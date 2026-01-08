@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -5,16 +6,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText, Download, Calendar, Shield, Loader2 } from "lucide-react";
 import { useAudits } from "@/hooks/useAudits";
 import { formatDistanceToNow, format } from "date-fns";
+import { downloadPdfReport } from "@/lib/pdfReport";
+import { useToast } from "@/hooks/use-toast";
 
 const Reports = () => {
   const navigate = useNavigate();
   const { data: audits, isLoading } = useAudits();
+  const { toast } = useToast();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   // Only show completed audits (with grades) as reports
   const completedAudits = audits?.filter(audit => audit.grade !== null) || [];
 
   const formatTimestamp = (timestamp: string) => {
     return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+  };
+
+  const handleDownloadPdf = async (auditId: string, projectName: string) => {
+    setDownloadingId(auditId);
+    try {
+      await downloadPdfReport(auditId, projectName);
+      toast({
+        title: "Report ready",
+        description: "Use your browser's print dialog to save as PDF.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Download failed",
+        description: "Please try again.",
+      });
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const getGradeColor = (grade: string) => {
@@ -97,9 +121,14 @@ const Reports = () => {
                           variant="outline"
                           size="sm"
                           className="gap-2"
-                          onClick={() => console.log("Download PDF for", audit.id)}
+                          disabled={downloadingId === audit.id}
+                          onClick={() => handleDownloadPdf(audit.id, audit.project_name)}
                         >
-                          <Download className="w-4 h-4" />
+                          {downloadingId === audit.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
                           PDF
                         </Button>
                       </div>
