@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,7 @@ const FindingsFilter = ({ findings, onFilteredChange }: FindingsFilterProps) => 
   }, [findings, searchQuery, selectedSeverities, showResolved]);
 
   // Update parent when filtered changes
-  useMemo(() => {
+  useEffect(() => {
     onFilteredChange(filteredFindings);
   }, [filteredFindings, onFilteredChange]);
 
