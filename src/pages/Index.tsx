@@ -119,14 +119,20 @@ const Index = () => {
   const [upgradeReason, setUpgradeReason] = useState<'scan_limit' | 'nloc_limit'>('scan_limit');
   const [pendingNloc, setPendingNloc] = useState(0);
 
-  // Handle audit query param from URL
+  // Handle URL query params
   useEffect(() => {
     const auditId = searchParams.get('audit');
+    const isNew = searchParams.get('new');
+    
     if (auditId) {
       setCurrentAuditId(auditId);
       setView("results");
+    } else if (isNew === 'true') {
+      setView("editor");
+      // Clear the param after handling
+      setSearchParams({});
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   const { toast } = useToast();
   const { data: audits, isLoading: auditsLoading } = useAudits();
