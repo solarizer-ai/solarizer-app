@@ -92,7 +92,7 @@ const Audits = () => {
                 {audits?.length || 0} total audits
               </p>
             </div>
-            <Button onClick={() => navigate("/")} className="gap-2">
+            <Button onClick={() => navigate("/dashboard?new=true")} className="gap-2">
               <Plus className="w-4 h-4" />
               New Audit
             </Button>
@@ -175,7 +175,7 @@ const Audits = () => {
                   : "Start your first smart contract security audit"}
               </p>
               {!searchQuery && statusFilter === "all" && (
-                <Button onClick={() => navigate("/")} className="gap-2">
+                <Button onClick={() => navigate("/dashboard?new=true")} className="gap-2">
                   <Plus className="w-4 h-4" />
                   New Audit
                 </Button>
