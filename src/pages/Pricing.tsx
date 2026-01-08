@@ -1,12 +1,6 @@
 import { useState } from "react";
-import { Check, X, Info, Zap } from "lucide-react";
+import { Check, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -88,25 +82,6 @@ const faqs = [
   },
 ];
 
-const NLocTooltip = () => (
-  <TooltipProvider delayDuration={200}>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Info className="inline-block w-3.5 h-3.5 ml-1.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
-      </TooltipTrigger>
-      <TooltipContent 
-        side="top" 
-        className="max-w-xs text-sm bg-popover border-border"
-      >
-        <p>
-          Normalized Lines of Code (nLOC) calculates the actual logic of your
-          contract, excluding comments and blank lines, ensuring fair pricing
-          for complex systems.
-        </p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
 
 const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -212,7 +187,6 @@ const Pricing = () => {
                         {plan.nLoc}
                       </span>{" "}
                       nLOC per scan
-                      <NLocTooltip />
                     </p>
                   </div>
 
