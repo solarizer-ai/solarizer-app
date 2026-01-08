@@ -1,221 +1,309 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Check, X, Zap } from "lucide-react";
+import { Check, X, Info, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
+import { cn } from "@/lib/utils";
 
 const plans = [
   {
-    name: "Free",
-    description: "Perfect for getting started",
+    name: "Starter",
     monthlyPrice: 0,
     annualPrice: 0,
+    nLoc: "250",
+    description: "Perfect for individual developers exploring smart contract security.",
     features: [
-      { name: "3 audits per month", included: true },
-      { name: "Basic vulnerability detection", included: true },
-      { name: "Email support", included: true },
+      { name: "Basic logic analysis", included: true },
+      { name: "Pattern matching", included: true },
       { name: "Community access", included: true },
-      { name: "Advanced detection", included: false },
-      { name: "PDF reports", included: false },
-      { name: "Priority support", included: false },
-      { name: "API access", included: false },
+      { name: "High-priority AI reasoning", included: false },
+      { name: "PDF security reports", included: false },
+      { name: "Multi-file context analysis", included: false },
     ],
     cta: "Get Started",
-    href: "/auth",
     popular: false,
   },
   {
-    name: "Pro",
-    description: "For professional developers",
-    monthlyPrice: 29,
-    annualPrice: 23,
+    name: "Professional",
+    monthlyPrice: 49,
+    annualPrice: 490,
+    nLoc: "1,500",
+    description: "For teams shipping production-grade protocols.",
     features: [
-      { name: "Unlimited audits", included: true },
-      { name: "Basic vulnerability detection", included: true },
-      { name: "Email support", included: true },
+      { name: "Basic logic analysis", included: true },
+      { name: "Pattern matching", included: true },
       { name: "Community access", included: true },
-      { name: "Advanced detection", included: true },
-      { name: "PDF reports", included: true },
-      { name: "Priority support", included: true },
-      { name: "API access", included: false },
+      { name: "High-priority AI reasoning", included: true },
+      { name: "PDF security reports", included: true },
+      { name: "10 full scans per month", included: true },
     ],
-    cta: "Start Pro Trial",
-    href: "/auth?plan=pro",
+    cta: "Select Plan",
     popular: true,
   },
   {
-    name: "Enterprise",
-    description: "For teams and organizations",
-    monthlyPrice: null,
-    annualPrice: null,
+    name: "Elite",
+    monthlyPrice: 149,
+    annualPrice: 1490,
+    nLoc: "5,000",
+    description: "Enterprise-grade security for complex DeFi systems.",
     features: [
-      { name: "Unlimited audits", included: true },
-      { name: "Basic vulnerability detection", included: true },
-      { name: "Email support", included: true },
-      { name: "Community access", included: true },
-      { name: "Advanced detection", included: true },
-      { name: "PDF reports", included: true },
+      { name: "Everything in Professional", included: true },
+      { name: "Multi-file context analysis", included: true },
+      { name: "Flash-loan attack simulation", included: true },
       { name: "Priority support", included: true },
-      { name: "API access", included: true },
+      { name: "Unlimited scans", included: true },
+      { name: "Custom integrations", included: true },
     ],
-    cta: "Contact Sales",
-    href: "/auth?plan=enterprise",
+    cta: "Select Plan",
     popular: false,
   },
 ];
 
 const faqs = [
   {
-    question: "Can I upgrade or downgrade my plan?",
-    answer: "Yes, you can change your plan at any time. Changes take effect immediately, and we'll prorate any billing adjustments.",
+    question: "What counts as nLOC?",
+    answer:
+      "Normalized Lines of Code (nLOC) measures the actual logic in your contract, excluding comments, blank lines, and formatting. This ensures fair, consistent pricing regardless of code style.",
   },
   {
-    question: "What happens when I reach my audit limit?",
-    answer: "On the Free plan, you'll need to wait until the next month or upgrade to Pro for unlimited audits.",
+    question: "Can I upgrade mid-billing cycle?",
+    answer:
+      "Yes! When you upgrade, we'll pro-rate the difference for the remainder of your billing period. You'll only pay the difference.",
   },
   {
-    question: "Is there a free trial for Pro?",
-    answer: "Yes! Pro comes with a 14-day free trial. No credit card required to start.",
+    question: "How do top-ups work?",
+    answer:
+      "Top-up credits add additional nLOC capacity to your account. They're valid for 30 days from purchase and stack with your plan's base capacity.",
   },
   {
-    question: "What payment methods do you accept?",
-    answer: "We accept all major credit cards, PayPal, and cryptocurrency payments for annual plans.",
+    question: "Is there a free trial for Professional?",
+    answer:
+      "Yes, we offer a 14-day free trial of Professional with full access to all features. No credit card required to start.",
   },
 ];
+
+const NLocTooltip = () => (
+  <TooltipProvider delayDuration={200}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="inline-block w-3.5 h-3.5 ml-1.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+      </TooltipTrigger>
+      <TooltipContent 
+        side="top" 
+        className="max-w-xs text-sm bg-popover border-border"
+      >
+        <p>
+          Normalized Lines of Code (nLOC) calculates the actual logic of your
+          contract, excluding comments and blank lines, ensuring fair pricing
+          for complex systems.
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
 const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <PublicHeader />
 
-      {/* Header Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Simple, Transparent Pricing
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="py-24 px-4">
+          <div className="max-w-6xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              Choose Your Security Plan
             </h1>
-            <p className="text-lg text-muted-foreground mb-8">
-              Choose the plan that fits your needs. All plans include our core security scanning features.
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
+              Transparent pricing that scales with your protocol. No hidden fees.
             </p>
 
-            {/* Billing Toggle */}
-            <div className="flex items-center justify-center gap-3">
-              <span className={cn("text-sm", !isAnnual ? "text-foreground" : "text-muted-foreground")}>
-                Monthly
-              </span>
-              <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
-              <span className={cn("text-sm", isAnnual ? "text-foreground" : "text-muted-foreground")}>
-                Annual
-              </span>
-              {isAnnual && (
-                <span className="ml-2 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                  Save 20%
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Cards */}
-      <section className="pb-24">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {plans.map((plan) => (
-              <div
-                key={plan.name}
+            {/* Monthly/Annual Toggle */}
+            <div className="inline-flex items-center gap-2 p-1 rounded-lg bg-muted/50 border border-border">
+              <button
+                onClick={() => setIsAnnual(false)}
                 className={cn(
-                  "relative rounded-2xl border p-8 flex flex-col",
-                  plan.popular
-                    ? "border-primary bg-card shadow-lg shadow-primary/10"
-                    : "border-border bg-card/50"
+                  "px-4 py-2 rounded-md text-sm font-medium transition-all",
+                  !isAnnual
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                      <Zap className="w-3 h-3" />
-                      Most Popular
-                    </div>
-                  </div>
+                Monthly
+              </button>
+              <button
+                onClick={() => setIsAnnual(true)}
+                className={cn(
+                  "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                  isAnnual
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
+              >
+                Annual
+                <span className="text-xs px-1.5 py-0.5 rounded bg-success/20 text-success font-medium">
+                  2 months free
+                </span>
+              </button>
+            </div>
+          </div>
+        </section>
 
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold mb-1">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground">{plan.description}</p>
-                </div>
+        {/* Pricing Cards */}
+        <section className="pb-16 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6">
+              {plans.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={cn(
+                    "relative flex flex-col p-8 rounded-xl border border-zinc-800 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/5",
+                    plan.popular && "border-t-2 border-t-primary"
+                  )}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="px-3 py-1 text-xs font-medium bg-primary text-primary-foreground rounded-full">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
 
-                <div className="mb-6">
-                  {plan.monthlyPrice !== null ? (
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {plan.description}
+                    </p>
+                  </div>
+
+                  <div className="mb-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">
+                      <span className="text-4xl font-bold font-mono">
                         ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
                       </span>
-                      <span className="text-muted-foreground">/month</span>
-                    </div>
-                  ) : (
-                    <div className="text-4xl font-bold">Custom</div>
-                  )}
-                  {isAnnual && plan.monthlyPrice !== null && plan.monthlyPrice > 0 && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Billed annually (${plan.annualPrice * 12}/year)
-                    </p>
-                  )}
-                </div>
-
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((feature) => (
-                    <li key={feature.name} className="flex items-center gap-3 text-sm">
-                      {feature.included ? (
-                        <Check className="w-4 h-4 text-success flex-shrink-0" />
-                      ) : (
-                        <X className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
-                      )}
-                      <span className={cn(!feature.included && "text-muted-foreground")}>
-                        {feature.name}
+                      <span className="text-muted-foreground">
+                        /{isAnnual ? "year" : "month"}
                       </span>
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                    {isAnnual && plan.monthlyPrice > 0 && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        <span className="line-through">
+                          ${plan.monthlyPrice * 12}
+                        </span>
+                        <span className="text-success ml-2">
+                          Save ${plan.monthlyPrice * 12 - plan.annualPrice}
+                        </span>
+                      </p>
+                    )}
+                  </div>
 
-                <Button
-                  asChild
-                  variant={plan.popular ? "default" : "outline"}
-                  className="w-full"
-                >
-                  <Link to={plan.href}>{plan.cta}</Link>
+                  <div className="mb-6 pb-6 border-b border-zinc-800">
+                    <p className="text-sm text-muted-foreground">
+                      Up to{" "}
+                      <span className="font-mono font-semibold text-foreground">
+                        {plan.nLoc}
+                      </span>{" "}
+                      nLOC per scan
+                      <NLocTooltip />
+                    </p>
+                  </div>
+
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {plan.features.map((feature) => (
+                      <li
+                        key={feature.name}
+                        className="flex items-start gap-3 text-sm"
+                      >
+                        {feature.included ? (
+                          <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                        ) : (
+                          <X className="w-4 h-4 text-muted-foreground/40 shrink-0 mt-0.5" />
+                        )}
+                        <span
+                          className={cn(
+                            feature.included
+                              ? "text-foreground"
+                              : "text-muted-foreground/60"
+                          )}
+                        >
+                          {feature.name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    className={cn(
+                      "w-full",
+                      plan.popular
+                        ? "bg-primary hover:bg-primary/90"
+                        : "bg-primary/10 text-primary hover:bg-primary/20"
+                    )}
+                  >
+                    {plan.cta}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Protocol Power-Up Section */}
+        <section className="pb-24 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-6 rounded-xl border border-dashed border-zinc-800 bg-card/30">
+              <div className="flex items-center gap-4">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Zap className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Protocol Power-Up</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Need more capacity? Scale on demand.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <p className="text-sm">
+                  <span className="font-mono font-bold text-lg">$15</span>
+                  <span className="text-muted-foreground"> per 500 nLOC</span>
+                </p>
+                <Button variant="outline" className="border-zinc-700">
+                  Purchase Top-up
                 </Button>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FAQ Section */}
-      <section className="py-24 border-t border-border bg-card/30">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
-            <p className="text-muted-foreground">
-              Have questions? We've got answers.
-            </p>
+        {/* FAQ Section */}
+        <section className="py-24 px-4 border-t border-border">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-6">
+              {faqs.map((faq, index) => (
+                <div
+                  key={index}
+                  className="p-6 rounded-xl border border-zinc-800 bg-card/30"
+                >
+                  <h3 className="font-semibold mb-2">{faq.question}</h3>
+                  <p className="text-sm text-muted-foreground">{faq.answer}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {faqs.map((faq) => (
-              <div key={faq.question} className="space-y-2">
-                <h3 className="font-semibold">{faq.question}</h3>
-                <p className="text-sm text-muted-foreground">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
     </div>
