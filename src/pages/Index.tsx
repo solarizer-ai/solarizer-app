@@ -2,21 +2,19 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
-import FileUploader from "@/components/FileUploader";
-import CodeEditor from "@/components/CodeEditor";
+import AuditWizard from "@/components/AuditWizard";
 import ScanningProgress from "@/components/ScanningProgress";
 import VulnerabilityMatrix from "@/components/VulnerabilityMatrix";
 import FindingItem from "@/components/FindingItem";
 import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Plus, Play, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
+import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
 import { useAudits, useAudit, useFindings, useCreateAudit, useUpdateAudit, useDeleteAudit, useCreateFindings } from "@/hooks/useAudits";
 import type { AuditStatus, SecurityGrade, FindingSeverity } from "@/hooks/useAudits";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { FileNode, getAllFiles } from "@/types/files";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -126,39 +124,25 @@ const Index = () => {
   const deleteAudit = useDeleteAudit();
   const createFindings = useCreateFindings();
 
-  const handleStartScan = async () => {
-    if (!projectName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Project name required",
-        description: "Please enter a name for your project.",
-      });
-      return;
-    }
-
-    if (!code.trim()) {
-      toast({
-        variant: "destructive",
-        title: "No code provided",
-        description: "Please paste or upload your Solidity contract.",
-      });
-      return;
-    }
-
+  const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string }) => {
+    const { projectName: name, files, code: codeContent } = wizardData;
+    
+    setProjectName(name);
+    setCode(codeContent);
     setIsScanning(true);
     setShowResults(false);
 
     try {
-      // Create the audit
+      const contractCount = getAllFiles(files).length || 1;
+      
       const audit = await createAudit.mutateAsync({
-        project_name: projectName,
-        contract_code: code,
-        contract_count: 1,
+        project_name: name,
+        contract_code: codeContent,
+        contract_count: contractCount,
       });
 
       setCurrentAuditId(audit.id);
 
-      // Update status to analyzing
       await updateAudit.mutateAsync({
         id: audit.id,
         status: "analyzing" as AuditStatus,
@@ -343,64 +327,27 @@ const Index = () => {
 
         {view === "editor" && (
           <div className="space-y-6">
-            {/* Editor Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <button 
-                  onClick={handleBackToDashboard}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
-                >
-                  ← Back to Dashboard
-                </button>
-                <h2 className="text-2xl font-semibold text-foreground">New Security Audit</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Upload your Solidity contracts or paste code directly
-                </p>
-              </div>
-              <Button 
-                onClick={handleStartScan}
-                disabled={isScanning || createAudit.isPending}
-                className="gap-2"
+            <div>
+              <button 
+                onClick={handleBackToDashboard}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
               >
-                {isScanning || createAudit.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-                {isScanning ? "Scanning..." : "Start Analysis"}
-              </Button>
+                ← Back to Dashboard
+              </button>
+              <h2 className="text-2xl font-semibold text-foreground">New Security Audit</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Create a new smart contract security audit
+              </p>
             </div>
 
-            {/* Project Name */}
-            <div className="space-y-2">
-              <Label htmlFor="projectName">Project Name</Label>
-              <Input
-                id="projectName"
-                placeholder="e.g., DeFi Vault v2.1"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                className="max-w-md"
+            {!isScanning && !showResults && (
+              <AuditWizard
+                onComplete={handleStartScan}
+                onCancel={handleBackToDashboard}
+                isSubmitting={createAudit.isPending}
               />
-            </div>
+            )}
 
-            {/* File Uploader */}
-            <FileUploader onFilesSelected={(files) => {
-              if (files.length > 0 && files[0].content) {
-                setCode(files[0].content);
-                if (!projectName && files[0].name) {
-                  setProjectName(files[0].name.replace('.sol', ''));
-                }
-              }
-            }} />
-
-            {/* Code Editor */}
-            <CodeEditor
-              code={code}
-              onChange={setCode}
-              fileName={projectName ? `${projectName}.sol` : "Contract.sol"}
-            />
-
-            {/* Scanning Progress */}
             {(isScanning || showResults) && (
               <ScanningProgress 
                 isScanning={isScanning} 
@@ -408,7 +355,6 @@ const Index = () => {
               />
             )}
 
-            {/* Quick Results Preview */}
             {showResults && currentAudit && (
               <div className="bg-card border border-border rounded-lg p-6">
                 <div className="flex items-center justify-between">
