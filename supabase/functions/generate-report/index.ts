@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,63 +23,101 @@ interface AuditReport {
   findings: Finding[];
 }
 
-const getSeverityColor = (severity: string): string => {
-  switch (severity) {
-    case 'critical': return '#dc2626';
-    case 'high': return '#ea580c';
-    case 'medium': return '#d97706';
-    case 'low': return '#2563eb';
-    case 'info': return '#6b7280';
-    default: return '#6b7280';
-  }
+const getSeverityLabel = (severity: string): string => {
+  return severity.charAt(0).toUpperCase() + severity.slice(1);
 };
 
-const getGradeColor = (grade: string): string => {
-  switch (grade) {
-    case 'A':
-    case 'B': return '#22c55e';
-    case 'C': return '#eab308';
-    case 'D':
-    case 'F': return '#ef4444';
-    default: return '#6b7280';
-  }
-};
+const generatePdf = (audit: AuditReport): ArrayBuffer => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  let yPos = margin;
 
-const escapeHtml = (text: string): string => {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
-
-const generateHtmlReport = (audit: AuditReport): string => {
-  const gradeColor = getGradeColor(audit.grade);
   const date = new Date(audit.created_at).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 
-  const findingsHtml = audit.findings.map((finding, index) => `
-    <div style="margin-bottom: 24px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; page-break-inside: avoid;">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-        <span style="background-color: ${getSeverityColor(finding.severity)}; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
-          ${escapeHtml(finding.severity)}
-        </span>
-        <span style="font-weight: 600; font-size: 16px; color: #111827;">${escapeHtml(finding.title)}</span>
-      </div>
-      ${finding.location ? `<p style="color: #6b7280; font-size: 12px; margin-bottom: 8px;">📍 ${escapeHtml(finding.location)}</p>` : ''}
-      <p style="color: #374151; font-size: 14px; line-height: 1.6; margin-bottom: 12px;">${escapeHtml(finding.description)}</p>
-      ${finding.remediation ? `
-        <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px;">
-          <p style="font-weight: 600; color: #166534; font-size: 12px; margin-bottom: 4px;">💡 Remediation</p>
-          <p style="color: #166534; font-size: 13px; line-height: 1.5;">${escapeHtml(finding.remediation)}</p>
-        </div>
-      ` : ''}
-    </div>
-  `).join('');
+  // Helper to add new page if needed
+  const checkPageBreak = (requiredSpace: number) => {
+    if (yPos + requiredSpace > pageHeight - margin) {
+      doc.addPage();
+      yPos = margin;
+      return true;
+    }
+    return false;
+  };
+
+  // Header
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(17, 24, 39);
+  doc.text("ENX Pro Security Report", margin, yPos);
+  yPos += 8;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(107, 114, 128);
+  doc.text("Smart Contract Security Audit", margin, yPos);
+  
+  doc.text(date, pageWidth - margin, yPos, { align: "right" });
+  yPos += 15;
+
+  // Divider line
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 15;
+
+  // Project Overview Box
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 40, 3, 3, "F");
+
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(17, 24, 39);
+  doc.text(audit.project_name, margin + 10, yPos + 15);
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(107, 114, 128);
+  doc.text("Security Assessment Summary", margin + 10, yPos + 25);
+
+  // Grade circle
+  const gradeX = pageWidth - margin - 25;
+  const gradeY = yPos + 20;
+  
+  // Grade color
+  let gradeColor: [number, number, number] = [34, 197, 94]; // green
+  if (audit.grade === "C" || audit.grade === "D") {
+    gradeColor = [234, 179, 8]; // yellow
+  } else if (audit.grade === "F") {
+    gradeColor = [239, 68, 68]; // red
+  }
+  
+  doc.setDrawColor(...gradeColor);
+  doc.setLineWidth(2);
+  doc.circle(gradeX, gradeY, 12, "S");
+  
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...gradeColor);
+  doc.text(audit.grade, gradeX, gradeY + 2, { align: "center" });
+  
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128);
+  doc.text(`Score: ${audit.security_score}%`, gradeX, gradeY + 18, { align: "center" });
+
+  yPos += 55;
+
+  // Vulnerability Summary
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(17, 24, 39);
+  doc.text("Vulnerability Summary", margin, yPos);
+  yPos += 10;
 
   const severityCounts = {
     critical: audit.findings.filter(f => f.severity === 'critical').length,
@@ -88,91 +127,134 @@ const generateHtmlReport = (audit: AuditReport): string => {
     info: audit.findings.filter(f => f.severity === 'info').length,
   };
 
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Security Report - ${escapeHtml(audit.project_name)}</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111827; line-height: 1.5; padding: 40px; }
-        @media print { body { padding: 20px; } }
-      </style>
-    </head>
-    <body>
-      <!-- Header -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #e5e7eb;">
-        <div>
-          <h1 style="font-size: 28px; font-weight: 700; color: #111827; margin-bottom: 4px;">🛡️ ENX Pro Security Report</h1>
-          <p style="color: #6b7280; font-size: 14px;">Smart Contract Security Audit</p>
-        </div>
-        <div style="text-align: right;">
-          <p style="font-size: 14px; color: #6b7280;">${date}</p>
-        </div>
-      </div>
+  const severities = [
+    { name: "Critical", count: severityCounts.critical, color: [254, 242, 242] as [number, number, number], textColor: [220, 38, 38] as [number, number, number] },
+    { name: "High", count: severityCounts.high, color: [255, 247, 237] as [number, number, number], textColor: [234, 88, 12] as [number, number, number] },
+    { name: "Medium", count: severityCounts.medium, color: [255, 251, 235] as [number, number, number], textColor: [217, 119, 6] as [number, number, number] },
+    { name: "Low", count: severityCounts.low, color: [239, 246, 255] as [number, number, number], textColor: [37, 99, 235] as [number, number, number] },
+    { name: "Info", count: severityCounts.info, color: [249, 250, 251] as [number, number, number], textColor: [107, 114, 128] as [number, number, number] },
+  ];
 
-      <!-- Project Overview -->
-      <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 24px; margin-bottom: 32px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <h2 style="font-size: 20px; font-weight: 600; color: #111827; margin-bottom: 8px;">${escapeHtml(audit.project_name)}</h2>
-            <p style="color: #6b7280; font-size: 14px;">Security Assessment Summary</p>
-          </div>
-          <div style="text-align: center;">
-            <div style="width: 80px; height: 80px; border-radius: 50%; background-color: ${gradeColor}20; border: 4px solid ${gradeColor}; display: flex; align-items: center; justify-content: center;">
-              <span style="font-size: 36px; font-weight: 700; color: ${gradeColor};">${audit.grade}</span>
-            </div>
-            <p style="margin-top: 8px; font-size: 14px; color: #6b7280;">Score: ${audit.security_score}%</p>
-          </div>
-        </div>
-      </div>
+  const boxWidth = (pageWidth - 2 * margin - 4 * 8) / 5;
+  let xPos = margin;
 
-      <!-- Vulnerability Summary -->
-      <div style="margin-bottom: 32px;">
-        <h3 style="font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 16px;">Vulnerability Summary</h3>
-        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 100px; padding: 16px; background-color: #fef2f2; border-radius: 8px; text-align: center;">
-            <p style="font-size: 24px; font-weight: 700; color: #dc2626;">${severityCounts.critical}</p>
-            <p style="font-size: 12px; color: #991b1b;">Critical</p>
-          </div>
-          <div style="flex: 1; min-width: 100px; padding: 16px; background-color: #fff7ed; border-radius: 8px; text-align: center;">
-            <p style="font-size: 24px; font-weight: 700; color: #ea580c;">${severityCounts.high}</p>
-            <p style="font-size: 12px; color: #9a3412;">High</p>
-          </div>
-          <div style="flex: 1; min-width: 100px; padding: 16px; background-color: #fffbeb; border-radius: 8px; text-align: center;">
-            <p style="font-size: 24px; font-weight: 700; color: #d97706;">${severityCounts.medium}</p>
-            <p style="font-size: 12px; color: #92400e;">Medium</p>
-          </div>
-          <div style="flex: 1; min-width: 100px; padding: 16px; background-color: #eff6ff; border-radius: 8px; text-align: center;">
-            <p style="font-size: 24px; font-weight: 700; color: #2563eb;">${severityCounts.low}</p>
-            <p style="font-size: 12px; color: #1e40af;">Low</p>
-          </div>
-          <div style="flex: 1; min-width: 100px; padding: 16px; background-color: #f9fafb; border-radius: 8px; text-align: center;">
-            <p style="font-size: 24px; font-weight: 700; color: #6b7280;">${severityCounts.info}</p>
-            <p style="font-size: 12px; color: #4b5563;">Info</p>
-          </div>
-        </div>
-      </div>
+  severities.forEach((sev) => {
+    doc.setFillColor(...sev.color);
+    doc.roundedRect(xPos, yPos, boxWidth, 30, 2, 2, "F");
+    
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...sev.textColor);
+    doc.text(String(sev.count), xPos + boxWidth / 2, yPos + 15, { align: "center" });
+    
+    doc.setFontSize(8);
+    doc.text(sev.name, xPos + boxWidth / 2, yPos + 24, { align: "center" });
+    
+    xPos += boxWidth + 8;
+  });
 
-      <!-- Detailed Findings -->
-      <div>
-        <h3 style="font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 16px;">Detailed Findings</h3>
-        ${audit.findings.length > 0 ? findingsHtml : '<p style="color: #6b7280; text-align: center; padding: 40px;">No vulnerabilities found. Great job! 🎉</p>'}
-      </div>
+  yPos += 45;
 
-      <!-- Footer -->
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
-        <p style="color: #9ca3af; font-size: 12px;">Generated by ENX Pro Smart Contract Security Platform</p>
-        <p style="color: #9ca3af; font-size: 12px;">Report generated on ${date}</p>
-      </div>
-    </body>
-    </html>
-  `;
+  // Detailed Findings
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(17, 24, 39);
+  doc.text("Detailed Findings", margin, yPos);
+  yPos += 10;
+
+  if (audit.findings.length === 0) {
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(107, 114, 128);
+    doc.text("No vulnerabilities found. Great job!", margin, yPos + 10);
+  } else {
+    audit.findings.forEach((finding, index) => {
+      checkPageBreak(60);
+
+      // Finding box
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.3);
+      
+      // Severity badge
+      let badgeColor: [number, number, number] = [107, 114, 128];
+      if (finding.severity === 'critical') badgeColor = [220, 38, 38];
+      else if (finding.severity === 'high') badgeColor = [234, 88, 12];
+      else if (finding.severity === 'medium') badgeColor = [217, 119, 6];
+      else if (finding.severity === 'low') badgeColor = [37, 99, 235];
+
+      doc.setFillColor(...badgeColor);
+      doc.roundedRect(margin, yPos, 45, 6, 1, 1, "F");
+      
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(getSeverityLabel(finding.severity).toUpperCase(), margin + 22.5, yPos + 4.5, { align: "center" });
+
+      // Title
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(17, 24, 39);
+      doc.text(finding.title, margin + 50, yPos + 4.5);
+      yPos += 12;
+
+      // Location
+      if (finding.location) {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(107, 114, 128);
+        doc.text(`Location: ${finding.location}`, margin, yPos);
+        yPos += 6;
+      }
+
+      // Description
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(55, 65, 81);
+      const descLines = doc.splitTextToSize(finding.description, pageWidth - 2 * margin);
+      doc.text(descLines, margin, yPos);
+      yPos += descLines.length * 4 + 4;
+
+      // Remediation
+      if (finding.remediation) {
+        checkPageBreak(25);
+        
+        doc.setFillColor(240, 253, 244);
+        const remLines = doc.splitTextToSize(finding.remediation, pageWidth - 2 * margin - 10);
+        const remHeight = remLines.length * 4 + 10;
+        doc.roundedRect(margin, yPos, pageWidth - 2 * margin, remHeight, 2, 2, "F");
+        
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(22, 101, 52);
+        doc.text("Remediation", margin + 5, yPos + 6);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.text(remLines, margin + 5, yPos + 12);
+        yPos += remHeight + 8;
+      }
+
+      yPos += 5;
+    });
+  }
+
+  // Footer
+  checkPageBreak(30);
+  yPos = pageHeight - 25;
+  doc.setDrawColor(229, 231, 235);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 8;
+  
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(156, 163, 175);
+  doc.text("Generated by ENX Pro Smart Contract Security Platform", pageWidth / 2, yPos, { align: "center" });
+  doc.text(`Report generated on ${date}`, pageWidth / 2, yPos + 5, { align: "center" });
+
+  return doc.output("arraybuffer") as ArrayBuffer;
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -187,7 +269,6 @@ serve(async (req) => {
       );
     }
 
-    // Get auth token from request
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -196,14 +277,12 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Fetch audit data
     const { data: audit, error: auditError } = await supabase
       .from("audits")
       .select("*")
@@ -218,7 +297,6 @@ serve(async (req) => {
       );
     }
 
-    // Fetch findings
     const { data: findings, error: findingsError } = await supabase
       .from("findings")
       .select("*")
@@ -243,15 +321,17 @@ serve(async (req) => {
       })),
     };
 
-    const html = generateHtmlReport(reportData);
+    const pdfBytes = generatePdf(reportData);
+    const fileName = `${audit.project_name.replace(/[^a-zA-Z0-9]/g, '_')}_Security_Report.pdf`;
 
     console.log("Generated PDF report for audit:", auditId);
 
-    return new Response(html, {
+    return new Response(pdfBytes, {
       status: 200,
       headers: {
         ...corsHeaders,
-        "Content-Type": "text/html; charset=utf-8",
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
 
