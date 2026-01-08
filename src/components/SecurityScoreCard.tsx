@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Shield, Download, ExternalLink } from "lucide-react";
+import { Shield, Download, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { downloadPdfReport } from "@/lib/pdfReport";
+import { useToast } from "@/hooks/use-toast";
 
 type Grade = "A" | "B" | "C" | "D" | "F";
 
@@ -9,7 +12,12 @@ interface SecurityScoreCardProps {
   score: number;
   projectName: string;
   timestamp: string;
-  onDownloadPDF?: () => void;
+  auditId?: string;
+  findingsCount?: {
+    passed: number;
+    warnings: number;
+    failed: number;
+  };
 }
 
 const gradeConfig: Record<Grade, { color: string; label: string; description: string }> = {
@@ -40,10 +48,47 @@ const gradeConfig: Record<Grade, { color: string; label: string; description: st
   },
 };
 
-const SecurityScoreCard = ({ grade, score, projectName, timestamp, onDownloadPDF }: SecurityScoreCardProps) => {
+const SecurityScoreCard = ({ 
+  grade, 
+  score, 
+  projectName, 
+  timestamp, 
+  auditId,
+  findingsCount 
+}: SecurityScoreCardProps) => {
   const config = gradeConfig[grade];
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (score / 100) * circumference;
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
+
+  const handleDownloadPDF = async () => {
+    if (!auditId) {
+      toast({
+        variant: "destructive",
+        title: "Cannot download",
+        description: "Audit ID is missing.",
+      });
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      await downloadPdfReport(auditId, projectName);
+      toast({
+        title: "Report ready",
+        description: "Use your browser's print dialog to save as PDF.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Download failed",
+        description: "Please try again.",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="bg-card border border-border rounded-lg p-6">
@@ -63,11 +108,16 @@ const SecurityScoreCard = ({ grade, score, projectName, timestamp, onDownloadPDF
         <Button
           variant="outline"
           size="sm"
-          onClick={onDownloadPDF}
+          onClick={handleDownloadPDF}
+          disabled={isDownloading || !auditId}
           className="gap-2 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
         >
-          <Download className="w-4 h-4" />
-          Download PDF
+          {isDownloading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          {isDownloading ? "Generating..." : "Download PDF"}
         </Button>
       </div>
 
@@ -119,20 +169,22 @@ const SecurityScoreCard = ({ grade, score, projectName, timestamp, onDownloadPDF
             {config.description}
           </p>
           
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="w-2 h-2 rounded-full bg-success" />
-              Passed: 42 checks
+          {findingsCount && (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="w-2 h-2 rounded-full bg-success" />
+                Passed: {findingsCount.passed} checks
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="w-2 h-2 rounded-full bg-warning" />
+                Warnings: {findingsCount.warnings}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="w-2 h-2 rounded-full bg-critical" />
+                Failed: {findingsCount.failed}
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="w-2 h-2 rounded-full bg-warning" />
-              Warnings: 8
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="w-2 h-2 rounded-full bg-critical" />
-              Failed: 3
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Verification Badge */}

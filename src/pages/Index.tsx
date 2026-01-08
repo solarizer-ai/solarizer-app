@@ -465,7 +465,12 @@ const Index = () => {
                   score={currentAudit.security_score || 0}
                   projectName={currentAudit.project_name}
                   timestamp={formatTimestamp(currentAudit.created_at)}
-                  onDownloadPDF={() => console.log("Download PDF")}
+                  auditId={currentAudit.id}
+                  findingsCount={{
+                    passed: 42 - (findings?.length || 0),
+                    warnings: findings?.filter(f => f.severity === 'medium' || f.severity === 'low').length || 0,
+                    failed: findings?.filter(f => f.severity === 'critical' || f.severity === 'high').length || 0,
+                  }}
                 />
 
                 {/* Vulnerability Matrix */}
