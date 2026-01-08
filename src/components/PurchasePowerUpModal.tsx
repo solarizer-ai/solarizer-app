@@ -87,6 +87,9 @@ export function PurchasePowerUpModal({
           <div className="space-y-2">
             <label className="text-sm font-medium">Select Power-Up</label>
             <Select value={selectedOption} onValueChange={setSelectedOption}>
+              <p className="text-xs text-muted-foreground mb-2">
+                Power-up credits expire at the end of your Pro subscription period.
+              </p>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select an option" />
               </SelectTrigger>
