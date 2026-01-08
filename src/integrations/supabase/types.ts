@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      audits: {
+        Row: {
+          contract_code: string
+          contract_count: number
+          created_at: string
+          grade: Database["public"]["Enums"]["security_grade"] | null
+          id: string
+          project_name: string
+          security_score: number | null
+          status: Database["public"]["Enums"]["audit_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_code: string
+          contract_count?: number
+          created_at?: string
+          grade?: Database["public"]["Enums"]["security_grade"] | null
+          id?: string
+          project_name: string
+          security_score?: number | null
+          status?: Database["public"]["Enums"]["audit_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_code?: string
+          contract_count?: number
+          created_at?: string
+          grade?: Database["public"]["Enums"]["security_grade"] | null
+          id?: string
+          project_name?: string
+          security_score?: number | null
+          status?: Database["public"]["Enums"]["audit_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      findings: {
+        Row: {
+          audit_id: string
+          code_snippet: string | null
+          created_at: string
+          description: string
+          id: string
+          is_resolved: boolean
+          line_end: number | null
+          line_start: number | null
+          location: string | null
+          remediation: string | null
+          severity: Database["public"]["Enums"]["finding_severity"]
+          title: string
+        }
+        Insert: {
+          audit_id: string
+          code_snippet?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          is_resolved?: boolean
+          line_end?: number | null
+          line_start?: number | null
+          location?: string | null
+          remediation?: string | null
+          severity: Database["public"]["Enums"]["finding_severity"]
+          title: string
+        }
+        Update: {
+          audit_id?: string
+          code_snippet?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          is_resolved?: boolean
+          line_end?: number | null
+          line_start?: number | null
+          location?: string | null
+          remediation?: string | null
+          severity?: Database["public"]["Enums"]["finding_severity"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "findings_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -80,6 +172,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      audit_status: "pending" | "analyzing" | "secured" | "issues"
+      finding_severity: "critical" | "high" | "medium" | "low" | "info"
+      security_grade: "A" | "B" | "C" | "D" | "F"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -208,6 +303,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      audit_status: ["pending", "analyzing", "secured", "issues"],
+      finding_severity: ["critical", "high", "medium", "low", "info"],
+      security_grade: ["A", "B", "C", "D", "F"],
     },
   },
 } as const
