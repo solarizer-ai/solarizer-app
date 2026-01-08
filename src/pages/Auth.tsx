@@ -28,7 +28,7 @@ const Auth = () => {
 
   // Redirect if already logged in
   if (user) {
-    const from = location.state?.from?.pathname || '/';
+    const from = location.state?.from?.pathname || '/dashboard';
     navigate(from, { replace: true });
     return null;
   }
@@ -75,7 +75,7 @@ const Auth = () => {
             });
           }
         } else {
-          const from = location.state?.from?.pathname || '/';
+          const from = location.state?.from?.pathname || '/dashboard';
           navigate(from, { replace: true });
         }
       } else {
@@ -99,7 +99,7 @@ const Auth = () => {
             title: 'Account created!',
             description: 'Welcome to ENX Pro. You are now signed in.',
           });
-          const from = location.state?.from?.pathname || '/';
+          const from = location.state?.from?.pathname || '/dashboard';
           navigate(from, { replace: true });
         }
       }
