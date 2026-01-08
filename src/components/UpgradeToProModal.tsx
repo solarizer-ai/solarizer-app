@@ -1,0 +1,81 @@
+import { Check, Zap, Shield, FileText, Code2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { PLAN_LIMITS } from "@/lib/nlocCalculator";
+
+interface UpgradeToProModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  reason?: 'scan_limit' | 'nloc_limit';
+  currentNloc?: number;
+}
+
+export function UpgradeToProModal({ 
+  open, 
+  onOpenChange, 
+  reason = 'scan_limit',
+  currentNloc 
+}: UpgradeToProModalProps) {
+  const features = [
+    { icon: Zap, text: "Unlimited scans" },
+    { icon: Shield, text: `${PLAN_LIMITS.pro.monthlyNloc.toLocaleString()} nLOC monthly allowance` },
+    { icon: Code2, text: "Multi-file analysis" },
+    { icon: FileText, text: "Full PDF reports" },
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            Upgrade to Pro
+          </DialogTitle>
+          <DialogDescription>
+            {reason === 'scan_limit' 
+              ? "You've used all your free trial scans. Upgrade to Pro for unlimited scans."
+              : `Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit for Starter.`
+            }
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold">$19</span>
+            <span className="text-muted-foreground">/month</span>
+          </div>
+
+          <ul className="space-y-3">
+            {features.map((feature, idx) => (
+              <li key={idx} className="flex items-center gap-3">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                  <feature.icon className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <span className="text-sm">{feature.text}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="pt-2 space-y-2">
+            <Button className="w-full" size="lg">
+              Upgrade to Pro
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full" 
+              onClick={() => onOpenChange(false)}
+            >
+              Maybe later
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

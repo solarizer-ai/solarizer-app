@@ -8,10 +8,15 @@ import VulnerabilityMatrix from "@/components/VulnerabilityMatrix";
 import FindingItem from "@/components/FindingItem";
 import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
+import { CreditBalance } from "@/components/CreditBalance";
+import { UpgradeToProModal } from "@/components/UpgradeToProModal";
+import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
 import { useAudits, useAudit, useFindings, useCreateAudit, useUpdateAudit, useDeleteAudit, useCreateFindings } from "@/hooks/useAudits";
 import type { AuditStatus, SecurityGrade, FindingSeverity } from "@/hooks/useAudits";
+import { useSubscription, useCredits, useScanCount, useDeductCredits } from "@/hooks/useSubscription";
+import { calculateNLOC, PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { FileNode, getAllFiles } from "@/types/files";
@@ -104,6 +109,12 @@ const Index = () => {
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
   const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
+  
+  // Subscription & credits state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPowerUpModal, setShowPowerUpModal] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<'scan_limit' | 'nloc_limit'>('scan_limit');
+  const [pendingNloc, setPendingNloc] = useState(0);
 
   // Handle audit query param from URL
   useEffect(() => {
@@ -123,9 +134,47 @@ const Index = () => {
   const updateAudit = useUpdateAudit();
   const deleteAudit = useDeleteAudit();
   const createFindings = useCreateFindings();
+  
+  // Subscription hooks
+  const { data: subscription } = useSubscription();
+  const { data: credits } = useCredits();
+  const { data: scanCount } = useScanCount();
+  const deductCredits = useDeductCredits();
 
   const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string }) => {
     const { projectName: name, files, code: codeContent } = wizardData;
+    
+    // Calculate nLOC for enforcement
+    const nloc = calculateNLOC(codeContent);
+    const plan = subscription?.plan || 'starter';
+    const currentScanCount = scanCount || 0;
+    const creditsRemaining = credits?.credits_remaining || 0;
+    
+    // Starter plan enforcement
+    if (plan === 'starter') {
+      // Check scan limit
+      if (currentScanCount >= PLAN_LIMITS.starter.maxScans) {
+        setUpgradeReason('scan_limit');
+        setShowUpgradeModal(true);
+        return;
+      }
+      // Check nLOC limit per scan
+      if (nloc > PLAN_LIMITS.starter.nlocPerScan) {
+        setUpgradeReason('nloc_limit');
+        setPendingNloc(nloc);
+        setShowUpgradeModal(true);
+        return;
+      }
+    }
+    
+    // Pro plan enforcement
+    if (plan === 'pro') {
+      if (nloc > creditsRemaining) {
+        setPendingNloc(nloc);
+        setShowPowerUpModal(true);
+        return;
+      }
+    }
     
     setProjectName(name);
     setCode(codeContent);
@@ -139,9 +188,15 @@ const Index = () => {
         project_name: name,
         contract_code: codeContent,
         contract_count: contractCount,
+        nloc_count: nloc,
       });
 
       setCurrentAuditId(audit.id);
+
+      // Deduct credits for Pro users
+      if (plan === 'pro') {
+        await deductCredits.mutateAsync(nloc);
+      }
 
       await updateAudit.mutateAsync({
         id: audit.id,
@@ -274,10 +329,13 @@ const Index = () => {
                   Monitor and manage your smart contract security assessments
                 </p>
               </div>
-              <Button onClick={handleNewAudit} className="gap-2">
-                <Plus className="w-4 h-4" />
-                New Audit
-              </Button>
+              <div className="flex items-center gap-4">
+                <CreditBalance />
+                <Button onClick={handleNewAudit} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  New Audit
+                </Button>
+              </div>
             </div>
 
             {/* Audit Grid */}
@@ -493,6 +551,22 @@ const Index = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Upgrade Modal */}
+      <UpgradeToProModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        reason={upgradeReason}
+        currentNloc={pendingNloc}
+      />
+
+      {/* Power-Up Modal */}
+      <PurchasePowerUpModal
+        open={showPowerUpModal}
+        onOpenChange={setShowPowerUpModal}
+        requiredNloc={pendingNloc}
+        currentCredits={credits?.credits_remaining || 0}
+      />
     </div>
   );
 };
