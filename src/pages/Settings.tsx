@@ -1,15 +1,21 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Loader2, Check } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { User, Bell, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { useSubscription, useCredits, useScanCount } from "@/hooks/useSubscription";
+import { PLAN_LIMITS } from "@/lib/nlocCalculator";
+import { format } from "date-fns";
 
 interface Profile {
   display_name: string | null;
@@ -20,11 +26,16 @@ interface Profile {
 const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState("");
+
+  const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
+  const { data: credits, isLoading: creditsLoading } = useCredits();
+  const { data: scanCount } = useScanCount();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -74,6 +85,13 @@ const Settings = () => {
     }
   };
 
+  const plan = subscription?.plan || 'starter';
+  const isPro = plan === 'pro';
+  const creditsRemaining = credits?.credits_remaining || 0;
+  const creditsUsed = credits?.credits_used_this_period || 0;
+  const totalCredits = isPro ? PLAN_LIMITS.pro.monthlyNloc : PLAN_LIMITS.starter.maxScans * PLAN_LIMITS.starter.nlocPerScan;
+  const usagePercent = totalCredits > 0 ? Math.min(100, (creditsUsed / totalCredits) * 100) : 0;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -104,6 +122,10 @@ const Settings = () => {
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
                 Profile
+              </TabsTrigger>
+              <TabsTrigger value="subscription" className="gap-2">
+                <CreditCard className="w-4 h-4" />
+                Subscription
               </TabsTrigger>
               <TabsTrigger value="notifications" className="gap-2">
                 <Bell className="w-4 h-4" />
@@ -156,6 +178,135 @@ const Settings = () => {
                   </Button>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="subscription">
+              {subscriptionLoading || creditsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Current Plan Card */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            Current Plan
+                            <Badge variant={isPro ? "default" : "secondary"}>
+                              {isPro ? "Pro" : "Starter"}
+                            </Badge>
+                          </CardTitle>
+                          <CardDescription>
+                            {isPro 
+                              ? "Unlimited scans with 1,500 nLOC monthly allowance" 
+                              : "2 free scans with 500 nLOC per scan"}
+                          </CardDescription>
+                        </div>
+                        {isPro && subscription?.current_period_end && (
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">Renews on</p>
+                            <p className="text-sm font-medium">
+                              {format(new Date(subscription.current_period_end), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {!isPro && (
+                        <Button onClick={() => navigate("/pricing")} className="gap-2">
+                          <Zap className="w-4 h-4" />
+                          Upgrade to Pro
+                          <ArrowUpRight className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {isPro && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4" />
+                          <span>$19/month • Next billing: {subscription?.current_period_end ? format(new Date(subscription.current_period_end), "MMM d, yyyy") : "—"}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Usage Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Usage This Period</CardTitle>
+                      <CardDescription>
+                        {isPro 
+                          ? "Your nLOC credit usage for this billing cycle" 
+                          : "Your scan usage"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {isPro ? (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">nLOC Used</span>
+                            <span className="font-medium">
+                              {creditsUsed.toLocaleString()} / {totalCredits.toLocaleString()}
+                            </span>
+                          </div>
+                          <Progress value={usagePercent} className="h-2" />
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Credits Remaining</span>
+                            <span className="font-medium text-primary">
+                              {creditsRemaining.toLocaleString()} nLOC
+                            </span>
+                          </div>
+                          {credits?.period_reset_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Credits reset on {format(new Date(credits.period_reset_at), "MMM d, yyyy")}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Scans Used</span>
+                            <span className="font-medium">
+                              {scanCount || 0} / {PLAN_LIMITS.starter.maxScans}
+                            </span>
+                          </div>
+                          <Progress 
+                            value={((scanCount || 0) / PLAN_LIMITS.starter.maxScans) * 100} 
+                            className="h-2" 
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Each scan limited to {PLAN_LIMITS.starter.nlocPerScan} nLOC
+                          </p>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Power-Up Card (Pro only) */}
+                  {isPro && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-primary" />
+                          Need More Credits?
+                        </CardTitle>
+                        <CardDescription>
+                          Purchase additional nLOC for large audits
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button variant="outline" onClick={() => navigate("/pricing")}>
+                          View Power-Up Options
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Power-up credits expire at the end of your current billing period
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="notifications">
