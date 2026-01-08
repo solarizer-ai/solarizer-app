@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
@@ -7,6 +7,7 @@ import CodeEditor from "@/components/CodeEditor";
 import ScanningProgress from "@/components/ScanningProgress";
 import VulnerabilityMatrix from "@/components/VulnerabilityMatrix";
 import FindingItem from "@/components/FindingItem";
+import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +105,7 @@ const Index = () => {
   const [showResults, setShowResults] = useState(false);
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
+  const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
 
   // Handle audit query param from URL
   useEffect(() => {
@@ -480,27 +482,37 @@ const Index = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-foreground">Detailed Findings</h3>
                   {findings && findings.length > 0 ? (
-                    <div className="space-y-3">
-                      {findings.map((finding) => (
-                        <FindingItem 
-                          key={finding.id} 
-                          finding={{
-                            id: finding.id,
-                            title: finding.title,
-                            severity: finding.severity,
-                            description: finding.description,
-                            location: finding.location ? {
-                              file: finding.location,
-                              lines: finding.line_start && finding.line_end 
-                                ? `${finding.line_start}-${finding.line_end}`
-                                : undefined,
-                            } : undefined,
-                            code: finding.code_snippet || undefined,
-                            remediation: finding.remediation || undefined,
-                          }} 
-                        />
-                      ))}
-                    </div>
+                    <>
+                      <FindingsFilter
+                        findings={findings.map((f) => ({
+                          id: f.id,
+                          title: f.title,
+                          severity: f.severity,
+                          description: f.description,
+                          location: f.location ? {
+                            file: f.location,
+                            lines: f.line_start && f.line_end 
+                              ? `${f.line_start}-${f.line_end}`
+                              : undefined,
+                          } : undefined,
+                          code: f.code_snippet || undefined,
+                          remediation: f.remediation || undefined,
+                          is_resolved: f.is_resolved,
+                        }))}
+                        onFilteredChange={useCallback((filtered: any[]) => setFilteredFindings(filtered), [])}
+                      />
+                      <div className="space-y-3">
+                        {filteredFindings.map((finding) => (
+                          <FindingItem 
+                            key={finding.id} 
+                            finding={finding} 
+                          />
+                        ))}
+                        {filteredFindings.length === 0 && (
+                          <p className="text-muted-foreground text-center py-8">No findings match your filters.</p>
+                        )}
+                      </div>
+                    </>
                   ) : (
                     <p className="text-muted-foreground text-center py-8">No findings for this audit.</p>
                   )}
