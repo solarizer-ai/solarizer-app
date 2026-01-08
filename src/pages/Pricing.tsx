@@ -214,7 +214,7 @@ const Pricing = () => {
 
             <p className="text-muted-foreground mb-6">
               Perfect for large protocol audits without upgrading your base plan. 
-              Power-Up credits never expire.
+              Power-Up credits are valid until the end of your current Pro subscription period.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
