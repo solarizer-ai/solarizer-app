@@ -45,7 +45,12 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
       const pathParts = parts.length > 1 ? parts.slice(1) : parts;
       const fileName = pathParts[pathParts.length - 1];
       
-      if (!shouldIncludeFile(fileName)) {
+      // Skip lib and node_modules folders
+      const shouldSkipFolder = pathParts.some(part => 
+        part === 'lib' || part === 'node_modules'
+      );
+      
+      if (shouldSkipFolder || !shouldIncludeFile(fileName)) {
         processed++;
         setProgress(Math.round((processed / total) * 100));
         continue;
@@ -295,10 +300,10 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">
-              Drag & drop your project folder
+              Drag & drop your src/contracts folder
             </p>
             <p className="text-xs text-muted-foreground">
-              or click to browse • Supports .sol, .json, .md, .txt files
+              or click to browse • Skips lib and node_modules
             </p>
           </div>
         </div>
