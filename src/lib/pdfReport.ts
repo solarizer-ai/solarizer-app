@@ -10,24 +10,31 @@ export const downloadPdfReport = async (auditId: string, projectName: string) =>
       throw new Error(error.message);
     }
 
-    // The response is HTML, open it in a new window for printing/saving as PDF
-    const blob = new Blob([data], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    
-    // Open in new window for print-to-PDF
-    const printWindow = window.open(url, "_blank");
-    
-    if (printWindow) {
-      printWindow.onload = () => {
-        // Auto-trigger print dialog after a short delay
-        setTimeout(() => {
-          printWindow.print();
-        }, 500);
-      };
+    // Convert response to blob
+    let blob: Blob;
+    if (data instanceof Blob) {
+      blob = data;
+    } else if (data instanceof ArrayBuffer) {
+      blob = new Blob([data], { type: "application/pdf" });
+    } else {
+      // If it's raw data, convert it
+      const arrayBuffer = await new Response(data).arrayBuffer();
+      blob = new Blob([arrayBuffer], { type: "application/pdf" });
     }
 
-    // Clean up URL after a delay
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${projectName.replace(/[^a-zA-Z0-9]/g, '_')}_Security_Report.pdf`;
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 
     return { success: true };
   } catch (error) {
