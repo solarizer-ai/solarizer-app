@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
 import FileUploader from "@/components/FileUploader";
@@ -95,6 +96,7 @@ balances[msg.sender] -= amount;`,
 ];
 
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<AppView>("dashboard");
   const [code, setCode] = useState(sampleCode);
   const [projectName, setProjectName] = useState("");
@@ -102,6 +104,15 @@ const Index = () => {
   const [showResults, setShowResults] = useState(false);
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
+
+  // Handle audit query param from URL
+  useEffect(() => {
+    const auditId = searchParams.get('audit');
+    if (auditId) {
+      setCurrentAuditId(auditId);
+      setView("results");
+    }
+  }, [searchParams]);
 
   const { toast } = useToast();
   const { data: audits, isLoading: auditsLoading } = useAudits();
@@ -204,12 +215,19 @@ const Index = () => {
   };
 
   const handleNewAudit = () => {
+    setSearchParams({});
     setView("editor");
     setShowResults(false);
     setIsScanning(false);
     setCurrentAuditId(null);
     setProjectName("");
     setCode(sampleCode);
+  };
+
+  const handleBackToDashboard = () => {
+    setSearchParams({});
+    setView("dashboard");
+    setCurrentAuditId(null);
   };
 
   const handleViewResults = (auditId?: string) => {
@@ -327,7 +345,7 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <div>
                 <button 
-                  onClick={() => setView("dashboard")}
+                  onClick={handleBackToDashboard}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
                 >
                   ← Back to Dashboard
@@ -427,7 +445,7 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <div>
                 <button 
-                  onClick={() => setView("dashboard")}
+                  onClick={handleBackToDashboard}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
                 >
                   ← Back to Dashboard
