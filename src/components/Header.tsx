@@ -22,7 +22,6 @@ interface Profile {
 const navLinks = [
   { href: "/", label: "Dashboard" },
   { href: "/audits", label: "Audits" },
-  { href: "/reports", label: "Reports" },
   { href: "/docs", label: "Docs" },
 ];
 
