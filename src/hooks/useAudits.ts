@@ -12,6 +12,7 @@ export interface Audit {
   project_name: string;
   contract_code: string;
   contract_count: number;
+  nloc_count: number | null;
   status: AuditStatus;
   grade: SecurityGrade | null;
   security_score: number | null;
@@ -38,6 +39,7 @@ export interface CreateAuditInput {
   project_name: string;
   contract_code: string;
   contract_count?: number;
+  nloc_count?: number;
 }
 
 export interface CreateFindingInput {

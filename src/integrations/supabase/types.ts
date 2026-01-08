@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           grade: Database["public"]["Enums"]["security_grade"] | null
           id: string
+          nloc_count: number | null
           project_name: string
           security_score: number | null
           status: Database["public"]["Enums"]["audit_status"]
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
+          nloc_count?: number | null
           project_name: string
           security_score?: number | null
           status?: Database["public"]["Enums"]["audit_status"]
@@ -45,6 +47,7 @@ export type Database = {
           created_at?: string
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
+          nloc_count?: number | null
           project_name?: string
           security_score?: number | null
           status?: Database["public"]["Enums"]["audit_status"]
@@ -106,6 +109,60 @@ export type Database = {
           },
         ]
       }
+      nloc_credits: {
+        Row: {
+          created_at: string
+          credits_remaining: number
+          credits_used_this_period: number
+          id: string
+          period_reset_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_remaining?: number
+          credits_used_this_period?: number
+          id?: string
+          period_reset_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_remaining?: number
+          credits_used_this_period?: number
+          id?: string
+          period_reset_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      power_up_purchases: {
+        Row: {
+          id: string
+          nloc_amount: number
+          price_cents: number
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          nloc_amount: number
+          price_cents: number
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          nloc_amount?: number
+          price_cents?: number
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -131,6 +188,39 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string
+          id: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           user_id?: string
         }
@@ -175,6 +265,8 @@ export type Database = {
       audit_status: "pending" | "analyzing" | "secured" | "issues"
       finding_severity: "critical" | "high" | "medium" | "low" | "info"
       security_grade: "A" | "B" | "C" | "D" | "F"
+      subscription_plan: "starter" | "pro"
+      subscription_status: "active" | "canceled" | "past_due"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -306,6 +398,8 @@ export const Constants = {
       audit_status: ["pending", "analyzing", "secured", "issues"],
       finding_severity: ["critical", "high", "medium", "low", "info"],
       security_grade: ["A", "B", "C", "D", "F"],
+      subscription_plan: ["starter", "pro"],
+      subscription_status: ["active", "canceled", "past_due"],
     },
   },
 } as const
