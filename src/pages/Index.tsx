@@ -110,6 +110,9 @@ const Index = () => {
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
   const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
   
+  // Memoized callback for findings filter
+  const handleFilteredChange = useCallback((filtered: any[]) => setFilteredFindings(filtered), []);
+  
   // Subscription & credits state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
@@ -503,7 +506,7 @@ const Index = () => {
                           remediation: f.remediation || undefined,
                           is_resolved: f.is_resolved,
                         }))}
-                        onFilteredChange={useCallback((filtered: any[]) => setFilteredFindings(filtered), [])}
+                        onFilteredChange={handleFilteredChange}
                       />
                       <div className="space-y-3">
                         {filteredFindings.map((finding) => (
