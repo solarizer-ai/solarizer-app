@@ -14,7 +14,7 @@ const Docs = () => {
           <div>
             <h2 className="text-2xl font-semibold text-foreground">Documentation</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Learn how to use ENX Pro for smart contract security auditing
+              Learn how to use Solarizer for smart contract security auditing
             </p>
           </div>
 
@@ -33,7 +33,7 @@ const Docs = () => {
                     Quick Start Guide
                   </CardTitle>
                   <CardDescription>
-                    Get started with ENX Pro in minutes
+                    Get started with Solarizer in minutes
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -129,7 +129,7 @@ const Docs = () => {
                     Common Vulnerabilities
                   </CardTitle>
                   <CardDescription>
-                    Security issues ENX Pro detects
+                    Security issues Solarizer detects
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

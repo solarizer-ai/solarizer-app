@@ -266,10 +266,10 @@ const CodeEditor = ({
               language={activeFile ? getLanguage(activeFile.name) : 'sol'}
               value={activeFileContent}
               onChange={handleCodeChange}
-              theme={theme === "dark" ? "enx-dark" : "enx-light"}
+              theme={theme === "dark" ? "solarizer-dark" : "solarizer-light"}
               options={editorOptions}
               beforeMount={(monaco) => {
-                monaco.editor.defineTheme("enx-dark", {
+                monaco.editor.defineTheme("solarizer-dark", {
                   base: "vs-dark",
                   inherit: true,
                   rules: [
@@ -287,7 +287,7 @@ const CodeEditor = ({
                     "editor.selectionBackground": "#3b82f640",
                   },
                 });
-                monaco.editor.defineTheme("enx-light", {
+                monaco.editor.defineTheme("solarizer-light", {
                   base: "vs",
                   inherit: true,
                   rules: [
@@ -307,7 +307,7 @@ const CodeEditor = ({
                 });
               }}
               onMount={(editor, monaco) => {
-                monaco.editor.setTheme(theme === "dark" ? "enx-dark" : "enx-light");
+                monaco.editor.setTheme(theme === "dark" ? "solarizer-dark" : "solarizer-light");
               }}
             />
           )}

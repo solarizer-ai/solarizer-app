@@ -35,7 +35,7 @@ const plans: Plan[] = [
     price: 0,
     usage: "2 scans total",
     capacity: `${PLAN_LIMITS.starter.nlocPerScan} nLOC per scan`,
-    description: "Try AuditPulse risk-free. No credit card required.",
+    description: "Try Solarizer risk-free. No credit card required.",
     features: [
       { text: "Core logic analysis", included: true },
       { text: "Proprietary pattern matching", included: true },
@@ -75,7 +75,7 @@ const faqs = [
   {
     question: "How does the Starter trial work?",
     answer:
-      "Starter gives you 2 free scans, each with a maximum of 500 nLOC. No credit card required. It's perfect for testing AuditPulse on a small contract.",
+      "Starter gives you 2 free scans, each with a maximum of 500 nLOC. No credit card required. It's perfect for testing Solarizer on a small contract.",
   },
   {
     question: "What happens when I exceed my Pro limit?",

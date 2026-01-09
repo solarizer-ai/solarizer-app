@@ -97,7 +97,7 @@ const Auth = () => {
         } else {
           toast({
             title: 'Account created!',
-            description: 'Welcome to ENX Pro. You are now signed in.',
+            description: 'Welcome to Solarizer. You are now signed in.',
           });
           const from = location.state?.from?.pathname || '/dashboard';
           navigate(from, { replace: true });
@@ -117,7 +117,7 @@ const Auth = () => {
             <Shield className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">ENX Pro</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Solarizer</h1>
             <p className="text-sm text-muted-foreground">Smart Contract Security</p>
           </div>
         </div>

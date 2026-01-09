@@ -30,7 +30,7 @@ const Footer = () => {
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Shield className="w-4 h-4 text-primary" />
               </div>
-              <span className="font-semibold">ENX Pro</span>
+              <span className="font-semibold">Solarizer</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Automated smart contract security auditing for Solidity developers.
@@ -91,7 +91,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ENX Pro. All rights reserved.
+            © {new Date().getFullYear()} Solarizer. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
             Built for Web3 developers
