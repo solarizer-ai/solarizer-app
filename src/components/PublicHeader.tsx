@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import solarizerLogo from "@/assets/solarizer-logo.png";
+import solarizerLogoDark from "@/assets/solarizer-logo.png";
+import solarizerLogoLight from "@/assets/solarizer-logo-light.png";
+import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -12,8 +14,11 @@ const navLinks = [
 ];
 
 const PublicHeader = () => {
+  const { theme } = useTheme();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const logo = theme === "dark" ? solarizerLogoDark : solarizerLogoLight;
 
   const isActive = (href: string) => {
     return location.pathname === href;
@@ -24,7 +29,7 @@ const PublicHeader = () => {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <img src={solarizerLogo} alt="Solarizer" className="w-11 h-11 rounded-lg object-cover" />
+          <img src={logo} alt="Solarizer" className="w-11 h-11 rounded-lg object-cover" />
           <h1 className="text-lg font-semibold tracking-tight">Solarizer</h1>
         </Link>
 
