@@ -28,9 +28,8 @@ const PublicHeader = () => {
     <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" className="flex items-center">
           <img src={logo} alt="Solarizer" className="w-11 h-11 rounded-lg object-cover" />
-          <h1 className="text-lg font-semibold tracking-tight">Solarizer</h1>
         </Link>
 
         {/* Desktop Navigation */}
