@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Shield, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import solarizerLogo from "@/assets/solarizer-logo.png";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -23,9 +24,7 @@ const PublicHeader = () => {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-primary" />
-          </div>
+          <img src={solarizerLogo} alt="Solarizer" className="w-9 h-9 rounded-lg object-cover" />
           <div>
             <h1 className="text-lg font-semibold tracking-tight">Solarizer</h1>
             <p className="text-xs text-muted-foreground -mt-0.5">Smart Contract Security</p>
