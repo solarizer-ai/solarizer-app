@@ -77,7 +77,7 @@ const Header = () => {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <img src={solarizerLogo} alt="Solarizer" className="w-9 h-9 rounded-lg object-cover" />
+            <img src={solarizerLogo} alt="Solarizer" className="w-11 h-11 rounded-lg object-cover" />
             <div>
               <h1 className="text-lg font-semibold tracking-tight">Solarizer</h1>
               <p className="text-xs text-muted-foreground -mt-0.5">Smart Contract Security</p>
