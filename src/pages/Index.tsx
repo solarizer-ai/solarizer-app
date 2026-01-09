@@ -150,40 +150,12 @@ const Index = () => {
   const { data: scanCount } = useScanCount();
   const deductCredits = useDeductCredits();
 
-  const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string }) => {
-    const { projectName: name, files, code: codeContent } = wizardData;
+  const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string; clocResult?: { totalNloc: number } }) => {
+    const { projectName: name, files, code: codeContent, clocResult } = wizardData;
     
-    // Calculate nLOC for enforcement
-    const nloc = calculateNLOC(codeContent);
+    // Use CLOC result from estimator step, fallback to local calculation
+    const nloc = clocResult?.totalNloc || calculateNLOC(codeContent);
     const plan = subscription?.plan || 'starter';
-    const currentScanCount = scanCount || 0;
-    const creditsRemaining = credits?.credits_remaining || 0;
-    
-    // Starter plan enforcement
-    if (plan === 'starter') {
-      // Check scan limit
-      if (currentScanCount >= PLAN_LIMITS.starter.maxScans) {
-        setUpgradeReason('scan_limit');
-        setShowUpgradeModal(true);
-        return;
-      }
-      // Check nLOC limit per scan
-      if (nloc > PLAN_LIMITS.starter.nlocPerScan) {
-        setUpgradeReason('nloc_limit');
-        setPendingNloc(nloc);
-        setShowUpgradeModal(true);
-        return;
-      }
-    }
-    
-    // Pro plan enforcement
-    if (plan === 'pro') {
-      if (nloc > creditsRemaining) {
-        setPendingNloc(nloc);
-        setShowPowerUpModal(true);
-        return;
-      }
-    }
     
     setProjectName(name);
     setCode(codeContent);
@@ -220,6 +192,17 @@ const Index = () => {
         description: "Please try again.",
       });
     }
+  };
+  
+  const handleUpgradeNeeded = (reason: 'scan_limit' | 'nloc_limit', nloc: number) => {
+    setUpgradeReason(reason);
+    setPendingNloc(nloc);
+    setShowUpgradeModal(true);
+  };
+
+  const handlePowerUpNeeded = (nloc: number) => {
+    setPendingNloc(nloc);
+    setShowPowerUpModal(true);
   };
 
   const handleScanComplete = async () => {
@@ -412,6 +395,11 @@ const Index = () => {
                 onComplete={handleStartScan}
                 onCancel={handleBackToDashboard}
                 isSubmitting={createAudit.isPending}
+                subscription={subscription}
+                credits={credits}
+                scanCount={scanCount}
+                onUpgradeNeeded={handleUpgradeNeeded}
+                onPowerUpNeeded={handlePowerUpNeeded}
               />
             )}
 
