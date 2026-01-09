@@ -191,7 +191,7 @@ const SecurityScoreCard = ({
         <div className="shrink-0 text-right">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs text-primary font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Verified by ENX
+            Verified by Solarizer
           </div>
           <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 ml-auto transition-colors">
             View on-chain proof

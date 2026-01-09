@@ -173,7 +173,7 @@ const Home = () => {
               Ready to Secure Your Contracts?
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Join thousands of developers who trust ENX Pro for smart contract security. 
+              Join thousands of developers who trust Solarizer for smart contract security. 
               Start with our free plan today.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

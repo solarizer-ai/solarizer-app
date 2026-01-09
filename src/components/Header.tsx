@@ -80,7 +80,7 @@ const Header = () => {
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold tracking-tight">ENX Pro</h1>
+              <h1 className="text-lg font-semibold tracking-tight">Solarizer</h1>
               <p className="text-xs text-muted-foreground -mt-0.5">Smart Contract Security</p>
             </div>
           </Link>
