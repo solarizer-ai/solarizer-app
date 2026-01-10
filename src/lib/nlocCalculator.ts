@@ -37,10 +37,12 @@ export const PLAN_LIMITS = {
     maxScans: 2,
     nlocPerScan: 150,
     maxFilesPerScan: 1,
+    initialCredits: 300, // 2 scans x 150 nLOC
   },
   pro: {
     monthlyNloc: 1500,
     unlimitedScans: true,
+    initialCredits: 1500,
   },
 } as const;
 

@@ -15,8 +15,7 @@ interface AuditWizardProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   subscription?: { plan: 'starter' | 'pro' } | null;
-  credits?: { credits_remaining: number } | null;
-  scanCount?: number | null;
+  credits?: { credits_remaining: number; scans_remaining: number } | null;
   onUpgradeNeeded?: (reason: 'scan_limit' | 'nloc_limit', nloc: number) => void;
   onPowerUpNeeded?: (nloc: number) => void;
 }
@@ -36,7 +35,6 @@ const AuditWizard = ({
   isSubmitting = false,
   subscription,
   credits,
-  scanCount,
   onUpgradeNeeded,
   onPowerUpNeeded,
 }: AuditWizardProps) => {
@@ -230,7 +228,6 @@ const AuditWizard = ({
             onPowerUpNeeded={handlePowerUpNeeded}
             subscription={subscription}
             credits={credits}
-            scanCount={scanCount}
             isSubmitting={isSubmitting}
           />
         )}

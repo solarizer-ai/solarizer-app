@@ -116,6 +116,7 @@ export type Database = {
           credits_used_this_period: number
           id: string
           period_reset_at: string | null
+          scans_remaining: number
           updated_at: string
           user_id: string
         }
@@ -125,6 +126,7 @@ export type Database = {
           credits_used_this_period?: number
           id?: string
           period_reset_at?: string | null
+          scans_remaining?: number
           updated_at?: string
           user_id: string
         }
@@ -134,6 +136,7 @@ export type Database = {
           credits_used_this_period?: number
           id?: string
           period_reset_at?: string | null
+          scans_remaining?: number
           updated_at?: string
           user_id?: string
         }

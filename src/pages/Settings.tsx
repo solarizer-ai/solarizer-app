@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { useSubscription, useCredits, useScanCount } from "@/hooks/useSubscription";
+import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { format } from "date-fns";
 
@@ -35,7 +35,6 @@ const Settings = () => {
 
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
-  const { data: scanCount } = useScanCount();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -266,13 +265,13 @@ const Settings = () => {
                       ) : (
                         <>
                           <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Scans Used</span>
+                            <span className="text-muted-foreground">Scans Remaining</span>
                             <span className="font-medium">
-                              {scanCount || 0} / {PLAN_LIMITS.starter.maxScans}
+                              {credits?.scans_remaining ?? 0} / {PLAN_LIMITS.starter.maxScans}
                             </span>
                           </div>
                           <Progress 
-                            value={((scanCount || 0) / PLAN_LIMITS.starter.maxScans) * 100} 
+                            value={((credits?.scans_remaining ?? 0) / PLAN_LIMITS.starter.maxScans) * 100} 
                             className="h-2" 
                           />
                           <p className="text-xs text-muted-foreground">
