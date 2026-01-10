@@ -12,8 +12,7 @@ interface EstimatorStepProps {
   onUpgradeNeeded: (reason: 'scan_limit' | 'nloc_limit', nloc: number) => void;
   onPowerUpNeeded: (nloc: number) => void;
   subscription: { plan: 'starter' | 'pro' } | null | undefined;
-  credits: { credits_remaining: number } | null | undefined;
-  scanCount: number | null | undefined;
+  credits: { credits_remaining: number; scans_remaining: number } | null | undefined;
   isSubmitting?: boolean;
 }
 
@@ -25,7 +24,6 @@ const EstimatorStep = ({
   onPowerUpNeeded,
   subscription,
   credits,
-  scanCount,
   isSubmitting = false,
 }: EstimatorStepProps) => {
   const clocEstimate = useClocEstimate();
@@ -39,8 +37,8 @@ const EstimatorStep = ({
   }, [files, clocResult, isPending, isError]);
 
   const plan = subscription?.plan || 'starter';
-  const currentScanCount = scanCount || 0;
-  const creditsRemaining = credits?.credits_remaining || 0;
+  const scansRemaining = credits?.scans_remaining ?? 0;
+  const creditsRemaining = credits?.credits_remaining ?? 0;
   const totalNloc = clocResult?.totalNloc || 0;
 
   const fileCount = files.length;
@@ -50,8 +48,8 @@ const EstimatorStep = ({
     if (!clocResult) return null;
 
     if (plan === 'starter') {
-      if (currentScanCount >= PLAN_LIMITS.starter.maxScans) {
-        return { valid: false, reason: 'scan_limit' as const, message: 'You have reached your scan limit for the Starter plan.' };
+      if (scansRemaining <= 0) {
+        return { valid: false, reason: 'scan_limit' as const, message: 'You have no scans remaining on your Starter plan.' };
       }
       if (fileCount > PLAN_LIMITS.starter.maxFilesPerScan) {
         return { valid: false, reason: 'file_limit' as const, message: `Starter plan allows only ${PLAN_LIMITS.starter.maxFilesPerScan} file per scan. You have ${fileCount} files.` };
@@ -59,7 +57,7 @@ const EstimatorStep = ({
       if (totalNloc > PLAN_LIMITS.starter.nlocPerScan) {
         return { valid: false, reason: 'nloc_limit' as const, message: `This project (${totalNloc} nLOC) exceeds the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit per scan on Starter.` };
       }
-      return { valid: true, message: `Within your plan limit (${PLAN_LIMITS.starter.nlocPerScan} nLOC)` };
+      return { valid: true, message: `Within your plan limit (${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''} remaining)` };
     }
 
     if (plan === 'pro') {

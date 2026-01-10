@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
 import { useAudits, useAudit, useFindings, useCreateAudit, useUpdateAudit, useDeleteAudit, useCreateFindings } from "@/hooks/useAudits";
 import type { AuditStatus, SecurityGrade, FindingSeverity } from "@/hooks/useAudits";
-import { useSubscription, useCredits, useScanCount, useDeductCredits } from "@/hooks/useSubscription";
+import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
 import { calculateNLOC, PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -147,7 +147,6 @@ const Index = () => {
   // Subscription hooks
   const { data: subscription } = useSubscription();
   const { data: credits } = useCredits();
-  const { data: scanCount } = useScanCount();
   const deductCredits = useDeductCredits();
 
   const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string; clocResult?: { totalNloc: number } }) => {
@@ -174,10 +173,8 @@ const Index = () => {
 
       setCurrentAuditId(audit.id);
 
-      // Deduct credits for Pro users
-      if (plan === 'pro') {
-        await deductCredits.mutateAsync(nloc);
-      }
+      // Deduct credits at scan START for ALL users
+      await deductCredits.mutateAsync({ nlocAmount: nloc, plan });
 
       await updateAudit.mutateAsync({
         id: audit.id,
@@ -397,7 +394,6 @@ const Index = () => {
                 isSubmitting={createAudit.isPending}
                 subscription={subscription}
                 credits={credits}
-                scanCount={scanCount}
                 onUpgradeNeeded={handleUpgradeNeeded}
                 onPowerUpNeeded={handlePowerUpNeeded}
               />

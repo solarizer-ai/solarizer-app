@@ -20,6 +20,7 @@ export interface NlocCredits {
   id: string;
   user_id: string;
   credits_remaining: number;
+  scans_remaining: number;
   credits_used_this_period: number;
   period_reset_at: string | null;
   created_at: string;
@@ -76,32 +77,14 @@ export function useCredits() {
   });
 }
 
-export function useScanCount() {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ['scan-count', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return 0;
-      
-      const { count, error } = await supabase
-        .from('audits')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!user?.id,
-  });
-}
+// useScanCount removed - now using scans_remaining from nloc_credits
 
 export function useDeductCredits() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (nlocAmount: number) => {
+    mutationFn: async ({ nlocAmount, plan }: { nlocAmount: number; plan: SubscriptionPlan }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       // First get current credits
@@ -116,12 +99,20 @@ export function useDeductCredits() {
       const newRemaining = Math.max(0, (currentCredits?.credits_remaining || 0) - nlocAmount);
       const newUsed = (currentCredits?.credits_used_this_period || 0) + nlocAmount;
 
+      // Build update object
+      const updates: Record<string, number> = {
+        credits_remaining: newRemaining,
+        credits_used_this_period: newUsed,
+      };
+
+      // Starter users also deduct scan count
+      if (plan === 'starter') {
+        updates.scans_remaining = Math.max(0, (currentCredits?.scans_remaining || 0) - 1);
+      }
+
       const { data, error } = await supabase
         .from('nloc_credits')
-        .update({
-          credits_remaining: newRemaining,
-          credits_used_this_period: newUsed,
-        })
+        .update(updates)
         .eq('user_id', user.id)
         .select()
         .single();

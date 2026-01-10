@@ -1,6 +1,6 @@
 import { Zap, Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { useSubscription, useCredits, useScanCount } from "@/hooks/useSubscription";
+import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import {
   Tooltip,
@@ -12,9 +12,8 @@ import {
 export function CreditBalance() {
   const { data: subscription, isLoading: subLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
-  const { data: scanCount, isLoading: scanLoading } = useScanCount();
 
-  const isLoading = subLoading || creditsLoading || scanLoading;
+  const isLoading = subLoading || creditsLoading;
   const plan = subscription?.plan || 'starter';
 
   if (isLoading) {
@@ -26,8 +25,7 @@ export function CreditBalance() {
   }
 
   if (plan === 'starter') {
-    const scansUsed = scanCount || 0;
-    const scansRemaining = Math.max(0, PLAN_LIMITS.starter.maxScans - scansUsed);
+    const scansRemaining = credits?.scans_remaining ?? 0;
 
     return (
       <TooltipProvider delayDuration={200}>
@@ -36,7 +34,7 @@ export function CreditBalance() {
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium">
-                {scansRemaining} of {PLAN_LIMITS.starter.maxScans} free scans
+                {scansRemaining} scan{scansRemaining !== 1 ? 's' : ''} remaining
               </span>
               <Tooltip>
                 <TooltipTrigger asChild>
