@@ -16,6 +16,7 @@ interface CodeEditorProps {
   files?: FileNode[];
   onFilesChange?: (files: FileNode[]) => void;
   showExplorer?: boolean;
+  disableAddFile?: boolean;
 }
 
 const CodeEditor = ({ 
@@ -26,6 +27,7 @@ const CodeEditor = ({
   files: externalFiles,
   onFilesChange,
   showExplorer = false,
+  disableAddFile = false,
 }: CodeEditorProps) => {
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -217,7 +219,7 @@ const CodeEditor = ({
                 )}
               </button>
             ))}
-            {!readOnly && (
+            {!readOnly && !disableAddFile && (
               <Button
                 variant="ghost"
                 size="sm"

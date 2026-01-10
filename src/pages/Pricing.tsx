@@ -34,11 +34,12 @@ const plans: Plan[] = [
     name: "Starter",
     price: 0,
     usage: "2 scans total",
-    capacity: `${PLAN_LIMITS.starter.nlocPerScan} nLOC per scan`,
+    capacity: `${PLAN_LIMITS.starter.nlocPerScan} nLOC per scan • Single file`,
     description: "Try Solarizer risk-free. No credit card required.",
     features: [
       { text: "Core logic analysis", included: true },
       { text: "Proprietary pattern matching", included: true },
+      { text: "Single file per scan only", included: true },
       { text: "Multi-file analysis", included: false },
       { text: "Integrated Code Editor", included: false },
       { text: "PDF Export", included: false },
@@ -75,7 +76,7 @@ const faqs = [
   {
     question: "How does the Starter trial work?",
     answer:
-      "Starter gives you 2 free scans, each with a maximum of 500 nLOC. No credit card required. It's perfect for testing Solarizer on a small contract.",
+      `Starter gives you 2 free scans, each with a maximum of ${PLAN_LIMITS.starter.nlocPerScan} nLOC and limited to a single file. No credit card required. It's perfect for testing Solarizer on a small contract.`,
   },
   {
     question: "What happens when I exceed my Pro limit?",

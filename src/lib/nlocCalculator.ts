@@ -35,7 +35,8 @@ export function isWithinNLocLimit(code: string, limit: number): boolean {
 export const PLAN_LIMITS = {
   starter: {
     maxScans: 2,
-    nlocPerScan: 500,
+    nlocPerScan: 150,
+    maxFilesPerScan: 1,
   },
   pro: {
     monthlyNloc: 1500,

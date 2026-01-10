@@ -157,6 +157,7 @@ const AuditWizard = ({
           <UploadMethodStep
             onSelectMethod={handleMethodSelect}
             onBack={handleBack}
+            isStarterPlan={subscription?.plan === 'starter' || !subscription}
           />
         )}
 
@@ -215,6 +216,7 @@ const AuditWizard = ({
               files={files}
               onFilesChange={setFiles}
               showExplorer={true}
+              disableAddFile={subscription?.plan === 'starter' || !subscription}
             />
           </div>
         )}
