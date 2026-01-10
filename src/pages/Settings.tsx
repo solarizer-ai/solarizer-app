@@ -304,6 +304,24 @@ const Settings = () => {
                       </CardContent>
                     </Card>
                   )}
+
+                  {/* Billing History Link */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CreditCard className="w-5 h-5" />
+                        Billing History
+                      </CardTitle>
+                      <CardDescription>
+                        View your past purchases and subscription changes
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" onClick={() => navigate("/billing")}>
+                        View Billing History
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </TabsContent>
