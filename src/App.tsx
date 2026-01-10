@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import Audits from "./pages/Audits";
 import Docs from "./pages/Docs";
 import Settings from "./pages/Settings";
+import BillingHistory from "./pages/BillingHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/billing"
+                element={
+                  <ProtectedRoute>
+                    <BillingHistory />
                   </ProtectedRoute>
                 }
               />

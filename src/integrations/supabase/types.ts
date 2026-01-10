@@ -196,6 +196,34 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_history: {
+        Row: {
+          changed_at: string
+          id: string
+          new_plan: Database["public"]["Enums"]["subscription_plan"]
+          previous_plan: Database["public"]["Enums"]["subscription_plan"] | null
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          id?: string
+          new_plan: Database["public"]["Enums"]["subscription_plan"]
+          previous_plan?:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          user_id: string
+        }
+        Update: {
+          changed_at?: string
+          id?: string
+          new_plan?: Database["public"]["Enums"]["subscription_plan"]
+          previous_plan?:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
