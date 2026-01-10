@@ -43,6 +43,8 @@ const EstimatorStep = ({
   const creditsRemaining = credits?.credits_remaining || 0;
   const totalNloc = clocResult?.totalNloc || 0;
 
+  const fileCount = files.length;
+
   // Validation logic
   const getValidationStatus = () => {
     if (!clocResult) return null;
@@ -50,6 +52,9 @@ const EstimatorStep = ({
     if (plan === 'starter') {
       if (currentScanCount >= PLAN_LIMITS.starter.maxScans) {
         return { valid: false, reason: 'scan_limit' as const, message: 'You have reached your scan limit for the Starter plan.' };
+      }
+      if (fileCount > PLAN_LIMITS.starter.maxFilesPerScan) {
+        return { valid: false, reason: 'file_limit' as const, message: `Starter plan allows only ${PLAN_LIMITS.starter.maxFilesPerScan} file per scan. You have ${fileCount} files.` };
       }
       if (totalNloc > PLAN_LIMITS.starter.nlocPerScan) {
         return { valid: false, reason: 'nloc_limit' as const, message: `This project (${totalNloc} nLOC) exceeds the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit per scan on Starter.` };
@@ -73,8 +78,8 @@ const EstimatorStep = ({
     if (!clocResult || !validation) return;
 
     if (!validation.valid) {
-      if (validation.reason === 'scan_limit' || validation.reason === 'nloc_limit') {
-        onUpgradeNeeded(validation.reason, totalNloc);
+      if (validation.reason === 'scan_limit' || validation.reason === 'nloc_limit' || validation.reason === 'file_limit') {
+        onUpgradeNeeded(validation.reason as 'scan_limit' | 'nloc_limit', totalNloc);
       } else if (validation.reason === 'credits') {
         onPowerUpNeeded(totalNloc);
       }

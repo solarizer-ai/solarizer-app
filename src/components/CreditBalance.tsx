@@ -43,7 +43,7 @@ export function CreditBalance() {
                   <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
-                  <p>Starter plan includes {PLAN_LIMITS.starter.maxScans} free scans, each up to {PLAN_LIMITS.starter.nlocPerScan} nLOC.</p>
+                  <p>Starter plan includes {PLAN_LIMITS.starter.maxScans} free scans, each up to {PLAN_LIMITS.starter.nlocPerScan} nLOC and {PLAN_LIMITS.starter.maxFilesPerScan} file per scan.</p>
                 </TooltipContent>
               </Tooltip>
             </div>
