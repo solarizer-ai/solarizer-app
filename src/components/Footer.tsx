@@ -5,12 +5,12 @@ const footerLinks = {
   product: [
     { label: "Features", href: "/#features" },
     { label: "Pricing", href: "/pricing" },
-    { label: "Documentation", href: "/docs" },
+    { label: "Dashboard", href: "/audits" },
   ],
-  company: [
-    { label: "About", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Careers", href: "#" },
+  intelligence: [
+    { label: "Documentation", href: "/docs" },
+    { label: "Security Index", href: "/docs" },
+    { label: "Exploit Database", href: "/docs" },
   ],
   legal: [
     { label: "Privacy", href: "#" },
@@ -27,13 +27,13 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
                 <Shield className="w-4 h-4 text-primary" />
               </div>
               <span className="font-semibold">Solarizer</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Automated smart contract security auditing for Solidity developers.
+              Proprietary smart contract security intelligence.
             </p>
           </div>
 
@@ -54,11 +54,11 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Company Links */}
+          {/* Intelligence Links */}
           <div>
-            <h4 className="font-medium mb-3 text-sm">Company</h4>
+            <h4 className="font-medium mb-3 text-sm">Intelligence</h4>
             <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
+              {footerLinks.intelligence.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.href}
@@ -94,7 +94,7 @@ const Footer = () => {
             © {new Date().getFullYear()} Solarizer. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
-            Built for Web3 developers
+            Powering secure deployments worldwide
           </p>
         </div>
       </div>

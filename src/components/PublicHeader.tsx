@@ -11,6 +11,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/docs", label: "Docs" },
 ];
 
 const PublicHeader = () => {
@@ -59,7 +60,7 @@ const PublicHeader = () => {
             <Button asChild variant="ghost" size="sm">
               <Link to="/auth">Sign In</Link>
             </Button>
-            <Button asChild size="sm">
+            <Button asChild variant="solarGlow" size="sm">
               <Link to="/auth">Get Started</Link>
             </Button>
           </div>
@@ -103,7 +104,7 @@ const PublicHeader = () => {
                   Sign In
                 </Link>
               </Button>
-              <Button asChild className="w-full">
+              <Button asChild variant="solarGlow" className="w-full">
                 <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
                   Get Started
                 </Link>
