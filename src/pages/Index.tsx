@@ -25,6 +25,8 @@ import { calculateNLOC, PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { FileNode, getAllFiles } from "@/types/files";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -114,6 +116,7 @@ const Index = () => {
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
   const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   
   // Memoized callback for findings filter
   const handleFilteredChange = useCallback((filtered: any[]) => setFilteredFindings(filtered), []);
@@ -126,6 +129,23 @@ const Index = () => {
   
   // Track current scan metrics for lifetime stats
   const [currentScanMetrics, setCurrentScanMetrics] = useState<{ contractCount: number; nlocCount: number } | null>(null);
+  
+  // Auth and profile
+  const { user } = useAuth();
+  
+  // Fetch user profile for welcome message
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) setDisplayName(data.display_name);
+    };
+    fetchProfile();
+  }, [user]);
 
   // Handle URL query params
   useEffect(() => {
@@ -335,7 +355,9 @@ const Index = () => {
             {/* Dashboard Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-foreground">Dashboard</h2>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Welcome back{displayName ? `, ${displayName}` : ''}!
+                </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   Overview of your security analysis activity
                 </p>
