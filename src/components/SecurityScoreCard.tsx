@@ -121,9 +121,9 @@ const SecurityScoreCard = ({
         </Button>
       </div>
 
-      <div className="flex items-center gap-8">
+      <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
         {/* Circular Progress */}
-        <div className="relative w-32 h-32 shrink-0">
+        <div className="relative w-28 h-28 lg:w-32 lg:h-32 shrink-0">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
             {/* Background circle */}
             <circle
@@ -152,15 +152,15 @@ const SecurityScoreCard = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={cn("text-4xl font-bold", config.color)}>{grade}</span>
+            <span className={cn("text-3xl lg:text-4xl font-bold", config.color)}>{grade}</span>
             <span className="text-xs text-muted-foreground">{score}/100</span>
           </div>
         </div>
 
         {/* Score Details */}
-        <div className="flex-1">
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className={cn("text-2xl font-semibold", config.color)}>
+        <div className="flex-1 text-center lg:text-left">
+          <div className="flex items-baseline justify-center lg:justify-start gap-2 mb-2">
+            <span className={cn("text-xl lg:text-2xl font-semibold", config.color)}>
               {config.label}
             </span>
             <span className="text-sm text-muted-foreground">Security Rating</span>
@@ -170,10 +170,10 @@ const SecurityScoreCard = ({
           </p>
           
           {findingsCount && (
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 lg:gap-4">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="w-2 h-2 rounded-full bg-success" />
-                Passed: {findingsCount.passed} checks
+                Passed: {findingsCount.passed}
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="w-2 h-2 rounded-full bg-warning" />
@@ -188,12 +188,12 @@ const SecurityScoreCard = ({
         </div>
 
         {/* Verification Badge */}
-        <div className="shrink-0 text-right">
+        <div className="shrink-0 text-center lg:text-right">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs text-primary font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             Verified by Solarizer
           </div>
-          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 ml-auto transition-colors">
+          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 mx-auto lg:ml-auto lg:mr-0 transition-colors">
             View on-chain proof
             <ExternalLink className="w-3 h-3" />
           </button>
