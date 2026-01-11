@@ -12,6 +12,7 @@ import { CreditBalance } from "@/components/CreditBalance";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DashboardStats } from "@/components/DashboardStats";
+import { useUpdateLifetimeStats } from "@/hooks/useDashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { RecentActivity } from "@/components/RecentActivity";
 import { SecurityTrend } from "@/components/SecurityTrend";
@@ -122,6 +123,9 @@ const Index = () => {
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState<'scan_limit' | 'nloc_limit'>('scan_limit');
   const [pendingNloc, setPendingNloc] = useState(0);
+  
+  // Track current scan metrics for lifetime stats
+  const [currentScanMetrics, setCurrentScanMetrics] = useState<{ contractCount: number; nlocCount: number } | null>(null);
 
   // Handle URL query params
   useEffect(() => {
@@ -152,6 +156,7 @@ const Index = () => {
   const { data: subscription } = useSubscription();
   const { data: credits } = useCredits();
   const deductCredits = useDeductCredits();
+  const { updateStats: updateLifetimeStats } = useUpdateLifetimeStats();
 
   const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string; clocResult?: { totalNloc: number } }) => {
     const { projectName: name, files, code: codeContent, clocResult } = wizardData;
@@ -176,6 +181,9 @@ const Index = () => {
       });
 
       setCurrentAuditId(audit.id);
+      
+      // Store metrics for lifetime stats update on completion
+      setCurrentScanMetrics({ contractCount, nlocCount: nloc });
 
       // Deduct credits at scan START for ALL users
       await deductCredits.mutateAsync({ nlocAmount: nloc, plan });
@@ -235,6 +243,16 @@ const Index = () => {
         grade,
         security_score: score,
       });
+
+      // Update lifetime stats (these persist even if audit is deleted later)
+      if (currentScanMetrics) {
+        await updateLifetimeStats(
+          currentScanMetrics.contractCount,
+          mockFindings.length,
+          currentScanMetrics.nlocCount
+        );
+        setCurrentScanMetrics(null);
+      }
 
       setIsScanning(false);
       setShowResults(true);

@@ -109,6 +109,36 @@ export type Database = {
           },
         ]
       }
+      lifetime_stats: {
+        Row: {
+          created_at: string
+          id: string
+          total_contracts_scanned: number
+          total_nloc_analyzed: number
+          total_vulnerabilities_found: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          total_contracts_scanned?: number
+          total_nloc_analyzed?: number
+          total_vulnerabilities_found?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          total_contracts_scanned?: number
+          total_nloc_analyzed?: number
+          total_vulnerabilities_found?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       nloc_credits: {
         Row: {
           created_at: string
