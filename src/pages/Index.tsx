@@ -11,6 +11,11 @@ import SecurityScoreCard from "@/components/SecurityScoreCard";
 import { CreditBalance } from "@/components/CreditBalance";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { DashboardStats } from "@/components/DashboardStats";
+import { SeverityBreakdown } from "@/components/SeverityBreakdown";
+import { RecentActivity } from "@/components/RecentActivity";
+import { QuickActions } from "@/components/QuickActions";
+import { SecurityTrend } from "@/components/SecurityTrend";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
 import { useAudits, useAudit, useFindings, useCreateAudit, useUpdateAudit, useDeleteAudit, useCreateFindings } from "@/hooks/useAudits";
@@ -309,67 +314,83 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         {view === "dashboard" && (
-          <div className="space-y-8">
-            {/* Dashboard Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold text-foreground">Recent Audits</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Monitor and manage your smart contract security assessments
-                </p>
+          <div className="space-y-6">
+            {/* Stats Overview */}
+            <DashboardStats />
+            
+            {/* Main Content Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Recent Audits - Takes 2 columns */}
+              <div className="lg:col-span-2 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">Recent Audits</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Your latest security assessments
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CreditBalance />
+                    <Button onClick={handleNewAudit} className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      <span className="hidden sm:inline">New Audit</span>
+                      <span className="sm:hidden">New</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Audit Grid */}
+                {auditsLoading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : audits && audits.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {audits.slice(0, 6).map((audit) => (
+                      <div key={audit.id} className="relative group">
+                        <AuditCard
+                          projectName={audit.project_name}
+                          contractCount={audit.contract_count}
+                          grade={audit.grade || undefined}
+                          status={audit.status}
+                          timestamp={formatTimestamp(audit.created_at)}
+                          onClick={() => handleViewResults(audit.id)}
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteAuditId(audit.id);
+                          }}
+                          className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 border border-dashed border-border rounded-lg">
+                    <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">No audits yet</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Start your first smart contract security audit
+                    </p>
+                    <Button onClick={handleNewAudit} className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      New Audit
+                    </Button>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-3 sm:gap-4">
-                <CreditBalance />
-                <Button onClick={handleNewAudit} className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">New Audit</span>
-                  <span className="sm:hidden">New</span>
-                </Button>
+
+              {/* Sidebar - Takes 1 column */}
+              <div className="space-y-4 order-first lg:order-last">
+                <QuickActions onNewAudit={handleNewAudit} />
+                <SeverityBreakdown />
+                <SecurityTrend />
+                <RecentActivity />
               </div>
             </div>
-
-            {/* Audit Grid */}
-            {auditsLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : audits && audits.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {audits.map((audit) => (
-                  <div key={audit.id} className="relative group">
-                    <AuditCard
-                      projectName={audit.project_name}
-                      contractCount={audit.contract_count}
-                      grade={audit.grade || undefined}
-                      status={audit.status}
-                      timestamp={formatTimestamp(audit.created_at)}
-                      onClick={() => handleViewResults(audit.id)}
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteAuditId(audit.id);
-                      }}
-                      className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-20 border border-dashed border-border rounded-lg">
-                <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No audits yet</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Start your first smart contract security audit
-                </p>
-                <Button onClick={handleNewAudit} className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  New Audit
-                </Button>
-              </div>
-            )}
           </div>
         )}
 
