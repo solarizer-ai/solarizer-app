@@ -73,6 +73,27 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        solar: {
+          orange: "hsl(var(--solar-orange))",
+          glow: "hsl(var(--solar-glow))",
+          deep: "hsl(var(--solar-deep))",
+        },
+        orange: {
+          50: "#fff7ed",
+          100: "#ffedd5",
+          200: "#fed7aa",
+          300: "#fdba74",
+          400: "#fb923c",
+          500: "#f97316",
+          600: "#ea580c",
+          700: "#c2410c",
+          800: "#9a3412",
+          900: "#7c2d12",
+          950: "#431407",
+        },
+        amber: {
+          400: "#fbbf24",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

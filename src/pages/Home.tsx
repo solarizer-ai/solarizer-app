@@ -1,58 +1,57 @@
 import { Link } from "react-router-dom";
-import { Shield, Zap, FileText, Lock, ArrowRight, CheckCircle2, Code2, Search, FileWarning } from "lucide-react";
+import { Shield, Zap, Lock, ArrowRight, CheckCircle2, Database, Wrench, Cpu, Layers, GitBranch, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 
 const features = [
   {
-    icon: Shield,
-    title: "Security Scanning",
-    description: "Comprehensive vulnerability detection for Solidity smart contracts with industry-leading accuracy.",
+    icon: Database,
+    title: "Proprietary Deep Scan",
+    description: "Fueled by our exclusive vulnerability index to catch complex logic errors that standard scanners miss.",
   },
   {
-    icon: Zap,
-    title: "Fast Analysis",
-    description: "Get results in seconds, not hours. Our engine processes contracts at lightning speed.",
-  },
-  {
-    icon: FileText,
-    title: "Detailed Reports",
-    description: "Export professional PDF reports with findings, remediation steps, and security scores.",
+    icon: Wrench,
+    title: "Remediation Intelligence",
+    description: "Get precise, secure code alternatives tailored to your architectural needs, not just bug reports.",
   },
   {
     icon: Lock,
-    title: "Best Practices",
-    description: "Ensure your contracts follow industry security standards and best practices.",
+    title: "100% Private Analysis",
+    description: "Your code never leaves our secure environment. Zero data retention policy.",
+  },
+  {
+    icon: Zap,
+    title: "Sub-5-Second Processing",
+    description: "Enterprise-grade speed without compromising depth of analysis.",
   },
 ];
 
-const steps = [
+const intelligenceLoop = [
   {
-    icon: Code2,
+    icon: Layers,
     step: "01",
-    title: "Upload Your Code",
-    description: "Drag and drop your Solidity contracts or paste code directly into the editor.",
+    title: "Normalisation",
+    description: "Our engine ingests and maps your Solidity architecture into our secure analysis environment.",
   },
   {
-    icon: Search,
+    icon: GitBranch,
     step: "02",
-    title: "Automated Analysis",
-    description: "Our engine scans for vulnerabilities, gas optimizations, and security issues.",
+    title: "Pattern Synthesis",
+    description: "The engine cross-references your codebase against our custom-curated library of historical exploits and logic vulnerabilities.",
   },
   {
-    icon: FileWarning,
+    icon: Target,
     step: "03",
-    title: "Review & Fix",
-    description: "Get actionable insights with severity ratings and remediation guidance.",
+    title: "Agentic Verification",
+    description: "A dual-layer 'Auditor' system challenges every finding to ensure 100% actionable, high-signal results.",
   },
 ];
 
-const stats = [
-  { value: "10K+", label: "Contracts Audited" },
-  { value: "500+", label: "Vulnerabilities Found" },
-  { value: "99.9%", label: "Uptime" },
-  { value: "<5s", label: "Avg Scan Time" },
+const trustMetrics = [
+  { value: "< 5s", label: "Average Scan Time" },
+  { value: "100%", label: "Private Analysis" },
+  { value: "Custom", label: "Exploit Database" },
 ];
 
 const Home = () => {
@@ -62,46 +61,67 @@ const Home = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
-        <div className="container mx-auto px-6 py-24 md:py-32 relative">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
+        
+        {/* Solar Ring Visual */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="relative w-[500px] h-[500px] opacity-30">
+            {/* Outer ring */}
+            <div className="absolute inset-0 rounded-full border border-primary/30 animate-orbit" />
+            {/* Middle ring */}
+            <div className="absolute inset-8 rounded-full border border-primary/40 animate-orbit-reverse" />
+            {/* Inner ring */}
+            <div className="absolute inset-16 rounded-full border border-primary/50 animate-orbit" style={{ animationDuration: '15s' }} />
+            {/* Core glow */}
+            <div className="absolute inset-24 rounded-full bg-primary/10 animate-pulse-glow" />
+            {/* Center dot */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary glow-orange-sm" />
+          </div>
+        </div>
+        
+        <div className="container mx-auto px-6 py-28 md:py-40 relative">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm mb-6">
-              <Shield className="w-4 h-4" />
-              <span>Smart Contract Security Platform</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm mb-8">
+              <Cpu className="w-4 h-4" />
+              <span className="font-medium">Security Intelligence Engine</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              Secure Your Smart Contracts{" "}
-              <span className="text-gradient">Before Launch</span>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
+              Audit at the Speed{" "}
+              <span className="text-gradient">of Code.</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Detect vulnerabilities, optimize gas usage, and ensure your Solidity contracts 
-              meet the highest security standards with our automated auditing platform.
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+              Solarizer is a specialized security engine powered by a proprietary database 
+              of smart contract exploits. Detect vulnerabilities and logic flaws in seconds, not weeks.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" className="text-base px-8">
+              <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
                 <Link to="/auth">
-                  Get Started Free
+                  Start Your Audit
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="text-base px-8">
-                <Link to="/pricing">View Pricing</Link>
+              <Button asChild variant="ghost" size="lg" className="text-base px-8 text-muted-foreground hover:text-foreground">
+                <Link to="/docs">View Documentation</Link>
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="border-y border-border bg-card/30">
-        <div className="container mx-auto px-6 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary mb-1">
-                  {stat.value}
+      {/* Trust Bar */}
+      <section className="border-y border-primary/20 bg-card/50">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
+            {trustMetrics.map((metric, index) => (
+              <div key={metric.label} className="flex items-center gap-3">
+                <div className="text-2xl md:text-3xl font-bold text-primary">
+                  {metric.value}
                 </div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div className="text-sm text-muted-foreground">{metric.label}</div>
+                {index < trustMetrics.length - 1 && (
+                  <div className="hidden md:block w-px h-8 bg-border ml-8" />
+                )}
               </div>
             ))}
           </div>
@@ -109,55 +129,57 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-24">
+      <section className="py-24 md:py-32">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Everything You Need for Contract Security
+              Proprietary Intelligence at Work
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive tools to identify, understand, and fix security vulnerabilities in your smart contracts.
+              Purpose-built detection capabilities that go beyond standard vulnerability scanning.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-colors group"
+                className="p-6 rounded-xl bg-card border border-border hover:border-primary/40 transition-all duration-300 group"
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:glow-orange-sm transition-all duration-300">
                   <feature.icon className="w-6 h-6 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="py-24 bg-card/30 border-y border-border">
+      {/* Intelligence Loop Section */}
+      <section className="py-24 md:py-32 bg-card/30 border-y border-border">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">The Solarizer Intelligence Loop</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Three simple steps to secure your smart contracts
+              A three-stage analysis pipeline that ensures comprehensive coverage
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {steps.map((step, index) => (
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {intelligenceLoop.map((step, index) => (
               <div key={step.title} className="relative">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 border border-primary/20 mb-4">
-                    <step.icon className="w-7 h-7 text-primary" />
+                <div className="bg-card border border-border rounded-xl p-6 h-full border-l-2 border-l-primary">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-14 h-14 rounded-full border-2 border-primary/40 flex items-center justify-center bg-primary/5">
+                      <span className="text-xl font-bold text-primary">{step.step}</span>
+                    </div>
+                    <step.icon className="w-6 h-6 text-primary/60" />
                   </div>
-                  <div className="text-xs font-medium text-primary mb-2">STEP {step.step}</div>
-                  <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                  <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] border-t border-dashed border-border" />
+                {index < intelligenceLoop.length - 1 && (
+                  <div className="hidden md:block absolute top-1/2 -right-4 w-8 border-t border-dashed border-primary/30" />
                 )}
               </div>
             ))}
@@ -166,26 +188,31 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24">
+      <section className="py-24 md:py-32">
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Secure Your Contracts?
+              Ready to Harden Your Contracts?
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Join thousands of developers who trust Solarizer for smart contract security. 
-              Start with our free plan today.
+              Deploy with confidence. The Solarizer Engine has your back.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" className="text-base px-8">
+              <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
                 <Link to="/auth">
-                  Start Free Audit
+                  Launch Your First Audit
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="w-4 h-4 text-success" />
+            </div>
+            <div className="flex items-center justify-center gap-6 mt-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
                 No credit card required
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                100% private
               </div>
             </div>
           </div>
