@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Bell, Settings, LogOut } from "lucide-react";
-import solarizerLogoDark from "@/assets/solarizer-logo.png";
-import solarizerLogoLight from "@/assets/solarizer-logo-light.png";
-import { useTheme } from "@/hooks/useTheme";
+import solarizerLogo from "@/assets/solarizer-logo.png";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,13 +28,10 @@ const navLinks = [
 ];
 
 const Header = () => {
-  const { theme } = useTheme();
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
-  
-  const logo = theme === "dark" ? solarizerLogoDark : solarizerLogoLight;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -82,7 +77,7 @@ const Header = () => {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/dashboard" className="flex items-center">
-            <img src={logo} alt="Solarizer" className="w-11 h-11 rounded-lg object-cover" />
+            <img src={solarizerLogo} alt="Solarizer" className="w-11 h-11 rounded-lg object-cover" />
           </Link>
         </div>
 

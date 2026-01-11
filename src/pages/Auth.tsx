@@ -9,8 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import solarizerLogoDark from "@/assets/solarizer-logo.png";
-import solarizerLogoLight from "@/assets/solarizer-logo-light.png";
+import solarizerLogo from "@/assets/solarizer-logo.png";
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -18,7 +17,6 @@ const passwordSchema = z.string().min(6, 'Password must be at least 6 characters
 const Auth = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme } = useTheme();
   
   // Determine mode from URL path
   const isSignupRoute = location.pathname === '/signup';
@@ -33,8 +31,6 @@ const Auth = () => {
   
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
-  
-  const logo = theme === "dark" ? solarizerLogoDark : solarizerLogoLight;
 
   // Sync isLogin state with URL
   useEffect(() => {
@@ -134,7 +130,7 @@ const Auth = () => {
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
           <Link to="/">
-            <img src={logo} alt="Solarizer" className="w-14 h-14 rounded-lg" />
+            <img src={solarizerLogo} alt="Solarizer" className="w-14 h-14 rounded-lg" />
           </Link>
         </div>
 
