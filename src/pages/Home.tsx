@@ -87,8 +87,8 @@ const Home = () => {
               <span className="font-medium">Security Intelligence Engine</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Audit at the Speed{" "}
-              <span className="text-gradient">of Code.</span>
+              Precision-Engineered{" "}
+              <span className="text-gradient">Security Intelligence.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
               Solarizer is a specialized security engine powered by a proprietary database 
