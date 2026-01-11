@@ -15,6 +15,7 @@ import Docs from "./pages/Docs";
 import Settings from "./pages/Settings";
 import BillingHistory from "./pages/BillingHistory";
 import NotFound from "./pages/NotFound";
+import ComingSoon from "./pages/ComingSoon";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/login" element={<Auth />} />
               <Route path="/signup" element={<Auth />} />
+              <Route path="/coming-soon" element={<ComingSoon />} />
               
               {/* Protected Routes */}
               <Route
