@@ -13,9 +13,9 @@ const footerLinks = {
     { label: "Exploit Database", href: "/docs" },
   ],
   legal: [
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
-    { label: "Security", href: "#" },
+    { label: "Privacy", href: "/coming-soon" },
+    { label: "Terms", href: "/coming-soon" },
+    { label: "Security", href: "/coming-soon" },
   ],
 };
 

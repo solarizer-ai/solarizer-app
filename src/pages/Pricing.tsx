@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Check, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -185,11 +186,12 @@ const Pricing = () => {
               </ul>
 
               <Button
+                asChild
                 className="w-full"
                 size="lg"
                 variant={plan.popular ? "default" : "outline"}
               >
-                {plan.cta}
+                <Link to="/signup">{plan.cta}</Link>
               </Button>
             </div>
           ))}
