@@ -311,18 +311,19 @@ const Index = () => {
         {view === "dashboard" && (
           <div className="space-y-8">
             {/* Dashboard Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">Recent Audits</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Monitor and manage your smart contract security assessments
                 </p>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <CreditBalance />
                 <Button onClick={handleNewAudit} className="gap-2">
                   <Plus className="w-4 h-4" />
-                  New Audit
+                  <span className="hidden sm:inline">New Audit</span>
+                  <span className="sm:hidden">New</span>
                 </Button>
               </div>
             </div>
@@ -441,19 +442,17 @@ const Index = () => {
         {view === "results" && (
           <div className="space-y-6">
             {/* Results Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <button 
-                  onClick={handleBackToDashboard}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
-                >
-                  ← Back to Dashboard
-                </button>
-                <h2 className="text-2xl font-semibold text-foreground">Security Report</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {currentAudit?.project_name || "Contract"} • Analyzed {currentAudit ? formatTimestamp(currentAudit.created_at) : ""}
-                </p>
-              </div>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={handleBackToDashboard}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
+              >
+                ← Back to Dashboard
+              </button>
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Security Report</h2>
+              <p className="text-sm text-muted-foreground">
+                {currentAudit?.project_name || "Contract"} • Analyzed {currentAudit ? formatTimestamp(currentAudit.created_at) : ""}
+              </p>
             </div>
 
             {currentAudit ? (
