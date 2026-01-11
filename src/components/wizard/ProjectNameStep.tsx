@@ -40,7 +40,7 @@ const ProjectNameStep = ({
             Name your project
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Give your audit a meaningful name to identify it later
+            Give your analysis a meaningful name to identify it later
           </p>
         </div>
       </div>

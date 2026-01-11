@@ -35,7 +35,7 @@ export const SecurityTrend = () => {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-6">
-            Complete more audits to see trends
+            Complete more analyses to see trends
           </p>
         </CardContent>
       </Card>
@@ -43,7 +43,7 @@ export const SecurityTrend = () => {
   }
 
   const data = securityScoreTrend.map((score, index) => ({
-    name: `Audit ${index + 1}`,
+    name: `Analysis ${index + 1}`,
     score,
   }));
 

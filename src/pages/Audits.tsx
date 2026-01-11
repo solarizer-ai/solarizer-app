@@ -87,14 +87,14 @@ const Audits = () => {
           {/* Page Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">All Audits</h2>
+              <h2 className="text-2xl font-semibold text-foreground">History</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {audits?.length || 0} total audits
+                {audits?.length || 0} security assessments
               </p>
             </div>
             <Button onClick={() => navigate("/dashboard?new=true")} className="gap-2">
               <Plus className="w-4 h-4" />
-              New Audit
+              Run Analysis
             </Button>
           </div>
 
@@ -102,8 +102,8 @@ const Audits = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search audits..."
+                <Input
+                placeholder="Search assessments..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -167,17 +167,17 @@ const Audits = () => {
             <div className="text-center py-20 border border-dashed border-border rounded-lg">
               <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                {searchQuery || statusFilter !== "all" ? "No matching audits" : "No audits yet"}
+                {searchQuery || statusFilter !== "all" ? "No matching assessments" : "No assessments yet"}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {searchQuery || statusFilter !== "all" 
                   ? "Try adjusting your filters" 
-                  : "Start your first smart contract security audit"}
+                  : "Start your first smart contract security analysis"}
               </p>
               {!searchQuery && statusFilter === "all" && (
                 <Button onClick={() => navigate("/dashboard?new=true")} className="gap-2">
                   <Plus className="w-4 h-4" />
-                  New Audit
+                  Run Analysis
                 </Button>
               )}
             </div>
@@ -189,9 +189,9 @@ const Audits = () => {
       <AlertDialog open={!!deleteAuditId} onOpenChange={() => setDeleteAuditId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Audit</AlertDialogTitle>
+            <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this audit? This action cannot be undone.
+              Are you sure you want to delete this assessment? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

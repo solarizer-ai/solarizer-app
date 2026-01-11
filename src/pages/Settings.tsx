@@ -291,7 +291,7 @@ const Settings = () => {
                           Need More Credits?
                         </CardTitle>
                         <CardDescription>
-                          Purchase additional nLOC for large audits
+                          Purchase additional nLOC for large analyses
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -337,9 +337,9 @@ const Settings = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Audit Complete</p>
+                      <p className="font-medium">Analysis Complete</p>
                       <p className="text-sm text-muted-foreground">
-                        Get notified when an audit finishes
+                        Get notified when an analysis finishes
                       </p>
                     </div>
                     <Switch defaultChecked />
@@ -357,7 +357,7 @@ const Settings = () => {
                     <div>
                       <p className="font-medium">Weekly Summary</p>
                       <p className="text-sm text-muted-foreground">
-                        Weekly digest of your audit activity
+                        Weekly digest of your security activity
                       </p>
                     </div>
                     <Switch />

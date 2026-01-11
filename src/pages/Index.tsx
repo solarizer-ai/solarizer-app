@@ -324,16 +324,16 @@ const Index = () => {
               <div className="lg:col-span-2 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-semibold text-foreground">Recent Audits</h2>
+                    <h2 className="text-xl font-semibold text-foreground">History</h2>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                      Your latest security assessments
+                      Your recent security assessments
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <CreditBalance />
                     <Button onClick={handleNewAudit} className="gap-2">
                       <Plus className="w-4 h-4" />
-                      <span className="hidden sm:inline">New Audit</span>
+                      <span className="hidden sm:inline">Run Analysis</span>
                       <span className="sm:hidden">New</span>
                     </Button>
                   </div>
@@ -371,13 +371,13 @@ const Index = () => {
                 ) : (
                   <div className="text-center py-16 border border-dashed border-border rounded-lg">
                     <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium text-foreground mb-2">No audits yet</h3>
+                    <h3 className="text-lg font-medium text-foreground mb-2">No assessments yet</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Start your first smart contract security audit
+                      Start your first smart contract security analysis
                     </p>
                     <Button onClick={handleNewAudit} className="gap-2">
                       <Plus className="w-4 h-4" />
-                      New Audit
+                      Run Analysis
                     </Button>
                   </div>
                 )}
@@ -403,9 +403,9 @@ const Index = () => {
               >
                 ← Back to Dashboard
               </button>
-              <h2 className="text-2xl font-semibold text-foreground">New Security Audit</h2>
+              <h2 className="text-2xl font-semibold text-foreground">New Security Analysis</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Create a new smart contract security audit
+                Run a new smart contract security analysis
               </p>
             </div>
 
@@ -548,9 +548,9 @@ const Index = () => {
       <AlertDialog open={!!deleteAuditId} onOpenChange={() => setDeleteAuditId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Audit</AlertDialogTitle>
+            <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this audit? This action cannot be undone.
+              Are you sure you want to delete this assessment? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

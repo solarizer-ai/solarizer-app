@@ -14,7 +14,7 @@ const Docs = () => {
           <div>
             <h2 className="text-2xl font-semibold text-foreground">Documentation</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Learn how to use Solarizer for smart contract security auditing
+              Learn how to use Solarizer for smart contract security analysis
             </p>
           </div>
 
@@ -176,7 +176,7 @@ const Docs = () => {
                     { title: 'Validate All Inputs', desc: 'Check for zero addresses, valid ranges, and expected values in all functions.' },
                     { title: 'Use SafeMath (pre-0.8)', desc: 'For Solidity versions before 0.8, use SafeMath for arithmetic operations.' },
                     { title: 'Emit Events', desc: 'Log all important state changes for transparency and off-chain tracking.' },
-                    { title: 'Regular Audits', desc: 'Schedule periodic security reviews, especially before major releases.' },
+                    { title: 'Regular Security Reviews', desc: 'Schedule periodic security reviews, especially before major releases.' },
                   ].map((practice, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <Zap className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
