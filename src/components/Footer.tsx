@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import { Shield } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
+import solarizerLogoDark from "@/assets/solarizer-logo.png";
+import solarizerLogoLight from "@/assets/solarizer-logo-light.png";
 
 const footerLinks = {
   product: [
@@ -20,17 +22,17 @@ const footerLinks = {
 };
 
 const Footer = () => {
+  const { theme } = useTheme();
+  const logo = theme === "dark" ? solarizerLogoDark : solarizerLogoLight;
+
   return (
     <footer className="border-t border-border bg-card/30">
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-primary" />
-              </div>
-              <span className="font-semibold">Solarizer</span>
+            <Link to="/" className="inline-block mb-4">
+              <img src={logo} alt="Solarizer" className="w-10 h-10 rounded-lg" />
             </Link>
             <p className="text-sm text-muted-foreground">
               Proprietary smart contract security intelligence.

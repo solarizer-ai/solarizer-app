@@ -1,19 +1,29 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import solarizerLogoDark from "@/assets/solarizer-logo.png";
+import solarizerLogoLight from "@/assets/solarizer-logo-light.png";
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { theme } = useTheme();
+  
+  // Determine mode from URL path
+  const isSignupRoute = location.pathname === '/signup';
+  const [isLogin, setIsLogin] = useState(!isSignupRoute);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -22,9 +32,14 @@ const Auth = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
   const { signIn, signUp, user } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
+  
+  const logo = theme === "dark" ? solarizerLogoDark : solarizerLogoLight;
+
+  // Sync isLogin state with URL
+  useEffect(() => {
+    setIsLogin(location.pathname !== '/signup');
+  }, [location.pathname]);
 
   // Redirect if already logged in
   if (user) {
@@ -108,18 +123,19 @@ const Auth = () => {
     }
   };
 
+  const handleToggleMode = () => {
+    setErrors({});
+    navigate(isLogin ? '/signup' : '/login', { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
-            <Shield className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Solarizer</h1>
-            <p className="text-sm text-muted-foreground">Smart Contract Security</p>
-          </div>
+        <div className="flex items-center justify-center mb-8">
+          <Link to="/">
+            <img src={logo} alt="Solarizer" className="w-14 h-14 rounded-lg" />
+          </Link>
         </div>
 
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -213,10 +229,7 @@ const Auth = () => {
             <div className="mt-6 text-center">
               <button
                 type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                }}
+                onClick={handleToggleMode}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {isLogin ? (
