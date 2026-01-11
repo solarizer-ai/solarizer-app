@@ -26,7 +26,7 @@ export const QuickActions = ({ onNewAudit }: QuickActionsProps) => {
           size="sm"
         >
           <Plus className="w-4 h-4" />
-          New Audit
+          Run Analysis
         </Button>
         
         <Button
@@ -36,7 +36,7 @@ export const QuickActions = ({ onNewAudit }: QuickActionsProps) => {
           size="sm"
         >
           <FileText className="w-4 h-4" />
-          View All Audits
+          View History
         </Button>
         
         <Button

@@ -97,7 +97,7 @@ const Home = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
                 <Link to="/signup">
-                  Start Your Audit
+                  Run Analysis
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -200,7 +200,7 @@ const Home = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
                 <Link to="/signup">
-                  Launch Your First Audit
+                  Start Your First Analysis
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
