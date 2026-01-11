@@ -14,7 +14,6 @@ import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { RecentActivity } from "@/components/RecentActivity";
-import { QuickActions } from "@/components/QuickActions";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
@@ -385,7 +384,6 @@ const Index = () => {
 
               {/* Sidebar - Takes 1 column */}
               <div className="space-y-4 order-first lg:order-last">
-                <QuickActions onNewAudit={handleNewAudit} />
                 <SeverityBreakdown />
                 <SecurityTrend />
                 <RecentActivity />
