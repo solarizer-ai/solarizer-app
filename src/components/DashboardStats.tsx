@@ -13,18 +13,18 @@ interface StatCardProps {
 
 const StatCard = ({ icon, label, value, subValue, iconColor = "text-primary" }: StatCardProps) => (
   <Card className="relative overflow-hidden group hover:border-primary/30 transition-colors">
-    <CardContent className="p-4 sm:p-5">
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium">{label}</p>
-          <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+    <CardContent className="p-3 sm:p-5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
+          <p className="text-xs text-muted-foreground font-medium truncate">{label}</p>
+          <p className="text-xl sm:text-3xl font-bold text-foreground tracking-tight">
             {typeof value === 'number' ? value.toLocaleString() : value}
           </p>
           {subValue && (
-            <p className="text-xs text-muted-foreground">{subValue}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{subValue}</p>
           )}
         </div>
-        <div className={`p-2.5 rounded-lg bg-primary/10 ${iconColor}`}>
+        <div className={`p-2 sm:p-2.5 rounded-lg bg-primary/10 ${iconColor} shrink-0`}>
           {icon}
         </div>
       </div>
