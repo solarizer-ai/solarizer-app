@@ -332,6 +332,24 @@ const Index = () => {
       <main className="container mx-auto px-6 py-8">
         {view === "dashboard" && (
           <div className="space-y-6">
+            {/* Dashboard Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Dashboard</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Overview of your security analysis activity
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <CreditBalance />
+                <Button onClick={handleNewAudit} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Run Analysis</span>
+                  <span className="sm:hidden">New</span>
+                </Button>
+              </div>
+            </div>
+
             {/* Stats Overview */}
             <DashboardStats />
             
@@ -339,22 +357,6 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Recent Audits - Takes 2 columns */}
               <div className="lg:col-span-2 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">History</h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      Your recent security assessments
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CreditBalance />
-                    <Button onClick={handleNewAudit} className="gap-2">
-                      <Plus className="w-4 h-4" />
-                      <span className="hidden sm:inline">Run Analysis</span>
-                      <span className="sm:hidden">New</span>
-                    </Button>
-                  </div>
-                </div>
 
                 {/* Audit Grid */}
                 {auditsLoading ? (
