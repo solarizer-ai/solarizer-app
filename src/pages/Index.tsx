@@ -106,6 +106,13 @@ balances[msg.sender] -= amount;`,
   },
 ];
 
+const getTimeBasedGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<AppView>("dashboard");
@@ -356,7 +363,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-foreground">
-                  Welcome back{displayName ? `, ${displayName}` : ''}!
+                  {getTimeBasedGreeting()}{displayName ? `, ${displayName}` : ''}!
                 </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   Overview of your security analysis activity
