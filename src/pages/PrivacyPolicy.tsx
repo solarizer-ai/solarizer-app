@@ -191,9 +191,8 @@ const PrivacyPolicy = () => {
                 If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:
               </p>
               <div className="p-6 rounded-lg bg-card border border-border">
-                <p className="text-foreground font-semibold mb-2">Solarizer Privacy Team</p>
-                <p className="text-muted-foreground">Email: privacy@solarizer.io</p>
-                <p className="text-muted-foreground">Address: Ahmedabad, Gujarat, India</p>
+                <p className="text-foreground font-semibold mb-2">Solarizer Team</p>
+                <p className="text-muted-foreground">Email: hello@solarizer.io</p>
               </div>
               <p className="text-muted-foreground leading-relaxed mt-4">
                 For EU residents, you also have the right to lodge a complaint with your local data protection authority.

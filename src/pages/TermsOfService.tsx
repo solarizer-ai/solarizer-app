@@ -236,9 +236,8 @@ const TermsOfService = () => {
                 If you have any questions about these Terms of Service, please contact us:
               </p>
               <div className="p-6 rounded-lg bg-card border border-border">
-                <p className="text-foreground font-semibold mb-2">Solarizer Legal Team</p>
-                <p className="text-muted-foreground">Email: legal@solarizer.io</p>
-                <p className="text-muted-foreground">Address: Ahmedabad, Gujarat, India</p>
+                <p className="text-foreground font-semibold mb-2">Solarizer Team</p>
+                <p className="text-muted-foreground">Email: hello@solarizer.io</p>
               </div>
             </section>
 
