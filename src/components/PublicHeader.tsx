@@ -53,10 +53,10 @@ const PublicHeader = () => {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
             <Button asChild variant="ghost" size="sm">
-              <Link to="/login">Sign In</Link>
+              <Link to="/coming-soon">Sign In</Link>
             </Button>
             <Button asChild variant="solarGlow" size="sm">
-              <Link to="/signup">Get Started</Link>
+              <Link to="/coming-soon">Get Started</Link>
             </Button>
           </div>
           
@@ -95,12 +95,12 @@ const PublicHeader = () => {
             </nav>
             <div className="flex flex-col gap-2 pt-2 border-t border-border">
               <Button asChild variant="outline" className="w-full">
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/coming-soon" onClick={() => setMobileMenuOpen(false)}>
                   Sign In
                 </Link>
               </Button>
               <Button asChild variant="solarGlow" className="w-full">
-                <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/coming-soon" onClick={() => setMobileMenuOpen(false)}>
                   Get Started
                 </Link>
               </Button>
