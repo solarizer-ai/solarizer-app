@@ -23,6 +23,85 @@ interface ClocResponse {
   };
 }
 
+// Security constants for input validation
+const MAX_FILES = 100; // Maximum number of files allowed per request
+const MAX_FILE_SIZE = 1024 * 1024; // 1MB per file
+const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB total
+const MAX_FILENAME_LENGTH = 255;
+const N8N_TIMEOUT_MS = 30000; // 30 second timeout for n8n webhook
+
+// Validate and sanitize file inputs
+function validateFiles(files: FileInput[]): { valid: boolean; error?: string; sanitizedFiles?: FileInput[] } {
+  // Check file count
+  if (files.length > MAX_FILES) {
+    return { valid: false, error: `Too many files. Maximum ${MAX_FILES} allowed, received ${files.length}.` };
+  }
+  
+  let totalSize = 0;
+  const sanitizedFiles: FileInput[] = [];
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    
+    // Validate file name exists and is a string
+    if (!file.name || typeof file.name !== 'string') {
+      return { valid: false, error: `Invalid file name at index ${i}` };
+    }
+    
+    // Check filename length
+    if (file.name.length > MAX_FILENAME_LENGTH) {
+      return { valid: false, error: `File name too long at index ${i}. Maximum ${MAX_FILENAME_LENGTH} characters.` };
+    }
+    
+    // Sanitize file name - remove path traversal attempts
+    let sanitizedName = file.name
+      .replace(/\.\.[\/\\]/g, '') // Remove ../
+      .replace(/^[\/\\]+/, '')    // Remove leading slashes
+      .replace(/[<>:"|?*\x00-\x1f]/g, ''); // Remove invalid characters
+    
+    // Check for path traversal after sanitization
+    if (sanitizedName !== file.name) {
+      console.warn(`File name sanitized from "${file.name}" to "${sanitizedName}"`);
+    }
+    
+    // Ensure we have a valid name after sanitization
+    if (!sanitizedName || sanitizedName.length === 0) {
+      return { valid: false, error: `Invalid file name at index ${i} after sanitization` };
+    }
+    
+    // Validate content exists and is a string
+    if (!file.content || typeof file.content !== 'string') {
+      return { valid: false, error: `Invalid file content at index ${i}` };
+    }
+    
+    // Check individual file size
+    const fileSize = new TextEncoder().encode(file.content).length;
+    if (fileSize > MAX_FILE_SIZE) {
+      return { 
+        valid: false, 
+        error: `File "${sanitizedName}" exceeds ${MAX_FILE_SIZE / 1024}KB limit (${Math.round(fileSize / 1024)}KB).` 
+      };
+    }
+    
+    totalSize += fileSize;
+    
+    // Check total size early to fail fast
+    if (totalSize > MAX_TOTAL_SIZE) {
+      return { 
+        valid: false, 
+        error: `Total payload size exceeds ${MAX_TOTAL_SIZE / (1024 * 1024)}MB limit.` 
+      };
+    }
+    
+    sanitizedFiles.push({
+      name: sanitizedName,
+      content: file.content,
+    });
+  }
+  
+  return { valid: true, sanitizedFiles };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -40,7 +119,18 @@ serve(async (req) => {
       );
     }
 
-    const { files } = await req.json() as { files: FileInput[] };
+    // Parse request body with size limit check
+    let requestBody: { files: FileInput[] };
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { files } = requestBody;
 
     if (!files || !Array.isArray(files) || files.length === 0) {
       return new Response(
@@ -49,40 +139,70 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing ${files.length} files for CLOC estimation`);
-
-    // Call n8n webhook
-    const n8nResponse = await fetch(n8nWebhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ files }),
-    });
-
-    if (!n8nResponse.ok) {
-      const errorText = await n8nResponse.text();
-      console.error('n8n webhook error:', errorText);
+    // Validate and sanitize input files
+    const validation = validateFiles(files);
+    if (!validation.valid) {
+      console.warn(`Input validation failed: ${validation.error}`);
       return new Response(
-        JSON.stringify({ error: 'Failed to get CLOC estimate from n8n', details: errorText }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const clocResult: ClocResponse = await n8nResponse.json();
-    
-    console.log('CLOC result:', JSON.stringify(clocResult));
+    console.log(`Processing ${validation.sanitizedFiles!.length} files for CLOC estimation`);
 
-    return new Response(
-      JSON.stringify(clocResult),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), N8N_TIMEOUT_MS);
+
+    try {
+      // Call n8n webhook with sanitized files and timeout
+      const n8nResponse = await fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ files: validation.sanitizedFiles }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!n8nResponse.ok) {
+        const errorText = await n8nResponse.text();
+        console.error('n8n webhook error:', errorText);
+        return new Response(
+          JSON.stringify({ error: 'Failed to get CLOC estimate from processing service' }),
+          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const clocResult: ClocResponse = await n8nResponse.json();
+      
+      console.log('CLOC result:', JSON.stringify(clocResult));
+
+      return new Response(
+        JSON.stringify(clocResult),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error('n8n webhook timeout');
+        return new Response(
+          JSON.stringify({ error: 'Processing service timeout. Please try with fewer files.' }),
+          { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      throw fetchError;
+    }
 
   } catch (error) {
     console.error('Error in cloc-estimate function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'An unexpected error occurred' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

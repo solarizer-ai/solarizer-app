@@ -149,40 +149,41 @@ export const useDashboardStats = (): { stats: DashboardStats; isLoading: boolean
   };
 };
 
+// Response type for server-side stats operations
+interface StatsOperationResponse {
+  success: boolean;
+  error?: string;
+  contracts_added?: number;
+  vulnerabilities_added?: number;
+  nloc_added?: number;
+}
+
 // Hook to update lifetime stats when a new audit is created
+// Uses secure server-side function to prevent manipulation
 export const useUpdateLifetimeStats = () => {
   const { user } = useAuth();
   
   const updateStats = async (contractCount: number, vulnerabilitiesCount: number, nlocCount: number) => {
     if (!user) return;
     
-    // First, try to get existing stats
-    const { data: existing } = await supabase
-      .from('lifetime_stats')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    // Call the secure server-side function for incrementing stats
+    // This prevents users from directly manipulating their statistics
+    const { data, error } = await supabase.rpc('increment_lifetime_stats', {
+      p_contracts: contractCount,
+      p_vulnerabilities: vulnerabilitiesCount,
+      p_nloc: nlocCount,
+    });
+
+    if (error) {
+      console.error('Failed to update lifetime stats:', error);
+      throw error;
+    }
     
-    if (existing) {
-      // Update existing stats by adding to the totals
-      await supabase
-        .from('lifetime_stats')
-        .update({
-          total_contracts_scanned: existing.total_contracts_scanned + contractCount,
-          total_vulnerabilities_found: existing.total_vulnerabilities_found + vulnerabilitiesCount,
-          total_nloc_analyzed: existing.total_nloc_analyzed + nlocCount,
-        })
-        .eq('user_id', user.id);
-    } else {
-      // Create new stats record
-      await supabase
-        .from('lifetime_stats')
-        .insert({
-          user_id: user.id,
-          total_contracts_scanned: contractCount,
-          total_vulnerabilities_found: vulnerabilitiesCount,
-          total_nloc_analyzed: nlocCount,
-        });
+    const result = data as unknown as StatsOperationResponse;
+    
+    if (!result?.success) {
+      console.error('Failed to update lifetime stats:', result?.error);
+      throw new Error(result?.error || 'Failed to update lifetime stats');
     }
   };
   

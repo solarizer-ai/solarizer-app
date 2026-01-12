@@ -324,6 +324,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_lifetime_stats: {
+        Args: { p_contracts: number; p_nloc: number; p_vulnerabilities: number }
+        Returns: Json
+      }
       purchase_power_up: {
         Args: { p_nloc_amount: number; p_price_cents: number }
         Returns: Json
