@@ -44,14 +44,14 @@ const plans: Plan[] = [
       { text: "Multi-file analysis", included: false },
       { text: "Integrated Code Editor", included: false },
       { text: "PDF Export", included: false },
-      { text: "Power-Up discounts", included: false },
+      { text: "Power-Ups available", included: true },
     ],
     cta: "Start Free Trial",
     popular: false,
   },
   {
     name: "Pro",
-    price: 19,
+    price: 99,
     usage: "Unlimited scans",
     capacity: `${PLAN_LIMITS.pro.monthlyNloc.toLocaleString()} nLOC monthly`,
     description: "Full-featured security for production protocols.",
@@ -61,7 +61,7 @@ const plans: Plan[] = [
       { text: "Multi-file analysis", included: true },
       { text: "Integrated Code Editor", included: true },
       { text: "PDF Export", included: true },
-      { text: "Power-Up discounts", included: true },
+      { text: "20% Power-Up discount", included: true },
     ],
     cta: "Upgrade to Pro",
     popular: true,
@@ -208,16 +208,16 @@ const Pricing = () => {
                 <Zap className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">Exceeded your monthly limit?</h3>
+                <h3 className="text-xl font-semibold">Need more capacity?</h3>
                 <p className="text-sm text-muted-foreground">
-                  nLOC Power-Ups — Pro users only
+                  nLOC Power-Ups — Available to all users
                 </p>
               </div>
             </div>
 
             <p className="text-muted-foreground mb-6">
               Perfect for large protocol audits without upgrading your base plan. 
-              Power-Up credits are valid until the end of your current Pro subscription period.
+              Power-Ups are available to all users. Pro subscribers enjoy a 20% discount on all Power-Up purchases.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
