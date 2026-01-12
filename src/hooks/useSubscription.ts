@@ -27,6 +27,17 @@ export interface NlocCredits {
   updated_at: string;
 }
 
+// Response type for server-side credit operations
+interface CreditOperationResponse {
+  success: boolean;
+  error?: string;
+  credits_remaining?: number;
+  credits_used_this_period?: number;
+  scans_remaining?: number;
+  nloc_added?: number;
+  required?: number;
+}
+
 export function useSubscription() {
   const { user } = useAuth();
 
@@ -87,38 +98,22 @@ export function useDeductCredits() {
     mutationFn: async ({ nlocAmount, plan }: { nlocAmount: number; plan: SubscriptionPlan }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      // First get current credits
-      const { data: currentCredits, error: fetchError } = await supabase
-        .from('nloc_credits')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const newRemaining = Math.max(0, (currentCredits?.credits_remaining || 0) - nlocAmount);
-      const newUsed = (currentCredits?.credits_used_this_period || 0) + nlocAmount;
-
-      // Build update object
-      const updates: Record<string, number> = {
-        credits_remaining: newRemaining,
-        credits_used_this_period: newUsed,
-      };
-
-      // Starter users also deduct scan count
-      if (plan === 'starter') {
-        updates.scans_remaining = Math.max(0, (currentCredits?.scans_remaining || 0) - 1);
-      }
-
-      const { data, error } = await supabase
-        .from('nloc_credits')
-        .update(updates)
-        .eq('user_id', user.id)
-        .select()
-        .single();
+      // Call the secure server-side function for credit deduction
+      const { data, error } = await supabase.rpc('deduct_credits', {
+        p_nloc_amount: nlocAmount,
+        p_is_starter: plan === 'starter',
+      });
 
       if (error) throw error;
-      return data;
+      
+      const result = data as unknown as CreditOperationResponse;
+      
+      // Check if the operation was successful
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to deduct credits');
+      }
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nloc-credits', user?.id] });
@@ -134,38 +129,22 @@ export function usePurchasePowerUp() {
     mutationFn: async ({ nlocAmount, priceCents }: { nlocAmount: number; priceCents: number }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      // Record purchase
-      const { error: purchaseError } = await supabase
-        .from('power_up_purchases')
-        .insert({
-          user_id: user.id,
-          nloc_amount: nlocAmount,
-          price_cents: priceCents,
-        });
-
-      if (purchaseError) throw purchaseError;
-
-      // Get current credits
-      const { data: currentCredits, error: fetchError } = await supabase
-        .from('nloc_credits')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Add credits
-      const { data, error } = await supabase
-        .from('nloc_credits')
-        .update({
-          credits_remaining: (currentCredits?.credits_remaining || 0) + nlocAmount,
-        })
-        .eq('user_id', user.id)
-        .select()
-        .single();
+      // Call the secure server-side function for power-up purchase
+      const { data, error } = await supabase.rpc('purchase_power_up', {
+        p_nloc_amount: nlocAmount,
+        p_price_cents: priceCents,
+      });
 
       if (error) throw error;
-      return data;
+      
+      const result = data as unknown as CreditOperationResponse;
+      
+      // Check if the operation was successful
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to purchase power-up');
+      }
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nloc-credits', user?.id] });
