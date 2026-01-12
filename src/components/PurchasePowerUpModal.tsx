@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Zap, Check } from "lucide-react";
+import { Zap, Check, Percent } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { POWER_UP_OPTIONS } from "@/lib/nlocCalculator";
-import { usePurchasePowerUp } from "@/hooks/useSubscription";
+import { usePurchasePowerUp, useSubscription } from "@/hooks/useSubscription";
 import { toast } from "@/hooks/use-toast";
 
 interface PurchasePowerUpModalProps {
@@ -36,6 +36,10 @@ export function PurchasePowerUpModal({
     POWER_UP_OPTIONS[0].nloc.toString()
   );
   const purchasePowerUp = usePurchasePowerUp();
+  const { data: subscription } = useSubscription();
+
+  const isPro = subscription?.plan === 'pro';
+  const proDiscountRate = 0.20;
 
   const selected = POWER_UP_OPTIONS.find(
     (opt) => opt.nloc.toString() === selectedOption
@@ -43,13 +47,24 @@ export function PurchasePowerUpModal({
 
   const deficit = Math.max(0, requiredNloc - currentCredits);
 
+  // Calculate discounted price for Pro users
+  const getDiscountedPrice = (priceCents: number) => {
+    if (isPro) {
+      return Math.round(priceCents * (1 - proDiscountRate));
+    }
+    return priceCents;
+  };
+
+  const finalPrice = selected ? getDiscountedPrice(selected.priceCents) : 0;
+  const proSavings = selected && isPro ? selected.priceCents - finalPrice : 0;
+
   const handlePurchase = async () => {
     if (!selected) return;
 
     try {
       await purchasePowerUp.mutateAsync({
         nlocAmount: selected.nloc,
-        priceCents: selected.priceCents,
+        priceCents: finalPrice,
       });
 
       toast({
@@ -84,26 +99,46 @@ export function PurchasePowerUpModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {isPro && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium">
+              <Percent className="h-4 w-4" />
+              Pro member: 20% discount applied!
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-sm font-medium">Select Power-Up</label>
             <Select value={selectedOption} onValueChange={setSelectedOption}>
               <p className="text-xs text-muted-foreground mb-2">
-                Power-up credits expire at the end of your Pro subscription period.
+                {isPro 
+                  ? "Power-up credits expire at the end of your Pro subscription period."
+                  : "Power-up credits never expire and are available anytime."
+                }
               </p>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select an option" />
               </SelectTrigger>
               <SelectContent>
-                {POWER_UP_OPTIONS.map((option) => (
-                  <SelectItem key={option.nloc} value={option.nloc.toString()}>
-                    <div className="flex items-center justify-between gap-4 w-full">
-                      <span>{option.nloc.toLocaleString()} nLOC</span>
-                      <span className="text-muted-foreground">
-                        ${(option.priceCents / 100).toFixed(0)}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
+                {POWER_UP_OPTIONS.map((option) => {
+                  const discounted = getDiscountedPrice(option.priceCents);
+                  return (
+                    <SelectItem key={option.nloc} value={option.nloc.toString()}>
+                      <div className="flex items-center justify-between gap-4 w-full">
+                        <span>{option.nloc.toLocaleString()} nLOC</span>
+                        <span className="text-muted-foreground">
+                          {isPro && discounted !== option.priceCents ? (
+                            <>
+                              <span className="line-through mr-1">${(option.priceCents / 100).toFixed(0)}</span>
+                              <span className="text-primary">${(discounted / 100).toFixed(0)}</span>
+                            </>
+                          ) : (
+                            `$${(option.priceCents / 100).toFixed(0)}`
+                          )}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -116,13 +151,33 @@ export function PurchasePowerUpModal({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Price</span>
-                <span className="font-semibold">${(selected.priceCents / 100).toFixed(0)}</span>
+                <div className="font-semibold">
+                  {isPro && proSavings > 0 ? (
+                    <>
+                      <span className="line-through text-muted-foreground mr-2">${(selected.priceCents / 100).toFixed(0)}</span>
+                      <span className="text-primary">${(finalPrice / 100).toFixed(0)}</span>
+                    </>
+                  ) : (
+                    `$${(finalPrice / 100).toFixed(0)}`
+                  )}
+                </div>
               </div>
+              {isPro && proSavings > 0 && (
+                <div className="flex items-center justify-between text-primary">
+                  <span className="text-sm flex items-center gap-1">
+                    <Percent className="h-3.5 w-3.5" />
+                    Pro Discount (20%)
+                  </span>
+                  <span className="font-semibold">
+                    -${(proSavings / 100).toFixed(0)}
+                  </span>
+                </div>
+              )}
               {selected.savings > 0 && (
                 <div className="flex items-center justify-between text-primary">
                   <span className="text-sm flex items-center gap-1">
                     <Check className="h-3.5 w-3.5" />
-                    You Save
+                    Bulk Savings
                   </span>
                   <span className="font-semibold">
                     ${selected.savings} (~{selected.discountPercent}%)
