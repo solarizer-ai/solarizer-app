@@ -191,7 +191,7 @@ const Pricing = () => {
                 size="lg"
                 variant={plan.popular ? "default" : "outline"}
               >
-                <Link to="/signup">{plan.cta}</Link>
+                <Link to="/coming-soon">{plan.cta}</Link>
               </Button>
             </div>
           ))}

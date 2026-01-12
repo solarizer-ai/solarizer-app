@@ -96,7 +96,7 @@ const Home = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
-                <Link to="/signup">
+                <Link to="/coming-soon">
                   Run Analysis
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
@@ -199,7 +199,7 @@ const Home = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
-                <Link to="/signup">
+                <Link to="/coming-soon">
                   Start Your First Analysis
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
