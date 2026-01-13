@@ -243,7 +243,18 @@ Deno.serve(async (req) => {
     // Parse and validate n8n response
     let n8nData: unknown;
     try {
-      n8nData = await n8nResponse.json();
+      const responseText = await n8nResponse.text();
+      console.log('run-audit: Raw n8n response:', responseText.substring(0, 1000));
+      
+      if (!responseText || responseText.trim() === '') {
+        console.error('run-audit: n8n returned empty response');
+        return new Response(
+          JSON.stringify({ error: 'Audit engine returned empty response' }),
+          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      n8nData = JSON.parse(responseText);
     } catch (e) {
       console.error('run-audit: Failed to parse n8n response as JSON', e);
       return new Response(
@@ -252,9 +263,13 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('run-audit: Parsed n8n data:', JSON.stringify(n8nData).substring(0, 500));
+
     const responseValidation = validateN8nResponse(n8nData);
     if (!responseValidation.valid) {
       console.error('run-audit: Invalid n8n response structure:', responseValidation.error);
+      console.error('run-audit: Received data type:', typeof n8nData);
+      console.error('run-audit: Received data keys:', n8nData && typeof n8nData === 'object' ? Object.keys(n8nData as object) : 'N/A');
       return new Response(
         JSON.stringify({ error: responseValidation.error }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
