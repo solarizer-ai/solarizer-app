@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Severity = "critical" | "high" | "medium" | "low" | "info";
+type Severity = "critical" | "high" | "medium" | "low";
 
 interface Finding {
   id: string;
@@ -19,6 +19,7 @@ interface Finding {
 
 interface FindingItemProps {
   finding: Finding;
+  isNew?: boolean;
 }
 
 const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: string; className: string }> = {
@@ -42,20 +43,18 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
     label: "Low",
     className: "text-primary bg-primary/10 border-primary/20",
   },
-  info: {
-    icon: Info,
-    label: "Info",
-    className: "text-muted-foreground bg-muted border-border",
-  },
 };
 
-const FindingItem = ({ finding }: FindingItemProps) => {
+const FindingItem = ({ finding, isNew = false }: FindingItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const config = severityConfig[finding.severity];
   const Icon = config.icon;
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card/50">
+    <div className={cn(
+      "border border-border rounded-lg overflow-hidden bg-card/50 transition-all duration-300",
+      isNew && "animate-fade-in ring-2 ring-primary/30"
+    )}>
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

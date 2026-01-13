@@ -90,7 +90,8 @@ const Index = () => {
   const [pendingFiles, setPendingFiles] = useState<{ name: string; content: string }[]>([]);
   
   // Realtime findings during scan
-  const [realtimeFindings, setRealtimeFindings] = useState<{ id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'info' }[]>([]);
+  const [realtimeFindings, setRealtimeFindings] = useState<{ id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' }[]>([]);
+  const [newFindingIds, setNewFindingIds] = useState<Set<string>>(new Set());
   const [realtimeAuditStatus, setRealtimeAuditStatus] = useState<'pending' | 'analyzing' | 'secured' | 'issues' | null>(null);
   
   // Widget visibility state
@@ -235,11 +236,26 @@ const Index = () => {
           (payload) => {
             console.log('Realtime finding received:', payload.new);
             const newFinding = payload.new as { id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'info' };
+            // Skip info severity findings
+            if (newFinding.severity === 'info') return;
+            
             setRealtimeFindings(prev => [...prev, {
               id: newFinding.id,
               title: newFinding.title,
-              severity: newFinding.severity,
+              severity: newFinding.severity as 'critical' | 'high' | 'medium' | 'low',
             }]);
+            
+            // Track new finding for animation
+            setNewFindingIds(prev => new Set(prev).add(newFinding.id));
+            // Clear animation after 1 second
+            setTimeout(() => {
+              setNewFindingIds(prev => {
+                const next = new Set(prev);
+                next.delete(newFinding.id);
+                return next;
+              });
+            }, 1000);
+            
             // Invalidate findings query to update the report view in real-time
             queryClient.invalidateQueries({ queryKey: ['findings', audit.id] });
           }
@@ -425,16 +441,21 @@ const Index = () => {
   };
 
   const getVulnerabilityCounts = () => {
-    if (!findings) return { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    if (!findings) return { critical: 0, high: 0, medium: 0, low: 0 };
+    
+    // Filter out info severity findings
+    const filteredFindings = findings.filter(f => f.severity !== "info");
     
     return {
-      critical: findings.filter(f => f.severity === "critical").length,
-      high: findings.filter(f => f.severity === "high").length,
-      medium: findings.filter(f => f.severity === "medium").length,
-      low: findings.filter(f => f.severity === "low").length,
-      info: findings.filter(f => f.severity === "info").length,
+      critical: filteredFindings.filter(f => f.severity === "critical").length,
+      high: filteredFindings.filter(f => f.severity === "high").length,
+      medium: filteredFindings.filter(f => f.severity === "medium").length,
+      low: filteredFindings.filter(f => f.severity === "low").length,
     };
   };
+  
+  // Filter info findings from display
+  const displayFindings = findings?.filter(f => f.severity !== "info") || [];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -594,7 +615,15 @@ const Index = () => {
               >
                 ← Back to Dashboard
               </button>
-              <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Security Report</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Security Report</h2>
+                {(currentAudit?.status === 'analyzing' || realtimeAuditStatus === 'analyzing') && (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/10 border border-success/20 text-xs text-success font-medium animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                    Live
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">
                 {currentAudit?.project_name || "Contract"} • Analyzed {currentAudit ? formatTimestamp(currentAudit.created_at) : ""}
               </p>
@@ -609,11 +638,6 @@ const Index = () => {
                   projectName={currentAudit.project_name}
                   timestamp={formatTimestamp(currentAudit.created_at)}
                   auditId={currentAudit.id}
-                  findingsCount={{
-                    passed: 42 - (findings?.length || 0),
-                    warnings: findings?.filter(f => f.severity === 'medium' || f.severity === 'low').length || 0,
-                    failed: findings?.filter(f => f.severity === 'critical' || f.severity === 'high').length || 0,
-                  }}
                 />
 
                 {/* Vulnerability Matrix */}
@@ -622,10 +646,10 @@ const Index = () => {
                 {/* Findings List */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-foreground">Detailed Findings</h3>
-                  {findings && findings.length > 0 ? (
+                {displayFindings.length > 0 ? (
                     <>
                       <FindingsFilter
-                        findings={findings.map((f) => ({
+                        findings={displayFindings.map((f) => ({
                           id: f.id,
                           title: f.title,
                           severity: f.severity,
@@ -646,7 +670,8 @@ const Index = () => {
                         {filteredFindings.map((finding) => (
                           <FindingItem 
                             key={finding.id} 
-                            finding={finding} 
+                            finding={finding}
+                            isNew={newFindingIds.has(finding.id)}
                           />
                         ))}
                         {filteredFindings.length === 0 && (
