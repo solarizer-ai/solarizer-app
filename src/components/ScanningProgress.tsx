@@ -54,16 +54,11 @@ const ScanningProgress = ({ isScanning, onComplete, onCancel }: ScanningProgress
   if (!isScanning && !isComplete) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-xl">
       <div className="relative w-full max-w-lg mx-4">
-        {/* Gradient Border Wrapper */}
-        <div className="relative p-[2px] rounded-2xl overflow-hidden">
-          {/* Animated gradient border */}
-          <div className="absolute inset-0 bg-gradient-conic animate-gradient-rotate" />
-          
-          {/* Main Container */}
-          <div className="relative flex flex-col items-center justify-center p-8 rounded-2xl bg-card/80 backdrop-blur-md">
-          
+        {/* Main Container */}
+        <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-card border border-border">
+        
           {/* Solar Animation Container */}
           <div className="relative w-64 h-64 mb-8">
             {/* Outer Ring 3 - Slowest */}
@@ -150,7 +145,6 @@ const ScanningProgress = ({ isScanning, onComplete, onCancel }: ScanningProgress
             <p className="text-xs text-warning">
               Credits are consumed when analysis starts and will not be refunded if cancelled.
             </p>
-          </div>
           </div>
         </div>
       </div>
