@@ -21,24 +21,6 @@ interface AuditRequest {
   };
 }
 
-interface Finding {
-  title: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
-  description: string;
-  location?: string;
-  line_start?: number;
-  line_end?: number;
-  code_snippet?: string;
-  remediation?: string;
-}
-
-interface N8nResponse {
-  security_score: number;
-  grade: 'A' | 'B' | 'C' | 'D' | 'F';
-  status: 'secured' | 'issues';
-  findings: Finding[];
-}
-
 // Validate and sanitize files (same logic as cloc-estimate)
 function validateFiles(files: FileInput[]): { valid: boolean; error?: string; sanitizedFiles?: FileInput[] } {
   if (!Array.isArray(files)) {
@@ -89,63 +71,6 @@ function validateFiles(files: FileInput[]): { valid: boolean; error?: string; sa
   return { valid: true, sanitizedFiles };
 }
 
-// Validate n8n response structure
-function validateN8nResponse(data: unknown): { valid: boolean; error?: string; response?: N8nResponse } {
-  if (!data || typeof data !== 'object') {
-    return { valid: false, error: 'Invalid response format from audit engine' };
-  }
-
-  const response = data as Record<string, unknown>;
-
-  if (typeof response.security_score !== 'number' || response.security_score < 0 || response.security_score > 100) {
-    return { valid: false, error: 'Invalid security_score in response' };
-  }
-
-  const validGrades = ['A', 'B', 'C', 'D', 'F'];
-  if (!validGrades.includes(response.grade as string)) {
-    return { valid: false, error: 'Invalid grade in response' };
-  }
-
-  const validStatuses = ['secured', 'issues'];
-  if (!validStatuses.includes(response.status as string)) {
-    return { valid: false, error: 'Invalid status in response' };
-  }
-
-  if (!Array.isArray(response.findings)) {
-    return { valid: false, error: 'Invalid findings array in response' };
-  }
-
-  // Validate each finding
-  const validSeverities = ['critical', 'high', 'medium', 'low', 'info'];
-  for (const finding of response.findings) {
-    if (typeof finding !== 'object' || !finding) {
-      return { valid: false, error: 'Invalid finding object' };
-    }
-
-    if (typeof finding.title !== 'string' || !finding.title) {
-      return { valid: false, error: 'Each finding must have a title' };
-    }
-
-    if (!validSeverities.includes(finding.severity)) {
-      return { valid: false, error: `Invalid severity: ${finding.severity}` };
-    }
-
-    if (typeof finding.description !== 'string') {
-      return { valid: false, error: 'Each finding must have a description' };
-    }
-  }
-
-  return {
-    valid: true,
-    response: {
-      security_score: response.security_score as number,
-      grade: response.grade as N8nResponse['grade'],
-      status: response.status as N8nResponse['status'],
-      findings: response.findings as Finding[],
-    },
-  };
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -160,6 +85,26 @@ Deno.serve(async (req) => {
       console.error('run-audit: N8N_AUDIT_WEBHOOK_URL not configured');
       return new Response(
         JSON.stringify({ error: 'Audit engine not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get callback secret for n8n to use
+    const callbackSecret = Deno.env.get('N8N_CALLBACK_SECRET');
+    if (!callbackSecret) {
+      console.error('run-audit: N8N_CALLBACK_SECRET not configured');
+      return new Response(
+        JSON.stringify({ error: 'Callback authentication not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get Supabase URL for n8n to call back
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    if (!supabaseUrl) {
+      console.error('run-audit: SUPABASE_URL not configured');
+      return new Response(
+        JSON.stringify({ error: 'Supabase URL not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -213,10 +158,15 @@ Deno.serve(async (req) => {
     console.log(`run-audit: Processing audit ${audit_id} for project "${project_name}" with ${validation.sanitizedFiles!.length} files`);
     console.log(`run-audit: Metadata - NLOC: ${metadata.nloc_count}, Contracts: ${metadata.contract_count}, Plan: ${metadata.plan}`);
 
-    // Call n8n webhook with NO TIMEOUT - let it take as long as needed
-    console.log('run-audit: Calling n8n audit engine (no timeout)...');
+    // Construct callback URLs for n8n
+    const saveFindingUrl = `${supabaseUrl}/functions/v1/save-finding`;
+    const completeAuditUrl = `${supabaseUrl}/functions/v1/complete-audit`;
+
+    // Fire-and-forget: Send to n8n without waiting for response
+    console.log('run-audit: Triggering n8n audit engine (fire-and-forget)...');
     
-    const n8nResponse = await fetch(webhookUrl, {
+    // Use fetch without await - fire and forget
+    fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -226,60 +176,28 @@ Deno.serve(async (req) => {
         project_name,
         files: validation.sanitizedFiles,
         metadata,
+        // Include callback info for n8n to save findings incrementally
+        callbacks: {
+          save_finding_url: saveFindingUrl,
+          complete_audit_url: completeAuditUrl,
+          secret: callbackSecret,
+        },
       }),
+    }).then(response => {
+      console.log(`run-audit: n8n webhook triggered, response status: ${response.status}`);
+    }).catch(error => {
+      console.error('run-audit: Error triggering n8n webhook:', error);
     });
 
-    console.log(`run-audit: n8n response status: ${n8nResponse.status}`);
-
-    if (!n8nResponse.ok) {
-      const errorText = await n8nResponse.text();
-      console.error('run-audit: n8n returned error:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'Audit engine error', details: errorText }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Parse and validate n8n response
-    let n8nData: unknown;
-    try {
-      const responseText = await n8nResponse.text();
-      console.log('run-audit: Raw n8n response:', responseText.substring(0, 1000));
-      
-      if (!responseText || responseText.trim() === '') {
-        console.error('run-audit: n8n returned empty response');
-        return new Response(
-          JSON.stringify({ error: 'Audit engine returned empty response' }),
-          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      n8nData = JSON.parse(responseText);
-    } catch (e) {
-      console.error('run-audit: Failed to parse n8n response as JSON', e);
-      return new Response(
-        JSON.stringify({ error: 'Invalid response from audit engine' }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('run-audit: Parsed n8n data:', JSON.stringify(n8nData).substring(0, 500));
-
-    const responseValidation = validateN8nResponse(n8nData);
-    if (!responseValidation.valid) {
-      console.error('run-audit: Invalid n8n response structure:', responseValidation.error);
-      console.error('run-audit: Received data type:', typeof n8nData);
-      console.error('run-audit: Received data keys:', n8nData && typeof n8nData === 'object' ? Object.keys(n8nData as object) : 'N/A');
-      return new Response(
-        JSON.stringify({ error: responseValidation.error }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`run-audit: Audit complete - Score: ${responseValidation.response!.security_score}, Grade: ${responseValidation.response!.grade}, Findings: ${responseValidation.response!.findings.length}`);
+    // Immediately return success - n8n will process in background and call back
+    console.log(`run-audit: Returning immediately - n8n will process in background`);
 
     return new Response(
-      JSON.stringify(responseValidation.response),
+      JSON.stringify({ 
+        status: 'started',
+        audit_id,
+        message: 'Audit started. Results will be saved incrementally via realtime updates.',
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
