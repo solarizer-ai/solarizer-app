@@ -579,7 +579,7 @@ const Index = () => {
                           location: f.location ? {
                             file: f.location,
                             lines: f.line_start && f.line_end 
-                              ? `${f.line_start}-${f.line_end}`
+                              ? (f.line_start === f.line_end ? `${f.line_start}` : `${f.line_start}-${f.line_end}`)
                               : undefined,
                           } : undefined,
                           code: f.code_snippet || undefined,
