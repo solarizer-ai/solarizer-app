@@ -280,6 +280,30 @@
       transform: translateY(0); 
     }
   }
+
+  @keyframes gradient-rotate {
+    0% {
+      transform: rotate(0deg) scale(1.5);
+    }
+    100% {
+      transform: rotate(360deg) scale(1.5);
+    }
+  }
+
+  .animate-gradient-rotate {
+    animation: gradient-rotate 4s linear infinite;
+  }
+
+  .bg-gradient-conic {
+    background: conic-gradient(
+      from 0deg,
+      hsl(var(--primary)),
+      hsl(25 95% 53%),
+      hsl(45 93% 47%),
+      hsl(25 95% 53%),
+      hsl(var(--primary))
+    );
+  }
 }
 
 /* Solar Ring Animation Component */
