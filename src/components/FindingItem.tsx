@@ -45,6 +45,21 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
   },
 };
 
+// Helper function to render text with inline code formatting for backtick-wrapped text
+const renderWithCodeFormatting = (text: string) => {
+  const parts = text.split(/(`[^`]+`)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return (
+        <code key={index} className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono text-primary">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+};
+
 const FindingItem = ({ finding, isNew = false }: FindingItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const config = severityConfig[finding.severity];
@@ -58,29 +73,51 @@ const FindingItem = ({ finding, isNew = false }: FindingItemProps) => {
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors text-left"
+        className="w-full p-4 hover:bg-muted/30 transition-colors text-left"
       >
-        <div className={cn(
-          "flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border shrink-0",
-          config.className
-        )}>
-          <Icon className="w-3.5 h-3.5" />
-          {config.label}
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{finding.title}</p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <FileCode className="w-3.5 h-3.5" />
-            <span className="font-mono">{finding.location.lines}</span>
+        {/* Mobile: Stacked layout, Desktop: Inline layout */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          {/* Top row on mobile: Badge + Chevron */}
+          <div className="flex items-center justify-between sm:contents">
+            <div className={cn(
+              "flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border shrink-0",
+              config.className
+            )}>
+              <Icon className="w-3.5 h-3.5" />
+              {config.label}
+            </div>
+            
+            {/* Chevron - visible on mobile in top row */}
+            <ChevronDown className={cn(
+              "w-4 h-4 text-muted-foreground transition-transform duration-200 sm:hidden",
+              isExpanded && "rotate-180"
+            )} />
           </div>
-          <ChevronDown className={cn(
-            "w-4 h-4 text-muted-foreground transition-transform duration-200",
-            isExpanded && "rotate-180"
-          )} />
+          
+          {/* Title - full width on mobile, can wrap to 2 lines */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground line-clamp-2 sm:truncate">
+              {finding.title}
+            </p>
+          </div>
+
+          {/* Location + Chevron (desktop only) */}
+          <div className="hidden sm:flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <FileCode className="w-3.5 h-3.5" />
+              <span className="font-mono">{finding.location.lines}</span>
+            </div>
+            <ChevronDown className={cn(
+              "w-4 h-4 text-muted-foreground transition-transform duration-200",
+              isExpanded && "rotate-180"
+            )} />
+          </div>
+          
+          {/* Location on mobile - smaller, below title */}
+          <div className="flex sm:hidden items-center gap-1.5 text-xs text-muted-foreground">
+            <FileCode className="w-3 h-3" />
+            <span className="font-mono text-[11px]">{finding.location.lines}</span>
+          </div>
         </div>
       </button>
 
@@ -93,7 +130,7 @@ const FindingItem = ({ finding, isNew = false }: FindingItemProps) => {
               Description
             </h4>
             <p className="text-sm text-foreground/90 leading-relaxed">
-              {finding.description}
+              {renderWithCodeFormatting(finding.description)}
             </p>
           </div>
 
@@ -126,8 +163,8 @@ const FindingItem = ({ finding, isNew = false }: FindingItemProps) => {
               Remediation Guide
             </h4>
             <div className="bg-success/5 border border-success/20 rounded-md p-4">
-              <p className="text-sm text-foreground/90 leading-relaxed font-mono">
-                {finding.remediation}
+              <p className="text-sm text-foreground/90 leading-relaxed">
+                {renderWithCodeFormatting(finding.remediation)}
               </p>
             </div>
           </div>
