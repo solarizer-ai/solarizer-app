@@ -1,60 +1,67 @@
 import { Link } from "react-router-dom";
-import { Shield, Zap, Lock, ArrowRight, CheckCircle2, Database, Wrench, Cpu, Layers, GitBranch, Target } from "lucide-react";
+import { Brain, Dna, ShieldCheck, ArrowRight, CheckCircle2, FileCode2, Shield, Filter, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 
 const features = [
   {
-    icon: Database,
-    title: "Proprietary Deep Scan",
-    description: "Fueled by our exclusive vulnerability index to catch complex logic errors that standard scanners miss.",
+    icon: Brain,
+    title: "Logic & Economic Security",
+    description: "We go beyond reentrancy. Detect broken invariants, insolvent math, and 'phantom' accounting errors that drain liquidity pools.",
   },
   {
-    icon: Wrench,
-    title: "Remediation Intelligence",
-    description: "Get precise, secure code alternatives tailored to your architectural needs, not just bug reports.",
+    icon: FileCode2,
+    title: "Context-Aware Remediation",
+    description: "Receive precise, syntax-perfect code fixes tailored to your specific variable naming and architectural style—ready to copy and paste.",
   },
   {
-    icon: Lock,
-    title: "100% Private Analysis",
-    description: "Your code never leaves our secure environment. Zero data retention policy.",
+    icon: Shield,
+    title: "Ephemeral Processing",
+    description: "Your IP is safe. Analysis occurs in a stateless, isolated environment with zero data retention. Your code is wiped the moment the report is generated.",
   },
   {
-    icon: Zap,
-    title: "Sub-5-Second Processing",
-    description: "Enterprise-grade speed without compromising depth of analysis.",
+    icon: Filter,
+    title: "High-Signal Reporting",
+    description: "Stop wasting time on noise. We automatically downgrade 'Owner Actions' and administrative privileges, focusing your attention on publicly exploitable criticals.",
   },
 ];
 
 const intelligenceLoop = [
   {
-    icon: Layers,
+    icon: Brain,
     step: "01",
-    title: "Normalisation",
-    description: "Our engine ingests and maps your Solidity architecture into our secure analysis environment.",
+    title: "Context Modeling",
+    headline: "Architectural Deconstruction",
+    description: "Our engine doesn't just read files; it builds a cognitive model of your entire protocol, mapping state changes, inheritance, and cross-contract relationships to understand the full picture.",
   },
   {
-    icon: GitBranch,
+    icon: Dna,
     step: "02",
-    title: "Pattern Synthesis",
-    description: "The engine cross-references your codebase against our custom-curated library of historical exploits and logic vulnerabilities.",
+    title: "Threat Synthesis",
+    headline: "Predictive Risk Matching",
+    description: "Your logic is instantly cross-referenced against our proprietary Vulnerability DNA Matrix—a curated index of complex exploit patterns that standard linters cannot see.",
   },
   {
-    icon: Target,
+    icon: ShieldCheck,
     step: "03",
-    title: "Agentic Verification",
-    description: "A dual-layer 'Auditor' system challenges every finding to ensure 100% actionable, high-signal results.",
+    title: "Logic Verification",
+    headline: "Semantic Validation",
+    description: "A multi-stage verification layer challenges every potential finding, filtering out false positives and distinguishing between critical bugs and acceptable centralization risks.",
   },
 ];
 
 const trustMetrics = [
-  { value: "< 5s", label: "Average Scan Time" },
-  { value: "100%", label: "Private Analysis" },
-  { value: "Custom", label: "Exploit Database" },
+  { value: "< 5s", label: "Sub-5s Analysis" },
+  { value: "100%", label: "Zero Retention" },
+  { value: "Custom", label: "DNA Matrix" },
 ];
 
 const Home = () => {
+  const scrollToHowItWorks = () => {
+    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <PublicHeader />
@@ -87,22 +94,27 @@ const Home = () => {
               <span className="font-medium">Security Intelligence Engine</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Precision-Engineered{" "}
-              <span className="text-gradient">Security Intelligence.</span>
+              Security Intelligence That{" "}
+              <span className="text-gradient">Understands Intent.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Solarizer is a specialized security engine powered by a proprietary database 
-              of smart contract exploits. Detect vulnerabilities and logic flaws in seconds, not weeks.
+              Standard scanners catch syntax errors. Solarizer detects business logic flaws 
+              and economic vulnerabilities by analyzing your protocol's architecture, not just its code.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
-                <Link to="/coming-soon">
-                  Run Analysis
+                <Link to="/dashboard">
+                  Start Security Analysis
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="lg" className="text-base px-8 text-muted-foreground hover:text-foreground">
-                <Link to="/docs">View Documentation</Link>
+              <Button 
+                variant="ghost" 
+                size="lg" 
+                className="text-base px-8 text-muted-foreground hover:text-foreground"
+                onClick={scrollToHowItWorks}
+              >
+                See How It Works
               </Button>
             </div>
           </div>
@@ -157,7 +169,7 @@ const Home = () => {
       </section>
 
       {/* Intelligence Loop Section */}
-      <section className="py-24 md:py-32 bg-card/30 border-y border-border">
+      <section id="how-it-works" className="py-24 md:py-32 bg-card/30 border-y border-border">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">The Solarizer Intelligence Loop</h2>
@@ -175,7 +187,8 @@ const Home = () => {
                     </div>
                     <step.icon className="w-6 h-6 text-primary/60" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
+                  <div className="text-xs uppercase tracking-wider text-primary/70 mb-1">{step.title}</div>
+                  <h3 className="text-xl font-semibold mb-3">{step.headline}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
                 {index < intelligenceLoop.length - 1 && (
@@ -192,15 +205,15 @@ const Home = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Harden Your Contracts?
+              Defend Against the Unforeseen.
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Deploy with confidence. The Solarizer Engine has your back.
+              The only engine that evolves as fast as the exploit landscape.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
-                <Link to="/coming-soon">
-                  Start Your First Analysis
+                <Link to="/dashboard">
+                  Secure Your Protocol
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
