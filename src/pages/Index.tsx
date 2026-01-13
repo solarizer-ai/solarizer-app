@@ -132,6 +132,10 @@ const Index = () => {
       setView("editor");
       // Clear the param after handling
       setSearchParams({});
+    } else {
+      // Reset to dashboard when navigating to /dashboard without params
+      setView("dashboard");
+      setCurrentAuditId(null);
     }
   }, [searchParams, setSearchParams]);
 
