@@ -7,6 +7,9 @@ const MinimalFooter = () => {
         <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()} Solarizer
         </p>
+        <p className="text-xs text-muted-foreground hidden sm:block">
+          Powering secure deployments worldwide
+        </p>
         <div className="flex items-center gap-4">
           <Link 
             to="/privacy" 
