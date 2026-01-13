@@ -88,6 +88,10 @@ const Index = () => {
   // Store files for the n8n API call
   const [pendingFiles, setPendingFiles] = useState<{ name: string; content: string }[]>([]);
   
+  // Realtime findings during scan
+  const [realtimeFindings, setRealtimeFindings] = useState<{ id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'info' }[]>([]);
+  const [realtimeAuditStatus, setRealtimeAuditStatus] = useState<'pending' | 'analyzing' | 'secured' | 'issues' | null>(null);
+  
   // AbortController ref for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
   
@@ -167,6 +171,8 @@ const Index = () => {
     setCode(codeContent);
     setIsScanning(true);
     setShowResults(false);
+    setRealtimeFindings([]);
+    setRealtimeAuditStatus('analyzing');
 
     // Create abort controller for cancellation
     const abortController = new AbortController();
@@ -202,7 +208,74 @@ const Index = () => {
         status: "analyzing" as AuditStatus,
       });
 
-      // Call the run-audit edge function (no timeout)
+      // Set up realtime subscriptions for findings and audit status
+      const findingsChannel = supabase
+        .channel(`findings-${audit.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'findings',
+            filter: `audit_id=eq.${audit.id}`,
+          },
+          (payload) => {
+            console.log('Realtime finding received:', payload.new);
+            const newFinding = payload.new as { id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'info' };
+            setRealtimeFindings(prev => [...prev, {
+              id: newFinding.id,
+              title: newFinding.title,
+              severity: newFinding.severity,
+            }]);
+          }
+        )
+        .subscribe();
+
+      const auditChannel = supabase
+        .channel(`audit-${audit.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'audits',
+            filter: `id=eq.${audit.id}`,
+          },
+          (payload) => {
+            console.log('Realtime audit update received:', payload.new);
+            const updatedAudit = payload.new as { status: 'pending' | 'analyzing' | 'secured' | 'issues' };
+            setRealtimeAuditStatus(updatedAudit.status);
+            
+            // If audit is complete, clean up
+            if (updatedAudit.status === 'secured' || updatedAudit.status === 'issues') {
+              supabase.removeChannel(findingsChannel);
+              supabase.removeChannel(auditChannel);
+              
+              // Update lifetime stats
+              if (currentScanMetrics) {
+                updateLifetimeStats(
+                  currentScanMetrics.contractCount,
+                  realtimeFindings.length,
+                  currentScanMetrics.nlocCount
+                );
+                setCurrentScanMetrics(null);
+              }
+              
+              setIsScanning(false);
+              setShowResults(true);
+              abortControllerRef.current = null;
+            }
+          }
+        )
+        .subscribe();
+
+      // Store channels for cleanup on cancel
+      abortController.signal.addEventListener('abort', () => {
+        supabase.removeChannel(findingsChannel);
+        supabase.removeChannel(auditChannel);
+      });
+
+      // Call the run-audit edge function (fire-and-forget now)
       const result = await runAudit.mutateAsync({
         audit_id: audit.id,
         project_name: name,
@@ -214,49 +287,14 @@ const Index = () => {
         },
       });
 
-      // Process the response
+      console.log('run-audit started:', result);
+
+      // Check if cancelled
       if (abortControllerRef.current?.signal.aborted) {
-        return; // User cancelled
+        return;
       }
 
-      // Insert findings from n8n response
-      const findingsToInsert = result.findings.map(f => ({
-        audit_id: audit.id,
-        title: f.title,
-        severity: f.severity as FindingSeverity,
-        description: f.description,
-        location: f.location || null,
-        line_start: f.line_start || null,
-        line_end: f.line_end || null,
-        code_snippet: f.code_snippet || null,
-        remediation: f.remediation || null,
-      }));
-      
-      if (findingsToInsert.length > 0) {
-        await createFindings.mutateAsync(findingsToInsert);
-      }
-
-      // Update audit with results from n8n
-      await updateAudit.mutateAsync({
-        id: audit.id,
-        status: result.status as AuditStatus,
-        grade: result.grade as SecurityGrade,
-        security_score: result.security_score,
-      });
-
-      // Update lifetime stats
-      if (currentScanMetrics) {
-        await updateLifetimeStats(
-          currentScanMetrics.contractCount,
-          result.findings.length,
-          currentScanMetrics.nlocCount
-        );
-        setCurrentScanMetrics(null);
-      }
-
-      setIsScanning(false);
-      setShowResults(true);
-      abortControllerRef.current = null;
+      // The function now returns immediately - we wait for realtime updates
 
     } catch (error) {
       // Check if this was a cancellation
@@ -265,10 +303,11 @@ const Index = () => {
       }
       
       setIsScanning(false);
+      setRealtimeAuditStatus(null);
       abortControllerRef.current = null;
       toast({
         variant: "destructive",
-        title: "Failed to complete analysis",
+        title: "Failed to start analysis",
         description: error instanceof Error ? error.message : "Please try again.",
       });
     }
@@ -308,6 +347,8 @@ const Index = () => {
     setCurrentAuditId(null);
     setCurrentScanMetrics(null);
     setPendingFiles([]);
+    setRealtimeFindings([]);
+    setRealtimeAuditStatus(null);
 
     toast({
       title: "Analysis cancelled",
@@ -324,6 +365,8 @@ const Index = () => {
     setProjectName("");
     setCode(sampleCode);
     setPendingFiles([]);
+    setRealtimeFindings([]);
+    setRealtimeAuditStatus(null);
   };
 
   const handleBackToDashboard = () => {
@@ -494,6 +537,8 @@ const Index = () => {
               <ScanningProgress 
                 isScanning={isScanning} 
                 onCancel={handleCancelScan}
+                findings={realtimeFindings}
+                auditStatus={realtimeAuditStatus}
               />
             )}
 
