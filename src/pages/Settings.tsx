@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import MinimalFooter from "@/components/MinimalFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,7 +109,7 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <main className="container mx-auto px-6 py-8">
@@ -407,6 +408,8 @@ const Settings = () => {
           </Tabs>
         </div>
       </main>
+
+      <MinimalFooter />
     </div>
   );
 };

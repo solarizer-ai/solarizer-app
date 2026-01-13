@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import Header from "@/components/Header";
+import MinimalFooter from "@/components/MinimalFooter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Zap, ArrowUpRight, CreditCard, Loader2, Receipt, ArrowLeft } from "lucide-react";
@@ -88,7 +89,7 @@ const BillingHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <main className="container mx-auto px-6 py-8">
@@ -201,6 +202,8 @@ const BillingHistory = () => {
           )}
         </div>
       </main>
+
+      <MinimalFooter />
     </div>
   );
 };

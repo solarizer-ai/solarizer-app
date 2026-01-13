@@ -14,8 +14,8 @@ import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DashboardStats } from "@/components/DashboardStats";
 import { useUpdateLifetimeStats } from "@/hooks/useDashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
-import { RecentActivity } from "@/components/RecentActivity";
 import { SecurityTrend } from "@/components/SecurityTrend";
+import MinimalFooter from "@/components/MinimalFooter";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
 import { useAudits, useAudit, useFindings, useCreateAudit, useUpdateAudit, useDeleteAudit, useCreateFindings } from "@/hooks/useAudits";
@@ -376,7 +376,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <main className="container mx-auto px-6 py-8">
@@ -458,7 +458,6 @@ const Index = () => {
               <div className="space-y-4 order-first lg:order-last">
                 <SeverityBreakdown />
                 <SecurityTrend />
-                <RecentActivity />
               </div>
             </div>
           </div>
@@ -650,6 +649,8 @@ const Index = () => {
         requiredNloc={pendingNloc}
         currentCredits={credits?.credits_remaining || 0}
       />
+
+      <MinimalFooter />
     </div>
   );
 };
