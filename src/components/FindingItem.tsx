@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +57,106 @@ const renderWithCodeFormatting = (text: string) => {
       );
     }
     return part;
+  });
+};
+
+// Solidity syntax highlighting
+const solidityKeywords = new Set([
+  'function', 'contract', 'pragma', 'solidity', 'public', 'private',
+  'external', 'internal', 'view', 'pure', 'payable', 'returns', 'return',
+  'if', 'else', 'for', 'while', 'require', 'assert', 'revert', 'modifier',
+  'event', 'emit', 'mapping', 'struct', 'enum', 'import', 'using', 'library',
+  'interface', 'constructor', 'memory', 'storage', 'calldata', 'virtual',
+  'override', 'constant', 'immutable', 'new', 'delete', 'true', 'false',
+  'this', 'super', 'is', 'abstract', 'indexed', 'anonymous', 'unchecked'
+]);
+
+const solidityTypes = new Set([
+  'uint', 'uint256', 'uint128', 'uint64', 'uint32', 'uint16', 'uint8',
+  'int', 'int256', 'int128', 'int64', 'int32', 'int16', 'int8',
+  'address', 'bool', 'string', 'bytes', 'bytes32', 'bytes4', 'bytes20'
+]);
+
+const highlightSolidityCode = (code: string) => {
+  const lines = code.split('\n');
+  
+  return lines.map((line, lineIndex) => {
+    const tokens: JSX.Element[] = [];
+    let remaining = line;
+    let tokenIndex = 0;
+    
+    while (remaining.length > 0) {
+      // Check for single-line comment
+      const commentMatch = remaining.match(/^(\/\/.*)/);
+      if (commentMatch) {
+        tokens.push(
+          <span key={`${lineIndex}-${tokenIndex++}`} className="text-muted-foreground italic">
+            {commentMatch[1]}
+          </span>
+        );
+        remaining = remaining.slice(commentMatch[1].length);
+        continue;
+      }
+      
+      // Check for string
+      const stringMatch = remaining.match(/^("[^"]*"|'[^']*')/);
+      if (stringMatch) {
+        tokens.push(
+          <span key={`${lineIndex}-${tokenIndex++}`} className="text-green-400">
+            {stringMatch[1]}
+          </span>
+        );
+        remaining = remaining.slice(stringMatch[1].length);
+        continue;
+      }
+      
+      // Check for number (hex or decimal)
+      const numberMatch = remaining.match(/^(0x[0-9a-fA-F]+|\d+)/);
+      if (numberMatch) {
+        tokens.push(
+          <span key={`${lineIndex}-${tokenIndex++}`} className="text-orange-400">
+            {numberMatch[1]}
+          </span>
+        );
+        remaining = remaining.slice(numberMatch[1].length);
+        continue;
+      }
+      
+      // Check for word (keyword, type, or identifier)
+      const wordMatch = remaining.match(/^([a-zA-Z_][a-zA-Z0-9_]*)/);
+      if (wordMatch) {
+        const word = wordMatch[1];
+        let className = "text-foreground/90";
+        
+        if (solidityKeywords.has(word)) {
+          className = "text-purple-400";
+        } else if (solidityTypes.has(word) || word.startsWith('uint') || word.startsWith('int') || word.startsWith('bytes')) {
+          className = "text-blue-400";
+        }
+        
+        tokens.push(
+          <span key={`${lineIndex}-${tokenIndex++}`} className={className}>
+            {word}
+          </span>
+        );
+        remaining = remaining.slice(word.length);
+        continue;
+      }
+      
+      // Default: take one character
+      tokens.push(
+        <span key={`${lineIndex}-${tokenIndex++}`} className="text-foreground/90">
+          {remaining[0]}
+        </span>
+      );
+      remaining = remaining.slice(1);
+    }
+    
+    return (
+      <div key={lineIndex} className="leading-relaxed">
+        {tokens.length > 0 ? tokens : '\u00A0'}
+      </div>
+    );
   });
 };
 
@@ -152,7 +252,7 @@ const FindingItem = ({ finding, isNew = false }: FindingItemProps) => {
               Affected Code
             </h4>
             <div className="bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto">
-              <pre className="text-foreground/90">{finding.code}</pre>
+              {highlightSolidityCode(finding.code)}
             </div>
           </div>
 
