@@ -54,7 +54,7 @@ const ScanningProgress = ({ isScanning, onComplete, onCancel }: ScanningProgress
   if (!isScanning && !isComplete) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/30 backdrop-blur-xl">
       <div className="relative w-full max-w-lg mx-4">
         {/* Main Container */}
         <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-card border border-border">
