@@ -10,7 +10,6 @@ interface RunAuditParams {
     contract_count: number;
     plan: 'starter' | 'pro';
   };
-  signal?: AbortSignal;
 }
 
 interface Finding {
@@ -24,6 +23,14 @@ interface Finding {
   remediation?: string;
 }
 
+// New response type for fire-and-forget
+interface AuditStartedResult {
+  status: 'started';
+  audit_id: string;
+  message: string;
+}
+
+// Legacy result type (kept for reference)
 interface AuditResult {
   security_score: number;
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
@@ -33,20 +40,18 @@ interface AuditResult {
 
 export const useRunAudit = () => {
   return useMutation({
-    mutationFn: async (params: RunAuditParams): Promise<AuditResult> => {
-      const { signal, ...body } = params;
-      
+    mutationFn: async (params: RunAuditParams): Promise<AuditStartedResult> => {
       const response = await supabase.functions.invoke('run-audit', {
-        body,
+        body: params,
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to run audit');
+        throw new Error(response.error.message || 'Failed to start audit');
       }
 
-      return response.data as AuditResult;
+      return response.data as AuditStartedResult;
     },
   });
 };
 
-export type { RunAuditParams, AuditResult, Finding };
+export type { RunAuditParams, AuditResult, AuditStartedResult, Finding };

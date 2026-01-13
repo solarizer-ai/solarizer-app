@@ -1,12 +1,21 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, Shield, AlertCircle, Info } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+interface Finding {
+  id: string;
+  title: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+}
 
 interface ScanningProgressProps {
   isScanning: boolean;
   onComplete?: () => void;
   onCancel?: () => void;
+  findings?: Finding[];
+  auditStatus?: 'pending' | 'analyzing' | 'secured' | 'issues' | null;
 }
 
 const scanSteps = [
@@ -21,9 +30,49 @@ const scanSteps = [
   "Generating security report...",
 ];
 
-const ScanningProgress = ({ isScanning, onComplete, onCancel }: ScanningProgressProps) => {
+const getSeverityColor = (severity: string) => {
+  switch (severity) {
+    case 'critical': return 'bg-destructive text-destructive-foreground';
+    case 'high': return 'bg-orange-500 text-white';
+    case 'medium': return 'bg-warning text-warning-foreground';
+    case 'low': return 'bg-blue-500 text-white';
+    case 'info': return 'bg-muted text-muted-foreground';
+    default: return 'bg-muted text-muted-foreground';
+  }
+};
+
+const getSeverityIcon = (severity: string) => {
+  switch (severity) {
+    case 'critical':
+    case 'high':
+      return <AlertCircle className="w-3 h-3" />;
+    case 'medium':
+    case 'low':
+      return <AlertTriangle className="w-3 h-3" />;
+    default:
+      return <Info className="w-3 h-3" />;
+  }
+};
+
+const ScanningProgress = ({ 
+  isScanning, 
+  onComplete, 
+  onCancel, 
+  findings = [],
+  auditStatus 
+}: ScanningProgressProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+
+  // Count findings by severity
+  const findingCounts = {
+    critical: findings.filter(f => f.severity === 'critical').length,
+    high: findings.filter(f => f.severity === 'high').length,
+    medium: findings.filter(f => f.severity === 'medium').length,
+    low: findings.filter(f => f.severity === 'low').length,
+    info: findings.filter(f => f.severity === 'info').length,
+  };
+  const totalFindings = findings.length;
 
   // Cycle through steps continuously
   useEffect(() => {
@@ -44,12 +93,15 @@ const ScanningProgress = ({ isScanning, onComplete, onCancel }: ScanningProgress
     }
   }, [isScanning]);
 
-  // Handle external completion
+  // Check if audit is complete
   useEffect(() => {
-    if (!isScanning && !isComplete && onComplete) {
-      // This effect is for when parent sets isScanning to false
+    if (auditStatus === 'secured' || auditStatus === 'issues') {
+      setIsComplete(true);
+      if (onComplete) {
+        onComplete();
+      }
     }
-  }, [isScanning, isComplete, onComplete]);
+  }, [auditStatus, onComplete]);
 
   if (!isScanning && !isComplete) return null;
 
@@ -108,6 +160,17 @@ const ScanningProgress = ({ isScanning, onComplete, onCancel }: ScanningProgress
             <div className="absolute inset-8 animate-[spin_6s_linear_infinite]">
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
             </div>
+            
+            {/* Finding Counter Overlay - Show when findings are coming in */}
+            {totalFindings > 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border shadow-lg">
+                  <Shield className="w-4 h-4 text-primary" />
+                  <span className="text-lg font-semibold text-foreground">{totalFindings}</span>
+                  <span className="text-xs text-muted-foreground">found</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Title */}
@@ -116,7 +179,7 @@ const ScanningProgress = ({ isScanning, onComplete, onCancel }: ScanningProgress
           </h2>
 
           {/* Status Text with Fade Animation */}
-          <div className="h-8 flex items-center justify-center mb-6">
+          <div className="h-8 flex items-center justify-center mb-4">
             <p 
               key={currentStep} 
               className="text-sm font-mono text-primary animate-[fade-in_0.5s_ease-out]"
@@ -124,6 +187,42 @@ const ScanningProgress = ({ isScanning, onComplete, onCancel }: ScanningProgress
               {scanSteps[currentStep]}
             </p>
           </div>
+
+          {/* Real-time Finding Counts */}
+          {totalFindings > 0 && (
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              {findingCounts.critical > 0 && (
+                <Badge className={cn("gap-1", getSeverityColor('critical'))}>
+                  {getSeverityIcon('critical')}
+                  {findingCounts.critical} Critical
+                </Badge>
+              )}
+              {findingCounts.high > 0 && (
+                <Badge className={cn("gap-1", getSeverityColor('high'))}>
+                  {getSeverityIcon('high')}
+                  {findingCounts.high} High
+                </Badge>
+              )}
+              {findingCounts.medium > 0 && (
+                <Badge className={cn("gap-1", getSeverityColor('medium'))}>
+                  {getSeverityIcon('medium')}
+                  {findingCounts.medium} Medium
+                </Badge>
+              )}
+              {findingCounts.low > 0 && (
+                <Badge className={cn("gap-1", getSeverityColor('low'))}>
+                  {getSeverityIcon('low')}
+                  {findingCounts.low} Low
+                </Badge>
+              )}
+              {findingCounts.info > 0 && (
+                <Badge className={cn("gap-1", getSeverityColor('info'))}>
+                  {getSeverityIcon('info')}
+                  {findingCounts.info} Info
+                </Badge>
+              )}
+            </div>
+          )}
 
           {/* Decorative Line */}
           <div className="w-48 h-px bg-gradient-to-r from-transparent via-border to-transparent mb-6" />
