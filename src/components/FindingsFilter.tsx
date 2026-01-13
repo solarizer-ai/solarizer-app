@@ -38,7 +38,7 @@ const FindingsFilter = ({ findings, onFilteredChange }: FindingsFilterProps) => 
   const [selectedSeverities, setSelectedSeverities] = useState<FindingSeverity[]>([]);
   const [showResolved, setShowResolved] = useState(true);
 
-  const severities: FindingSeverity[] = ["critical", "high", "medium", "low", "info"];
+  const severities: FindingSeverity[] = ["critical", "high", "medium", "low"];
 
   const filteredFindings = useMemo(() => {
     let result = [...findings];
@@ -101,7 +101,7 @@ const FindingsFilter = ({ findings, onFilteredChange }: FindingsFilterProps) => 
         return "bg-warning/10 text-warning border-warning/30 hover:bg-warning/20";
       case "low":
         return "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20";
-      case "info":
+      default:
         return "bg-muted text-muted-foreground border-border hover:bg-muted/80";
     }
   };

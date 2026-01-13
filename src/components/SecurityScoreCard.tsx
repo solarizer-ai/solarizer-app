@@ -13,11 +13,6 @@ interface SecurityScoreCardProps {
   projectName: string;
   timestamp: string;
   auditId?: string;
-  findingsCount?: {
-    passed: number;
-    warnings: number;
-    failed: number;
-  };
 }
 
 const gradeConfig: Record<Grade, { color: string; label: string; description: string }> = {
@@ -53,8 +48,7 @@ const SecurityScoreCard = ({
   score, 
   projectName, 
   timestamp, 
-  auditId,
-  findingsCount 
+  auditId
 }: SecurityScoreCardProps) => {
   const config = gradeConfig[grade];
   const circumference = 2 * Math.PI * 45;
@@ -165,38 +159,9 @@ const SecurityScoreCard = ({
             </span>
             <span className="text-sm text-muted-foreground">Security Rating</span>
           </div>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground">
             {config.description}
           </p>
-          
-          {findingsCount && (
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 lg:gap-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="w-2 h-2 rounded-full bg-success" />
-                Passed: {findingsCount.passed}
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="w-2 h-2 rounded-full bg-warning" />
-                Warnings: {findingsCount.warnings}
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="w-2 h-2 rounded-full bg-critical" />
-                Failed: {findingsCount.failed}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Verification Badge */}
-        <div className="shrink-0 text-center lg:text-right">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs text-primary font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Verified by Solarizer
-          </div>
-          <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 mx-auto lg:ml-auto lg:mr-0 transition-colors">
-            View on-chain proof
-            <ExternalLink className="w-3 h-3" />
-          </button>
         </div>
       </div>
     </div>
