@@ -1,0 +1,52 @@
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface RunAuditParams {
+  audit_id: string;
+  project_name: string;
+  files: { name: string; content: string }[];
+  metadata: {
+    nloc_count: number;
+    contract_count: number;
+    plan: 'starter' | 'pro';
+  };
+  signal?: AbortSignal;
+}
+
+interface Finding {
+  title: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  description: string;
+  location?: string;
+  line_start?: number;
+  line_end?: number;
+  code_snippet?: string;
+  remediation?: string;
+}
+
+interface AuditResult {
+  security_score: number;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  status: 'secured' | 'issues';
+  findings: Finding[];
+}
+
+export const useRunAudit = () => {
+  return useMutation({
+    mutationFn: async (params: RunAuditParams): Promise<AuditResult> => {
+      const { signal, ...body } = params;
+      
+      const response = await supabase.functions.invoke('run-audit', {
+        body,
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to run audit');
+      }
+
+      return response.data as AuditResult;
+    },
+  });
+};
+
+export type { RunAuditParams, AuditResult, Finding };

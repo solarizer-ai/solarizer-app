@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
@@ -21,6 +21,7 @@ import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
 import { useAudits, useAudit, useFindings, useCreateAudit, useUpdateAudit, useDeleteAudit, useCreateFindings } from "@/hooks/useAudits";
 import type { AuditStatus, SecurityGrade, FindingSeverity } from "@/hooks/useAudits";
 import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
+import { useRunAudit } from "@/hooks/useRunAudit";
 import { calculateNLOC, PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -65,47 +66,6 @@ contract Vault {
     }
 }`;
 
-// Mock findings generator (will be replaced by n8n integration later)
-const generateMockFindings = (auditId: string) => [
-  {
-    audit_id: auditId,
-    title: "Reentrancy Vulnerability in withdraw()",
-    severity: "critical" as FindingSeverity,
-    description: "The withdraw function updates the user's balance after the external call, making it vulnerable to reentrancy attacks.",
-    location: "Vault.sol",
-    line_start: 14,
-    line_end: 18,
-    code_snippet: `(bool success, ) = msg.sender.call{value: amount}("");
-require(success, "Transfer failed");
-balances[msg.sender] -= amount;`,
-    remediation: `Use the checks-effects-interactions pattern. Update the balance BEFORE making the external call.`,
-  },
-  {
-    audit_id: auditId,
-    title: "Missing Zero Address Validation",
-    severity: "medium" as FindingSeverity,
-    description: "The contract does not validate against zero addresses in critical functions.",
-    location: "Vault.sol",
-    line_start: 7,
-    line_end: 8,
-    code_snippet: `function deposit() external payable {
-    balances[msg.sender] += msg.value;
-}`,
-    remediation: `Add require statements to validate addresses.`,
-  },
-  {
-    audit_id: auditId,
-    title: "Consider Using SafeMath for Arithmetic",
-    severity: "low" as FindingSeverity,
-    description: "While Solidity 0.8+ has built-in overflow protection, explicit SafeMath usage can make the code more readable.",
-    location: "Vault.sol",
-    line_start: 8,
-    line_end: 8,
-    code_snippet: `balances[msg.sender] += msg.value;`,
-    remediation: `For enhanced readability, consider using SafeMath library.`,
-  },
-];
-
 const getTimeBasedGreeting = () => {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
@@ -124,6 +84,12 @@ const Index = () => {
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
   const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  
+  // Store files for the n8n API call
+  const [pendingFiles, setPendingFiles] = useState<{ name: string; content: string }[]>([]);
+  
+  // AbortController ref for cancellation
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   // Memoized callback for findings filter
   const handleFilteredChange = useCallback((filtered: any[]) => setFilteredFindings(filtered), []);
@@ -184,6 +150,7 @@ const Index = () => {
   const { data: credits } = useCredits();
   const deductCredits = useDeductCredits();
   const { updateStats: updateLifetimeStats } = useUpdateLifetimeStats();
+  const runAudit = useRunAudit();
 
   const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string; clocResult?: { totalNloc: number } }) => {
     const { projectName: name, files, code: codeContent, clocResult } = wizardData;
@@ -197,8 +164,19 @@ const Index = () => {
     setIsScanning(true);
     setShowResults(false);
 
+    // Create abort controller for cancellation
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
       const contractCount = getAllFiles(files).length || 1;
+      
+      // Convert FileNode[] to simple file objects for API
+      const fileList = getAllFiles(files).map(f => ({
+        name: f.name,
+        content: f.content || '',
+      }));
+      setPendingFiles(fileList);
       
       const audit = await createAudit.mutateAsync({
         project_name: name,
@@ -220,12 +198,74 @@ const Index = () => {
         status: "analyzing" as AuditStatus,
       });
 
-    } catch (error) {
+      // Call the run-audit edge function (no timeout)
+      const result = await runAudit.mutateAsync({
+        audit_id: audit.id,
+        project_name: name,
+        files: fileList,
+        metadata: {
+          nloc_count: nloc,
+          contract_count: contractCount,
+          plan: plan as 'starter' | 'pro',
+        },
+      });
+
+      // Process the response
+      if (abortControllerRef.current?.signal.aborted) {
+        return; // User cancelled
+      }
+
+      // Insert findings from n8n response
+      const findingsToInsert = result.findings.map(f => ({
+        audit_id: audit.id,
+        title: f.title,
+        severity: f.severity as FindingSeverity,
+        description: f.description,
+        location: f.location || null,
+        line_start: f.line_start || null,
+        line_end: f.line_end || null,
+        code_snippet: f.code_snippet || null,
+        remediation: f.remediation || null,
+      }));
+      
+      if (findingsToInsert.length > 0) {
+        await createFindings.mutateAsync(findingsToInsert);
+      }
+
+      // Update audit with results from n8n
+      await updateAudit.mutateAsync({
+        id: audit.id,
+        status: result.status as AuditStatus,
+        grade: result.grade as SecurityGrade,
+        security_score: result.security_score,
+      });
+
+      // Update lifetime stats
+      if (currentScanMetrics) {
+        await updateLifetimeStats(
+          currentScanMetrics.contractCount,
+          result.findings.length,
+          currentScanMetrics.nlocCount
+        );
+        setCurrentScanMetrics(null);
+      }
+
       setIsScanning(false);
+      setShowResults(true);
+      abortControllerRef.current = null;
+
+    } catch (error) {
+      // Check if this was a cancellation
+      if (abortControllerRef.current?.signal.aborted) {
+        return;
+      }
+      
+      setIsScanning(false);
+      abortControllerRef.current = null;
       toast({
         variant: "destructive",
-        title: "Failed to create audit",
-        description: "Please try again.",
+        title: "Failed to complete analysis",
+        description: error instanceof Error ? error.message : "Please try again.",
       });
     }
   };
@@ -241,56 +281,34 @@ const Index = () => {
     setShowPowerUpModal(true);
   };
 
-  const handleScanComplete = async () => {
-    if (!currentAuditId) return;
-
-    try {
-      // Generate mock findings (will be replaced by n8n)
-      const mockFindings = generateMockFindings(currentAuditId);
-      await createFindings.mutateAsync(mockFindings);
-
-      // Calculate score and grade based on findings
-      const criticalCount = mockFindings.filter(f => f.severity === "critical").length;
-      const highCount = mockFindings.filter(f => f.severity === "high").length;
-      const mediumCount = mockFindings.filter(f => f.severity === "medium").length;
-      
-      let score = 100 - (criticalCount * 25) - (highCount * 15) - (mediumCount * 5);
-      score = Math.max(0, Math.min(100, score));
-      
-      let grade: SecurityGrade = "A";
-      if (score < 50) grade = "F";
-      else if (score < 60) grade = "D";
-      else if (score < 70) grade = "C";
-      else if (score < 85) grade = "B";
-
-      // Update audit with results
-      await updateAudit.mutateAsync({
-        id: currentAuditId,
-        status: criticalCount > 0 ? "issues" : "secured" as AuditStatus,
-        grade,
-        security_score: score,
-      });
-
-      // Update lifetime stats (these persist even if audit is deleted later)
-      if (currentScanMetrics) {
-        await updateLifetimeStats(
-          currentScanMetrics.contractCount,
-          mockFindings.length,
-          currentScanMetrics.nlocCount
-        );
-        setCurrentScanMetrics(null);
-      }
-
-      setIsScanning(false);
-      setShowResults(true);
-    } catch (error) {
-      setIsScanning(false);
-      toast({
-        variant: "destructive",
-        title: "Failed to complete analysis",
-        description: "Please try again.",
-      });
+  const handleCancelScan = async () => {
+    // Abort the ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
+
+    // Update audit status back to pending
+    if (currentAuditId) {
+      try {
+        await updateAudit.mutateAsync({
+          id: currentAuditId,
+          status: "pending" as AuditStatus,
+        });
+      } catch (e) {
+        // Ignore errors when updating cancelled audit
+      }
+    }
+
+    setIsScanning(false);
+    setCurrentAuditId(null);
+    setCurrentScanMetrics(null);
+    setPendingFiles([]);
+
+    toast({
+      title: "Analysis cancelled",
+      description: "Note: Credits used for this analysis have already been consumed.",
+    });
   };
 
   const handleNewAudit = () => {
@@ -301,6 +319,7 @@ const Index = () => {
     setCurrentAuditId(null);
     setProjectName("");
     setCode(sampleCode);
+    setPendingFiles([]);
   };
 
   const handleBackToDashboard = () => {
@@ -468,10 +487,10 @@ const Index = () => {
               />
             )}
 
-            {(isScanning || showResults) && (
+            {isScanning && (
               <ScanningProgress 
                 isScanning={isScanning} 
-                onComplete={handleScanComplete}
+                onCancel={handleCancelScan}
               />
             )}
 
