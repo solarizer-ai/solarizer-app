@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
@@ -160,6 +161,7 @@ const Index = () => {
   const deductCredits = useDeductCredits();
   const { updateStats: updateLifetimeStats } = useUpdateLifetimeStats();
   const runAudit = useRunAudit();
+  const queryClient = useQueryClient();
 
   const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string; clocResult?: { totalNloc: number } }) => {
     const { projectName: name, files, code: codeContent, clocResult } = wizardData;
@@ -238,6 +240,8 @@ const Index = () => {
               title: newFinding.title,
               severity: newFinding.severity,
             }]);
+            // Invalidate findings query to update the report view in real-time
+            queryClient.invalidateQueries({ queryKey: ['findings', audit.id] });
           }
         )
         .subscribe();
@@ -256,6 +260,9 @@ const Index = () => {
             console.log('Realtime audit update received:', payload.new);
             const updatedAudit = payload.new as { status: 'pending' | 'analyzing' | 'secured' | 'issues' };
             setRealtimeAuditStatus(updatedAudit.status);
+            
+            // Invalidate audit query to update score/grade in report view
+            queryClient.invalidateQueries({ queryKey: ['audit', audit.id] });
             
             // If audit is complete, clean up
             if (updatedAudit.status === 'secured' || updatedAudit.status === 'issues') {
