@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
 import AuditWizard from "@/components/AuditWizard";
-import ScanningProgress from "@/components/ScanningProgress";
+import ScanProgressWidget from "@/components/ScanProgressWidget";
 import VulnerabilityMatrix from "@/components/VulnerabilityMatrix";
 import FindingItem from "@/components/FindingItem";
 import FindingsFilter from "@/components/FindingsFilter";
@@ -23,11 +23,11 @@ import type { AuditStatus, SecurityGrade, FindingSeverity } from "@/hooks/useAud
 import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
 import { useRunAudit } from "@/hooks/useRunAudit";
 import { calculateNLOC, PLAN_LIMITS } from "@/lib/nlocCalculator";
-import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { FileNode, getAllFiles } from "@/types/files";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -92,6 +92,8 @@ const Index = () => {
   const [realtimeFindings, setRealtimeFindings] = useState<{ id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'info' }[]>([]);
   const [realtimeAuditStatus, setRealtimeAuditStatus] = useState<'pending' | 'analyzing' | 'secured' | 'issues' | null>(null);
   
+  // Widget visibility state
+  const [showWidget, setShowWidget] = useState(false);
   // AbortController ref for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
   
@@ -143,7 +145,6 @@ const Index = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  const { toast } = useToast();
   const { data: audits, isLoading: auditsLoading } = useAudits();
   const { data: currentAudit } = useAudit(currentAuditId);
   const { data: findings } = useFindings(currentAuditId);
@@ -173,6 +174,13 @@ const Index = () => {
     setShowResults(false);
     setRealtimeFindings([]);
     setRealtimeAuditStatus('analyzing');
+    setShowWidget(true);
+    
+    // Show toast notification
+    toast.info("Security analysis started", {
+      description: `Analyzing ${name}...`,
+      duration: 4000,
+    });
 
     // Create abort controller for cancellation
     const abortController = new AbortController();
@@ -305,9 +313,7 @@ const Index = () => {
       setIsScanning(false);
       setRealtimeAuditStatus(null);
       abortControllerRef.current = null;
-      toast({
-        variant: "destructive",
-        title: "Failed to start analysis",
+      toast.error("Failed to start analysis", {
         description: error instanceof Error ? error.message : "Please try again.",
       });
     }
@@ -349,9 +355,9 @@ const Index = () => {
     setPendingFiles([]);
     setRealtimeFindings([]);
     setRealtimeAuditStatus(null);
+    setShowWidget(false);
 
-    toast({
-      title: "Analysis cancelled",
+    toast.info("Analysis cancelled", {
       description: "Note: Credits used for this analysis have already been consumed.",
     });
   };
@@ -367,6 +373,11 @@ const Index = () => {
     setPendingFiles([]);
     setRealtimeFindings([]);
     setRealtimeAuditStatus(null);
+    setShowWidget(false);
+  };
+
+  const handleCloseWidget = () => {
+    setShowWidget(false);
   };
 
   const handleBackToDashboard = () => {
@@ -387,14 +398,11 @@ const Index = () => {
     
     try {
       await deleteAudit.mutateAsync(deleteAuditId);
-      toast({
-        title: "Audit deleted",
+      toast.success("Audit deleted", {
         description: "The audit has been permanently removed.",
       });
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Failed to delete",
+      toast.error("Failed to delete", {
         description: "Please try again.",
       });
     } finally {
@@ -533,14 +541,6 @@ const Index = () => {
               />
             )}
 
-            {isScanning && (
-              <ScanningProgress 
-                isScanning={isScanning} 
-                onCancel={handleCancelScan}
-                findings={realtimeFindings}
-                auditStatus={realtimeAuditStatus}
-              />
-            )}
 
             {showResults && currentAudit && (
               <div className="bg-card border border-border rounded-lg p-6">
@@ -693,6 +693,22 @@ const Index = () => {
         onOpenChange={setShowPowerUpModal}
         requiredNloc={pendingNloc}
         currentCredits={credits?.credits_remaining || 0}
+      />
+
+      {/* Scan Progress Widget */}
+      <ScanProgressWidget
+        isVisible={showWidget}
+        projectName={projectName}
+        findings={realtimeFindings}
+        auditStatus={realtimeAuditStatus}
+        onCancel={handleCancelScan}
+        onViewResults={() => {
+          if (currentAuditId) {
+            handleViewResults(currentAuditId);
+            setShowWidget(false);
+          }
+        }}
+        onClose={handleCloseWidget}
       />
 
       <MinimalFooter />
