@@ -208,6 +208,9 @@ const Index = () => {
       // Store metrics for lifetime stats update on completion
       setCurrentScanMetrics({ contractCount, nlocCount: nloc });
 
+      // Navigate to dashboard IMMEDIATELY so user sees progress widget
+      setView("dashboard");
+
       // Deduct credits at scan START for ALL users
       await deductCredits.mutateAsync({ nlocAmount: nloc, plan });
 
@@ -296,9 +299,6 @@ const Index = () => {
       });
 
       console.log('run-audit started:', result);
-
-      // Navigate to dashboard to show progress widget
-      setView("dashboard");
 
       // Check if cancelled
       if (abortControllerRef.current?.signal.aborted) {
