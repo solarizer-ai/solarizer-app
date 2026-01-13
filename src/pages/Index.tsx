@@ -272,7 +272,7 @@ const Index = () => {
             table: 'audits',
             filter: `id=eq.${audit.id}`,
           },
-          (payload) => {
+          async (payload) => {
             console.log('Realtime audit update received:', payload.new);
             const updatedAudit = payload.new as { status: 'pending' | 'analyzing' | 'secured' | 'issues' };
             setRealtimeAuditStatus(updatedAudit.status);
@@ -285,13 +285,23 @@ const Index = () => {
               supabase.removeChannel(findingsChannel);
               supabase.removeChannel(auditChannel);
               
-              // Update lifetime stats
+              // Update lifetime stats - fetch actual findings count from DB to avoid race conditions
               if (currentScanMetrics) {
-                updateLifetimeStats(
+                const { data: actualFindings } = await supabase
+                  .from('findings')
+                  .select('id')
+                  .eq('audit_id', audit.id);
+                
+                const actualFindingsCount = actualFindings?.length || 0;
+                
+                await updateLifetimeStats(
                   currentScanMetrics.contractCount,
-                  realtimeFindings.length,
+                  actualFindingsCount,
                   currentScanMetrics.nlocCount
                 );
+                
+                // Invalidate lifetime-stats query to refresh dashboard
+                queryClient.invalidateQueries({ queryKey: ['lifetime-stats'] });
                 setCurrentScanMetrics(null);
               }
               
