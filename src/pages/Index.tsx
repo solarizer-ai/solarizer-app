@@ -297,6 +297,9 @@ const Index = () => {
 
       console.log('run-audit started:', result);
 
+      // Navigate to dashboard to show progress widget
+      setView("dashboard");
+
       // Check if cancelled
       if (abortControllerRef.current?.signal.aborted) {
         return;
