@@ -176,7 +176,7 @@ const CodeEditor = ({
   const editorContent = (
     <div className={cn(
       "border border-border rounded-lg overflow-hidden bg-card flex",
-      isFullscreen && "fixed inset-0 z-[70] rounded-none border-0"
+      isFullscreen && "fixed top-16 left-0 right-0 bottom-0 z-[70] rounded-none border-0"
     )}>
       {/* File Explorer */}
       {showExplorer && (
