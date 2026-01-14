@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown, FilePlus, FolderPlus, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronDown, FilePlus, FolderPlus, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FileNode } from "@/types/files";
 import FileTypeIcon from "./FileTypeIcon";
@@ -24,6 +24,11 @@ interface FileTreeItemProps {
   onDragOver?: (e: React.DragEvent, path: string) => void;
   onDragLeave?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent, targetPath: string) => void;
+  // Rename
+  renamingPath?: string | null;
+  onStartRename?: (path: string) => void;
+  onRename?: (oldPath: string, newName: string) => void;
+  onCancelRename?: () => void;
 }
 
 const FileTreeItem = ({
@@ -45,12 +50,17 @@ const FileTreeItem = ({
   onDragOver,
   onDragLeave,
   onDrop,
+  renamingPath,
+  onStartRename,
+  onRename,
+  onCancelRename,
 }: FileTreeItemProps) => {
   const isActive = node.path === activeFilePath;
   const isFolder = node.type === 'folder';
   const isExpanded = node.isExpanded ?? false;
   const isCreatingHere = isCreating && creatingInPath === node.path;
   const isDragOver = dragOverPath === node.path && isFolder;
+  const isRenaming = renamingPath === node.path;
 
   const handleClick = () => {
     if (isFolder) {
@@ -65,6 +75,28 @@ const FileTreeItem = ({
       onCreateConfirm?.();
     } else if (e.key === 'Escape') {
       onCreateCancel?.();
+    }
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const newName = e.currentTarget.value.trim();
+      if (newName && newName !== node.name) {
+        onRename?.(node.path, newName);
+      } else {
+        onCancelRename?.();
+      }
+    } else if (e.key === 'Escape') {
+      onCancelRename?.();
+    }
+  };
+
+  const handleRenameBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const newName = e.target.value.trim();
+    if (newName && newName !== node.name) {
+      onRename?.(node.path, newName);
+    } else {
+      onCancelRename?.();
     }
   };
 
@@ -129,38 +161,60 @@ const FileTreeItem = ({
           size={14}
           className="shrink-0"
         />
-        <span className="truncate flex-1">{node.name}</span>
+        {isRenaming ? (
+          <Input
+            autoFocus
+            defaultValue={node.name}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={handleRenameKeyDown}
+            onBlur={handleRenameBlur}
+            className="h-6 text-sm py-0 px-1.5 flex-1"
+          />
+        ) : (
+          <span className="truncate flex-1">{node.name}</span>
+        )}
         
         {/* Action buttons on hover */}
-        <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          {isFolder && onCreateInFolder && (
-            <>
+        {!isRenaming && (
+          <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {isFolder && onCreateInFolder && (
+              <>
+                <span
+                  role="button"
+                  onClick={(e) => { e.stopPropagation(); onCreateInFolder(node.path, 'file'); }}
+                  className="p-0.5 hover:bg-muted rounded"
+                >
+                  <FilePlus className="w-3.5 h-3.5" />
+                </span>
+                <span
+                  role="button"
+                  onClick={(e) => { e.stopPropagation(); onCreateInFolder(node.path, 'folder'); }}
+                  className="p-0.5 hover:bg-muted rounded"
+                >
+                  <FolderPlus className="w-3.5 h-3.5" />
+                </span>
+              </>
+            )}
+            {onStartRename && (
               <span
                 role="button"
-                onClick={(e) => { e.stopPropagation(); onCreateInFolder(node.path, 'file'); }}
+                onClick={(e) => { e.stopPropagation(); onStartRename(node.path); }}
                 className="p-0.5 hover:bg-muted rounded"
               >
-                <FilePlus className="w-3.5 h-3.5" />
+                <Pencil className="w-3.5 h-3.5" />
               </span>
+            )}
+            {onDelete && (
               <span
                 role="button"
-                onClick={(e) => { e.stopPropagation(); onCreateInFolder(node.path, 'folder'); }}
-                className="p-0.5 hover:bg-muted rounded"
+                onClick={(e) => { e.stopPropagation(); onDelete(node.path); }}
+                className="p-0.5 hover:bg-destructive/20 hover:text-destructive rounded"
               >
-                <FolderPlus className="w-3.5 h-3.5" />
+                <Trash2 className="w-3.5 h-3.5" />
               </span>
-            </>
-          )}
-          {onDelete && (
-            <span
-              role="button"
-              onClick={(e) => { e.stopPropagation(); onDelete(node.path); }}
-              className="p-0.5 hover:bg-destructive/20 hover:text-destructive rounded"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </span>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Inline input for creating new item inside this folder */}
@@ -211,6 +265,10 @@ const FileTreeItem = ({
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
               onDrop={onDrop}
+              renamingPath={renamingPath}
+              onStartRename={onStartRename}
+              onRename={onRename}
+              onCancelRename={onCancelRename}
             />
           ))}
         </div>

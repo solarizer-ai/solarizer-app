@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { FileNode, createFileNode, createFolderNode, addNodeToTree, deleteNodeFromTree, moveNodeInTree, isDescendantOf } from "@/types/files";
+import { FileNode, createFileNode, createFolderNode, addNodeToTree, deleteNodeFromTree, moveNodeInTree, isDescendantOf, renameNodeInTree, findNodeByPath } from "@/types/files";
 import FileTreeItem from "./FileTreeItem";
 
 interface FileExplorerProps {
@@ -31,6 +31,7 @@ const FileExplorer = ({
   const [creatingInPath, setCreatingInPath] = useState<string>("");
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
   const [draggingPath, setDraggingPath] = useState<string | null>(null);
+  const [renamingPath, setRenamingPath] = useState<string | null>(null);
 
   const handleCreateItem = () => {
     if (!newItemName.trim()) {
@@ -81,6 +82,17 @@ const FileExplorer = ({
   const handleDelete = (path: string) => {
     const newFiles = deleteNodeFromTree(files, path);
     onFilesChange(newFiles);
+  };
+
+  const handleRename = (oldPath: string, newName: string) => {
+    const node = findNodeByPath(files, oldPath);
+    if (!newName.trim() || newName === node?.name) {
+      setRenamingPath(null);
+      return;
+    }
+    const newFiles = renameNodeInTree(files, oldPath, newName.trim());
+    onFilesChange(newFiles);
+    setRenamingPath(null);
   };
 
   // Drag and drop handlers
@@ -230,6 +242,10 @@ const FileExplorer = ({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
+              renamingPath={renamingPath}
+              onStartRename={setRenamingPath}
+              onRename={handleRename}
+              onCancelRename={() => setRenamingPath(null)}
             />
           ))}
 
