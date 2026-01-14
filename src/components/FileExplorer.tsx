@@ -28,35 +28,52 @@ const FileExplorer = ({
 }: FileExplorerProps) => {
   const [isCreating, setIsCreating] = useState<'file' | 'folder' | null>(null);
   const [newItemName, setNewItemName] = useState("");
+  const [creatingInPath, setCreatingInPath] = useState<string>("");
 
   const handleCreateItem = () => {
     if (!newItemName.trim()) {
-      setIsCreating(null);
+      resetCreatingState();
       return;
     }
 
     const name = newItemName.trim();
-    const path = name;
+    const path = creatingInPath ? `${creatingInPath}/${name}` : name;
 
     if (isCreating === 'file') {
       const newFile = createFileNode(name, path, '');
-      onFilesChange(addNodeToTree(files, '', newFile));
+      onFilesChange(addNodeToTree(files, creatingInPath, newFile));
     } else if (isCreating === 'folder') {
       const newFolder = createFolderNode(name, path, []);
-      onFilesChange(addNodeToTree(files, '', newFolder));
+      onFilesChange(addNodeToTree(files, creatingInPath, newFolder));
     }
 
+    resetCreatingState();
+  };
+
+  const resetCreatingState = () => {
     setNewItemName("");
     setIsCreating(null);
+    setCreatingInPath("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleCreateItem();
     } else if (e.key === 'Escape') {
-      setIsCreating(null);
-      setNewItemName("");
+      resetCreatingState();
     }
+  };
+
+  const handleCreateInFolder = (folderPath: string, type: 'file' | 'folder') => {
+    setCreatingInPath(folderPath);
+    setIsCreating(type);
+    setNewItemName("");
+  };
+
+  const handleRootCreate = (type: 'file' | 'folder') => {
+    setCreatingInPath("");
+    setIsCreating(type);
+    setNewItemName("");
   };
 
   if (isCollapsed) {
@@ -74,6 +91,9 @@ const FileExplorer = ({
     );
   }
 
+  // Check if we're creating at root level (not inside a folder)
+  const isCreatingAtRoot = isCreating && creatingInPath === "";
+
   return (
     <div className="h-full w-56 border-r border-border bg-card flex flex-col shrink-0">
       {/* Header */}
@@ -86,7 +106,7 @@ const FileExplorer = ({
             variant="ghost"
             size="icon"
             className="h-6 w-6 text-muted-foreground hover:text-foreground"
-            onClick={() => setIsCreating('file')}
+            onClick={() => handleRootCreate('file')}
             title="New File"
           >
             <FilePlus className="w-3.5 h-3.5" />
@@ -95,7 +115,7 @@ const FileExplorer = ({
             variant="ghost"
             size="icon"
             className="h-6 w-6 text-muted-foreground hover:text-foreground"
-            onClick={() => setIsCreating('folder')}
+            onClick={() => handleRootCreate('folder')}
             title="New Folder"
           >
             <FolderPlus className="w-3.5 h-3.5" />
@@ -115,8 +135,8 @@ const FileExplorer = ({
       {/* File Tree */}
       <ScrollArea className="flex-1">
         <div className="p-1">
-          {/* New item input */}
-          {isCreating && (
+          {/* New item input at root level */}
+          {isCreatingAtRoot && (
             <div className="px-2 py-1">
               <Input
                 autoFocus
@@ -139,6 +159,13 @@ const FileExplorer = ({
               activeFilePath={activeFilePath}
               onFileSelect={onFileSelect}
               onToggleFolder={onToggleFolder}
+              onCreateInFolder={handleCreateInFolder}
+              creatingInPath={creatingInPath}
+              isCreating={isCreating}
+              newItemName={newItemName}
+              onNewItemNameChange={setNewItemName}
+              onCreateConfirm={handleCreateItem}
+              onCreateCancel={resetCreatingState}
             />
           ))}
 
