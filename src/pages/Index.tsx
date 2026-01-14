@@ -13,7 +13,6 @@ import { CreditBalance } from "@/components/CreditBalance";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DashboardStats } from "@/components/DashboardStats";
-import { useUpdateLifetimeStats } from "@/hooks/useDashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import MinimalFooter from "@/components/MinimalFooter";
@@ -108,8 +107,7 @@ const Index = () => {
   const [upgradeReason, setUpgradeReason] = useState<'scan_limit' | 'nloc_limit'>('scan_limit');
   const [pendingNloc, setPendingNloc] = useState(0);
   
-  // Track current scan metrics for lifetime stats
-  const [currentScanMetrics, setCurrentScanMetrics] = useState<{ contractCount: number; nlocCount: number } | null>(null);
+  
   
   // Auth and profile
   const { user } = useAuth();
@@ -160,7 +158,6 @@ const Index = () => {
   const { data: subscription } = useSubscription();
   const { data: credits } = useCredits();
   const deductCredits = useDeductCredits();
-  const { updateStats: updateLifetimeStats } = useUpdateLifetimeStats();
   const runAudit = useRunAudit();
   const queryClient = useQueryClient();
 
@@ -207,9 +204,6 @@ const Index = () => {
       });
 
       setCurrentAuditId(audit.id);
-      
-      // Store metrics for lifetime stats update on completion
-      setCurrentScanMetrics({ contractCount, nlocCount: nloc });
 
       // Navigate to dashboard IMMEDIATELY so user sees progress widget
       setView("dashboard");
@@ -285,25 +279,6 @@ const Index = () => {
               supabase.removeChannel(findingsChannel);
               supabase.removeChannel(auditChannel);
               
-              // Update lifetime stats - fetch actual findings count from DB to avoid race conditions
-              if (currentScanMetrics) {
-                const { data: actualFindings } = await supabase
-                  .from('findings')
-                  .select('id')
-                  .eq('audit_id', audit.id);
-                
-                const actualFindingsCount = actualFindings?.length || 0;
-                
-                await updateLifetimeStats(
-                  currentScanMetrics.contractCount,
-                  actualFindingsCount,
-                  currentScanMetrics.nlocCount
-                );
-                
-                // Invalidate lifetime-stats query to refresh dashboard
-                queryClient.invalidateQueries({ queryKey: ['lifetime-stats', user?.id] });
-                setCurrentScanMetrics(null);
-              }
               
               setIsScanning(false);
               setShowResults(true);
@@ -387,7 +362,7 @@ const Index = () => {
 
     setIsScanning(false);
     setCurrentAuditId(null);
-    setCurrentScanMetrics(null);
+    
     setPendingFiles([]);
     setRealtimeFindings([]);
     setRealtimeAuditStatus(null);

@@ -27,28 +27,6 @@ export interface DashboardStats {
   securityScoreTrend: number[];
 }
 
-// Fetch lifetime stats that persist even when audits are deleted
-const useLifetimeStats = () => {
-  const { user } = useAuth();
-  
-  return useQuery({
-    queryKey: ['lifetime-stats', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      const { data, error } = await supabase
-        .from('lifetime_stats')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-};
-
 // Fetch all findings for all user's audits (for severity breakdown and current vulns)
 const useAllFindings = () => {
   const { user } = useAuth();
@@ -75,14 +53,13 @@ const useAllFindings = () => {
 export const useDashboardStats = (): { stats: DashboardStats; isLoading: boolean } => {
   const { data: audits, isLoading: auditsLoading } = useAudits();
   const { data: allFindings, isLoading: findingsLoading } = useAllFindings();
-  const { data: lifetimeStats, isLoading: lifetimeLoading } = useLifetimeStats();
   
   const stats = useMemo(() => {
     if (!audits) {
       return {
-        totalContractsScanned: lifetimeStats?.total_contracts_scanned || 0,
-        totalVulnerabilitiesFound: lifetimeStats?.total_vulnerabilities_found || 0,
-        totalNlocAnalyzed: lifetimeStats?.total_nloc_analyzed || 0,
+        totalContractsScanned: 0,
+        totalVulnerabilitiesFound: 0,
+        totalNlocAnalyzed: 0,
         averageSecurityScore: 0,
         severityBreakdown: { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
         recentActivity: [],
@@ -90,23 +67,18 @@ export const useDashboardStats = (): { stats: DashboardStats; isLoading: boolean
       };
     }
 
-    // Use lifetime stats for persistent metrics (don't reset on deletion)
-    const totalContractsScanned = lifetimeStats?.total_contracts_scanned || 
-      audits.reduce((acc, audit) => acc + (audit.contract_count || 0), 0);
+    // Calculate stats from current audits
+    const totalContractsScanned = audits.reduce((acc, audit) => acc + (audit.contract_count || 0), 0);
+    const totalVulnerabilitiesFound = allFindings?.length || 0;
+    const totalNlocAnalyzed = audits.reduce((acc, audit) => acc + (audit.nloc_count || 0), 0);
     
-    const totalVulnerabilitiesFound = lifetimeStats?.total_vulnerabilities_found || 
-      (allFindings?.length || 0);
-    
-    const totalNlocAnalyzed = lifetimeStats?.total_nloc_analyzed || 
-      audits.reduce((acc, audit) => acc + (audit.nloc_count || 0), 0);
-    
-    // Average security score (calculated from current audits - can reset on deletion)
+    // Average security score
     const completedAudits = audits.filter(a => a.security_score !== null);
     const averageSecurityScore = completedAudits.length > 0
       ? Math.round(completedAudits.reduce((acc, a) => acc + (a.security_score || 0), 0) / completedAudits.length)
       : 0;
     
-    // Severity breakdown (from current findings for accurate display)
+    // Severity breakdown
     const severityBreakdown = {
       critical: allFindings?.filter(f => f.severity === 'critical').length || 0,
       high: allFindings?.filter(f => f.severity === 'high').length || 0,
@@ -141,51 +113,10 @@ export const useDashboardStats = (): { stats: DashboardStats; isLoading: boolean
       recentActivity,
       securityScoreTrend,
     };
-  }, [audits, allFindings, lifetimeStats]);
+  }, [audits, allFindings]);
   
   return {
     stats,
-    isLoading: auditsLoading || findingsLoading || lifetimeLoading,
+    isLoading: auditsLoading || findingsLoading,
   };
-};
-
-// Response type for server-side stats operations
-interface StatsOperationResponse {
-  success: boolean;
-  error?: string;
-  contracts_added?: number;
-  vulnerabilities_added?: number;
-  nloc_added?: number;
-}
-
-// Hook to update lifetime stats when a new audit is created
-// Uses secure server-side function to prevent manipulation
-export const useUpdateLifetimeStats = () => {
-  const { user } = useAuth();
-  
-  const updateStats = async (contractCount: number, vulnerabilitiesCount: number, nlocCount: number) => {
-    if (!user) return;
-    
-    // Call the secure server-side function for incrementing stats
-    // This prevents users from directly manipulating their statistics
-    const { data, error } = await supabase.rpc('increment_lifetime_stats', {
-      p_contracts: contractCount,
-      p_vulnerabilities: vulnerabilitiesCount,
-      p_nloc: nlocCount,
-    });
-
-    if (error) {
-      console.error('Failed to update lifetime stats:', error);
-      throw error;
-    }
-    
-    const result = data as unknown as StatsOperationResponse;
-    
-    if (!result?.success) {
-      console.error('Failed to update lifetime stats:', result?.error);
-      throw new Error(result?.error || 'Failed to update lifetime stats');
-    }
-  };
-  
-  return { updateStats };
 };
