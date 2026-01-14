@@ -14,6 +14,7 @@ import Audits from "./pages/Audits";
 import Docs from "./pages/Docs";
 import Settings from "./pages/Settings";
 import BillingHistory from "./pages/BillingHistory";
+import Report from "./pages/Report";
 import NotFound from "./pages/NotFound";
 import ComingSoon from "./pages/ComingSoon";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -70,6 +71,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <BillingHistory />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports/:auditId"
+                element={
+                  <ProtectedRoute>
+                    <Report />
                   </ProtectedRoute>
                 }
               />
