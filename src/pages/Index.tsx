@@ -1,14 +1,10 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
 import AuditWizard from "@/components/AuditWizard";
 import ScanProgressWidget from "@/components/ScanProgressWidget";
-import VulnerabilityMatrix from "@/components/VulnerabilityMatrix";
-import FindingItem from "@/components/FindingItem";
-import FindingsFilter from "@/components/FindingsFilter";
-import SecurityScoreCard from "@/components/SecurityScoreCard";
 import { CreditBalance } from "@/components/CreditBalance";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
@@ -18,11 +14,11 @@ import { SecurityTrend } from "@/components/SecurityTrend";
 import MinimalFooter from "@/components/MinimalFooter";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
-import { useAudits, useAudit, useFindings, useCreateAudit, useUpdateAudit, useDeleteAudit, useCreateFindings } from "@/hooks/useAudits";
-import type { AuditStatus, SecurityGrade, FindingSeverity } from "@/hooks/useAudits";
+import { useAudits, useAudit, useCreateAudit, useUpdateAudit, useDeleteAudit } from "@/hooks/useAudits";
+import type { AuditStatus } from "@/hooks/useAudits";
 import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
 import { useRunAudit } from "@/hooks/useRunAudit";
-import { calculateNLOC, PLAN_LIMITS } from "@/lib/nlocCalculator";
+import { calculateNLOC } from "@/lib/nlocCalculator";
 import { formatDistanceToNow } from "date-fns";
 import { FileNode, getAllFiles } from "@/types/files";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,7 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type AppView = "dashboard" | "editor" | "results";
+type AppView = "dashboard" | "editor";
 
 const sampleCode = `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
@@ -75,6 +71,7 @@ const getTimeBasedGreeting = () => {
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [view, setView] = useState<AppView>("dashboard");
   const [code, setCode] = useState(sampleCode);
   const [projectName, setProjectName] = useState("");
@@ -83,7 +80,6 @@ const Index = () => {
   const [showResults, setShowResults] = useState(false);
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
-  const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
   const [displayName, setDisplayName] = useState<string | null>(null);
   
   // Store files for the n8n API call
@@ -91,7 +87,6 @@ const Index = () => {
   
   // Realtime findings during scan
   const [realtimeFindings, setRealtimeFindings] = useState<{ id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' }[]>([]);
-  const [newFindingIds, setNewFindingIds] = useState<Set<string>>(new Set());
   const [realtimeAuditStatus, setRealtimeAuditStatus] = useState<'pending' | 'analyzing' | 'secured' | 'issues' | null>(null);
   
   // Widget visibility state
@@ -99,16 +94,11 @@ const Index = () => {
   // AbortController ref for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
   
-  // Memoized callback for findings filter
-  const handleFilteredChange = useCallback((filtered: any[]) => setFilteredFindings(filtered), []);
-  
   // Subscription & credits state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState<'scan_limit' | 'nloc_limit'>('scan_limit');
   const [pendingNloc, setPendingNloc] = useState(0);
-  
-  
   
   // Auth and profile
   const { user } = useAuth();
@@ -129,18 +119,14 @@ const Index = () => {
 
   // Handle URL query params
   useEffect(() => {
-    const auditId = searchParams.get('audit');
     const isNew = searchParams.get('new');
     
-    if (auditId) {
-      setCurrentAuditId(auditId);
-      setView("results");
-    } else if (isNew === 'true') {
+    if (isNew === 'true') {
       setView("editor");
       // Clear the param after handling
       setSearchParams({});
     } else {
-      // Reset to dashboard when navigating to /dashboard without params
+      // Reset to dashboard
       setView("dashboard");
       setCurrentAuditId(null);
     }
@@ -148,12 +134,10 @@ const Index = () => {
 
   const { data: audits, isLoading: auditsLoading } = useAudits();
   const { data: currentAudit } = useAudit(currentAuditId);
-  const { data: findings } = useFindings(currentAuditId);
   
   const createAudit = useCreateAudit();
   const updateAudit = useUpdateAudit();
   const deleteAudit = useDeleteAudit();
-  const createFindings = useCreateFindings();
   
   // Subscription hooks
   const { data: subscription } = useSubscription();
@@ -240,17 +224,6 @@ const Index = () => {
               severity: newFinding.severity as 'critical' | 'high' | 'medium' | 'low',
             }]);
             
-            // Track new finding for animation
-            setNewFindingIds(prev => new Set(prev).add(newFinding.id));
-            // Clear animation after 1 second
-            setTimeout(() => {
-              setNewFindingIds(prev => {
-                const next = new Set(prev);
-                next.delete(newFinding.id);
-                return next;
-              });
-            }, 1000);
-            
             // Invalidate findings query to update the report view in real-time
             queryClient.invalidateQueries({ queryKey: ['findings', audit.id] });
           }
@@ -279,7 +252,6 @@ const Index = () => {
             if (updatedAudit.status === 'secured' || updatedAudit.status === 'issues') {
               supabase.removeChannel(findingsChannel);
               supabase.removeChannel(auditChannel);
-              
               
               setIsScanning(false);
               setShowResults(true);
@@ -400,11 +372,8 @@ const Index = () => {
     setWizardProjectName("");
   };
 
-  const handleViewResults = (auditId?: string) => {
-    if (auditId) {
-      setCurrentAuditId(auditId);
-    }
-    setView("results");
+  const handleViewResults = (auditId: string) => {
+    navigate(`/reports/${auditId}`);
   };
 
   const handleDeleteAudit = async () => {
@@ -428,31 +397,11 @@ const Index = () => {
     return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
   };
 
-  const getVulnerabilityCounts = () => {
-    if (!findings) return { critical: 0, high: 0, medium: 0, low: 0 };
-    
-    // Filter out info severity findings
-    const filteredFindings = findings.filter(f => f.severity !== "info");
-    
-    return {
-      critical: filteredFindings.filter(f => f.severity === "critical").length,
-      high: filteredFindings.filter(f => f.severity === "high").length,
-      medium: filteredFindings.filter(f => f.severity === "medium").length,
-      low: filteredFindings.filter(f => f.severity === "low").length,
-    };
-  };
-  
-  // Filter info findings from display - memoized to prevent infinite update loops
-  const displayFindings = useMemo(() => 
-    (findings ?? []).filter(f => f.severity !== "info"), 
-    [findings]
-  );
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-6 py-8 flex-1">
         {view === "dashboard" && (
           <div className="space-y-6">
             {/* Dashboard Header */}
@@ -566,7 +515,6 @@ const Index = () => {
               />
             )}
 
-
             {showResults && currentAudit && (
               <div className="bg-card border border-border rounded-lg p-6">
                 <div className="flex items-center justify-between">
@@ -585,102 +533,15 @@ const Index = () => {
                     <div>
                       <p className="text-lg font-semibold text-foreground">Analysis Complete</p>
                       <p className="text-sm text-muted-foreground">
-                        Found {findings?.filter(f => f.severity === 'critical').length || 0} critical, {findings?.filter(f => f.severity === 'high').length || 0} high, {findings?.filter(f => f.severity === 'medium').length || 0} medium issues
+                        Security analysis finished
                       </p>
                     </div>
                   </div>
-                  <Button onClick={() => handleViewResults()} variant="outline" className="gap-2">
+                  <Button onClick={() => currentAuditId && handleViewResults(currentAuditId)} variant="outline" className="gap-2">
                     View Full Report
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {view === "results" && (
-          <div className="space-y-6">
-            {/* Results Header */}
-            <div className="flex flex-col gap-2">
-              <button 
-                onClick={handleBackToDashboard}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
-              >
-                ← Back to Dashboard
-              </button>
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Security Report</h2>
-                {(currentAudit?.status === 'analyzing' || realtimeAuditStatus === 'analyzing') && (
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/10 border border-success/20 text-xs text-success font-medium animate-pulse">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                    Live
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {currentAudit?.project_name || "Contract"} • Analyzed {currentAudit ? formatTimestamp(currentAudit.created_at) : ""}
-              </p>
-            </div>
-
-            {currentAudit ? (
-              <>
-                {/* Security Score Card */}
-                <SecurityScoreCard
-                  grade={currentAudit.grade || "C"}
-                  score={currentAudit.security_score || 0}
-                  projectName={currentAudit.project_name}
-                  timestamp={formatTimestamp(currentAudit.created_at)}
-                  auditId={currentAudit.id}
-                />
-
-                {/* Vulnerability Matrix */}
-                <VulnerabilityMatrix counts={getVulnerabilityCounts()} />
-
-                {/* Findings List */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-foreground">Detailed Findings</h3>
-                {displayFindings.length > 0 ? (
-                    <>
-                      <FindingsFilter
-                        findings={displayFindings.map((f) => ({
-                          id: f.id,
-                          title: f.title,
-                          severity: f.severity,
-                          description: f.description,
-                          location: f.location ? {
-                            file: f.location,
-                            lines: f.line_start && f.line_end 
-                              ? (f.line_start === f.line_end ? `${f.line_start}` : `${f.line_start}-${f.line_end}`)
-                              : undefined,
-                          } : undefined,
-                          code: f.code_snippet || undefined,
-                          remediation: f.remediation || undefined,
-                          is_resolved: f.is_resolved,
-                        }))}
-                        onFilteredChange={handleFilteredChange}
-                      />
-                      <div className="space-y-3">
-                        {filteredFindings.map((finding) => (
-                          <FindingItem 
-                            key={finding.id} 
-                            finding={finding}
-                            isNew={newFindingIds.has(finding.id)}
-                          />
-                        ))}
-                        {filteredFindings.length === 0 && (
-                          <p className="text-muted-foreground text-center py-8">No findings match your filters.</p>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-muted-foreground text-center py-8">No findings for this audit.</p>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             )}
           </div>

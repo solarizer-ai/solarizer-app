@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Bell, Settings, LogOut, Menu } from "lucide-react";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,6 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -94,13 +93,6 @@ const Header = () => {
             <Link
               key={link.href}
               to={link.href}
-              onClick={(e) => {
-                if (link.href === "/dashboard" && location.pathname === "/dashboard") {
-                  e.preventDefault();
-                  setSearchParams({});
-                  navigate("/dashboard");
-                }
-              }}
               className={cn(
                 "text-sm transition-colors",
                 isActive(link.href)
@@ -189,14 +181,7 @@ const Header = () => {
                     <Link
                       key={link.href}
                       to={link.href}
-                      onClick={(e) => {
-                        if (link.href === "/dashboard" && location.pathname === "/dashboard") {
-                          e.preventDefault();
-                          setSearchParams({});
-                          navigate("/dashboard");
-                        }
-                        setMobileMenuOpen(false);
-                      }}
+                      onClick={() => setMobileMenuOpen(false)}
                       className={cn(
                         "px-3 py-2.5 rounded-lg text-sm transition-colors",
                         isActive(link.href)

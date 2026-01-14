@@ -150,7 +150,7 @@ const Audits = () => {
                     grade={audit.grade || undefined}
                     status={audit.status}
                     timestamp={formatTimestamp(audit.created_at)}
-                    onClick={() => navigate(`/dashboard?audit=${audit.id}`)}
+                    onClick={() => navigate(`/reports/${audit.id}`)}
                   />
                   <button
                     onClick={(e) => {
