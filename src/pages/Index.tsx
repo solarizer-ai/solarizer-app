@@ -78,6 +78,7 @@ const Index = () => {
   const [view, setView] = useState<AppView>("dashboard");
   const [code, setCode] = useState(sampleCode);
   const [projectName, setProjectName] = useState("");
+  const [wizardProjectName, setWizardProjectName] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
@@ -380,6 +381,7 @@ const Index = () => {
     setIsScanning(false);
     setCurrentAuditId(null);
     setProjectName("");
+    setWizardProjectName("");
     setCode(sampleCode);
     setPendingFiles([]);
     setRealtimeFindings([]);
@@ -395,6 +397,7 @@ const Index = () => {
     setSearchParams({});
     setView("dashboard");
     setCurrentAuditId(null);
+    setWizardProjectName("");
   };
 
   const handleViewResults = (auditId?: string) => {
@@ -539,7 +542,9 @@ const Index = () => {
               >
                 ← Back to Dashboard
               </button>
-              <h2 className="text-2xl font-semibold text-foreground">New Security Analysis</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                {wizardProjectName || "New Security Analysis"}
+              </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Run a new smart contract security analysis
               </p>
@@ -554,6 +559,7 @@ const Index = () => {
                 credits={credits}
                 onUpgradeNeeded={handleUpgradeNeeded}
                 onPowerUpNeeded={handlePowerUpNeeded}
+                onProjectNameChange={setWizardProjectName}
               />
             )}
 
