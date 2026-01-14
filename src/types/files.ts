@@ -127,3 +127,43 @@ export const getAllFiles = (nodes: FileNode[]): FileNode[] => {
   traverse(nodes);
   return files;
 };
+
+// Helper to update paths recursively for a node and its children
+const updateNodePaths = (node: FileNode, newPath: string): FileNode => {
+  const updatedNode = { ...node, path: newPath };
+  if (node.type === 'folder' && node.children) {
+    updatedNode.children = node.children.map((child) => {
+      const childNewPath = `${newPath}/${child.name}`;
+      return updateNodePaths(child, childNewPath);
+    });
+  }
+  return updatedNode;
+};
+
+// Check if targetPath is inside sourcePath (to prevent dropping into self)
+export const isDescendantOf = (targetPath: string, sourcePath: string): boolean => {
+  return targetPath === sourcePath || targetPath.startsWith(sourcePath + '/');
+};
+
+export const moveNodeInTree = (
+  nodes: FileNode[],
+  sourcePath: string,
+  targetFolderPath: string
+): FileNode[] => {
+  // Find the source node
+  const sourceNode = findNodeByPath(nodes, sourcePath);
+  if (!sourceNode) return nodes;
+
+  // Prevent moving into self or descendants
+  if (isDescendantOf(targetFolderPath, sourcePath)) return nodes;
+
+  // Remove from original location
+  let newTree = deleteNodeFromTree(nodes, sourcePath);
+
+  // Update the path of the moved node and its children
+  const newPath = targetFolderPath ? `${targetFolderPath}/${sourceNode.name}` : sourceNode.name;
+  const updatedNode = updateNodePaths(sourceNode, newPath);
+
+  // Add to new location
+  return addNodeToTree(newTree, targetFolderPath, updatedNode);
+};

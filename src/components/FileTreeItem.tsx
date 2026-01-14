@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown, FilePlus, FolderPlus } from "lucide-react";
+import { ChevronRight, ChevronDown, FilePlus, FolderPlus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FileNode } from "@/types/files";
 import FileTypeIcon from "./FileTypeIcon";
@@ -11,12 +11,19 @@ interface FileTreeItemProps {
   onFileSelect: (node: FileNode) => void;
   onToggleFolder: (path: string) => void;
   onCreateInFolder?: (folderPath: string, type: 'file' | 'folder') => void;
+  onDelete?: (path: string) => void;
   creatingInPath?: string;
   isCreating?: 'file' | 'folder' | null;
   newItemName?: string;
   onNewItemNameChange?: (name: string) => void;
   onCreateConfirm?: () => void;
   onCreateCancel?: () => void;
+  // Drag and drop
+  dragOverPath?: string | null;
+  onDragStart?: (e: React.DragEvent, path: string) => void;
+  onDragOver?: (e: React.DragEvent, path: string) => void;
+  onDragLeave?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent, targetPath: string) => void;
 }
 
 const FileTreeItem = ({
@@ -26,17 +33,24 @@ const FileTreeItem = ({
   onFileSelect,
   onToggleFolder,
   onCreateInFolder,
+  onDelete,
   creatingInPath,
   isCreating,
   newItemName,
   onNewItemNameChange,
   onCreateConfirm,
   onCreateCancel,
+  dragOverPath,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }: FileTreeItemProps) => {
   const isActive = node.path === activeFilePath;
   const isFolder = node.type === 'folder';
   const isExpanded = node.isExpanded ?? false;
   const isCreatingHere = isCreating && creatingInPath === node.path;
+  const isDragOver = dragOverPath === node.path && isFolder;
 
   const handleClick = () => {
     if (isFolder) {
@@ -54,15 +68,47 @@ const FileTreeItem = ({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    onDragStart?.(e, node.path);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isFolder) {
+      onDragOver?.(e, node.path);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.stopPropagation();
+    onDragLeave?.(e);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isFolder) {
+      onDrop?.(e, node.path);
+    }
+  };
+
   return (
     <div>
-      <button
+      <div
+        draggable
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         onClick={handleClick}
         className={cn(
-          "group flex items-center gap-1.5 w-full px-2 py-1 text-sm rounded-md transition-colors text-left",
+          "group flex items-center gap-1.5 w-full px-2 py-1 text-sm rounded-md transition-colors text-left cursor-pointer select-none",
           isActive
             ? "bg-primary/15 text-primary"
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+          isDragOver && "bg-primary/20 ring-1 ring-primary/40"
         )}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
       >
@@ -85,25 +131,37 @@ const FileTreeItem = ({
         />
         <span className="truncate flex-1">{node.name}</span>
         
-        {isFolder && onCreateInFolder && (
-          <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Action buttons on hover */}
+        <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {isFolder && onCreateInFolder && (
+            <>
+              <span
+                role="button"
+                onClick={(e) => { e.stopPropagation(); onCreateInFolder(node.path, 'file'); }}
+                className="p-0.5 hover:bg-muted rounded"
+              >
+                <FilePlus className="w-3.5 h-3.5" />
+              </span>
+              <span
+                role="button"
+                onClick={(e) => { e.stopPropagation(); onCreateInFolder(node.path, 'folder'); }}
+                className="p-0.5 hover:bg-muted rounded"
+              >
+                <FolderPlus className="w-3.5 h-3.5" />
+              </span>
+            </>
+          )}
+          {onDelete && (
             <span
               role="button"
-              onClick={(e) => { e.stopPropagation(); onCreateInFolder(node.path, 'file'); }}
-              className="p-0.5 hover:bg-muted rounded"
+              onClick={(e) => { e.stopPropagation(); onDelete(node.path); }}
+              className="p-0.5 hover:bg-destructive/20 hover:text-destructive rounded"
             >
-              <FilePlus className="w-3.5 h-3.5" />
+              <Trash2 className="w-3.5 h-3.5" />
             </span>
-            <span
-              role="button"
-              onClick={(e) => { e.stopPropagation(); onCreateInFolder(node.path, 'folder'); }}
-              className="p-0.5 hover:bg-muted rounded"
-            >
-              <FolderPlus className="w-3.5 h-3.5" />
-            </span>
-          </div>
-        )}
-      </button>
+          )}
+        </div>
+      </div>
 
       {/* Inline input for creating new item inside this folder */}
       {isFolder && isCreatingHere && (
@@ -141,12 +199,18 @@ const FileTreeItem = ({
               onFileSelect={onFileSelect}
               onToggleFolder={onToggleFolder}
               onCreateInFolder={onCreateInFolder}
+              onDelete={onDelete}
               creatingInPath={creatingInPath}
               isCreating={isCreating}
               newItemName={newItemName}
               onNewItemNameChange={onNewItemNameChange}
               onCreateConfirm={onCreateConfirm}
               onCreateCancel={onCreateCancel}
+              dragOverPath={dragOverPath}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
             />
           ))}
         </div>

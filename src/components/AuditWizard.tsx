@@ -18,6 +18,7 @@ interface AuditWizardProps {
   credits?: { credits_remaining: number; scans_remaining: number } | null;
   onUpgradeNeeded?: (reason: 'scan_limit' | 'nloc_limit', nloc: number) => void;
   onPowerUpNeeded?: (nloc: number) => void;
+  onProjectNameChange?: (name: string) => void;
 }
 
 type WizardStep = 'name' | 'method' | 'input' | 'estimate';
@@ -37,6 +38,7 @@ const AuditWizard = ({
   credits,
   onUpgradeNeeded,
   onPowerUpNeeded,
+  onProjectNameChange,
 }: AuditWizardProps) => {
   const [step, setStep] = useState<WizardStep>('name');
   const [projectName, setProjectName] = useState("");
@@ -44,6 +46,10 @@ const AuditWizard = ({
   const [files, setFiles] = useState<FileNode[]>([]);
   const [editorCode, setEditorCode] = useState(SAMPLE_CODE);
 
+  const handleProjectNameChange = (name: string) => {
+    setProjectName(name);
+    onProjectNameChange?.(name);
+  };
   const handleMethodSelect = (method: UploadMethod) => {
     setUploadMethod(method);
     if (method === 'editor') {
@@ -146,7 +152,7 @@ const AuditWizard = ({
         {step === 'name' && (
           <ProjectNameStep
             projectName={projectName}
-            onProjectNameChange={setProjectName}
+            onProjectNameChange={handleProjectNameChange}
             onContinue={() => setStep('method')}
           />
         )}

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { FileNode, createFileNode, createFolderNode, addNodeToTree } from "@/types/files";
+import { FileNode, createFileNode, createFolderNode, addNodeToTree, deleteNodeFromTree, moveNodeInTree, isDescendantOf } from "@/types/files";
 import FileTreeItem from "./FileTreeItem";
 
 interface FileExplorerProps {
@@ -29,6 +29,8 @@ const FileExplorer = ({
   const [isCreating, setIsCreating] = useState<'file' | 'folder' | null>(null);
   const [newItemName, setNewItemName] = useState("");
   const [creatingInPath, setCreatingInPath] = useState<string>("");
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
+  const [draggingPath, setDraggingPath] = useState<string | null>(null);
 
   const handleCreateItem = () => {
     if (!newItemName.trim()) {
@@ -74,6 +76,57 @@ const FileExplorer = ({
     setCreatingInPath("");
     setIsCreating(type);
     setNewItemName("");
+  };
+
+  const handleDelete = (path: string) => {
+    const newFiles = deleteNodeFromTree(files, path);
+    onFilesChange(newFiles);
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, path: string) => {
+    e.dataTransfer.setData('text/plain', path);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggingPath(path);
+  };
+
+  const handleDragOver = (e: React.DragEvent, path: string) => {
+    e.preventDefault();
+    // Only allow dropping on folders, and not on self or descendants
+    if (draggingPath && !isDescendantOf(path, draggingPath)) {
+      setDragOverPath(path);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverPath(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetPath: string) => {
+    e.preventDefault();
+    const sourcePath = e.dataTransfer.getData('text/plain');
+    
+    if (sourcePath && sourcePath !== targetPath) {
+      const newFiles = moveNodeInTree(files, sourcePath, targetPath);
+      onFilesChange(newFiles);
+    }
+    
+    setDragOverPath(null);
+    setDraggingPath(null);
+  };
+
+  const handleRootDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const sourcePath = e.dataTransfer.getData('text/plain');
+    
+    if (sourcePath) {
+      // Move to root (empty string as target)
+      const newFiles = moveNodeInTree(files, sourcePath, '');
+      onFilesChange(newFiles);
+    }
+    
+    setDragOverPath(null);
+    setDraggingPath(null);
   };
 
   if (isCollapsed) {
@@ -134,7 +187,12 @@ const FileExplorer = ({
 
       {/* File Tree */}
       <ScrollArea className="flex-1">
-        <div className="p-1">
+        <div 
+          className="p-1"
+          onDragOver={(e) => { e.preventDefault(); setDragOverPath('__root__'); }}
+          onDragLeave={() => setDragOverPath(null)}
+          onDrop={handleRootDrop}
+        >
           {/* New item input at root level */}
           {isCreatingAtRoot && (
             <div className="px-2 py-1">
@@ -160,12 +218,18 @@ const FileExplorer = ({
               onFileSelect={onFileSelect}
               onToggleFolder={onToggleFolder}
               onCreateInFolder={handleCreateInFolder}
+              onDelete={handleDelete}
               creatingInPath={creatingInPath}
               isCreating={isCreating}
               newItemName={newItemName}
               onNewItemNameChange={setNewItemName}
               onCreateConfirm={handleCreateItem}
               onCreateCancel={resetCreatingState}
+              dragOverPath={dragOverPath}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             />
           ))}
 
