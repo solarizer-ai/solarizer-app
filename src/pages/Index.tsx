@@ -349,12 +349,12 @@ const Index = () => {
       abortControllerRef.current = null;
     }
 
-    // Update audit status back to pending
+    // Update audit status to cancelled (user-initiated)
     if (currentAuditId) {
       try {
         await updateAudit.mutateAsync({
           id: currentAuditId,
-          status: "pending" as AuditStatus,
+          status: "cancelled" as AuditStatus,
         });
       } catch (e) {
         // Ignore errors when updating cancelled audit

@@ -298,10 +298,24 @@ export type Database = {
         Args: { p_nloc_amount: number; p_price_cents: number }
         Returns: Json
       }
+      refund_credits: {
+        Args: {
+          p_is_starter?: boolean
+          p_nloc_amount: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
-      audit_status: "pending" | "analyzing" | "secured" | "issues"
+      audit_status:
+        | "pending"
+        | "analyzing"
+        | "secured"
+        | "issues"
+        | "cancelled"
+        | "failed"
       finding_severity: "critical" | "high" | "medium" | "low" | "info"
       security_grade: "A" | "B" | "C" | "D" | "F"
       subscription_plan: "starter" | "pro"
@@ -434,7 +448,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      audit_status: ["pending", "analyzing", "secured", "issues"],
+      audit_status: [
+        "pending",
+        "analyzing",
+        "secured",
+        "issues",
+        "cancelled",
+        "failed",
+      ],
       finding_severity: ["critical", "high", "medium", "low", "info"],
       security_grade: ["A", "B", "C", "D", "F"],
       subscription_plan: ["starter", "pro"],

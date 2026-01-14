@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-export type AuditStatus = 'pending' | 'analyzing' | 'secured' | 'issues';
+export type AuditStatus = 'pending' | 'analyzing' | 'secured' | 'issues' | 'cancelled' | 'failed';
 export type SecurityGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info'; // 'info' kept for DB compatibility but filtered in UI
 

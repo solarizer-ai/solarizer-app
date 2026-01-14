@@ -1,7 +1,7 @@
-import { Clock, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
+import { Clock, CheckCircle2, Loader2, AlertTriangle, XCircle, AlertOctagon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type AuditStatus = "analyzing" | "secured" | "issues" | "pending";
+type AuditStatus = "analyzing" | "secured" | "issues" | "pending" | "cancelled" | "failed";
 type SecurityGrade = "A" | "B" | "C" | "D" | "F";
 
 interface AuditCardProps {
@@ -41,6 +41,16 @@ const statusConfig: Record<AuditStatus, { label: string; icon: React.ReactNode; 
     label: "Pending",
     icon: <Clock className="w-3 h-3" />,
     className: "text-muted-foreground bg-muted border-border",
+  },
+  cancelled: {
+    label: "Cancelled",
+    icon: <XCircle className="w-3 h-3" />,
+    className: "text-muted-foreground bg-muted border-border",
+  },
+  failed: {
+    label: "Failed",
+    icon: <AlertOctagon className="w-3 h-3" />,
+    className: "text-critical bg-critical/10 border-critical/20",
   },
 };
 
