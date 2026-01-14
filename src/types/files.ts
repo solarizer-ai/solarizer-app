@@ -113,6 +113,26 @@ export const deleteNodeFromTree = (
     });
 };
 
+export const renameNodeInTree = (
+  nodes: FileNode[],
+  oldPath: string,
+  newName: string
+): FileNode[] => {
+  return nodes.map((node) => {
+    if (node.path === oldPath) {
+      const pathParts = oldPath.split('/');
+      pathParts[pathParts.length - 1] = newName;
+      const newPath = pathParts.join('/');
+      
+      return updateNodePaths({ ...node, name: newName }, newPath);
+    }
+    if (node.children) {
+      return { ...node, children: renameNodeInTree(node.children, oldPath, newName) };
+    }
+    return node;
+  });
+};
+
 export const getAllFiles = (nodes: FileNode[]): FileNode[] => {
   const files: FileNode[] = [];
   const traverse = (nodeList: FileNode[]) => {

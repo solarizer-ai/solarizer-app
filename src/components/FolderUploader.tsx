@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { FolderUp, Loader2, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FileNode, generateId } from "@/types/files";
+import { FileNode, generateId, deleteNodeFromTree } from "@/types/files";
 import FileTypeIcon from "./FileTypeIcon";
 
 interface FolderUploaderProps {
@@ -204,11 +204,16 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
     return size;
   };
 
+  const handleRemoveFile = (path: string) => {
+    const updatedFiles = deleteNodeFromTree(uploadedFiles, path);
+    onFilesUploaded(updatedFiles);
+  };
+
   const renderTree = (nodes: FileNode[], depth = 0): React.ReactNode => {
     return nodes.map((node) => (
-      <div key={node.id}>
+      <div key={node.id} className="group">
         <div
-          className="flex items-center gap-2 py-1 text-sm text-muted-foreground"
+          className="flex items-center gap-2 py-1 text-sm text-muted-foreground hover:bg-muted/50 rounded-sm pr-1"
           style={{ paddingLeft: `${depth * 16}px` }}
         >
           <FileTypeIcon
@@ -217,12 +222,18 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
             isOpen={true}
             size={14}
           />
-          <span className="truncate">{node.name}</span>
+          <span className="truncate flex-1">{node.name}</span>
           {node.type === 'file' && node.content && (
-            <span className="text-xs text-muted-foreground/60 ml-auto">
+            <span className="text-xs text-muted-foreground/60">
               {formatSize(new Blob([node.content]).size)}
             </span>
           )}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleRemoveFile(node.path); }}
+            className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive rounded transition-opacity"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
         {node.children && renderTree(node.children, depth + 1)}
       </div>
