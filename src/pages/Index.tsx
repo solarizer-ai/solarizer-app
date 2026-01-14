@@ -301,7 +301,7 @@ const Index = () => {
                 );
                 
                 // Invalidate lifetime-stats query to refresh dashboard
-                queryClient.invalidateQueries({ queryKey: ['lifetime-stats'] });
+                queryClient.invalidateQueries({ queryKey: ['lifetime-stats', user?.id] });
                 setCurrentScanMetrics(null);
               }
               
