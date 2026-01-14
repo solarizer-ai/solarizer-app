@@ -109,36 +109,6 @@ export type Database = {
           },
         ]
       }
-      lifetime_stats: {
-        Row: {
-          created_at: string
-          id: string
-          total_contracts_scanned: number
-          total_nloc_analyzed: number
-          total_vulnerabilities_found: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          total_contracts_scanned?: number
-          total_nloc_analyzed?: number
-          total_vulnerabilities_found?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          total_contracts_scanned?: number
-          total_nloc_analyzed?: number
-          total_vulnerabilities_found?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       nloc_credits: {
         Row: {
           created_at: string
@@ -323,10 +293,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      increment_lifetime_stats: {
-        Args: { p_contracts: number; p_nloc: number; p_vulnerabilities: number }
-        Returns: Json
       }
       purchase_power_up: {
         Args: { p_nloc_amount: number; p_price_cents: number }
