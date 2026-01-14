@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
@@ -442,8 +442,11 @@ const Index = () => {
     };
   };
   
-  // Filter info findings from display
-  const displayFindings = findings?.filter(f => f.severity !== "info") || [];
+  // Filter info findings from display - memoized to prevent infinite update loops
+  const displayFindings = useMemo(() => 
+    (findings ?? []).filter(f => f.severity !== "info"), 
+    [findings]
+  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
