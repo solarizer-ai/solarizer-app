@@ -6,7 +6,8 @@ import {
   SandpackCodeEditor,
   useSandpack,
 } from "@codesandbox/sandpack-react";
-import { Copy, Check, Maximize2, Minimize2, FilePlus, FolderPlus, Trash2, Pencil } from "lucide-react";
+import { Copy, Check, Maximize2, Minimize2, FilePlus, FolderPlus, Trash2, Pencil, Lock, Unlock, WrapText, List, Download } from "lucide-react";
+import JSZip from "jszip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
@@ -43,6 +44,11 @@ const SandpackEditorInner = ({
   const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Editor settings states
+  const [isReadOnly, setIsReadOnly] = useState(readOnly);
+  const [wordWrap, setWordWrap] = useState(true);
+  const [showLineNumbers, setShowLineNumbers] = useState(true);
   
   // Dialog states
   const [newFileOpen, setNewFileOpen] = useState(false);
@@ -120,6 +126,22 @@ const SandpackEditorInner = ({
   const fileCount = Object.keys(sandpack.files).length;
   const hasActiveFile = !!sandpack.activeFile;
 
+  // Download project as ZIP
+  const handleDownload = useCallback(async () => {
+    const zip = new JSZip();
+    Object.entries(sandpack.files).forEach(([path, file]) => {
+      const filePath = path.startsWith("/") ? path.slice(1) : path;
+      zip.file(filePath, file.code);
+    });
+    const content = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "project.zip";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [sandpack.files]);
+
   return (
     <>
       <div
@@ -139,11 +161,62 @@ const SandpackEditorInner = ({
             <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded mr-2">
               {getLanguageLabel(activeFileName)}
             </span>
+            
+            {/* Editor Settings Toggles */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 w-7 p-0",
+                isReadOnly ? "text-amber-500 hover:text-amber-400" : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setIsReadOnly(!isReadOnly)}
+              title={isReadOnly ? "Read-only mode (click to edit)" : "Edit mode (click to lock)"}
+            >
+              {isReadOnly ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 w-7 p-0",
+                wordWrap ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setWordWrap(!wordWrap)}
+              title={wordWrap ? "Word wrap enabled" : "Word wrap disabled"}
+            >
+              <WrapText className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 w-7 p-0",
+                showLineNumbers ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setShowLineNumbers(!showLineNumbers)}
+              title={showLineNumbers ? "Line numbers visible" : "Line numbers hidden"}
+            >
+              <List className="w-3.5 h-3.5" />
+            </Button>
+            
+            <div className="h-4 w-px bg-border mx-1" />
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              onClick={handleDownload}
+              title="Download project as ZIP"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
               className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
               onClick={handleCopy}
+              title="Copy current file"
             >
               {copied ? (
                 <Check className="w-3.5 h-3.5 text-success" />
@@ -156,6 +229,7 @@ const SandpackEditorInner = ({
               size="sm"
               className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
               onClick={() => setIsFullscreen(!isFullscreen)}
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
             >
               {isFullscreen ? (
                 <Minimize2 className="w-3.5 h-3.5" />
@@ -167,7 +241,7 @@ const SandpackEditorInner = ({
         </div>
 
         {/* File Management Toolbar */}
-        {!disableFileManagement && !readOnly && (
+        {!disableFileManagement && !isReadOnly && (
           <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border bg-muted/20">
             <Button
               variant="ghost"
@@ -230,11 +304,12 @@ const SandpackEditorInner = ({
           )}
           <SandpackCodeEditor
             showTabs={true}
-            showLineNumbers={true}
+            showLineNumbers={showLineNumbers}
             showInlineErrors={true}
-            wrapContent={true}
+            wrapContent={wordWrap}
             closableTabs={true}
-            readOnly={readOnly}
+            readOnly={isReadOnly}
+            showReadOnly={isReadOnly}
             style={{
               height: isFullscreen ? "calc(100vh - 112px)" : height,
               flex: 1,
