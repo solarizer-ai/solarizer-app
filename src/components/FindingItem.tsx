@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -9,17 +9,21 @@ interface Finding {
   title: string;
   severity: Severity;
   description: string;
-  location: {
+  location?: {
     file: string;
-    lines: string;
+    lines?: string;
   };
-  code: string;
-  remediation: string;
+  code?: string;
+  remediation?: string;
+  is_resolved?: boolean;
 }
 
 interface FindingItemProps {
   finding: Finding;
   isNew?: boolean;
+  isHighlighted?: boolean;
+  forceExpanded?: boolean;
+  onRefReady?: (el: HTMLDivElement | null) => void;
 }
 
 const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: string; className: string }> = {
@@ -160,16 +164,33 @@ const highlightSolidityCode = (code: string) => {
   });
 };
 
-const FindingItem = ({ finding, isNew = false }: FindingItemProps) => {
+const FindingItem = ({ 
+  finding, 
+  isNew = false, 
+  isHighlighted = false,
+  forceExpanded = false,
+  onRefReady 
+}: FindingItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const config = severityConfig[finding.severity];
   const Icon = config.icon;
 
+  // Auto-expand when forceExpanded changes to true
+  useEffect(() => {
+    if (forceExpanded) {
+      setIsExpanded(true);
+    }
+  }, [forceExpanded]);
+
   return (
-    <div className={cn(
-      "border border-border rounded-lg overflow-hidden bg-card/50 transition-all duration-300",
-      isNew && "animate-fade-in ring-2 ring-primary/30"
-    )}>
+    <div 
+      ref={onRefReady}
+      className={cn(
+        "border border-border rounded-lg overflow-hidden bg-card/50 transition-all duration-300",
+        isNew && "animate-fade-in ring-2 ring-primary/30",
+        isHighlighted && "ring-2 ring-warning animate-highlight-pulse"
+      )}
+    >
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

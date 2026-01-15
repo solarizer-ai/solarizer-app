@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import MinimalFooter from "@/components/MinimalFooter";
@@ -6,15 +6,21 @@ import VulnerabilityMatrix from "@/components/VulnerabilityMatrix";
 import FindingItem from "@/components/FindingItem";
 import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
-import { Loader2 } from "lucide-react";
+import SecurityCoverageTab from "@/components/SecurityCoverageTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Shield, AlertTriangle } from "lucide-react";
 import { useAudit, useFindings } from "@/hooks/useAudits";
 import { formatDistanceToNow } from "date-fns";
+import type { CoverageData } from "@/hooks/useAudits";
 
 const Report = () => {
   const { auditId } = useParams<{ auditId: string }>();
   const navigate = useNavigate();
   const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
-
+  const [activeTab, setActiveTab] = useState<string>("coverage");
+  const [highlightedFindingId, setHighlightedFindingId] = useState<string | null>(null);
+  const findingRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  
   // Memoized callback for findings filter
   const handleFilteredChange = useCallback((filtered: any[]) => setFilteredFindings(filtered), []);
 
@@ -29,13 +35,13 @@ const Report = () => {
     if (!findings) return { critical: 0, high: 0, medium: 0, low: 0 };
     
     // Filter out info severity findings
-    const filteredFindings = findings.filter(f => f.severity !== "info");
+    const filteredFindingsForCounts = findings.filter(f => f.severity !== "info");
     
     return {
-      critical: filteredFindings.filter(f => f.severity === "critical").length,
-      high: filteredFindings.filter(f => f.severity === "high").length,
-      medium: filteredFindings.filter(f => f.severity === "medium").length,
-      low: filteredFindings.filter(f => f.severity === "low").length,
+      critical: filteredFindingsForCounts.filter(f => f.severity === "critical").length,
+      high: filteredFindingsForCounts.filter(f => f.severity === "high").length,
+      medium: filteredFindingsForCounts.filter(f => f.severity === "medium").length,
+      low: filteredFindingsForCounts.filter(f => f.severity === "low").length,
     };
   };
 
@@ -60,6 +66,26 @@ const Report = () => {
       })),
     [findings]
   );
+
+  // Handle "View Issue" from coverage tab - switches to findings tab and scrolls to finding
+  const handleViewIssue = useCallback((findingTitle: string) => {
+    const finding = transformedFindings.find(f => f.title === findingTitle);
+    if (finding) {
+      // Switch to findings tab
+      setActiveTab("findings");
+      
+      // Wait for tab content to render, then scroll
+      setTimeout(() => {
+        const element = findingRefs.current.get(finding.id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setHighlightedFindingId(finding.id);
+          // Remove highlight after animation
+          setTimeout(() => setHighlightedFindingId(null), 2000);
+        }
+      }, 100);
+    }
+  }, [transformedFindings]);
 
   const isLive = currentAudit?.status === 'analyzing';
 
@@ -114,31 +140,59 @@ const Report = () => {
               {/* Vulnerability Matrix */}
               <VulnerabilityMatrix counts={getVulnerabilityCounts()} />
 
-              {/* Findings List */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Detailed Findings</h3>
-                {transformedFindings.length > 0 ? (
-                  <>
-                    <FindingsFilter
-                      findings={transformedFindings}
-                      onFilteredChange={handleFilteredChange}
-                    />
-                    <div className="space-y-3">
-                      {filteredFindings.map((finding) => (
-                        <FindingItem 
-                          key={finding.id} 
-                          finding={finding}
+              {/* Tabbed Interface: Coverage & Findings */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="coverage" className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    Security Coverage
+                  </TabsTrigger>
+                  <TabsTrigger value="findings" className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Findings ({transformedFindings.length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="coverage" className="mt-4">
+                  <SecurityCoverageTab
+                    coverageData={currentAudit?.coverage_data as CoverageData | null}
+                    onViewIssue={handleViewIssue}
+                  />
+                </TabsContent>
+
+                <TabsContent value="findings" className="mt-4">
+                  <div className="space-y-4">
+                    {transformedFindings.length > 0 ? (
+                      <>
+                        <FindingsFilter
+                          findings={transformedFindings}
+                          onFilteredChange={handleFilteredChange}
                         />
-                      ))}
-                      {filteredFindings.length === 0 && (
-                        <p className="text-muted-foreground text-center py-8">No findings match your filters.</p>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-muted-foreground text-center py-8">No findings for this audit.</p>
-                )}
-              </div>
+                        <div className="space-y-3">
+                          {filteredFindings.map((finding) => (
+                            <FindingItem 
+                              key={finding.id} 
+                              finding={finding}
+                              isHighlighted={highlightedFindingId === finding.id}
+                              forceExpanded={highlightedFindingId === finding.id}
+                              onRefReady={(el) => {
+                                if (el) {
+                                  findingRefs.current.set(finding.id, el);
+                                }
+                              }}
+                            />
+                          ))}
+                          {filteredFindings.length === 0 && (
+                            <p className="text-muted-foreground text-center py-8">No findings match your filters.</p>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">No findings for this audit.</p>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </>
           ) : (
             <div className="text-center py-20">

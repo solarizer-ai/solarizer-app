@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           contract_code: string
           contract_count: number
+          coverage_data: Json | null
           created_at: string
           grade: Database["public"]["Enums"]["security_grade"] | null
           id: string
@@ -25,12 +26,14 @@ export type Database = {
           project_name: string
           security_score: number | null
           status: Database["public"]["Enums"]["audit_status"]
+          system_hologram: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
           contract_code: string
           contract_count?: number
+          coverage_data?: Json | null
           created_at?: string
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
@@ -38,12 +41,14 @@ export type Database = {
           project_name: string
           security_score?: number | null
           status?: Database["public"]["Enums"]["audit_status"]
+          system_hologram?: Json | null
           updated_at?: string
           user_id: string
         }
         Update: {
           contract_code?: string
           contract_count?: number
+          coverage_data?: Json | null
           created_at?: string
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
@@ -51,6 +56,7 @@ export type Database = {
           project_name?: string
           security_score?: number | null
           status?: Database["public"]["Enums"]["audit_status"]
+          system_hologram?: Json | null
           updated_at?: string
           user_id?: string
         }
