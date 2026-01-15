@@ -81,7 +81,8 @@ const solidityTypes = new Set([
   'address', 'bool', 'string', 'bytes', 'bytes32', 'bytes4', 'bytes20'
 ]);
 
-const highlightSolidityCode = (code: string) => {
+const highlightSolidityCode = (code: string | undefined) => {
+  if (!code) return null;
   const lines = code.split('\n');
   
   return lines.map((line, lineIndex) => {
@@ -224,10 +225,12 @@ const FindingItem = ({
 
           {/* Location + Chevron (desktop only) */}
           <div className="hidden sm:flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <FileCode className="w-3.5 h-3.5" />
-              <span className="font-mono">{finding.location.lines}</span>
-            </div>
+            {finding.location?.lines && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <FileCode className="w-3.5 h-3.5" />
+                <span className="font-mono">{finding.location.lines}</span>
+              </div>
+            )}
             <ChevronDown className={cn(
               "w-4 h-4 text-muted-foreground transition-transform duration-200",
               isExpanded && "rotate-180"
@@ -235,10 +238,12 @@ const FindingItem = ({
           </div>
           
           {/* Location on mobile - smaller, below title */}
-          <div className="flex sm:hidden items-center gap-1.5 text-xs text-muted-foreground">
-            <FileCode className="w-3 h-3" />
-            <span className="font-mono text-[11px]">{finding.location.lines}</span>
-          </div>
+          {finding.location?.lines && (
+            <div className="flex sm:hidden items-center gap-1.5 text-xs text-muted-foreground">
+              <FileCode className="w-3 h-3" />
+              <span className="font-mono text-[11px]">{finding.location.lines}</span>
+            </div>
+          )}
         </div>
       </button>
 
@@ -256,39 +261,49 @@ const FindingItem = ({
           </div>
 
           {/* Location */}
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Location
-            </h4>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-mono text-primary">{finding.location.file}</span>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">Lines {finding.location.lines}</span>
+          {finding.location && (
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                Location
+              </h4>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-mono text-primary">{finding.location.file}</span>
+                {finding.location.lines && (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">Lines {finding.location.lines}</span>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Affected Code */}
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Affected Code
-            </h4>
-            <div className="bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto">
-              {highlightSolidityCode(finding.code)}
+          {finding.code && (
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                Affected Code
+              </h4>
+              <div className="bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto">
+                {highlightSolidityCode(finding.code)}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Remediation */}
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Lightbulb className="w-3.5 h-3.5 text-success" />
-              Remediation Guide
-            </h4>
-            <div className="bg-success/5 border border-success/20 rounded-md p-4">
-              <p className="text-sm text-foreground/90 leading-relaxed">
-                {renderWithCodeFormatting(finding.remediation)}
-              </p>
+          {finding.remediation && (
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-success" />
+                Remediation Guide
+              </h4>
+              <div className="bg-success/5 border border-success/20 rounded-md p-4">
+                <p className="text-sm text-foreground/90 leading-relaxed">
+                  {renderWithCodeFormatting(finding.remediation)}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
