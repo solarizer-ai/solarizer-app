@@ -5,11 +5,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-callback-secret',
 };
 
+interface CoverageTestDetail {
+  test_name: string;
+  status: "PASSED" | "FAILED";
+  proof: string | null;
+  file: string;
+  related_finding_title: string | null;
+}
+
+interface CoverageData {
+  total_tests: number;
+  passed: number;
+  failed: number;
+  details: CoverageTestDetail[];
+}
+
 interface CompleteAuditRequest {
   audit_id: string;
   security_score: number;
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   status: 'secured' | 'issues';
+  coverage_data?: CoverageData;
+  system_hologram?: Record<string, unknown>;
 }
 
 Deno.serve(async (req) => {
@@ -53,7 +70,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { audit_id, security_score, grade, status } = body;
+    const { audit_id, security_score, grade, status, coverage_data, system_hologram } = body;
 
     // Validate required fields
     if (!audit_id || typeof audit_id !== 'string') {
@@ -86,12 +103,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate coverage_data structure if provided
+    if (coverage_data) {
+      if (typeof coverage_data.total_tests !== 'number' ||
+          typeof coverage_data.passed !== 'number' ||
+          typeof coverage_data.failed !== 'number' ||
+          !Array.isArray(coverage_data.details)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid coverage_data structure' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Initialize Supabase client with service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`complete-audit: Completing audit ${audit_id} with score ${security_score}, grade ${grade}, status ${status}`);
+    console.log(`complete-audit: Completing audit ${audit_id} with score ${security_score}, grade ${grade}, status ${status}, coverage_tests: ${coverage_data?.total_tests ?? 0}`);
 
     // Update the audit
     const { data, error } = await supabase
@@ -100,6 +130,8 @@ Deno.serve(async (req) => {
         security_score,
         grade,
         status,
+        coverage_data: coverage_data || {},
+        system_hologram: system_hologram || {},
         updated_at: new Date().toISOString(),
       })
       .eq('id', audit_id)
