@@ -135,3 +135,88 @@ export const getFirstFilePath = (nodes: FileNode[]): string | null => {
   const allFiles = getAllFiles(nodes);
   return allFiles.length > 0 ? allFiles[0].path : null;
 };
+
+/**
+ * Get default content based on file extension
+ */
+export const getDefaultContent = (fileName: string): string => {
+  const ext = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+  
+  switch (ext) {
+    case ".sol":
+      return `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract ${fileName.replace(".sol", "")} {
+    // Your smart contract code here
+}`;
+    case ".json":
+      return `{
+  
+}`;
+    case ".md":
+      return `# ${fileName.replace(".md", "")}
+
+`;
+    case ".js":
+    case ".jsx":
+      return `// ${fileName}
+
+export default function() {
+  
+}`;
+    case ".ts":
+    case ".tsx":
+      return `// ${fileName}
+
+export default function() {
+  
+}`;
+    case ".yaml":
+    case ".yml":
+      return `# ${fileName}
+
+`;
+    default:
+      return "";
+  }
+};
+
+/**
+ * Get all folder paths from files
+ */
+export const getFolderPaths = (files: Record<string, { code: string }>): string[] => {
+  const folders = new Set<string>();
+  folders.add("/"); // Root folder
+  
+  Object.keys(files).forEach((path) => {
+    const parts = path.split("/").filter(Boolean);
+    parts.pop(); // Remove file name
+    
+    let currentPath = "";
+    parts.forEach((part) => {
+      currentPath = `${currentPath}/${part}`;
+      folders.add(currentPath);
+    });
+  });
+  
+  return Array.from(folders).sort();
+};
+
+/**
+ * Check if a path already exists
+ */
+export const pathExists = (files: Record<string, { code: string }>, path: string): boolean => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return Object.keys(files).some(
+    (existingPath) => existingPath.toLowerCase() === normalizedPath.toLowerCase()
+  );
+};
+
+/**
+ * Get all files in a folder (for deletion)
+ */
+export const getFilesInFolder = (files: Record<string, { code: string }>, folderPath: string): string[] => {
+  const normalizedPath = folderPath.startsWith("/") ? folderPath : `/${folderPath}`;
+  return Object.keys(files).filter((path) => path.startsWith(normalizedPath + "/"));
+};
