@@ -7,7 +7,7 @@ import ProjectNameStep from "./wizard/ProjectNameStep";
 import UploadMethodStep, { UploadMethod } from "./wizard/UploadMethodStep";
 import EstimatorStep from "./wizard/EstimatorStep";
 import FolderUploader from "./FolderUploader";
-import CodeEditor from "./CodeEditor";
+import SandpackEditor from "./SandpackEditor";
 import { ClocResult } from "@/hooks/useClocEstimate";
 
 interface AuditWizardProps {
@@ -216,11 +216,11 @@ const AuditWizard = ({
               </Button>
             </div>
 
-            <CodeEditor
+            <SandpackEditor
               files={files}
               onFilesChange={setFiles}
               showExplorer={true}
-              disableAddFile={subscription?.plan === 'starter' || !subscription}
+              readOnly={false}
             />
           </div>
         )}
