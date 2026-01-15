@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { downloadPdfReport } from "@/lib/pdfReport";
 import { useToast } from "@/hooks/use-toast";
 
-type Grade = "A" | "B" | "C" | "D" | "F";
+type Grade = "A" | "B" | "C" | "D" | "F" | null;
 
 interface VulnerabilityCount {
   critical: number;
@@ -23,7 +23,7 @@ interface SecurityScoreCardProps {
   counts?: VulnerabilityCount;
 }
 
-const gradeConfig: Record<Grade, { color: string; label: string; description: string }> = {
+const gradeConfig: Record<Exclude<Grade, null>, { color: string; label: string; description: string }> = {
   A: {
     color: "text-success",
     label: "Excellent",
@@ -51,6 +51,12 @@ const gradeConfig: Record<Grade, { color: string; label: string; description: st
   },
 };
 
+const pendingConfig = {
+  color: "text-muted-foreground",
+  label: "Pending",
+  description: "Analysis in progress or no results yet",
+};
+
 const SecurityScoreCard = ({ 
   grade, 
   score, 
@@ -59,9 +65,11 @@ const SecurityScoreCard = ({
   auditId,
   counts = { critical: 0, high: 0, medium: 0, low: 0 }
 }: SecurityScoreCardProps) => {
-  const config = gradeConfig[grade];
+  const isPending = grade === null;
+  const config = isPending ? pendingConfig : gradeConfig[grade];
+  const displayScore = isPending ? 0 : score;
   const circumference = 2 * Math.PI * 45;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
+  const strokeDashoffset = circumference - (displayScore / 100) * circumference;
   const [isDownloading, setIsDownloading] = useState(false);
   const { toast } = useToast();
 
@@ -136,7 +144,25 @@ const SecurityScoreCard = ({
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6">
+    <div className="bg-card border border-border rounded-lg p-6 relative">
+      {/* Desktop Download Button - Absolute positioned top-right */}
+      {!isPending && auditId && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownloadPDF}
+          disabled={isDownloading}
+          className="hidden sm:flex gap-2 absolute top-4 right-4 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+        >
+          {isDownloading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          {isDownloading ? "Generating..." : "Download PDF"}
+        </Button>
+      )}
+
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
         {/* Circular Progress */}
         <div className="relative w-28 h-28 lg:w-32 lg:h-32 shrink-0">
@@ -157,6 +183,7 @@ const SecurityScoreCard = ({
               r="45"
               className={cn(
                 "transition-all duration-1000 ease-out",
+                isPending ? "stroke-muted" :
                 grade === "A" || grade === "B" ? "stroke-success" :
                 grade === "C" || grade === "D" ? "stroke-warning" : "stroke-critical"
               )}
@@ -168,36 +195,23 @@ const SecurityScoreCard = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={cn("text-3xl lg:text-4xl font-bold", config.color)}>{grade}</span>
-            <span className="text-xs text-muted-foreground">{score}/100</span>
+            <span className={cn("text-3xl lg:text-4xl font-bold", config.color)}>
+              {isPending ? "--" : grade}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {isPending ? "--/100" : `${score}/100`}
+            </span>
           </div>
         </div>
 
         {/* Score Details + Vulnerability Matrix */}
         <div className="flex-1 text-center lg:text-left space-y-4">
           <div>
-            <div className="flex flex-col sm:flex-row items-center sm:items-baseline justify-center lg:justify-between gap-2 mb-2">
-              <div className="flex items-baseline gap-2">
-                <span className={cn("text-xl lg:text-2xl font-semibold", config.color)}>
-                  {config.label}
-                </span>
-                <span className="text-sm text-muted-foreground">Security Rating</span>
-              </div>
-              {/* Desktop: Button inline with Security Rating */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadPDF}
-                disabled={isDownloading || !auditId}
-                className="hidden sm:flex gap-2 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-              >
-                {isDownloading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-                {isDownloading ? "Generating..." : "Download PDF"}
-              </Button>
+            <div className="flex items-baseline gap-2 justify-center lg:justify-start mb-2">
+              <span className={cn("text-xl lg:text-2xl font-semibold", config.color)}>
+                {config.label}
+              </span>
+              <span className="text-sm text-muted-foreground">Security Rating</span>
             </div>
             <p className="text-sm text-muted-foreground">
               {config.description}
@@ -246,20 +260,22 @@ const SecurityScoreCard = ({
             </div>
 
             {/* Mobile: Button below vulnerability matrix */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadPDF}
-              disabled={isDownloading || !auditId}
-              className="flex sm:hidden w-full mt-4 gap-2 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-            >
-              {isDownloading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              {isDownloading ? "Generating..." : "Download PDF"}
-            </Button>
+            {!isPending && auditId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadPDF}
+                disabled={isDownloading}
+                className="flex sm:hidden w-full mt-4 gap-2 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                {isDownloading ? "Generating..." : "Download PDF"}
+              </Button>
+            )}
           </div>
         </div>
       </div>
