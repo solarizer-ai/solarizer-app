@@ -6,6 +6,21 @@ export type AuditStatus = 'pending' | 'analyzing' | 'secured' | 'issues' | 'canc
 export type SecurityGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info'; // 'info' kept for DB compatibility but filtered in UI
 
+export interface CoverageTestDetail {
+  test_name: string;
+  status: "PASSED" | "FAILED";
+  proof: string | null;
+  file: string;
+  related_finding_title: string | null;
+}
+
+export interface CoverageData {
+  total_tests: number;
+  passed: number;
+  failed: number;
+  details: CoverageTestDetail[];
+}
+
 export interface Audit {
   id: string;
   user_id: string;
@@ -16,6 +31,8 @@ export interface Audit {
   status: AuditStatus;
   grade: SecurityGrade | null;
   security_score: number | null;
+  coverage_data: CoverageData | null;
+  system_hologram: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,7 +84,7 @@ export const useAudits = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Audit[];
+      return data as unknown as Audit[];
     },
     enabled: !!user,
   });
@@ -89,7 +106,7 @@ export const useAudit = (auditId: string | null) => {
         .maybeSingle();
       
       if (error) throw error;
-      return data as Audit | null;
+      return data as unknown as Audit | null;
     },
     enabled: !!user && !!auditId,
   });
@@ -139,7 +156,7 @@ export const useCreateAudit = () => {
         .single();
       
       if (error) throw error;
-      return data as Audit;
+      return data as unknown as Audit;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['audits'] });
@@ -158,13 +175,13 @@ export const useUpdateAudit = () => {
     }: Partial<Audit> & { id: string }) => {
       const { data, error } = await supabase
         .from('audits')
-        .update(updates)
+        .update(updates as unknown as Record<string, unknown>)
         .eq('id', id)
         .select()
         .single();
       
       if (error) throw error;
-      return data as Audit;
+      return data as unknown as Audit;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['audits'] });
