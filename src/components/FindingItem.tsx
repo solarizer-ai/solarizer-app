@@ -202,7 +202,7 @@ const FindingItem = ({
           {/* Top row on mobile: Badge + Chevron */}
           <div className="flex items-center justify-between sm:contents">
             <div className={cn(
-              "flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border shrink-0",
+              "flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border shrink-0 min-w-[85px] justify-center",
               config.className
             )}>
               <Icon className="w-3.5 h-3.5" />
@@ -219,7 +219,7 @@ const FindingItem = ({
           {/* Title - full width on mobile, can wrap to 2 lines */}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground line-clamp-2 sm:truncate">
-              {finding.title}
+              {renderWithCodeFormatting(finding.title)}
             </p>
           </div>
 

@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import MinimalFooter from "@/components/MinimalFooter";
-import VulnerabilityMatrix from "@/components/VulnerabilityMatrix";
 import FindingItem from "@/components/FindingItem";
 import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
@@ -128,17 +127,15 @@ const Report = () => {
             </div>
           ) : currentAudit ? (
             <>
-              {/* Security Score Card */}
+              {/* Security Score Card with Vulnerability Matrix */}
               <SecurityScoreCard
                 grade={currentAudit.grade || "C"}
                 score={currentAudit.security_score || 0}
                 projectName={currentAudit.project_name}
                 timestamp={formatTimestamp(currentAudit.created_at)}
                 auditId={currentAudit.id}
+                counts={getVulnerabilityCounts()}
               />
-
-              {/* Vulnerability Matrix */}
-              <VulnerabilityMatrix counts={getVulnerabilityCounts()} />
 
               {/* Tabbed Interface: Coverage & Findings */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

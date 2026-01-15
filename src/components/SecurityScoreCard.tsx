@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Shield, Download, ExternalLink, Loader2 } from "lucide-react";
+import { Shield, Download, Loader2, AlertTriangle, AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { downloadPdfReport } from "@/lib/pdfReport";
 import { useToast } from "@/hooks/use-toast";
 
 type Grade = "A" | "B" | "C" | "D" | "F";
+
+interface VulnerabilityCount {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+}
 
 interface SecurityScoreCardProps {
   grade: Grade;
@@ -13,6 +20,7 @@ interface SecurityScoreCardProps {
   projectName: string;
   timestamp: string;
   auditId?: string;
+  counts?: VulnerabilityCount;
 }
 
 const gradeConfig: Record<Grade, { color: string; label: string; description: string }> = {
@@ -48,7 +56,8 @@ const SecurityScoreCard = ({
   score, 
   projectName, 
   timestamp, 
-  auditId
+  auditId,
+  counts = { critical: 0, high: 0, medium: 0, low: 0 }
 }: SecurityScoreCardProps) => {
   const config = gradeConfig[grade];
   const circumference = 2 * Math.PI * 45;
@@ -84,21 +93,52 @@ const SecurityScoreCard = ({
     }
   };
 
+  // Vulnerability matrix data
+  const categories = [
+    {
+      label: "Critical",
+      count: counts.critical,
+      icon: AlertTriangle,
+      bgColor: "bg-critical/10",
+      textColor: "text-critical",
+      borderColor: "border-critical/30",
+      barColor: "bg-critical",
+    },
+    {
+      label: "High",
+      count: counts.high,
+      icon: AlertTriangle,
+      bgColor: "bg-destructive/10",
+      textColor: "text-destructive",
+      borderColor: "border-destructive/30",
+      barColor: "bg-destructive",
+    },
+    {
+      label: "Medium",
+      count: counts.medium,
+      icon: AlertCircle,
+      bgColor: "bg-warning/10",
+      textColor: "text-warning",
+      borderColor: "border-warning/30",
+      barColor: "bg-warning",
+    },
+    {
+      label: "Low",
+      count: counts.low,
+      icon: Info,
+      bgColor: "bg-primary/10",
+      textColor: "text-primary",
+      borderColor: "border-primary/30",
+      barColor: "bg-primary",
+    },
+  ];
+
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
   return (
     <div className="bg-card border border-border rounded-lg p-6">
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Protocol Health Certificate</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {projectName} • Generated {timestamp}
-            </p>
-          </div>
-        </div>
-
+      {/* Download Button - Top Right */}
+      <div className="flex justify-end mb-4">
         <Button
           variant="outline"
           size="sm"
@@ -151,17 +191,61 @@ const SecurityScoreCard = ({
           </div>
         </div>
 
-        {/* Score Details */}
-        <div className="flex-1 text-center lg:text-left">
-          <div className="flex items-baseline justify-center lg:justify-start gap-2 mb-2">
-            <span className={cn("text-xl lg:text-2xl font-semibold", config.color)}>
-              {config.label}
-            </span>
-            <span className="text-sm text-muted-foreground">Security Rating</span>
+        {/* Score Details + Vulnerability Matrix */}
+        <div className="flex-1 text-center lg:text-left space-y-4">
+          <div>
+            <div className="flex items-baseline justify-center lg:justify-start gap-2 mb-2">
+              <span className={cn("text-xl lg:text-2xl font-semibold", config.color)}>
+                {config.label}
+              </span>
+              <span className="text-sm text-muted-foreground">Security Rating</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {config.description}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {config.description}
-          </p>
+
+          {/* Vulnerability Matrix - Integrated */}
+          <div className="pt-4 border-t border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Vulnerability Matrix
+              </h4>
+              <span className="text-xs text-muted-foreground">{total} findings</span>
+            </div>
+
+            {/* Visual Bar */}
+            <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-4">
+              {categories.map((cat) => {
+                const width = total > 0 ? (cat.count / total) * 100 : 0;
+                return width > 0 ? (
+                  <div
+                    key={cat.label}
+                    className={cn("h-full transition-all duration-500", cat.barColor)}
+                    style={{ width: `${width}%` }}
+                  />
+                ) : null;
+              })}
+            </div>
+
+            {/* Category Pills */}
+            <div className="flex flex-wrap justify-center lg:justify-start gap-2">
+              {categories.map((cat) => (
+                <div
+                  key={cat.label}
+                  className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border",
+                    cat.bgColor,
+                    cat.borderColor
+                  )}
+                >
+                  <cat.icon className={cn("w-3.5 h-3.5", cat.textColor)} />
+                  <span className={cn("text-sm font-medium", cat.textColor)}>{cat.count}</span>
+                  <span className="text-xs text-muted-foreground">{cat.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
