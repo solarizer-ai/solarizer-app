@@ -87,29 +87,24 @@ const SecurityCoverageTab = ({ coverageData, onViewIssue }: SecurityCoverageTabP
         shieldConfig.borderColor
       )}>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          {/* Shield Icon */}
-          <div className={cn(
-            "flex items-center justify-center w-16 h-16 rounded-full shrink-0",
-            shieldConfig.bgColor
-          )}>
-            <ShieldIcon className={cn("w-8 h-8", shieldConfig.color)} />
+          {/* Shield Icon with Percentage */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className={cn(
+              "flex items-center justify-center w-16 h-16 rounded-full",
+              shieldConfig.bgColor
+            )}>
+              <ShieldIcon className={cn("w-8 h-8", shieldConfig.color)} />
+            </div>
+            <span className={cn("text-3xl font-bold", shieldConfig.color)}>
+              {passPercentage.toFixed(0)}%
+            </span>
           </div>
           
-          {/* Score and Progress */}
+          {/* Tests and Progress */}
           <div className="flex-1 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
-              <div>
-                <h3 className="text-2xl font-semibold text-foreground">
-                  {passed}/{total_tests} Tests Passed
-                </h3>
-                <p className={cn("text-sm", shieldConfig.color)}>
-                  {shieldConfig.label}
-                </p>
-              </div>
-              <span className="text-3xl font-bold text-foreground">
-                {passPercentage.toFixed(1)}%
-              </span>
-            </div>
+            <h3 className="text-xl font-semibold text-foreground">
+              {passed}/{total_tests} Tests Passed
+            </h3>
             
             <Progress 
               value={passPercentage} 
@@ -148,7 +143,7 @@ const SecurityCoverageTab = ({ coverageData, onViewIssue }: SecurityCoverageTabP
                 <div className="flex items-center gap-3 text-left flex-1">
                   <XCircle className="w-5 h-5 text-destructive shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-sm font-medium text-foreground line-clamp-2 sm:truncate">
                       {test.test_name}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -196,7 +191,7 @@ const SecurityCoverageTab = ({ coverageData, onViewIssue }: SecurityCoverageTabP
                 <div className="flex items-center gap-3 text-left flex-1">
                   <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-sm font-medium text-foreground line-clamp-2 sm:truncate">
                       {test.test_name}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
