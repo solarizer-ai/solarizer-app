@@ -137,24 +137,6 @@ const SecurityScoreCard = ({
 
   return (
     <div className="bg-card border border-border rounded-lg p-6">
-      {/* Download Button - Top Right */}
-      <div className="flex justify-end mb-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDownloadPDF}
-          disabled={isDownloading || !auditId}
-          className="gap-2 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-        >
-          {isDownloading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Download className="w-4 h-4" />
-          )}
-          {isDownloading ? "Generating..." : "Download PDF"}
-        </Button>
-      </div>
-
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
         {/* Circular Progress */}
         <div className="relative w-28 h-28 lg:w-32 lg:h-32 shrink-0">
@@ -194,11 +176,28 @@ const SecurityScoreCard = ({
         {/* Score Details + Vulnerability Matrix */}
         <div className="flex-1 text-center lg:text-left space-y-4">
           <div>
-            <div className="flex items-baseline justify-center lg:justify-start gap-2 mb-2">
-              <span className={cn("text-xl lg:text-2xl font-semibold", config.color)}>
-                {config.label}
-              </span>
-              <span className="text-sm text-muted-foreground">Security Rating</span>
+            <div className="flex flex-col sm:flex-row items-center sm:items-baseline justify-center lg:justify-between gap-2 mb-2">
+              <div className="flex items-baseline gap-2">
+                <span className={cn("text-xl lg:text-2xl font-semibold", config.color)}>
+                  {config.label}
+                </span>
+                <span className="text-sm text-muted-foreground">Security Rating</span>
+              </div>
+              {/* Desktop: Button inline with Security Rating */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadPDF}
+                disabled={isDownloading || !auditId}
+                className="hidden sm:flex gap-2 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                {isDownloading ? "Generating..." : "Download PDF"}
+              </Button>
             </div>
             <p className="text-sm text-muted-foreground">
               {config.description}
@@ -245,6 +244,22 @@ const SecurityScoreCard = ({
                 </div>
               ))}
             </div>
+
+            {/* Mobile: Button below vulnerability matrix */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPDF}
+              disabled={isDownloading || !auditId}
+              className="flex sm:hidden w-full mt-4 gap-2 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+            >
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              {isDownloading ? "Generating..." : "Download PDF"}
+            </Button>
           </div>
         </div>
       </div>

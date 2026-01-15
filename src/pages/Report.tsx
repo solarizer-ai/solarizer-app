@@ -108,7 +108,7 @@ const Report = () => {
               ← Back to Dashboard
             </button>
             <div className="flex items-center gap-3">
-              <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Security Report</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Analysis Results</h2>
               {isLive && (
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/10 border border-success/20 text-xs text-success font-medium animate-pulse">
                   <span className="w-1.5 h-1.5 rounded-full bg-success" />
