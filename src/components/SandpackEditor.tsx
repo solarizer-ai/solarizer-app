@@ -6,7 +6,7 @@ import {
   SandpackCodeEditor,
   useSandpack,
 } from "@codesandbox/sandpack-react";
-import { Copy, Check, Maximize2, Minimize2, FilePlus, FolderPlus, Trash2, Pencil, Lock, Unlock, WrapText, List, Download } from "lucide-react";
+import { Copy, Check, Maximize2, Minimize2, FilePlus, FolderPlus, Trash2, Pencil, Lock, WrapText, List, Download } from "lucide-react";
 import JSZip from "jszip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,8 +45,8 @@ const SandpackEditorInner = ({
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
-  // Editor settings states
-  const [isReadOnly, setIsReadOnly] = useState(readOnly);
+  // Editor settings states - always start in edit mode unless explicitly set
+  const [isReadOnly, setIsReadOnly] = useState(readOnly ?? false);
   const [wordWrap, setWordWrap] = useState(true);
   const [showLineNumbers, setShowLineNumbers] = useState(true);
   
@@ -168,12 +168,12 @@ const SandpackEditorInner = ({
               size="sm"
               className={cn(
                 "h-7 w-7 p-0",
-                isReadOnly ? "text-amber-500 hover:text-amber-400" : "text-muted-foreground hover:text-foreground"
+                isReadOnly ? "text-amber-500 hover:text-amber-400" : "text-green-500 hover:text-green-400"
               )}
               onClick={() => setIsReadOnly(!isReadOnly)}
-              title={isReadOnly ? "Read-only mode (click to edit)" : "Edit mode (click to lock)"}
+              title={isReadOnly ? "Currently locked - click to unlock and edit" : "Currently editable - click to lock"}
             >
-              {isReadOnly ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+              {isReadOnly ? <Lock className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
             </Button>
             <Button
               variant="ghost"
