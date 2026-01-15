@@ -56,11 +56,13 @@ function validateFiles(files: FileInput[]): { valid: boolean; error?: string; sa
       return { valid: false, error: `File ${file.name} exceeds 1MB limit` };
     }
 
-    // Sanitize file name (prevent path traversal)
+    // Sanitize file name (prevent path traversal and shell-unsafe characters)
     const sanitizedName = file.name
-      .replace(/\.\./g, '')
-      .replace(/^\/+/, '')
-      .replace(/\\/g, '/');
+      .replace(/\.\./g, '')           // Remove path traversal
+      .replace(/^\/+/, '')            // Remove leading slashes
+      .replace(/\\/g, '/')            // Normalize backslashes
+      .replace(/\s+/g, '_')           // Replace spaces with underscores
+      .replace(/[<>:"|?*]/g, '_');    // Replace shell-unsafe characters
 
     sanitizedFiles.push({
       name: sanitizedName,

@@ -53,11 +53,12 @@ function validateFiles(files: FileInput[]): { valid: boolean; error?: string; sa
       return { valid: false, error: `File name too long at index ${i}. Maximum ${MAX_FILENAME_LENGTH} characters.` };
     }
     
-    // Sanitize file name - remove path traversal attempts
+    // Sanitize file name - remove path traversal attempts and shell-unsafe characters
     let sanitizedName = file.name
-      .replace(/\.\.[\/\\]/g, '') // Remove ../
-      .replace(/^[\/\\]+/, '')    // Remove leading slashes
-      .replace(/[<>:"|?*\x00-\x1f]/g, ''); // Remove invalid characters
+      .replace(/\.\.[\/\\]/g, '')      // Remove ../
+      .replace(/^[\/\\]+/, '')         // Remove leading slashes
+      .replace(/\s+/g, '_')            // Replace spaces with underscores
+      .replace(/[<>:"|?*\x00-\x1f]/g, '_'); // Replace invalid/shell-unsafe characters
     
     // Check for path traversal after sanitization
     if (sanitizedName !== file.name) {
