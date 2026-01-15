@@ -129,7 +129,7 @@ const Report = () => {
             <>
               {/* Security Score Card with Vulnerability Matrix */}
               <SecurityScoreCard
-                grade={currentAudit.grade || "C"}
+                grade={currentAudit.grade || null}
                 score={currentAudit.security_score || 0}
                 projectName={currentAudit.project_name}
                 timestamp={formatTimestamp(currentAudit.created_at)}
