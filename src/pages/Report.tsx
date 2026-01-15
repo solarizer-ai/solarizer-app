@@ -39,9 +39,25 @@ const Report = () => {
     };
   };
 
-  // Filter info findings from display - memoized to prevent infinite update loops
-  const displayFindings = useMemo(() => 
-    (findings ?? []).filter(f => f.severity !== "info"), 
+  // Memoize transformed findings to prevent infinite update loops
+  const transformedFindings = useMemo(() => 
+    (findings ?? [])
+      .filter(f => f.severity !== "info")
+      .map((f) => ({
+        id: f.id,
+        title: f.title,
+        severity: f.severity,
+        description: f.description,
+        location: f.location ? {
+          file: f.location,
+          lines: f.line_start && f.line_end 
+            ? (f.line_start === f.line_end ? `${f.line_start}` : `${f.line_start}-${f.line_end}`)
+            : undefined,
+        } : undefined,
+        code: f.code_snippet || undefined,
+        remediation: f.remediation || undefined,
+        is_resolved: f.is_resolved,
+      })),
     [findings]
   );
 
@@ -101,24 +117,10 @@ const Report = () => {
               {/* Findings List */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Detailed Findings</h3>
-                {displayFindings.length > 0 ? (
+                {transformedFindings.length > 0 ? (
                   <>
                     <FindingsFilter
-                      findings={displayFindings.map((f) => ({
-                        id: f.id,
-                        title: f.title,
-                        severity: f.severity,
-                        description: f.description,
-                        location: f.location ? {
-                          file: f.location,
-                          lines: f.line_start && f.line_end 
-                            ? (f.line_start === f.line_end ? `${f.line_start}` : `${f.line_start}-${f.line_end}`)
-                            : undefined,
-                        } : undefined,
-                        code: f.code_snippet || undefined,
-                        remediation: f.remediation || undefined,
-                        is_resolved: f.is_resolved,
-                      }))}
+                      findings={transformedFindings}
                       onFilteredChange={handleFilteredChange}
                     />
                     <div className="space-y-3">
