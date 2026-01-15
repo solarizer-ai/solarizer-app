@@ -39,7 +39,7 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --critical: 0 72% 51%;
+    --critical: 280 70% 55%;
     --critical-foreground: 0 0% 100%;
 
     --border: 0 0% 14%;
@@ -101,7 +101,7 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --critical: 0 72% 51%;
+    --critical: 280 70% 55%;
     --critical-foreground: 0 0% 100%;
 
     --border: 0 0% 90%;
