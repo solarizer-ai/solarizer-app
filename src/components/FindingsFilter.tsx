@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -70,9 +70,16 @@ const FindingsFilter = ({ findings, onFilteredChange }: FindingsFilterProps) => 
     return result;
   }, [findings, searchQuery, selectedSeverities, showResolved]);
 
-  // Update parent when filtered changes
+  // Track last emitted signature to prevent redundant updates
+  const lastSignatureRef = useRef<string>("");
+
+  // Update parent only when filtered results actually change
   useEffect(() => {
-    onFilteredChange(filteredFindings);
+    const signature = filteredFindings.map(f => f.id).join(",");
+    if (signature !== lastSignatureRef.current) {
+      lastSignatureRef.current = signature;
+      onFilteredChange(filteredFindings);
+    }
   }, [filteredFindings, onFilteredChange]);
 
   const toggleSeverity = (severity: FindingSeverity) => {
