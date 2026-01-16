@@ -378,20 +378,24 @@ contract MyContract {
     return sandpackFiles;
   });
 
-  const activeFile = getFirstFilePath(files) || Object.keys(initialFiles)[0];
+  // Ensure we always have a valid entry file path
+  const fileKeys = Object.keys(initialFiles);
+  const firstFilePath = getFirstFilePath(files);
+  const activeFile = firstFilePath || fileKeys[0] || "/Contract.sol";
+  const normalizedActiveFile = activeFile.startsWith("/") ? activeFile : `/${activeFile}`;
 
   return (
     <SandpackProvider
       files={initialFiles}
       theme={theme === "dark" ? solarizerDarkTheme : solarizerLightTheme}
       options={{
-        activeFile: activeFile?.startsWith("/") ? activeFile : `/${activeFile}`,
-        visibleFiles: Object.keys(initialFiles),
+        activeFile: normalizedActiveFile,
+        visibleFiles: fileKeys,
         recompileMode: "delayed",
         recompileDelay: 500,
       }}
       customSetup={{
-        entry: activeFile?.startsWith("/") ? activeFile : `/${activeFile}`,
+        entry: normalizedActiveFile,
       }}
     >
       <SandpackEditorInner
