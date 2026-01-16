@@ -2,6 +2,18 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 
+const COLORS = {
+  navy: [15, 23, 42], // Slate-900
+  slate: [71, 85, 105], // Slate-600 (Secondary Text)
+  border: [226, 232, 240], // Slate-200
+  critical: [185, 28, 28], // Red-700
+  high: [194, 65, 12], // Orange-700
+  medium: [180, 83, 9], // Amber-700
+  low: [29, 78, 216], // Blue-700
+  info: [51, 65, 85], // Slate-700
+  success: [21, 128, 61], // Green-700
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -13,6 +25,8 @@ interface Finding {
   description: string;
   location: string | null;
   remediation: string | null;
+  code_snippet?: string;
+  line_start?: number;
 }
 
 interface AuditReport {
@@ -20,12 +34,13 @@ interface AuditReport {
   grade: string;
   security_score: number;
   created_at: string;
+  coverage_data?: {
+    total_tests: number;
+    passed: number;
+    failed: number;
+  };
   findings: Finding[];
 }
-
-const getSeverityLabel = (severity: string): string => {
-  return severity.charAt(0).toUpperCase() + severity.slice(1);
-};
 
 const generatePdf = (audit: AuditReport): ArrayBuffer => {
   const doc = new jsPDF();
@@ -34,15 +49,8 @@ const generatePdf = (audit: AuditReport): ArrayBuffer => {
   const margin = 20;
   let yPos = margin;
 
-  const date = new Date(audit.created_at).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
-  // Helper to add new page if needed
-  const checkPageBreak = (requiredSpace: number) => {
-    if (yPos + requiredSpace > pageHeight - margin) {
+  const checkPageBreak = (needed: number) => {
+    if (yPos + needed > pageHeight - 30) {
       doc.addPage();
       yPos = margin;
       return true;
@@ -50,208 +58,174 @@ const generatePdf = (audit: AuditReport): ArrayBuffer => {
     return false;
   };
 
-  // Header
-  doc.setFontSize(24);
+  // --- 1. COVER PAGE ---
+  doc.setFillColor(...COLORS.navy);
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
+  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(17, 24, 39);
-  doc.text("Solarizer Security Report", margin, yPos);
-  yPos += 8;
+  doc.setFontSize(42);
+  doc.text("SOLARIZER", margin, 100);
+  doc.setFontSize(18);
+  doc.text("Smart Contract Security Assessment", margin, 112);
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(1);
+  doc.line(margin, 122, margin + 40, 122);
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+  doc.text(`PROJECT: ${audit.project_name.toUpperCase()}`, margin, 140);
+  doc.text(
+    `DATE: ${new Date(audit.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}`,
+    margin,
+    148,
+  );
 
+  // --- 2. EXECUTIVE SUMMARY ---
+  doc.addPage();
+  yPos = margin;
+  doc.setTextColor(...COLORS.navy);
+  doc.setFontSize(22);
+  doc.setFont("helvetica", "bold");
+  doc.text("Executive Summary", margin, yPos);
+  yPos += 15;
+
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 50, 3, 3, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(...COLORS.slate);
+  doc.text("OVERALL SECURITY GRADE", margin + 10, yPos + 15);
+  doc.setFontSize(40);
+  doc.setTextColor(...COLORS.success);
+  doc.text(audit.grade, margin + 10, yPos + 38);
+  doc.setTextColor(...COLORS.navy);
+  doc.setFontSize(10);
+  doc.text("SECURITY SCORE", pageWidth / 2, yPos + 15);
+  doc.setFontSize(40);
+  doc.text(`${audit.security_score}%`, pageWidth / 2, yPos + 38);
+  yPos += 65;
+
+  // --- 3. METHODOLOGY ---
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("Methodology", margin, yPos);
+  yPos += 10;
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(107, 114, 128);
-  doc.text("Smart Contract Security Audit", margin, yPos);
-  
-  doc.text(date, pageWidth - margin, yPos, { align: "right" });
-  yPos += 15;
+  doc.setTextColor(...COLORS.slate);
+  const methodology =
+    "This assessment utilizes a proprietary multi-layered verification pipeline. The process involves comprehensive structural mapping of contract dependencies, automated formal verification of state transitions, and a rigorous logical consistency review. Every finding is cross-referenced against an extensive repository of historical vulnerabilities and verified for contextual accuracy within the specific business logic of the protocol.";
+  doc.text(doc.splitTextToSize(methodology, pageWidth - margin * 2), margin, yPos);
+  yPos += 40;
 
-  // Divider line
-  doc.setDrawColor(229, 231, 235);
-  doc.setLineWidth(0.5);
-  doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 15;
+  if (audit.coverage_data) {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.navy);
+    doc.text("Verification Coverage", margin, yPos);
+    yPos += 8;
+    doc.setFont("helvetica", "normal");
+    doc.text(`Total Logic Assertions: ${audit.coverage_data.total_tests}`, margin, yPos);
+    doc.text(`Passed: ${audit.coverage_data.passed}`, margin + 60, yPos);
+    doc.text(`Failed: ${audit.coverage_data.failed}`, margin + 100, yPos);
+    yPos += 20;
+  }
 
-  // Project Overview Box
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 40, 3, 3, "F");
-
+  // --- 4. DETAILED FINDINGS ---
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(17, 24, 39);
-  doc.text(audit.project_name, margin + 10, yPos + 15);
+  doc.text("Security Findings", margin, yPos);
+  yPos += 12;
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(107, 114, 128);
-  doc.text("Security Assessment Summary", margin + 10, yPos + 25);
+  audit.findings.forEach((finding, i) => {
+    checkPageBreak(70);
+    const sColor = (COLORS as any)[finding.severity] || COLORS.info;
 
-  // Grade circle
-  const gradeX = pageWidth - margin - 25;
-  const gradeY = yPos + 20;
-  
-  // Grade color
-  let gradeColor: [number, number, number] = [34, 197, 94]; // green
-  if (audit.grade === "C" || audit.grade === "D") {
-    gradeColor = [234, 179, 8]; // yellow
-  } else if (audit.grade === "F") {
-    gradeColor = [239, 68, 68]; // red
-  }
-  
-  doc.setDrawColor(...gradeColor);
-  doc.setLineWidth(2);
-  doc.circle(gradeX, gradeY, 12, "S");
-  
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...gradeColor);
-  doc.text(audit.grade, gradeX, gradeY + 2, { align: "center" });
-  
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128);
-  doc.text(`Score: ${audit.security_score}%`, gradeX, gradeY + 18, { align: "center" });
+    // Header block
+    doc.setFillColor(241, 245, 249);
+    doc.rect(margin, yPos, pageWidth - margin * 2, 12, "F");
+    doc.setFillColor(...sColor);
+    doc.rect(margin, yPos, 4, 12, "F");
+    doc.setFontSize(11);
+    doc.setTextColor(...COLORS.navy);
+    doc.text(`${i + 1}. ${finding.title}`, margin + 8, yPos + 8);
+    doc.setFontSize(9);
+    doc.text(finding.severity.toUpperCase(), pageWidth - margin - 5, yPos + 8, { align: "right" });
+    yPos += 18;
 
-  yPos += 55;
+    // Description
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.slate);
+    const descLines = doc.splitTextToSize(finding.description, pageWidth - margin * 2);
+    doc.text(descLines, margin, yPos);
+    yPos += descLines.length * 5 + 6;
 
-  // Vulnerability Summary
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(17, 24, 39);
-  doc.text("Vulnerability Summary", margin, yPos);
-  yPos += 10;
+    // Snippet Evidence
+    if (finding.code_snippet) {
+      checkPageBreak(30);
+      doc.setFillColor(248, 250, 252);
+      const snipLines = doc.splitTextToSize(finding.code_snippet, pageWidth - margin * 4);
+      const snipHeight = snipLines.length * 4 + 12;
+      doc.rect(margin, yPos, pageWidth - margin * 2, snipHeight, "F");
+      doc.setFont("courier", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.navy);
+      doc.text(snipLines, margin + 5, yPos + 8);
+      yPos += snipHeight + 10;
+    }
 
-  const severityCounts = {
-    critical: audit.findings.filter(f => f.severity === 'critical').length,
-    high: audit.findings.filter(f => f.severity === 'high').length,
-    medium: audit.findings.filter(f => f.severity === 'medium').length,
-    low: audit.findings.filter(f => f.severity === 'low').length,
-    info: audit.findings.filter(f => f.severity === 'info').length,
-  };
-
-  const severities = [
-    { name: "Critical", count: severityCounts.critical, color: [254, 242, 242] as [number, number, number], textColor: [220, 38, 38] as [number, number, number] },
-    { name: "High", count: severityCounts.high, color: [255, 247, 237] as [number, number, number], textColor: [234, 88, 12] as [number, number, number] },
-    { name: "Medium", count: severityCounts.medium, color: [255, 251, 235] as [number, number, number], textColor: [217, 119, 6] as [number, number, number] },
-    { name: "Low", count: severityCounts.low, color: [239, 246, 255] as [number, number, number], textColor: [37, 99, 235] as [number, number, number] },
-    { name: "Info", count: severityCounts.info, color: [249, 250, 251] as [number, number, number], textColor: [107, 114, 128] as [number, number, number] },
-  ];
-
-  const boxWidth = (pageWidth - 2 * margin - 4 * 8) / 5;
-  let xPos = margin;
-
-  severities.forEach((sev) => {
-    doc.setFillColor(...sev.color);
-    doc.roundedRect(xPos, yPos, boxWidth, 30, 2, 2, "F");
-    
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...sev.textColor);
-    doc.text(String(sev.count), xPos + boxWidth / 2, yPos + 15, { align: "center" });
-    
-    doc.setFontSize(8);
-    doc.text(sev.name, xPos + boxWidth / 2, yPos + 24, { align: "center" });
-    
-    xPos += boxWidth + 8;
+    // Remediation
+    if (finding.remediation) {
+      checkPageBreak(30);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...COLORS.success);
+      doc.text("Proposed Mitigation:", margin, yPos);
+      yPos += 6;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...COLORS.slate);
+      const remLines = doc.splitTextToSize(finding.remediation, pageWidth - margin * 2);
+      doc.text(remLines, margin, yPos);
+      yPos += remLines.length * 5 + 15;
+    }
   });
 
-  yPos += 45;
-
-  // Detailed Findings
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(17, 24, 39);
-  doc.text("Detailed Findings", margin, yPos);
+  // --- 5. LEGAL DISCLAIMER ---
+  checkPageBreak(60);
   yPos += 10;
+  doc.setDrawColor(...COLORS.border);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 10;
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...COLORS.navy);
+  doc.text("Legal Disclaimer", margin, yPos);
+  yPos += 8;
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...COLORS.slate);
+  const disclaimer = [
+    "This security assessment represents a point-in-time analysis of the smart contract source code provided at the time of the audit. While Solarizer utilizes advanced verification pipelines and industry-standard security patterns, a security audit is not a 100% guarantee of the absolute absence of vulnerabilities, bugs, or potential exploits.",
+    "Security is an evolving field; new attack vectors or compiler-level issues may emerge after the issuance of this report. This assessment does not constitute an endorsement of the project's quality, financial viability, or investment potential. Solarizer and its associates are not liable for any financial losses, protocol hacks, or technical failures occurring after the completion of this audit.",
+  ];
+  disclaimer.forEach((p) => {
+    const lines = doc.splitTextToSize(p, pageWidth - margin * 2);
+    doc.text(lines, margin, yPos);
+    yPos += lines.length * 4 + 4;
+  });
 
-  if (audit.findings.length === 0) {
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(107, 114, 128);
-    doc.text("No vulnerabilities found. Great job!", margin, yPos + 10);
-  } else {
-    audit.findings.forEach((finding, index) => {
-      checkPageBreak(60);
-
-      // Finding box
-      doc.setDrawColor(229, 231, 235);
-      doc.setLineWidth(0.3);
-      
-      // Severity badge
-      let badgeColor: [number, number, number] = [107, 114, 128];
-      if (finding.severity === 'critical') badgeColor = [220, 38, 38];
-      else if (finding.severity === 'high') badgeColor = [234, 88, 12];
-      else if (finding.severity === 'medium') badgeColor = [217, 119, 6];
-      else if (finding.severity === 'low') badgeColor = [37, 99, 235];
-
-      doc.setFillColor(...badgeColor);
-      doc.roundedRect(margin, yPos, 45, 6, 1, 1, "F");
-      
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text(getSeverityLabel(finding.severity).toUpperCase(), margin + 22.5, yPos + 4.5, { align: "center" });
-
-      // Title
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(17, 24, 39);
-      doc.text(finding.title, margin + 50, yPos + 4.5);
-      yPos += 12;
-
-      // Location
-      if (finding.location) {
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(107, 114, 128);
-        doc.text(`Location: ${finding.location}`, margin, yPos);
-        yPos += 6;
-      }
-
-      // Description
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(55, 65, 81);
-      const descLines = doc.splitTextToSize(finding.description, pageWidth - 2 * margin);
-      doc.text(descLines, margin, yPos);
-      yPos += descLines.length * 4 + 4;
-
-      // Remediation
-      if (finding.remediation) {
-        checkPageBreak(25);
-        
-        doc.setFillColor(240, 253, 244);
-        const remLines = doc.splitTextToSize(finding.remediation, pageWidth - 2 * margin - 10);
-        const remHeight = remLines.length * 4 + 10;
-        doc.roundedRect(margin, yPos, pageWidth - 2 * margin, remHeight, 2, 2, "F");
-        
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(22, 101, 52);
-        doc.text("Remediation", margin + 5, yPos + 6);
-        
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.text(remLines, margin + 5, yPos + 12);
-        yPos += remHeight + 8;
-      }
-
-      yPos += 5;
-    });
+  // Footer / Page Numbers
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 2; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(180);
+    doc.text(
+      `Solarizer Proprietary Security Assessment Report | Page ${i} of ${totalPages}`,
+      pageWidth / 2,
+      pageHeight - 10,
+      { align: "center" },
+    );
   }
 
-  // Footer
-  checkPageBreak(30);
-  yPos = pageHeight - 25;
-  doc.setDrawColor(229, 231, 235);
-  doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 8;
-  
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(156, 163, 175);
-  doc.text("Generated by Solarizer Smart Contract Security Platform", pageWidth / 2, yPos, { align: "center" });
-  doc.text(`Report generated on ${date}`, pageWidth / 2, yPos + 5, { align: "center" });
-
-  return doc.output("arraybuffer") as ArrayBuffer;
+  return doc.output("arraybuffer");
 };
 
 serve(async (req) => {
@@ -261,40 +235,36 @@ serve(async (req) => {
 
   try {
     const { auditId } = await req.json();
-    
+
     if (!auditId) {
-      return new Response(
-        JSON.stringify({ error: "Audit ID is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Audit ID is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Authorization required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Authorization required" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } }
+      global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: audit, error: auditError } = await supabase
-      .from("audits")
-      .select("*")
-      .eq("id", auditId)
-      .single();
+    const { data: audit, error: auditError } = await supabase.from("audits").select("*").eq("id", auditId).single();
 
     if (auditError || !audit) {
       console.error("Audit fetch error:", auditError);
-      return new Response(
-        JSON.stringify({ error: "Audit not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Audit not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { data: findings, error: findingsError } = await supabase
@@ -312,7 +282,7 @@ serve(async (req) => {
       grade: audit.grade || "N/A",
       security_score: audit.security_score || 0,
       created_at: audit.created_at,
-      findings: (findings || []).map(f => ({
+      findings: (findings || []).map((f) => ({
         title: f.title,
         severity: f.severity,
         description: f.description,
@@ -322,7 +292,7 @@ serve(async (req) => {
     };
 
     const pdfBytes = generatePdf(reportData);
-    const fileName = `${audit.project_name.replace(/[^a-zA-Z0-9]/g, '_')}_Security_Report.pdf`;
+    const fileName = `${audit.project_name.replace(/[^a-zA-Z0-9]/g, "_")}_Security_Report.pdf`;
 
     console.log("Generated PDF report for audit:", auditId);
 
@@ -334,13 +304,12 @@ serve(async (req) => {
         "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
-
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error generating report:", error);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
