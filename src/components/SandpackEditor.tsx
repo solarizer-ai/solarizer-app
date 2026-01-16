@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   SandpackProvider,
   SandpackLayout,
@@ -56,11 +56,25 @@ const SandpackEditorInner = ({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
 
-  // Sync files back to parent when they change
+  // Track previous files to prevent infinite loops
+  const previousFilesRef = useRef<string>("");
+
+  // Sync files back to parent when they change (with stable comparison)
   useEffect(() => {
     if (onFilesChange && sandpack.files) {
-      const fileNodes = sandpackFilesToFileNodes(sandpack.files);
-      onFilesChange(fileNodes);
+      // Create a stable string representation of files
+      const filesSnapshot = JSON.stringify(
+        Object.fromEntries(
+          Object.entries(sandpack.files).map(([path, file]) => [path, file.code])
+        )
+      );
+      
+      // Only call onFilesChange if content actually changed
+      if (filesSnapshot !== previousFilesRef.current) {
+        previousFilesRef.current = filesSnapshot;
+        const fileNodes = sandpackFilesToFileNodes(sandpack.files);
+        onFilesChange(fileNodes);
+      }
     }
   }, [sandpack.files, onFilesChange]);
 
@@ -387,15 +401,11 @@ contract MyContract {
   return (
     <SandpackProvider
       files={initialFiles}
+      template="static"
       theme={theme === "dark" ? solarizerDarkTheme : solarizerLightTheme}
       options={{
         activeFile: normalizedActiveFile,
         visibleFiles: fileKeys,
-        recompileMode: "delayed",
-        recompileDelay: 500,
-      }}
-      customSetup={{
-        entry: normalizedActiveFile,
       }}
     >
       <SandpackEditorInner
