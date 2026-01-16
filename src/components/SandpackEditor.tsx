@@ -375,9 +375,27 @@ const SandpackEditor = ({
   const { theme } = useTheme();
   const [initialFiles] = useState(() => {
     const sandpackFiles = fileNodesToSandpackFiles(files);
-    // Ensure at least one file exists
-    if (Object.keys(sandpackFiles).length === 0) {
+    
+    // Hide default Sandpack template files
+    const hiddenDefaults: Record<string, { code: string; hidden: true }> = {
+      "/index.html": { code: "", hidden: true },
+      "/index.js": { code: "", hidden: true },
+      "/package.json": { code: "{}", hidden: true },
+      "/styles.css": { code: "", hidden: true },
+    };
+    
+    // Merge: hidden defaults first, then user files (user files override if same path)
+    const mergedFiles = { ...hiddenDefaults, ...sandpackFiles };
+    
+    // Check if there are any visible user files
+    const visibleFiles = Object.entries(mergedFiles).filter(
+      ([_, f]) => !(f as { hidden?: boolean }).hidden
+    );
+    
+    // Ensure at least one visible file exists
+    if (visibleFiles.length === 0) {
       return {
+        ...hiddenDefaults,
         "/Contract.sol": {
           code: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
@@ -389,11 +407,14 @@ contract MyContract {
         },
       };
     }
-    return sandpackFiles;
+    
+    return mergedFiles;
   });
 
-  // Ensure we always have a valid entry file path
-  const fileKeys = Object.keys(initialFiles);
+  // Get only visible file keys (exclude hidden files)
+  const fileKeys = Object.keys(initialFiles).filter(
+    key => !(initialFiles[key] as { hidden?: boolean }).hidden
+  );
   const firstFilePath = getFirstFilePath(files);
   const activeFile = firstFilePath || fileKeys[0] || "/Contract.sol";
   const normalizedActiveFile = activeFile.startsWith("/") ? activeFile : `/${activeFile}`;
