@@ -1,4 +1,4 @@
-import { Clock, CheckCircle2, Loader2, AlertTriangle, XCircle, AlertOctagon } from "lucide-react";
+import { Clock, CheckCircle2, Loader2, AlertTriangle, XCircle, AlertOctagon, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type AuditStatus = "analyzing" | "secured" | "issues" | "pending" | "cancelled" | "failed";
@@ -11,6 +11,7 @@ interface AuditCardProps {
   status: AuditStatus;
   timestamp: string;
   onClick?: () => void;
+  isShared?: boolean;
 }
 
 const gradeColors: Record<SecurityGrade, string> = {
@@ -54,7 +55,7 @@ const statusConfig: Record<AuditStatus, { label: string; icon: React.ReactNode; 
   },
 };
 
-const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onClick }: AuditCardProps) => {
+const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onClick, isShared }: AuditCardProps) => {
   const statusInfo = statusConfig[status];
 
   return (
@@ -63,11 +64,20 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
       className={cn(
         "group relative bg-card border border-border rounded-lg p-5 cursor-pointer",
         "hover:border-primary/30 hover:bg-card/80 transition-all duration-200",
-        "hover:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.15)]"
+        "hover:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.15)]",
+        isShared && "border-l-2 border-l-secondary"
       )}
     >
+      {/* Shared Badge */}
+      {isShared && (
+        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary/20 text-secondary-foreground text-xs">
+          <Users className="w-3 h-3" />
+          Shared
+        </div>
+      )}
+
       <div className="flex items-start justify-between mb-4">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-2">
           <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
             {projectName}
           </h3>
@@ -76,9 +86,17 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
           </p>
         </div>
         
-        {grade && (
+        {grade && !isShared && (
           <div className={cn(
             "w-10 h-10 rounded-lg border flex items-center justify-center font-semibold text-lg",
+            gradeColors[grade]
+          )}>
+            {grade}
+          </div>
+        )}
+        {grade && isShared && (
+          <div className={cn(
+            "w-10 h-10 rounded-lg border flex items-center justify-center font-semibold text-lg mt-6",
             gradeColors[grade]
           )}>
             {grade}

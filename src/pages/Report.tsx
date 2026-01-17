@@ -7,18 +7,25 @@ import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
 import SecurityCoverageTab from "@/components/SecurityCoverageTab";
 import ScopeTab from "@/components/ScopeTab";
+import ShareAuditModal from "@/components/ShareAuditModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Shield, AlertTriangle, FileCode } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users } from "lucide-react";
 import { useAudit, useFindings } from "@/hooks/useAudits";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
 import { formatDistanceToNow } from "date-fns";
 import type { CoverageData, Finding } from "@/hooks/useAudits";
 
 const Report = () => {
   const { auditId } = useParams<{ auditId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<string>("scope");
   const [highlightedFindingId, setHighlightedFindingId] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const findingRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   
   // Memoized callback for findings filter
@@ -26,6 +33,15 @@ const Report = () => {
 
   const { data: currentAudit, isLoading: auditLoading } = useAudit(auditId || null);
   const { data: findings } = useFindings(auditId || null);
+  const { data: shareCount } = useAuditShareCount(auditId || null);
+
+  // Check if current user is the owner
+  const isOwner = user?.id === currentAudit?.user_id;
+
+  // Get owner info for shared audits
+  const { data: ownerInfo } = useAuditOwnerInfo(
+    !isOwner && currentAudit ? currentAudit.user_id : null
+  );
 
   const formatTimestamp = (timestamp: string) => {
     return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
@@ -92,6 +108,9 @@ const Report = () => {
     return null;
   }
 
+  // Get owner email for the share modal
+  const currentUserEmail = user?.email || null;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -106,13 +125,35 @@ const Report = () => {
             >
               ← Back to Dashboard
             </button>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Analysis Results</h2>
               {isLive && (
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/10 border border-success/20 text-xs text-success font-medium animate-pulse">
                   <span className="w-1.5 h-1.5 rounded-full bg-success" />
                   Live
                 </span>
+              )}
+              {!isOwner && ownerInfo && (
+                <Badge variant="secondary" className="gap-1.5">
+                  <Users className="w-3 h-3" />
+                  Shared by {ownerInfo.display_name || ownerInfo.email}
+                </Badge>
+              )}
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShareModalOpen(true)}
+                  className="gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                  {shareCount && shareCount > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                      {shareCount}
+                    </Badge>
+                  )}
+                </Button>
               )}
             </div>
             <p className="text-sm text-muted-foreground">
@@ -212,6 +253,16 @@ const Report = () => {
       </main>
 
       <MinimalFooter />
+
+      {/* Share Modal */}
+      {currentAudit && (
+        <ShareAuditModal
+          open={shareModalOpen}
+          onOpenChange={setShareModalOpen}
+          auditId={currentAudit.id}
+          ownerEmail={currentUserEmail}
+        />
+      )}
     </div>
   );
 };
