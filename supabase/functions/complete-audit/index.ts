@@ -123,17 +123,30 @@ Deno.serve(async (req) => {
 
     console.log(`complete-audit: Completing audit ${audit_id} with score ${security_score}, grade ${grade}, status ${status}, coverage_tests: ${coverage_data?.total_tests ?? 0}`);
 
+    // Build update object - only include optional fields if explicitly provided
+    const updateData: Record<string, unknown> = {
+      security_score,
+      grade,
+      status,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Only update coverage_data if explicitly provided (don't overwrite existing)
+    if (coverage_data !== undefined) {
+      updateData.coverage_data = coverage_data;
+    }
+
+    // Only update system_hologram if explicitly provided
+    if (system_hologram !== undefined) {
+      updateData.system_hologram = system_hologram;
+    }
+
+    console.log(`complete-audit: Updating with fields: ${Object.keys(updateData).join(', ')}`);
+
     // Update the audit
     const { data, error } = await supabase
       .from('audits')
-      .update({
-        security_score,
-        grade,
-        status,
-        coverage_data: coverage_data || {},
-        system_hologram: system_hologram || {},
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', audit_id)
       .select('id')
       .single();
