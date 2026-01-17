@@ -14,6 +14,7 @@ interface Finding {
     lines?: string;
   };
   code?: string;
+  startLine?: number;
   remediation?: string;
   is_resolved?: boolean;
 }
@@ -81,11 +82,16 @@ const solidityTypes = new Set([
   'address', 'bool', 'string', 'bytes', 'bytes32', 'bytes4', 'bytes20'
 ]);
 
-const highlightSolidityCode = (code: string | undefined) => {
+const highlightSolidityCode = (code: string | undefined, startLine: number = 1) => {
   if (!code) return null;
   const lines = code.split('\n');
   
+  // Calculate the width needed for line numbers based on the largest line number
+  const maxLineNumber = startLine + lines.length - 1;
+  const lineNumberWidth = Math.max(3, String(maxLineNumber).length);
+  
   return lines.map((line, lineIndex) => {
+    const lineNumber = startLine + lineIndex;
     const tokens: JSX.Element[] = [];
     let remaining = line;
     let tokenIndex = 0;
@@ -158,8 +164,16 @@ const highlightSolidityCode = (code: string | undefined) => {
     }
     
     return (
-      <div key={lineIndex} className="leading-relaxed">
-        {tokens.length > 0 ? tokens : '\u00A0'}
+      <div key={lineIndex} className="flex leading-relaxed">
+        <span 
+          className="pr-3 text-right text-muted-foreground/50 select-none shrink-0 border-r border-border/50 mr-3"
+          style={{ width: `${lineNumberWidth + 1}ch` }}
+        >
+          {lineNumber}
+        </span>
+        <span className="flex-1">
+          {tokens.length > 0 ? tokens : '\u00A0'}
+        </span>
       </div>
     );
   });
@@ -285,7 +299,7 @@ const FindingItem = ({
                 Affected Code
               </h4>
               <div className="bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto">
-                {highlightSolidityCode(finding.code)}
+                {highlightSolidityCode(finding.code, finding.startLine)}
               </div>
             </div>
           )}
