@@ -1,9 +1,5 @@
-import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Shield, Download, Loader2, AlertTriangle, AlertCircle, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { downloadPdfReport } from "@/lib/pdfReport";
-import { useToast } from "@/hooks/use-toast";
+import { Shield, AlertTriangle, AlertCircle, Info } from "lucide-react";
 
 type Grade = "A" | "B" | "C" | "D" | "F" | null;
 
@@ -71,36 +67,6 @@ const SecurityScoreCard = ({
   const displayScore = isPending ? 0 : score;
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (displayScore / 100) * circumference;
-  const [isDownloading, setIsDownloading] = useState(false);
-  const { toast } = useToast();
-
-  const handleDownloadPDF = async () => {
-    if (!auditId) {
-      toast({
-        variant: "destructive",
-        title: "Cannot download",
-        description: "Audit ID is missing.",
-      });
-      return;
-    }
-
-    setIsDownloading(true);
-    try {
-      await downloadPdfReport(auditId, projectName);
-      toast({
-        title: "Report ready",
-        description: "Use your browser's print dialog to save as PDF.",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Download failed",
-        description: "Please try again.",
-      });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
   // Vulnerability matrix data
   const categories = [
@@ -154,25 +120,7 @@ const SecurityScoreCard = ({
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 relative">
-      {/* Desktop Download Button - Absolute positioned top-right */}
-      {!isPending && auditId && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDownloadPDF}
-          disabled={isDownloading}
-          className="hidden sm:flex gap-2 absolute top-4 right-4 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-        >
-          {isDownloading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Download className="w-4 h-4" />
-          )}
-          {isDownloading ? "Generating..." : "Download PDF"}
-        </Button>
-      )}
-
+    <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
         {/* Circular Progress */}
         <div className="relative w-28 h-28 lg:w-32 lg:h-32 shrink-0">
@@ -268,24 +216,6 @@ const SecurityScoreCard = ({
                 </div>
               ))}
             </div>
-
-            {/* Mobile: Button below vulnerability matrix */}
-            {!isPending && auditId && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadPDF}
-                disabled={isDownloading}
-                className="flex sm:hidden w-full mt-4 gap-2 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-              >
-                {isDownloading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-                {isDownloading ? "Generating..." : "Download PDF"}
-              </Button>
-            )}
           </div>
         </div>
       </div>
