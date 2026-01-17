@@ -148,11 +148,6 @@ const Report = () => {
                 >
                   <Share2 className="w-4 h-4" />
                   Share
-                  {shareCount && shareCount > 0 && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                      {shareCount}
-                    </Badge>
-                  )}
                 </Button>
               )}
             </div>
