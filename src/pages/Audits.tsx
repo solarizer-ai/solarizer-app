@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Loader2, FileCode, Trash2 } from "lucide-react";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -24,11 +25,13 @@ import {
 const Audits = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { data: audits, isLoading } = useAudits();
   const deleteAudit = useDeleteAudit();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [ownershipFilter, setOwnershipFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
 
@@ -60,7 +63,15 @@ const Audits = () => {
   const filteredAudits = audits?.filter(audit => {
     const matchesSearch = audit.project_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || audit.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    
+    // Ownership filter
+    const isOwned = audit.user_id === user?.id;
+    const matchesOwnership = 
+      ownershipFilter === "all" || 
+      (ownershipFilter === "owned" && isOwned) ||
+      (ownershipFilter === "shared" && !isOwned);
+    
+    return matchesSearch && matchesStatus && matchesOwnership;
   }).sort((a, b) => {
     switch (sortBy) {
       case "newest":
@@ -78,6 +89,9 @@ const Audits = () => {
         return 0;
     }
   });
+
+  // Check if there are any shared audits
+  const hasSharedAudits = audits?.some(a => a.user_id !== user?.id);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -122,6 +136,18 @@ const Audits = () => {
                 <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
+            {hasSharedAudits && (
+              <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Ownership" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Audits</SelectItem>
+                  <SelectItem value="owned">My Audits</SelectItem>
+                  <SelectItem value="shared">Shared with me</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Sort by" />
@@ -142,40 +168,46 @@ const Audits = () => {
             </div>
           ) : filteredAudits && filteredAudits.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredAudits.map((audit) => (
-                <div key={audit.id} className="relative group">
-                  <AuditCard
-                    projectName={audit.project_name}
-                    contractCount={audit.contract_count}
-                    grade={audit.grade || undefined}
-                    status={audit.status}
-                    timestamp={formatTimestamp(audit.created_at)}
-                    onClick={() => navigate(`/reports/${audit.id}`)}
-                  />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteAuditId(audit.id);
-                    }}
-                    className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+              {filteredAudits.map((audit) => {
+                const isOwned = audit.user_id === user?.id;
+                return (
+                  <div key={audit.id} className="relative group">
+                    <AuditCard
+                      projectName={audit.project_name}
+                      contractCount={audit.contract_count}
+                      grade={audit.grade || undefined}
+                      status={audit.status}
+                      timestamp={formatTimestamp(audit.created_at)}
+                      onClick={() => navigate(`/reports/${audit.id}`)}
+                      isShared={!isOwned}
+                    />
+                    {isOwned && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteAuditId(audit.id);
+                        }}
+                        className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-20 border border-dashed border-border rounded-lg">
               <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                {searchQuery || statusFilter !== "all" ? "No matching assessments" : "No assessments yet"}
+                {searchQuery || statusFilter !== "all" || ownershipFilter !== "all" ? "No matching assessments" : "No assessments yet"}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {searchQuery || statusFilter !== "all" 
+                {searchQuery || statusFilter !== "all" || ownershipFilter !== "all"
                   ? "Try adjusting your filters" 
                   : "Start your first smart contract security analysis"}
               </p>
-              {!searchQuery && statusFilter === "all" && (
+              {!searchQuery && statusFilter === "all" && ownershipFilter === "all" && (
                 <Button onClick={() => navigate("/dashboard?new=true")} className="gap-2">
                   <Plus className="w-4 h-4" />
                   Run Analysis

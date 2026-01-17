@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_shares: {
+        Row: {
+          audit_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          shared_with_email: string
+          shared_with_user_id: string
+        }
+        Insert: {
+          audit_id: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          shared_with_email: string
+          shared_with_user_id: string
+        }
+        Update: {
+          audit_id?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          shared_with_email?: string
+          shared_with_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_shares_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audits: {
         Row: {
           contract_code: string
