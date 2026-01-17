@@ -1,4 +1,4 @@
-import { Check, Zap, Shield, FileText, Code2 } from "lucide-react";
+import { Check, Zap, Shield, Code2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,6 @@ export function UpgradeToProModal({
     { icon: Zap, text: "Unlimited scans" },
     { icon: Shield, text: `${PLAN_LIMITS.pro.monthlyNloc.toLocaleString()} nLOC monthly allowance` },
     { icon: Code2, text: "Multi-file analysis" },
-    { icon: FileText, text: "Full PDF reports" },
   ];
 
   return (

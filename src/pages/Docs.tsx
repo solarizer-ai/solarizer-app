@@ -71,17 +71,6 @@ const Docs = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-medium text-primary">4</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Export Report</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Download your security report as a PDF for documentation and sharing.
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
