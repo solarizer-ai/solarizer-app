@@ -60,6 +60,7 @@ const Report = () => {
             : undefined,
         } : undefined,
         code: f.code_snippet || undefined,
+        startLine: f.line_start || 1,
         remediation: f.remediation || undefined,
         is_resolved: f.is_resolved,
       })),
