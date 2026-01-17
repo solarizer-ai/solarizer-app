@@ -9,11 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { User, Bell, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight } from "lucide-react";
+import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
+
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { format } from "date-fns";
@@ -131,10 +131,6 @@ const Settings = () => {
               <TabsTrigger value="subscription" className="gap-2">
                 <CreditCard className="w-4 h-4" />
                 Subscription
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="gap-2">
-                <Bell className="w-4 h-4" />
-                Notifications
               </TabsTrigger>
               <TabsTrigger value="security" className="gap-2">
                 <Shield className="w-4 h-4" />
@@ -332,48 +328,6 @@ const Settings = () => {
               )}
             </TabsContent>
 
-            <TabsContent value="notifications">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                  <CardDescription>
-                    Choose what notifications you receive
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Analysis Complete</p>
-                      <p className="text-sm text-muted-foreground">
-                        Get notified when an analysis finishes
-                      </p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Critical Findings</p>
-                      <p className="text-sm text-muted-foreground">
-                        Immediate alerts for critical vulnerabilities
-                      </p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Weekly Summary</p>
-                      <p className="text-sm text-muted-foreground">
-                        Weekly digest of your security activity
-                      </p>
-                    </div>
-                    <Switch />
-                  </div>
-                  <p className="text-xs text-muted-foreground pt-2">
-                    * Notification features coming soon
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="security">
               <Card>

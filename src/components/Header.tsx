@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Settings, LogOut, Menu } from "lucide-react";
+import { Settings, LogOut, Menu } from "lucide-react";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 import { Button } from "@/components/ui/button";
 import {
@@ -107,17 +107,6 @@ const Header = () => {
 
         <div className="flex items-center gap-1">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="hidden sm:flex text-muted-foreground hover:text-foreground">
-            <Bell className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="hidden sm:flex text-muted-foreground hover:text-foreground"
-            onClick={() => navigate("/settings")}
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
           
           {/* Desktop User Menu */}
           <DropdownMenu>
