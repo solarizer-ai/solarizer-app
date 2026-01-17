@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Severity = "critical" | "high" | "medium" | "low";
+type Severity = "critical" | "high" | "medium" | "low" | "info";
 
 interface Finding {
   id: string;
@@ -47,6 +47,11 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
     icon: Info,
     label: "Low",
     className: "text-primary bg-primary/10 border-primary/20",
+  },
+  info: {
+    icon: Info,
+    label: "Info",
+    className: "text-slate-400 bg-slate-400/10 border-slate-400/20",
   },
 };
 

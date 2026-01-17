@@ -31,23 +31,20 @@ const Report = () => {
   };
 
   const getVulnerabilityCounts = () => {
-    if (!findings) return { critical: 0, high: 0, medium: 0, low: 0 };
-    
-    // Filter out info severity findings
-    const filteredFindingsForCounts = findings.filter(f => f.severity !== "info");
+    if (!findings) return { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
     
     return {
-      critical: filteredFindingsForCounts.filter(f => f.severity === "critical").length,
-      high: filteredFindingsForCounts.filter(f => f.severity === "high").length,
-      medium: filteredFindingsForCounts.filter(f => f.severity === "medium").length,
-      low: filteredFindingsForCounts.filter(f => f.severity === "low").length,
+      critical: findings.filter(f => f.severity === "critical").length,
+      high: findings.filter(f => f.severity === "high").length,
+      medium: findings.filter(f => f.severity === "medium").length,
+      low: findings.filter(f => f.severity === "low").length,
+      info: findings.filter(f => f.severity === "info").length,
     };
   };
 
   // Memoize transformed findings to prevent infinite update loops
   const transformedFindings = useMemo(() => 
     (findings ?? [])
-      .filter(f => f.severity !== "info")
       .map((f) => ({
         id: f.id,
         title: f.title,

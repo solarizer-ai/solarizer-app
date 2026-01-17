@@ -12,6 +12,7 @@ interface VulnerabilityCount {
   high: number;
   medium: number;
   low: number;
+  info: number;
 }
 
 interface SecurityScoreCardProps {
@@ -63,7 +64,7 @@ const SecurityScoreCard = ({
   projectName, 
   timestamp, 
   auditId,
-  counts = { critical: 0, high: 0, medium: 0, low: 0 }
+  counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 }
 }: SecurityScoreCardProps) => {
   const isPending = grade === null;
   const config = isPending ? pendingConfig : gradeConfig[grade];
@@ -138,6 +139,15 @@ const SecurityScoreCard = ({
       textColor: "text-primary",
       borderColor: "border-primary/30",
       barColor: "bg-primary",
+    },
+    {
+      label: "Info",
+      count: counts.info,
+      icon: Info,
+      bgColor: "bg-slate-400/10",
+      textColor: "text-slate-400",
+      borderColor: "border-slate-400/30",
+      barColor: "bg-slate-400",
     },
   ];
 
