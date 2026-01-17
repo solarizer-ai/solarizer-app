@@ -13,7 +13,7 @@ import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import MinimalFooter from "@/components/MinimalFooter";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowRight, FileCode, Loader2, Trash2 } from "lucide-react";
+import { Plus, ArrowRight, FileCode, Loader2, Trash2, ChevronRight } from "lucide-react";
 import { useAudits, useAudit, useCreateAudit, useUpdateAudit, useDeleteAudit } from "@/hooks/useAudits";
 import type { AuditStatus } from "@/hooks/useAudits";
 import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
@@ -431,6 +431,22 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Recent Audits - Takes 2 columns */}
               <div className="lg:col-span-2 space-y-4">
+                
+                {/* Section Header */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">Recent Analysis</h3>
+                  {audits && audits.length > 4 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => navigate('/audits')}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      View More
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  )}
+                </div>
 
                 {/* Audit Grid */}
                 {auditsLoading ? (
@@ -439,7 +455,7 @@ const Index = () => {
                   </div>
                 ) : audits && audits.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {audits.slice(0, 6).map((audit) => (
+                    {audits.slice(0, 4).map((audit) => (
                       <div key={audit.id} className="relative group">
                         <AuditCard
                           projectName={audit.project_name}

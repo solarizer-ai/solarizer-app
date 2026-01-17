@@ -1,4 +1,4 @@
-import { Shield, Bug, Code2, TrendingUp } from "lucide-react";
+import { Shield, Bug, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,8 +54,7 @@ export const DashboardStats = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCardSkeleton />
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <StatCardSkeleton />
         <StatCardSkeleton />
         <StatCardSkeleton />
@@ -64,7 +63,7 @@ export const DashboardStats = () => {
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-3 gap-3 sm:gap-4">
       <StatCard
         icon={<Shield className="w-5 h-5" />}
         label="Total Contracts"
@@ -77,12 +76,6 @@ export const DashboardStats = () => {
         value={stats.totalVulnerabilitiesFound}
         subValue="issues found"
         iconColor="text-destructive"
-      />
-      <StatCard
-        icon={<Code2 className="w-5 h-5" />}
-        label="Lines Analyzed"
-        value={stats.totalNlocAnalyzed}
-        subValue="total nLOC"
       />
       <StatCard
         icon={<TrendingUp className="w-5 h-5" />}
