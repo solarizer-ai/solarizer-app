@@ -6,17 +6,18 @@ import FindingItem from "@/components/FindingItem";
 import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
 import SecurityCoverageTab from "@/components/SecurityCoverageTab";
+import ScopeTab from "@/components/ScopeTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Shield, AlertTriangle } from "lucide-react";
+import { Loader2, Shield, AlertTriangle, FileCode } from "lucide-react";
 import { useAudit, useFindings } from "@/hooks/useAudits";
 import { formatDistanceToNow } from "date-fns";
-import type { CoverageData } from "@/hooks/useAudits";
+import type { CoverageData, Finding } from "@/hooks/useAudits";
 
 const Report = () => {
   const { auditId } = useParams<{ auditId: string }>();
   const navigate = useNavigate();
   const [filteredFindings, setFilteredFindings] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("coverage");
+  const [activeTab, setActiveTab] = useState<string>("scope");
   const [highlightedFindingId, setHighlightedFindingId] = useState<string | null>(null);
   const findingRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   
@@ -135,18 +136,31 @@ const Report = () => {
                 counts={getVulnerabilityCounts()}
               />
 
-              {/* Tabbed Interface: Coverage & Findings */}
+              {/* Tabbed Interface: Scope, Coverage & Findings */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="scope" className="flex items-center gap-2">
+                    <FileCode className="w-4 h-4" />
+                    Scope
+                  </TabsTrigger>
                   <TabsTrigger value="coverage" className="flex items-center gap-2">
                     <Shield className="w-4 h-4" />
-                    Security Coverage
+                    Coverage
                   </TabsTrigger>
                   <TabsTrigger value="findings" className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" />
                     Findings ({transformedFindings.length})
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="scope" className="mt-4">
+                  <ScopeTab
+                    coverageData={currentAudit?.coverage_data as CoverageData | null}
+                    findings={(findings ?? []) as Finding[]}
+                    contractCount={currentAudit?.contract_count || 0}
+                    nlocCount={currentAudit?.nloc_count || null}
+                  />
+                </TabsContent>
 
                 <TabsContent value="coverage" className="mt-4">
                   <SecurityCoverageTab
