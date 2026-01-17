@@ -17,8 +17,24 @@ interface FindingInput {
   remediation?: string;
 }
 
+interface CoverageTestDetail {
+  test_name: string;
+  status: "PASSED" | "FAILED";
+  proof: string | null;
+  file: string;
+  related_finding_title: string | null;
+}
+
+interface CoverageData {
+  total_tests: number;
+  passed: number;
+  failed: number;
+  details: CoverageTestDetail[];
+}
+
 interface SaveFindingRequest {
   finding: FindingInput;
+  coverage_data?: CoverageData;
 }
 
 Deno.serve(async (req) => {
@@ -62,7 +78,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { finding } = body;
+    const { finding, coverage_data } = body;
 
     // Validate required fields
     if (!finding || typeof finding !== 'object') {
@@ -101,6 +117,32 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate coverage_data if provided
+    if (coverage_data !== undefined) {
+      if (typeof coverage_data !== 'object' || coverage_data === null) {
+        return new Response(
+          JSON.stringify({ error: 'coverage_data must be an object' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (typeof coverage_data.total_tests !== 'number' ||
+          typeof coverage_data.passed !== 'number' ||
+          typeof coverage_data.failed !== 'number') {
+        return new Response(
+          JSON.stringify({ error: 'coverage_data requires total_tests, passed, and failed as numbers' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (!Array.isArray(coverage_data.details)) {
+        return new Response(
+          JSON.stringify({ error: 'coverage_data.details must be an array' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Initialize Supabase client with service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -136,8 +178,40 @@ Deno.serve(async (req) => {
 
     console.log(`save-finding: Successfully saved finding with id ${data.id}`);
 
+    // Update audit with coverage_data if provided
+    if (coverage_data) {
+      console.log(`save-finding: Updating coverage_data for audit ${finding.audit_id}`);
+      
+      const { error: coverageError } = await supabase
+        .from('audits')
+        .update({
+          coverage_data: coverage_data,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', finding.audit_id);
+
+      if (coverageError) {
+        console.error('save-finding: Failed to update coverage_data:', coverageError);
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            finding_id: data.id,
+            coverage_updated: false,
+            coverage_error: coverageError.message 
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log(`save-finding: Coverage data updated successfully`);
+    }
+
     return new Response(
-      JSON.stringify({ success: true, finding_id: data.id }),
+      JSON.stringify({ 
+        success: true, 
+        finding_id: data.id,
+        coverage_updated: coverage_data ? true : false
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
