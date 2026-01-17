@@ -1,9 +1,30 @@
 import { supabase } from "@/integrations/supabase/client";
+import logoUrl from "@/assets/solarizer-logo.png";
+
+// Helper to convert image to base64 data URL
+const getLogoDataUrl = async (): Promise<string> => {
+  try {
+    const response = await fetch(logoUrl);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.warn("Failed to load logo:", error);
+    return "";
+  }
+};
 
 export const downloadPdfReport = async (auditId: string, projectName: string) => {
   try {
+    // Get logo as base64
+    const logoDataUrl = await getLogoDataUrl();
+    
     const { data, error } = await supabase.functions.invoke("generate-report", {
-      body: { auditId },
+      body: { auditId, logoDataUrl },
     });
 
     if (error) {
