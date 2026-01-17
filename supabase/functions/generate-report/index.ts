@@ -5,28 +5,30 @@ import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 // Enhanced Color Palette - Obsidian & Solar Orange Theme
 const COLORS = {
   // Obsidian blacks
-  obsidian: [5, 5, 5], // Near black (hsl(0 0% 2%))
+  obsidian: [5, 5, 5], // Near black
   navy: [15, 23, 42], // Slate-900
+  darkGray: [30, 30, 30], // Dark card background
 
   // Solar Orange (BRAND CORE)
-  solarOrange: [253, 124, 41], // hsl(24 95% 53%)
-  solarGlow: [255, 153, 77], // hsl(24 100% 60%)
-  solarDeep: [230, 107, 29], // hsl(24 90% 45%)
+  solarOrange: [253, 124, 41], // Primary brand
+  solarGlow: [255, 153, 77], // Lighter variant
+  solarDeep: [230, 107, 29], // Darker variant
 
   // Grayscale
-  slate: [71, 85, 105], // Slate-600
-  slateLight: [148, 163, 184], // Slate-400
-  border: [226, 232, 240], // Slate-200
-  bgLight: [248, 250, 252], // Slate-50
+  slate: [71, 85, 105], // Body text
+  slateLight: [148, 163, 184], // Secondary text
+  border: [226, 232, 240], // Dividers
+  bgLight: [248, 250, 252], // Light backgrounds
+  bgCard: [252, 252, 253], // Card backgrounds
   white: [255, 255, 255],
 
   // Severity colors
-  critical: [185, 28, 28], // Red-700
-  high: [194, 65, 12], // Orange-700
-  medium: [180, 83, 9], // Amber-700
-  low: [29, 78, 216], // Blue-700
-  info: [51, 65, 85], // Slate-700
-  success: [21, 128, 61], // Green-700
+  critical: [220, 38, 38], // Brighter red
+  high: [234, 88, 12], // Brighter orange
+  medium: [234, 179, 8], // Brighter amber
+  low: [59, 130, 246], // Brighter blue
+  info: [100, 116, 139], // Slate
+  success: [34, 197, 94], // Brighter green
 };
 
 const corsHeaders = {
@@ -73,12 +75,12 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
+  const margin = 22;
   let yPos = margin;
 
   // Utility: Check if page break needed
   const checkPageBreak = (needed: number) => {
-    if (yPos + needed > pageHeight - 30) {
+    if (yPos + needed > pageHeight - 35) {
       doc.addPage();
       addPageFooter(doc.internal.getCurrentPageInfo().pageNumber);
       yPos = margin;
@@ -91,41 +93,62 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
   const addPageFooter = (pageNum: number) => {
     const totalPages = doc.internal.getNumberOfPages();
     doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
     doc.setTextColor(...COLORS.slateLight);
-    doc.text(
-      `Solarizer Proprietary Security Assessment Report | Page ${pageNum} of ${totalPages}`,
-      pageWidth / 2,
-      pageHeight - 10,
-      { align: "center" },
-    );
+
+    // Left: Solarizer mark
+    doc.text("Solarizer", margin, pageHeight - 12);
+
+    // Center: Report type
+    doc.text("Confidential Security Assessment", pageWidth / 2, pageHeight - 12, { align: "center" });
+
+    // Right: Page number
+    doc.text(`${pageNum} of ${totalPages}`, pageWidth - margin, pageHeight - 12, { align: "right" });
   };
 
   // Utility: Draw severity badge
-  const drawSeverityBadge = (severity: string, x: number, y: number) => {
+  const drawSeverityBadge = (severity: string, x: number, y: number, small = false) => {
     const sColor = (COLORS as any)[severity] || COLORS.info;
-    const badgeWidth = 55;
-    const badgeHeight = 16;
+    const badgeWidth = small ? 45 : 60;
+    const badgeHeight = small ? 14 : 18;
 
     doc.setFillColor(...sColor);
-    doc.roundedRect(x, y, badgeWidth, badgeHeight, 2, 2, "F");
+    doc.roundedRect(x, y, badgeWidth, badgeHeight, 3, 3, "F");
 
     doc.setTextColor(...COLORS.white);
-    doc.setFontSize(9);
+    doc.setFontSize(small ? 8 : 9);
     doc.setFont("helvetica", "bold");
-    doc.text(severity.toUpperCase(), x + badgeWidth / 2, y + 11, { align: "center" });
+    doc.text(severity.toUpperCase(), x + badgeWidth / 2, y + (small ? 9.5 : 12), { align: "center" });
   };
 
-  // Utility: Draw horizontal progress bar
+  // Utility: Draw progress bar
   const drawProgressBar = (x: number, y: number, width: number, percentage: number, color: number[]) => {
     // Background
-    doc.setFillColor(...COLORS.border);
-    doc.roundedRect(x, y, width, 8, 2, 2, "F");
+    doc.setFillColor(240, 240, 242);
+    doc.roundedRect(x, y, width, 6, 2, 2, "F");
 
     // Progress
     if (percentage > 0) {
       doc.setFillColor(...color);
-      doc.roundedRect(x, y, (width * percentage) / 100, 8, 2, 2, "F");
+      const progressWidth = (width * percentage) / 100;
+      doc.roundedRect(x, y, Math.max(progressWidth, 4), 6, 2, 2, "F");
     }
+  };
+
+  // Utility: Section header with orange accent
+  const drawSectionHeader = (title: string, y: number, size = 20) => {
+    doc.setFontSize(size);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.navy);
+    doc.text(title, margin, y);
+
+    // Orange accent line
+    doc.setDrawColor(...COLORS.solarOrange);
+    doc.setLineWidth(2.5);
+    const textWidth = doc.getTextWidth(title);
+    doc.line(margin, y + 2, margin + Math.min(textWidth + 5, 70), y + 2);
+
+    return y + 14;
   };
 
   // ==========================================
@@ -138,114 +161,137 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
 
   // Solar Orange accent bar (left side)
   doc.setFillColor(...COLORS.solarOrange);
-  doc.rect(0, 0, 8, pageHeight, "F");
+  doc.rect(0, 0, 6, pageHeight, "F");
 
-  // Add logo space (if provided)
+  // Logo space (top-right)
   if (logoDataUrl) {
     try {
-      // Logo area: top-right corner
-      doc.addImage(logoDataUrl, "PNG", pageWidth - 60, 20, 40, 40);
+      doc.addImage(logoDataUrl, "PNG", pageWidth - 55, 22, 35, 35);
     } catch (e) {
       console.warn("Failed to add logo:", e);
     }
   } else {
-    // Logo placeholder box (for design reference)
+    // Logo placeholder
     doc.setDrawColor(...COLORS.solarOrange);
     doc.setLineWidth(2);
-    doc.rect(pageWidth - 60, 20, 40, 40, "S");
-    doc.setFontSize(8);
+    doc.rect(pageWidth - 55, 22, 35, 35, "S");
+    doc.setFontSize(7);
     doc.setTextColor(...COLORS.slateLight);
-    doc.text("LOGO", pageWidth - 40, 43, { align: "center" });
+    doc.text("LOGO", pageWidth - 37.5, 42, { align: "center" });
   }
 
-  // Main title
+  // Main title - NOT ALL CAPS
   doc.setTextColor(...COLORS.white);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(48);
-  doc.text("SOLARIZER", margin + 10, 100);
+  doc.setFontSize(44);
+  doc.text("Solarizer", margin + 8, 95);
 
   // Subtitle with Solar Orange
   doc.setTextColor(...COLORS.solarOrange);
-  doc.setFontSize(16);
-  doc.text("SMART CONTRACT SECURITY ASSESSMENT", margin + 10, 115);
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "normal");
+  doc.text("Smart Contract Security Assessment", margin + 8, 108);
 
   // Solar Orange decorative line
   doc.setDrawColor(...COLORS.solarOrange);
   doc.setLineWidth(2);
-  doc.line(margin + 10, 125, margin + 90, 125);
+  doc.line(margin + 8, 115, margin + 75, 115);
 
   // Project details
-  doc.setTextColor(...COLORS.white);
-  doc.setFontSize(12);
+  yPos = 135;
+  doc.setTextColor(...COLORS.slateLight);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(`PROJECT:`, margin + 10, 145);
-  doc.setFont("helvetica", "bold");
-  doc.text(audit.project_name.toUpperCase(), margin + 38, 145);
+  doc.text("PROJECT", margin + 8, yPos);
 
-  doc.setFont("helvetica", "normal");
-  doc.text(`DATE:`, margin + 10, 155);
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(15);
   doc.setFont("helvetica", "bold");
+  doc.text(audit.project_name.toUpperCase(), margin + 8, yPos + 8);
+
+  yPos += 22;
+  doc.setTextColor(...COLORS.slateLight);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text("ASSESSMENT DATE", margin + 8, yPos);
+
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
   doc.text(
     new Date(audit.created_at).toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
     }),
-    margin + 33,
-    155,
+    margin + 8,
+    yPos + 7,
   );
 
   // Confidential badge
-  doc.setFillColor(30, 30, 30);
-  doc.roundedRect(margin + 10, 170, 90, 18, 2, 2, "F");
+  yPos += 25;
+  doc.setFillColor(...COLORS.darkGray);
+  doc.roundedRect(margin + 8, yPos, 75, 14, 3, 3, "F");
   doc.setTextColor(...COLORS.solarOrange);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("⚠ CONFIDENTIAL REPORT", margin + 55, 181, { align: "center" });
-
-  // Footer text
-  doc.setTextColor(...COLORS.slateLight);
   doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("⚠  CONFIDENTIAL REPORT", margin + 45.5, yPos + 9.5, { align: "center" });
+
+  // Footer tagline
+  doc.setTextColor(...COLORS.slateLight);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.text("Powered by Solarizer AI Verification Engine", pageWidth / 2, pageHeight - 20, { align: "center" });
+  doc.text("Powered by AI-Driven Security Intelligence", pageWidth / 2, pageHeight - 18, { align: "center" });
 
   // ==========================================
   // 2. TABLE OF CONTENTS
   // ==========================================
 
   doc.addPage();
-  yPos = margin;
+  yPos = margin + 5;
 
-  doc.setTextColor(...COLORS.navy);
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.text("Table of Contents", margin, yPos);
-
-  // Solar Orange underline
-  doc.setDrawColor(...COLORS.solarOrange);
-  doc.setLineWidth(2);
-  doc.line(margin, yPos + 3, margin + 65, yPos + 3);
-  yPos += 20;
+  yPos = drawSectionHeader("Table of Contents", yPos, 22);
+  yPos += 8;
 
   const tocItems = [
     { title: "Executive Summary", page: 3 },
-    { title: "Audit Scope", page: 3 },
+    { title: "Assessment Scope", page: 3 },
     { title: "Methodology", page: 3 },
-    { title: "Findings Overview", page: 4 },
-    { title: "Detailed Findings", page: 5 },
-    { title: "Verification Coverage", page: "N/A" },
-    { title: "Legal Disclaimer", page: "N/A" },
+    { title: "Security Findings Overview", page: 4 },
+    { title: "Detailed Analysis", page: 5 },
+    { title: "Test Coverage Results", page: "—" },
+    { title: "Disclaimer", page: "—" },
   ];
 
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...COLORS.slate);
 
   tocItems.forEach((item, i) => {
-    doc.text(`${i + 1}.`, margin, yPos);
+    // Number
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.solarOrange);
+    doc.text(`${i + 1}`, margin + 2, yPos);
+
+    // Title
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.navy);
     doc.text(item.title, margin + 10, yPos);
-    doc.text(String(item.page), pageWidth - margin - 10, yPos, { align: "right" });
-    yPos += 8;
+
+    // Dots
+    const titleWidth = doc.getTextWidth(item.title);
+    const dotsX = margin + 10 + titleWidth + 3;
+    const pageX = pageWidth - margin - 8;
+    doc.setTextColor(...COLORS.border);
+    doc.setFont("helvetica", "normal");
+    doc.text("· ".repeat(Math.floor((pageX - dotsX) / 2)), dotsX, yPos);
+
+    // Page number
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.slate);
+    doc.text(String(item.page), pageWidth - margin, yPos, { align: "right" });
+
+    yPos += 9;
   });
 
   addPageFooter(2);
@@ -255,35 +301,32 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
   // ==========================================
 
   doc.addPage();
-  yPos = margin;
+  yPos = margin + 5;
 
-  doc.setTextColor(...COLORS.navy);
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.text("Executive Summary", margin, yPos);
+  yPos = drawSectionHeader("Executive Summary", yPos, 22);
+  yPos += 5;
 
-  doc.setDrawColor(...COLORS.solarOrange);
-  doc.setLineWidth(2);
-  doc.line(margin, yPos + 3, margin + 75, yPos + 3);
-  yPos += 20;
+  // Modern score card with gradient-like effect
+  doc.setFillColor(252, 252, 253);
+  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 55, 5, 5, "F");
 
-  // Score dashboard card
-  doc.setFillColor(...COLORS.bgLight);
-  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 60, 4, 4, "F");
+  // Subtle border
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 55, 5, 5, "S");
 
-  // Solar Orange accent border
-  doc.setDrawColor(...COLORS.solarOrange);
-  doc.setLineWidth(1);
-  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 60, 4, 4, "S");
+  // Solar Orange top accent
+  doc.setFillColor(...COLORS.solarOrange);
+  doc.rect(margin, yPos, pageWidth - margin * 2, 3, "F");
 
-  // Left side: Grade
-  doc.setFontSize(10);
-  doc.setTextColor(...COLORS.slate);
+  yPos += 18;
+
+  // Left: Grade
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.slateLight);
   doc.setFont("helvetica", "normal");
-  doc.text("OVERALL SECURITY GRADE", margin + 15, yPos + 18);
+  doc.text("SECURITY GRADE", margin + 15, yPos);
 
-  doc.setFontSize(42);
-  doc.setFont("helvetica", "bold");
   const gradeColor =
     audit.grade === "A"
       ? COLORS.success
@@ -294,102 +337,142 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
           : audit.grade === "D"
             ? COLORS.high
             : COLORS.critical;
+
+  doc.setFontSize(36);
+  doc.setFont("helvetica", "bold");
   doc.setTextColor(...gradeColor);
-  doc.text(audit.grade, margin + 15, yPos + 48);
+  doc.text(audit.grade, margin + 15, yPos + 23);
 
-  // Right side: Score
-  doc.setFontSize(10);
-  doc.setTextColor(...COLORS.slate);
+  // Divider line
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.5);
+  doc.line(pageWidth / 2 - 8, yPos - 5, pageWidth / 2 - 8, yPos + 30);
+
+  // Right: Score
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.slateLight);
   doc.setFont("helvetica", "normal");
-  doc.text("SECURITY SCORE", pageWidth / 2 + 10, yPos + 18);
+  doc.text("SECURITY SCORE", pageWidth / 2 + 8, yPos);
 
-  doc.setFontSize(42);
+  doc.setFontSize(36);
   doc.setTextColor(...COLORS.solarOrange);
   doc.setFont("helvetica", "bold");
-  doc.text(`${audit.security_score}%`, pageWidth / 2 + 10, yPos + 48);
+  doc.text(`${audit.security_score}%`, pageWidth / 2 + 8, yPos + 23);
 
-  yPos += 75;
+  yPos += 45;
 
   // ==========================================
   // 4. AUDIT SCOPE
   // ==========================================
 
-  checkPageBreak(40);
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...COLORS.navy);
-  doc.text("Audit Scope", margin, yPos);
-  yPos += 12;
+  checkPageBreak(45);
+  yPos = drawSectionHeader("Assessment Scope", yPos, 16);
+  yPos += 3;
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...COLORS.slate);
-
-  const scopeItems = [
-    { label: "Contracts Analyzed", value: audit.contract_count || "N/A" },
-    { label: "Lines of Code", value: audit.nloc_count?.toLocaleString() || "N/A" },
-    { label: "Verification Tests", value: audit.coverage_data?.total_tests || "N/A" },
-    { label: "Analysis Date", value: new Date(audit.created_at).toLocaleDateString() },
+  // Grid layout for scope items
+  const scopeData = [
+    { label: "Smart Contracts", value: audit.contract_count || "—", icon: "📄" },
+    { label: "Lines of Code", value: audit.nloc_count?.toLocaleString() || "—", icon: "💻" },
+    { label: "Security Tests", value: audit.coverage_data?.total_tests || "—", icon: "🔍" },
+    {
+      label: "Analysis Date",
+      value: new Date(audit.created_at).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      icon: "📅",
+    },
   ];
 
-  scopeItems.forEach((item) => {
-    doc.setFont("helvetica", "bold");
-    doc.text(`${item.label}:`, margin, yPos);
+  const boxWidth = (pageWidth - margin * 2 - 6) / 2;
+  const boxHeight = 22;
+  let xOffset = 0;
+
+  scopeData.forEach((item, i) => {
+    if (i % 2 === 0) {
+      xOffset = margin;
+    } else {
+      xOffset = margin + boxWidth + 6;
+    }
+
+    const boxY = yPos + Math.floor(i / 2) * (boxHeight + 4);
+
+    // Card background
+    doc.setFillColor(...COLORS.bgCard);
+    doc.roundedRect(xOffset, boxY, boxWidth, boxHeight, 3, 3, "F");
+
+    // Icon
+    doc.setFontSize(14);
+    doc.text(item.icon, xOffset + 8, boxY + 14);
+
+    // Label
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.slateLight);
     doc.setFont("helvetica", "normal");
-    doc.text(String(item.value), margin + 60, yPos);
-    yPos += 7;
+    doc.text(item.label.toUpperCase(), xOffset + 22, boxY + 10);
+
+    // Value
+    doc.setFontSize(13);
+    doc.setTextColor(...COLORS.navy);
+    doc.setFont("helvetica", "bold");
+    doc.text(String(item.value), xOffset + 22, boxY + 19);
   });
 
-  yPos += 10;
+  yPos += Math.ceil(scopeData.length / 2) * (boxHeight + 4) + 8;
 
   // ==========================================
   // 5. METHODOLOGY
   // ==========================================
 
-  checkPageBreak(50);
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...COLORS.navy);
-  doc.text("Methodology", margin, yPos);
-  yPos += 12;
+  checkPageBreak(55);
+  yPos = drawSectionHeader("Methodology", yPos, 16);
+  yPos += 3;
 
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...COLORS.slate);
 
-  const methodology = [
-    "This assessment utilizes Solarizer's proprietary multi-layered verification pipeline combining automated formal verification with AI-powered logical consistency analysis.",
-    "",
-    "The analysis process includes:",
-    "• Comprehensive structural mapping of contract dependencies",
-    "• Automated state transition verification against safety properties",
-    "• Cross-referencing against 20,000+ historical vulnerability patterns",
-    "• Contextual validation within protocol-specific business logic",
-    "• Manual review of critical security-sensitive code paths",
+  const methodText =
+    "This assessment leverages Solarizer's proprietary AI-powered verification engine, combining automated formal verification with deep logical analysis.";
+  const methodLines = doc.splitTextToSize(methodText, pageWidth - margin * 2);
+  doc.text(methodLines, margin, yPos);
+  yPos += methodLines.length * 5 + 8;
+
+  // Methodology points
+  const methodPoints = [
+    "Structural mapping of contract dependencies and call graphs",
+    "Automated state transition verification against safety properties",
+    "Pattern matching against 20,000+ historical vulnerability signatures",
+    "Contextual validation within protocol-specific business logic",
+    "Manual review of security-critical code paths",
   ];
 
-  methodology.forEach((line) => {
-    if (line === "") {
-      yPos += 4;
-    } else {
-      const lines = doc.splitTextToSize(line, pageWidth - margin * 2);
-      doc.text(lines, margin, yPos);
-      yPos += lines.length * 5;
-    }
+  doc.setFontSize(9);
+  methodPoints.forEach((point) => {
+    // Orange bullet
+    doc.setFontSize(12);
+    doc.setTextColor(...COLORS.solarOrange);
+    doc.text("•", margin + 2, yPos);
+
+    // Point text
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.slate);
+    doc.setFont("helvetica", "normal");
+    const lines = doc.splitTextToSize(point, pageWidth - margin * 2 - 10);
+    doc.text(lines, margin + 8, yPos);
+    yPos += lines.length * 5 + 1;
   });
 
-  yPos += 10;
+  yPos += 8;
 
   // ==========================================
   // 6. FINDINGS OVERVIEW
   // ==========================================
 
-  checkPageBreak(80);
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...COLORS.navy);
-  doc.text("Findings Overview", margin, yPos);
-  yPos += 15;
+  checkPageBreak(70);
+  yPos = drawSectionHeader("Security Findings Overview", yPos, 16);
+  yPos += 3;
 
   // Count findings by severity
   const severityCounts = {
@@ -402,64 +485,71 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
 
   const totalFindings = Object.values(severityCounts).reduce((a, b) => a + b, 0);
 
-  // Visual breakdown dashboard
-  doc.setFillColor(...COLORS.bgLight);
-  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 70, 4, 4, "F");
+  if (totalFindings === 0) {
+    // No findings - success message
+    doc.setFillColor(240, 253, 244);
+    doc.roundedRect(margin, yPos, pageWidth - margin * 2, 35, 4, 4, "F");
 
-  yPos += 15;
-
-  const severityItems = [
-    { name: "Critical", key: "critical", icon: "⚠", color: COLORS.critical },
-    { name: "High", key: "high", icon: "🔶", color: COLORS.high },
-    { name: "Medium", key: "medium", icon: "🟡", color: COLORS.medium },
-    { name: "Low", key: "low", icon: "🔵", color: COLORS.low },
-    { name: "Info", key: "info", icon: "ℹ", color: COLORS.info },
-  ];
-
-  severityItems.forEach((item) => {
-    const count = (severityCounts as any)[item.key];
-    const percentage = totalFindings > 0 ? (count / totalFindings) * 100 : 0;
-
-    // Icon
-    doc.setFontSize(12);
-    doc.text(item.icon, margin + 10, yPos);
-
-    // Label
-    doc.setFontSize(10);
+    doc.setTextColor(...COLORS.success);
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLORS.navy);
-    doc.text(item.name, margin + 20, yPos);
+    doc.text("✓  No Security Issues Detected", pageWidth / 2, yPos + 15, { align: "center" });
 
-    // Progress bar
-    const barX = margin + 50;
-    const barWidth = 80;
-    drawProgressBar(barX, yPos - 5, barWidth, percentage, item.color);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.slate);
+    doc.text("All security verification tests passed successfully.", pageWidth / 2, yPos + 25, { align: "center" });
 
-    // Count
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...item.color);
-    doc.text(String(count), barX + barWidth + 10, yPos);
+    yPos += 40;
+  } else {
+    // Visual breakdown
+    const severityItems = [
+      { name: "Critical", key: "critical", color: COLORS.critical },
+      { name: "High", key: "high", color: COLORS.high },
+      { name: "Medium", key: "medium", color: COLORS.medium },
+      { name: "Low", key: "low", color: COLORS.low },
+      { name: "Info", key: "info", color: COLORS.info },
+    ];
 
-    yPos += 11;
-  });
+    severityItems.forEach((item) => {
+      const count = (severityCounts as any)[item.key];
+      if (count === 0) return; // Skip if no findings
 
-  yPos += 10;
+      const percentage = (count / totalFindings) * 100;
+
+      // Badge
+      drawSeverityBadge(item.key, margin, yPos - 3, true);
+
+      // Label
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...COLORS.navy);
+      doc.text(item.name, margin + 50, yPos + 3);
+
+      // Progress bar
+      const barX = margin + 85;
+      const barWidth = 65;
+      drawProgressBar(barX, yPos - 1, barWidth, percentage, item.color);
+
+      // Count
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...item.color);
+      doc.text(String(count), barX + barWidth + 8, yPos + 3);
+
+      yPos += 13;
+    });
+
+    yPos += 5;
+  }
 
   // ==========================================
   // 7. DETAILED FINDINGS
   // ==========================================
 
   if (audit.findings.length > 0) {
-    checkPageBreak(30);
-    doc.setFontSize(20);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLORS.navy);
-    doc.text("Detailed Findings", margin, yPos);
-
-    doc.setDrawColor(...COLORS.solarOrange);
-    doc.setLineWidth(2);
-    doc.line(margin, yPos + 3, margin + 60, yPos + 3);
-    yPos += 18;
+    checkPageBreak(25);
+    yPos = drawSectionHeader("Detailed Analysis", yPos, 18);
+    yPos += 5;
 
     // Sort findings by severity
     const severityOrder: any = { critical: 1, high: 2, medium: 3, low: 4, info: 5 };
@@ -468,120 +558,113 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
     );
 
     sortedFindings.forEach((finding, i) => {
-      checkPageBreak(90);
+      checkPageBreak(80);
 
       const sColor = (COLORS as any)[finding.severity] || COLORS.info;
 
-      // Header card
-      doc.setFillColor(...COLORS.bgLight);
-      doc.roundedRect(margin, yPos, pageWidth - margin * 2, 14, 3, 3, "F");
+      // Finding card
+      doc.setFillColor(...COLORS.bgCard);
+      const cardStartY = yPos;
+      doc.roundedRect(margin, yPos, pageWidth - margin * 2, 16, 4, 4, "F");
 
-      // Left severity indicator bar
+      // Severity indicator (left bar)
       doc.setFillColor(...sColor);
-      doc.rect(margin, yPos, 5, 14, "F");
+      doc.rect(margin, yPos, 4, 16, "F");
 
-      // Finding number and title
-      doc.setFontSize(11);
+      // Finding number
+      doc.setFontSize(9);
+      doc.setTextColor(...COLORS.slateLight);
+      doc.setFont("helvetica", "bold");
+      doc.text(`#${i + 1}`, margin + 10, yPos + 10);
+
+      // Title
+      doc.setFontSize(10.5);
       doc.setTextColor(...COLORS.navy);
       doc.setFont("helvetica", "bold");
-      doc.text(`${i + 1}. ${finding.title}`, margin + 10, yPos + 9);
+      const titleText = finding.title.length > 75 ? finding.title.substring(0, 75) + "..." : finding.title;
+      doc.text(titleText, margin + 20, yPos + 10);
 
-      // Severity badge (top-right)
-      drawSeverityBadge(finding.severity, pageWidth - margin - 58, yPos - 1);
+      // Severity badge (right)
+      drawSeverityBadge(finding.severity, pageWidth - margin - 48, yPos + 1, true);
 
-      yPos += 20;
+      yPos += 22;
 
-      // Location info (if available)
+      // Location (if available)
       if (finding.location) {
-        doc.setFillColor(245, 245, 245);
-        doc.roundedRect(margin, yPos, pageWidth - margin * 2, 10, 2, 2, "F");
+        doc.setFillColor(248, 248, 249);
+        doc.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, 9, 2, 2, "F");
 
         doc.setFontSize(8);
-        doc.setTextColor(...COLORS.slate);
+        doc.setTextColor(...COLORS.slateLight);
         doc.setFont("helvetica", "normal");
 
         const locationText =
           finding.line_start && finding.line_end
-            ? `📁 ${finding.location} : Lines ${finding.line_start}-${finding.line_end}`
+            ? `📁 ${finding.location}  •  Lines ${finding.line_start}–${finding.line_end}`
             : `📁 ${finding.location}`;
 
-        doc.text(locationText, margin + 5, yPos + 7);
-        yPos += 15;
+        doc.text(locationText, margin + 6, yPos + 6.5);
+        yPos += 13;
       }
 
       // Description
-      doc.setFontSize(10);
+      doc.setFontSize(9.5);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...COLORS.slate);
-      const descLines = doc.splitTextToSize(finding.description, pageWidth - margin * 2 - 4);
-      doc.text(descLines, margin + 2, yPos);
-      yPos += descLines.length * 5 + 8;
+      const descLines = doc.splitTextToSize(finding.description, pageWidth - margin * 2 - 6);
+      doc.text(descLines, margin + 3, yPos);
+      yPos += descLines.length * 5 + 6;
 
-      // Code snippet (if available)
+      // Code snippet
       if (finding.code_snippet) {
-        checkPageBreak(35);
+        checkPageBreak(30);
 
-        doc.setFillColor(250, 250, 250);
-        const snipLines = doc.splitTextToSize(finding.code_snippet, pageWidth - margin * 2 - 10);
-        const snipHeight = snipLines.length * 4 + 14;
-        doc.roundedRect(margin, yPos, pageWidth - margin * 2, snipHeight, 2, 2, "F");
-
-        // "Code Evidence" label
-        doc.setFontSize(8);
+        // Code header
+        doc.setFontSize(7.5);
         doc.setTextColor(...COLORS.slateLight);
         doc.setFont("helvetica", "bold");
-        doc.text("CODE EVIDENCE", margin + 5, yPos + 8);
+        doc.text("AFFECTED CODE", margin + 3, yPos);
+        yPos += 5;
+
+        // Code box
+        doc.setFillColor(250, 250, 251);
+        const snipLines = doc.splitTextToSize(finding.code_snippet, pageWidth - margin * 2 - 12);
+        const snipHeight = snipLines.length * 4.2 + 10;
+        doc.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, snipHeight, 2, 2, "F");
 
         doc.setFont("courier", "normal");
-        doc.setFontSize(7);
+        doc.setFontSize(7.5);
         doc.setTextColor(...COLORS.navy);
-        doc.text(snipLines, margin + 5, yPos + 14);
-        yPos += snipHeight + 10;
+        doc.text(snipLines, margin + 6, yPos + 6);
+        yPos += snipHeight + 8;
       }
 
       // Remediation
       if (finding.remediation) {
-        checkPageBreak(30);
+        checkPageBreak(25);
 
         // Remediation header
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...COLORS.success);
-        doc.setFontSize(10);
-        doc.text("✓ Proposed Mitigation:", margin, yPos);
-        yPos += 7;
+        doc.setFontSize(9);
+        doc.text("✓  Recommended Fix", margin + 3, yPos);
+        yPos += 6;
 
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...COLORS.slate);
         doc.setFontSize(9);
-        const remLines = doc.splitTextToSize(finding.remediation, pageWidth - margin * 2 - 4);
-        doc.text(remLines, margin + 2, yPos);
-        yPos += remLines.length * 4.5 + 5;
+        const remLines = doc.splitTextToSize(finding.remediation, pageWidth - margin * 2 - 6);
+        doc.text(remLines, margin + 3, yPos);
+        yPos += remLines.length * 4.5 + 3;
       }
 
-      // Separator line
+      // Subtle separator
+      yPos += 5;
       doc.setDrawColor(...COLORS.border);
-      doc.setLineWidth(0.5);
-      doc.line(margin, yPos, pageWidth - margin, yPos);
+      doc.setLineWidth(0.3);
+      doc.line(margin + 5, yPos, pageWidth - margin - 5, yPos);
       yPos += 12;
     });
-  } else {
-    // No findings - success message
-    checkPageBreak(50);
-
-    doc.setFillColor(...COLORS.success);
-    doc.setFillColor(240, 253, 244); // Light green bg
-    doc.roundedRect(margin, yPos, pageWidth - margin * 2, 40, 4, 4, "F");
-
-    doc.setTextColor(...COLORS.success);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("✓ No Security Issues Found", pageWidth / 2, yPos + 15, { align: "center" });
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("All verification tests passed successfully.", pageWidth / 2, yPos + 28, { align: "center" });
-
-    yPos += 50;
   }
 
   // ==========================================
@@ -589,64 +672,56 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
   // ==========================================
 
   if (audit.coverage_data) {
-    checkPageBreak(60);
+    checkPageBreak(55);
 
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLORS.navy);
-    doc.text("Verification Coverage", margin, yPos);
-    yPos += 15;
+    yPos = drawSectionHeader("Test Coverage Results", yPos, 16);
+    yPos += 3;
 
-    // Summary stats
-    doc.setFillColor(...COLORS.bgLight);
-    doc.roundedRect(margin, yPos, pageWidth - margin * 2, 30, 3, 3, "F");
+    // Summary card
+    doc.setFillColor(...COLORS.bgCard);
+    doc.roundedRect(margin, yPos, pageWidth - margin * 2, 28, 4, 4, "F");
 
     const passRate =
       audit.coverage_data.total_tests > 0
         ? ((audit.coverage_data.passed / audit.coverage_data.total_tests) * 100).toFixed(1)
-        : "0";
+        : "0.0";
 
     yPos += 12;
 
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...COLORS.slate);
-    doc.text(`Total Logic Assertions:`, margin + 10, yPos);
-    doc.setFont("helvetica", "bold");
-    doc.text(String(audit.coverage_data.total_tests), margin + 80, yPos);
+    // Stats layout
+    const stats = [
+      { label: "Total Tests", value: audit.coverage_data.total_tests, color: COLORS.navy },
+      { label: "Passed", value: audit.coverage_data.passed, color: COLORS.success },
+      { label: "Failed", value: audit.coverage_data.failed, color: COLORS.critical },
+      { label: "Pass Rate", value: `${passRate}%`, color: COLORS.solarOrange },
+    ];
 
-    yPos += 8;
+    const statWidth = (pageWidth - margin * 2 - 15) / stats.length;
 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Passed:`, margin + 10, yPos);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLORS.success);
-    doc.text(String(audit.coverage_data.passed), margin + 80, yPos);
+    stats.forEach((stat, i) => {
+      const statX = margin + 5 + i * statWidth;
 
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...COLORS.slate);
-    doc.text(`Failed:`, margin + 110, yPos);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLORS.critical);
-    doc.text(String(audit.coverage_data.failed), margin + 140, yPos);
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.slateLight);
+      doc.setFont("helvetica", "normal");
+      doc.text(stat.label.toUpperCase(), statX, yPos);
 
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...COLORS.slate);
-    doc.text(`Pass Rate:`, pageWidth / 2 + 10, yPos);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLORS.solarOrange);
-    doc.text(`${passRate}%`, pageWidth / 2 + 45, yPos);
+      doc.setFontSize(15);
+      doc.setTextColor(...stat.color);
+      doc.setFont("helvetica", "bold");
+      doc.text(String(stat.value), statX, yPos + 10);
+    });
 
     yPos += 20;
 
-    // Per-file breakdown (if details available)
+    // Per-file breakdown
     if (audit.coverage_data.details && audit.coverage_data.details.length > 0) {
-      checkPageBreak(40);
+      checkPageBreak(35);
 
-      doc.setFontSize(12);
+      doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...COLORS.navy);
-      doc.text("Per-Contract Test Results", margin, yPos);
+      doc.text("Contract Breakdown", margin, yPos);
       yPos += 10;
 
       // Group by file
@@ -658,33 +733,35 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
         fileGroups[detail.file].push(detail);
       });
 
-      Object.keys(fileGroups).forEach((fileName) => {
-        checkPageBreak(20);
+      Object.keys(fileGroups)
+        .slice(0, 5)
+        .forEach((fileName) => {
+          // Limit to 5 files
+          checkPageBreak(15);
 
-        const tests = fileGroups[fileName];
-        const passed = tests.filter((t) => t.status === "PASSED").length;
-        const failed = tests.filter((t) => t.status === "FAILED").length;
-        const total = tests.length;
-        const filePassRate = total > 0 ? (passed / total) * 100 : 0;
+          const tests = fileGroups[fileName];
+          const passed = tests.filter((t) => t.status === "PASSED").length;
+          const total = tests.length;
+          const filePassRate = total > 0 ? (passed / total) * 100 : 0;
 
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...COLORS.navy);
-        doc.text(`📄 ${fileName}`, margin, yPos);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...COLORS.navy);
+          doc.text(`📄 ${fileName}`, margin + 2, yPos);
 
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(...COLORS.slate);
-        doc.text(`${passed}/${total} tests passed`, margin + 60, yPos);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(...COLORS.slate);
+          doc.text(`${passed}/${total} tests`, margin + 2 + doc.getTextWidth(`📄 ${fileName}`) + 5, yPos);
 
-        // Mini progress bar
-        const barWidth = 50;
-        drawProgressBar(pageWidth - margin - barWidth - 5, yPos - 4, barWidth, filePassRate, COLORS.success);
+          // Progress bar
+          const barWidth = 45;
+          drawProgressBar(pageWidth - margin - barWidth - 2, yPos - 3.5, barWidth, filePassRate, COLORS.success);
 
-        yPos += 8;
-      });
+          yPos += 10;
+        });
 
-      yPos += 10;
+      yPos += 5;
     }
   }
 
@@ -692,29 +769,29 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
   // 9. LEGAL DISCLAIMER
   // ==========================================
 
-  checkPageBreak(80);
-  yPos += 5;
+  checkPageBreak(70);
+  yPos += 8;
   doc.setDrawColor(...COLORS.border);
-  doc.setLineWidth(0.5);
+  doc.setLineWidth(0.3);
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 12;
 
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...COLORS.navy);
   doc.text("Legal Disclaimer", margin, yPos);
   yPos += 10;
 
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...COLORS.slate);
 
   const disclaimer = [
-    "This security assessment represents a point-in-time analysis of the smart contract source code provided at the time of the audit. While Solarizer utilizes advanced AI-powered verification pipelines and industry-standard security patterns, a security audit is not a 100% guarantee of the absolute absence of vulnerabilities, bugs, or potential exploits.",
+    "This security assessment represents a point-in-time analysis of the smart contract source code provided. While Solarizer utilizes advanced AI-powered verification and industry-standard security patterns, no audit can guarantee the complete absence of vulnerabilities.",
     "",
-    "Security is an evolving field; new attack vectors, compiler-level issues, or protocol design flaws may emerge after the issuance of this report. This assessment does not constitute financial advice, an endorsement of the project's quality, investment potential, or legal compliance.",
+    "Security is an evolving field. New attack vectors, compiler issues, or design flaws may emerge after this report's publication. This assessment does not constitute financial advice or an endorsement of the project's investment potential.",
     "",
-    "Solarizer and its associates are not liable for any financial losses, protocol exploits, smart contract failures, or security incidents occurring after the completion of this audit. The responsibility for implementing recommended fixes and maintaining ongoing security practices lies solely with the project team.",
+    "Solarizer and its associates are not liable for any financial losses, exploits, or security incidents occurring post-audit. The project team retains full responsibility for implementing fixes and maintaining security.",
   ];
 
   disclaimer.forEach((para) => {
@@ -723,7 +800,7 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
     } else {
       const lines = doc.splitTextToSize(para, pageWidth - margin * 2);
       doc.text(lines, margin, yPos);
-      yPos += lines.length * 4 + 3;
+      yPos += lines.length * 4.2 + 2;
     }
   });
 
@@ -737,36 +814,54 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
   doc.setFillColor(...COLORS.obsidian);
   doc.rect(0, 0, pageWidth, pageHeight, "F");
 
-  // Solar Orange accent bar (right side for symmetry)
+  // Solar Orange accent bar (right side)
   doc.setFillColor(...COLORS.solarOrange);
-  doc.rect(pageWidth - 8, 0, 8, pageHeight, "F");
+  doc.rect(pageWidth - 6, 0, 6, pageHeight, "F");
 
   // Centered content
   const centerY = pageHeight / 2;
 
   doc.setTextColor(...COLORS.white);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(32);
-  doc.text("SOLARIZER", pageWidth / 2, centerY - 30, { align: "center" });
+  doc.setFontSize(28);
+  doc.text("Solarizer", pageWidth / 2, centerY - 25, { align: "center" });
 
   doc.setTextColor(...COLORS.solarOrange);
-  doc.setFontSize(14);
-  doc.text("Powered by AI Verification Engine", pageWidth / 2, centerY - 15, { align: "center" });
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text("AI-Powered Security Intelligence", pageWidth / 2, centerY - 12, { align: "center" });
+
+  // Divider
+  doc.setDrawColor(...COLORS.solarOrange);
+  doc.setLineWidth(1);
+  doc.line(pageWidth / 2 - 35, centerY - 2, pageWidth / 2 + 35, centerY - 2);
 
   // Contact info
   doc.setTextColor(...COLORS.slateLight);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("For inquiries, contact:", pageWidth / 2, centerY + 10, { align: "center" });
+  doc.setFontSize(9);
+  doc.text("For inquiries and support:", pageWidth / 2, centerY + 12, { align: "center" });
 
   doc.setTextColor(...COLORS.white);
-  doc.text("support@solarizer.io", pageWidth / 2, centerY + 20, { align: "center" });
-  doc.text("https://solarizer.io", pageWidth / 2, centerY + 30, { align: "center" });
+  doc.setFontSize(10);
+  doc.text("support@solarizer.io", pageWidth / 2, centerY + 23, { align: "center" });
+  doc.text("https://solarizer.io", pageWidth / 2, centerY + 32, { align: "center" });
 
   // Timestamp
   doc.setTextColor(...COLORS.slateLight);
-  doc.setFontSize(8);
-  doc.text(`Report generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 20, { align: "center" });
+  doc.setFontSize(7.5);
+  doc.text(
+    `Report generated ${new Date().toLocaleString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })}`,
+    pageWidth / 2,
+    pageHeight - 16,
+    { align: "center" },
+  );
 
   // ==========================================
   // FINALIZE: Add page numbers
@@ -774,7 +869,6 @@ const generatePdf = (audit: AuditReport, logoDataUrl?: string): ArrayBuffer => {
 
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 2; i <= totalPages - 1; i++) {
-    // Skip cover (1) and back cover (last)
     doc.setPage(i);
     addPageFooter(i);
   }
@@ -815,7 +909,6 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    // Fetch audit data
     const { data: audit, error: auditError } = await supabase.from("audits").select("*").eq("id", auditId).single();
 
     if (auditError || !audit) {
@@ -826,7 +919,6 @@ serve(async (req) => {
       });
     }
 
-    // Fetch findings
     const { data: findings, error: findingsError } = await supabase
       .from("findings")
       .select("*")
@@ -837,7 +929,6 @@ serve(async (req) => {
       console.error("Findings fetch error:", findingsError);
     }
 
-    // Build report data
     const reportData: AuditReport = {
       project_name: audit.project_name,
       grade: audit.grade || "N/A",
@@ -859,9 +950,9 @@ serve(async (req) => {
     };
 
     const pdfBytes = generatePdf(reportData, logoDataUrl);
-    const fileName = `${audit.project_name.replace(/[^a-zA-Z0-9]/g, "_")}_Solarizer_Security_Report.pdf`;
+    const fileName = `${audit.project_name.replace(/[^a-zA-Z0-9]/g, "_")}_Solarizer_Report.pdf`;
 
-    console.log("✅ Generated enhanced PDF report for audit:", auditId);
+    console.log("✅ Generated professional PDF report:", auditId);
 
     return new Response(pdfBytes, {
       status: 200,
@@ -873,7 +964,7 @@ serve(async (req) => {
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ Error generating report:", error);
+    console.error("❌ PDF generation error:", error);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
