@@ -133,10 +133,13 @@ const Report = () => {
                   Live
                 </span>
               )}
-              {!isOwner && ownerInfo && (
+{!isOwner && currentAudit && (
                 <Badge variant="secondary" className="gap-1.5">
                   <Users className="w-3 h-3" />
-                  Shared by {ownerInfo.display_name || ownerInfo.email}
+                  {ownerInfo 
+                    ? `Shared by ${ownerInfo.display_name || ownerInfo.email}`
+                    : "Shared"
+                  }
                 </Badge>
               )}
               {isOwner && (
