@@ -309,7 +309,7 @@ const Pricing = () => {
                         ...prev,
                         [plan.id]: Math.max(1, parseInt(e.target.value) || 0)
                       }))}
-                      className="w-24 h-8 text-sm bg-background [&::-webkit-inner-spin-button]:appearance-auto [&::-webkit-outer-spin-button]:appearance-auto [&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:opacity-100"
+                      className="w-24 h-8 text-sm bg-background [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                       min={1}
                     />
                   </div>
