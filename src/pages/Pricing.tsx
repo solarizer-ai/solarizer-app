@@ -89,29 +89,34 @@ const pricingPlans: PricingPlan[] = [
 
 const faqs = [
   {
-    question: "What is NLOC?",
+    question: "What exactly counts towards my NLOC limit?",
     answer:
-      "Normalized Lines of Code (NLOC) measures the actual logic in your smart contract by excluding comments and blank lines. This ensures fair pricing based on code complexity.",
+      "Every line of code in the files you upload is scanned and counted towards your quota. This includes imports and external libraries if they are present in the file. Tip: To save NLOC, we recommend flattening your contracts or only uploading your core logic files.",
   },
   {
-    question: "How does annual billing work?",
+    question: "What happens to my NLOC if I switch plans?",
     answer:
-      "When you choose annual billing for Pro or Business plans, you get 2 months free (pay for 10 months, get 12). Launch plan pricing remains fixed at $149/mo regardless of billing period.",
+      "Your NLOC balance is yours. If you Upgrade or Downgrade your plan, your existing NLOC balance (from subscriptions or Power Ups) is maintained and rolls over to the new plan. You never lose the capacity you paid for.",
   },
   {
-    question: "What happens when I exceed my NLOC limit?",
+    question: "Do my NLOC credits expire?",
     answer:
-      "If your scan exceeds your included NLOC, you can purchase Power-Ups to add more capacity instantly. Power-Up credits never expire and carry over between billing periods.",
+      "No. Any NLOC capacity you buy never expires as long as you maintain an active subscription (minimum Launch Plan). Unused credits simply roll over to the next month.",
   },
   {
-    question: "Do unused NLOC credits roll over?",
+    question: "Can I buy Power Ups without a subscription?",
     answer:
-      "Yes! Your NLOC credits never expire. Whether you Upgrade, Downgrade, or buy Power-Ups, your balance is always maintained as long as you have an active subscription.",
+      "No. You need an active subscription (Launch, Pro, or Business) to access the Solarizer analysis engine. However, you can buy as many Power Ups as you need on top of any active plan.",
   },
   {
-    question: "Can I change my plan anytime?",
+    question: "Why can't I see remediation recommendations on the Launch Plan?",
     answer:
-      "Yes, you can upgrade or downgrade anytime. Your NLOC balance carries over, and you'll be prorated for any plan changes mid-billing cycle.",
+      "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation, the interactive code editor, and PDF reporting, you will need to upgrade to the Pro Plan.",
+  },
+  {
+    question: "How does the Annual Discount work?",
+    answer:
+      "If you choose Annual billing for the Pro or Business plans, you pay for 10 months and get 2 months free. The Launch Plan does not offer an annual discount.",
   },
 ];
 
@@ -149,13 +154,13 @@ const Pricing = () => {
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            Flexible Pricing for Smart Contract Security
+            Flexible Audit Pricing
           </h1>
           <p
             className="text-lg text-muted-foreground max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
             style={{ animationDelay: "100ms" }}
           >
-            Pay for what you analyze. Scale as you grow.
+            Credits never expire. Upgrade, downgrade, or pause without losing value.
           </p>
         </div>
 
