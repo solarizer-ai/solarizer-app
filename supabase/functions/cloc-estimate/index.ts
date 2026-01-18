@@ -113,10 +113,10 @@ serve(async (req) => {
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
     
     if (!n8nWebhookUrl) {
-      console.error('N8N_WEBHOOK_URL is not configured');
+      console.error('cloc-estimate: N8N_WEBHOOK_URL is not configured');
       return new Response(
-        JSON.stringify({ error: 'N8N webhook URL is not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

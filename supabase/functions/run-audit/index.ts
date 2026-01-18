@@ -86,8 +86,8 @@ Deno.serve(async (req) => {
     if (!webhookUrl) {
       console.error('run-audit: N8N_AUDIT_WEBHOOK_URL not configured');
       return new Response(
-        JSON.stringify({ error: 'Audit engine not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -96,8 +96,8 @@ Deno.serve(async (req) => {
     if (!callbackSecret) {
       console.error('run-audit: N8N_CALLBACK_SECRET not configured');
       return new Response(
-        JSON.stringify({ error: 'Callback authentication not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -106,8 +106,8 @@ Deno.serve(async (req) => {
     if (!supabaseUrl) {
       console.error('run-audit: SUPABASE_URL not configured');
       return new Response(
-        JSON.stringify({ error: 'Supabase URL not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

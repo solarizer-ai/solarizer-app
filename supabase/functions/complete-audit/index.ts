@@ -1,8 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// No CORS headers - this is a server-to-server callback only
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-callback-secret',
+  'Content-Type': 'application/json',
 };
 
 interface CoverageTestDetail {
@@ -30,9 +30,9 @@ interface CompleteAuditRequest {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
+  // Reject CORS preflight - this is server-to-server only
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 403 });
   }
 
   console.log('complete-audit: Request received');
@@ -45,8 +45,8 @@ Deno.serve(async (req) => {
     if (!expectedSecret) {
       console.error('complete-audit: N8N_CALLBACK_SECRET not configured');
       return new Response(
-        JSON.stringify({ error: 'Callback authentication not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: corsHeaders }
       );
     }
 
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       console.error('complete-audit: Invalid callback secret');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: corsHeaders }
       );
     }
 
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       console.error('complete-audit: Failed to parse request body', e);
       return new Response(
         JSON.stringify({ error: 'Invalid request body' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -76,30 +76,30 @@ Deno.serve(async (req) => {
     if (!audit_id || typeof audit_id !== 'string') {
       return new Response(
         JSON.stringify({ error: 'audit_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     if (typeof security_score !== 'number' || security_score < 0 || security_score > 100) {
       return new Response(
         JSON.stringify({ error: 'security_score must be a number between 0 and 100' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     const validGrades = ['A', 'B', 'C', 'D', 'F'];
     if (!validGrades.includes(grade)) {
       return new Response(
-        JSON.stringify({ error: `Invalid grade: ${grade}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Invalid request parameters' }),
+        { status: 400, headers: corsHeaders }
       );
     }
 
     const validStatuses = ['secured', 'issues'];
     if (!validStatuses.includes(status)) {
       return new Response(
-        JSON.stringify({ error: `Invalid status: ${status}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Invalid request parameters' }),
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
           !Array.isArray(coverage_data.details)) {
         return new Response(
           JSON.stringify({ error: 'Invalid coverage_data structure' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: corsHeaders }
         );
       }
     }
@@ -154,8 +154,8 @@ Deno.serve(async (req) => {
     if (error) {
       console.error('complete-audit: Database error:', error);
       return new Response(
-        JSON.stringify({ error: 'Failed to complete audit', details: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to complete audit' }),
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
       console.error('complete-audit: Audit not found');
       return new Response(
         JSON.stringify({ error: 'Audit not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -171,15 +171,15 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, audit_id: data.id }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: corsHeaders }
     );
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('complete-audit: Unexpected error:', errorMessage);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: corsHeaders }
     );
   }
 });
