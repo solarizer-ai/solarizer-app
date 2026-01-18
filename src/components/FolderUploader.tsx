@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FileNode, generateId, deleteNodeFromTree } from "@/types/files";
 import FileTypeIcon from "./FileTypeIcon";
+import { toast } from "@/hooks/use-toast";
 
 interface FolderUploaderProps {
   onFilesUploaded: (files: FileNode[]) => void;
@@ -12,6 +13,11 @@ interface FolderUploaderProps {
 }
 
 const ALLOWED_EXTENSIONS = ['.sol', '.json', '.md', '.txt', '.js', '.ts', '.yaml', '.yml', '.toml'];
+
+// Client-side validation limits (matching server-side)
+const MAX_FILES = 100;
+const MAX_FILE_SIZE = 1024 * 1024; // 1MB per file
+const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB total
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -105,10 +111,38 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
     setProgress(0);
 
     try {
+      // Pre-validation: Check file count before processing
+      const validFiles = files.filter(f => {
+        const relativePath = (f as any).webkitRelativePath || f.name;
+        const parts = relativePath.split('/');
+        const pathParts = parts.length > 1 ? parts.slice(1) : parts;
+        const fileName = pathParts[pathParts.length - 1];
+        const shouldSkipFolder = pathParts.some((part: string) => part === 'lib' || part === 'node_modules');
+        return !shouldSkipFolder && shouldIncludeFile(fileName);
+      });
+
+      if (validFiles.length > MAX_FILES) {
+        throw new Error(`Too many files. Maximum ${MAX_FILES} allowed, found ${validFiles.length}.`);
+      }
+
+      // Pre-validation: Check total size before reading content
+      let totalSize = 0;
+      for (const file of validFiles) {
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error(`File "${file.name}" exceeds ${MAX_FILE_SIZE / 1024}KB limit.`);
+        }
+        totalSize += file.size;
+        if (totalSize > MAX_TOTAL_SIZE) {
+          throw new Error(`Total size exceeds ${MAX_TOTAL_SIZE / (1024 * 1024)}MB limit.`);
+        }
+      }
+
       const tree = await buildTreeFromFiles(files);
       onFilesUploaded(tree);
     } catch (error) {
       console.error('Error processing files:', error);
+      // Re-throw to let caller handle the error (could show toast)
+      throw error;
     } finally {
       setIsLoading(false);
       setProgress(0);
@@ -118,7 +152,15 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
   const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      await processFiles(files);
+      try {
+        await processFiles(files);
+      } catch (error) {
+        toast({
+          title: "Upload failed",
+          description: error instanceof Error ? error.message : "Failed to process files",
+          variant: "destructive",
+        });
+      }
     }
     // Reset input
     if (inputRef.current) inputRef.current.value = '';
@@ -170,7 +212,15 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
     }
 
     if (files.length > 0) {
-      await processFiles(files);
+      try {
+        await processFiles(files);
+      } catch (error) {
+        toast({
+          title: "Upload failed",
+          description: error instanceof Error ? error.message : "Failed to process files",
+          variant: "destructive",
+        });
+      }
     }
   }, []);
 
