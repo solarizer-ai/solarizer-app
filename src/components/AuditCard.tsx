@@ -86,17 +86,10 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
           </p>
         </div>
         
-        {grade && !isShared && (
+        {grade && (
           <div className={cn(
             "w-10 h-10 rounded-lg border flex items-center justify-center font-semibold text-lg",
-            gradeColors[grade]
-          )}>
-            {grade}
-          </div>
-        )}
-        {grade && isShared && (
-          <div className={cn(
-            "w-10 h-10 rounded-lg border flex items-center justify-center font-semibold text-lg mt-6",
+            isShared && "mt-6",
             gradeColors[grade]
           )}>
             {grade}
