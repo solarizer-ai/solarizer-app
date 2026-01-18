@@ -14,7 +14,7 @@ interface AuditWizardProps {
   onComplete: (data: { projectName: string; files: FileNode[]; code: string; clocResult?: ClocResult }) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
-  subscription?: { plan: 'starter' | 'pro' } | null;
+  subscription?: { plan: 'starter' | 'pro' | 'business' } | null;
   credits?: { credits_remaining: number; scans_remaining: number } | null;
   onUpgradeNeeded?: (reason: 'scan_limit' | 'nloc_limit', nloc: number) => void;
   onPowerUpNeeded?: (nloc: number) => void;
