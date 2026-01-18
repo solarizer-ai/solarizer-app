@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, X, Zap, Shield } from "lucide-react";
+import { Check, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -53,7 +53,7 @@ const pricingPlans: PricingPlan[] = [
     label: 'Most Popular',
     monthlyPrice: 199,
     annualPrice: 1990,
-    baseNloc: 100,
+    baseNloc: 150,
     powerUpPrice: 5,
     hasAnnualDiscount: true,
     popular: true,
@@ -71,8 +71,8 @@ const pricingPlans: PricingPlan[] = [
     id: 'business',
     name: 'Business',
     label: 'For Teams',
-    monthlyPrice: 299,
-    annualPrice: 2990,
+    monthlyPrice: 499,
+    annualPrice: 4990,
     baseNloc: 150,
     powerUpPrice: 4,
     hasAnnualDiscount: true,
@@ -118,13 +118,33 @@ const faqs = [
     answer:
       "If you choose Annual billing for the Pro or Business plans, you pay for 10 months and get 2 months free. The Launch Plan does not offer an annual discount.",
   },
+  {
+    question: "What is Security Coverage and how is it different from \"Findings\"?",
+    answer:
+      "\"Findings\" only show you what is broken. Security Coverage shows you everything we checked to ensure it was safe. It is a complete ledger of all security hypotheses—such as \"Does this contract have reentrancy protection?\"—and their results.",
+  },
+  {
+    question: "Why is this important for me?",
+    answer:
+      "It provides transparency and trust. Instead of wondering if an auditor simply missed a bug, you can see a line-by-line verification that specific risks (like Integer Overflows or Access Control failures) were tested and passed.",
+  },
+  {
+    question: "What does a \"PASSED\" test mean in the coverage?",
+    answer:
+      "A \"PASSED\" status means the engine specifically analyzed that vector and found the contract to be secure against it. For these tests, we provide Proof—a brief explanation of why that specific logic is safe (e.g., \"Uses OpenZeppelin's ReentrancyGuard\").",
+  },
+  {
+    question: "What happens when a test \"FAILS\"?",
+    answer:
+      "If a test fails, it is automatically linked to a detailed Finding. You can click the \"View Issue\" button next to any failed test to see the exact line of code, the severity of the risk, and the recommended fix.",
+  },
 ];
 
 const Pricing = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [customNloc, setCustomNloc] = useState<Record<string, number>>({
     launch: 150,
-    pro: 100,
+    pro: 150,
     business: 150
   });
 
@@ -326,26 +346,6 @@ const Pricing = () => {
           })}
         </div>
 
-        {/* NLOC Guarantee Section */}
-        <div 
-          className="max-w-4xl mx-auto mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
-          style={{ animationDelay: "600ms" }}
-        >
-          <div className="rounded-2xl border border-green-500/30 bg-green-500/5 p-8 text-center">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Shield className="h-8 w-8 text-green-400" />
-              <h3 className="text-2xl font-bold">The NLOC Guarantee</h3>
-            </div>
-            <p className="text-xl font-medium text-green-400 mb-3">
-              Your Code Credits Never Expire.
-            </p>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Whether you Upgrade, Downgrade, or buy Power Ups, your NLOC balance is 
-              always maintained. Credits remain valid forever, requiring only an active 
-              subscription (minimum Launch Plan) to utilize.
-            </p>
-          </div>
-        </div>
 
         {/* FAQ Section */}
         <div className="max-w-3xl mx-auto">
