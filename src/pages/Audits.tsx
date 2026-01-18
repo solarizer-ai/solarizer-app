@@ -187,7 +187,7 @@ const Audits = () => {
                           e.stopPropagation();
                           setDeleteAuditId(audit.id);
                         }}
-                        className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                        className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
