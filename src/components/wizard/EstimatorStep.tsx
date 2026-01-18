@@ -11,7 +11,7 @@ interface EstimatorStepProps {
   onProceed: (clocResult: ClocResult) => void;
   onUpgradeNeeded: (reason: 'scan_limit' | 'nloc_limit', nloc: number) => void;
   onPowerUpNeeded: (nloc: number) => void;
-  subscription: { plan: 'starter' | 'pro' } | null | undefined;
+  subscription: { plan: 'starter' | 'pro' | 'business' } | null | undefined;
   credits: { credits_remaining: number; scans_remaining: number } | null | undefined;
   isSubmitting?: boolean;
 }
@@ -60,7 +60,7 @@ const EstimatorStep = ({
       return { valid: true, message: `Within your plan limit (${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''} remaining)` };
     }
 
-    if (plan === 'pro') {
+    if (plan === 'pro' || plan === 'business') {
       if (totalNloc > creditsRemaining) {
         return { valid: false, reason: 'credits' as const, message: `You need ${totalNloc} credits but only have ${creditsRemaining} remaining.` };
       }

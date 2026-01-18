@@ -8,15 +8,19 @@ import SecurityScoreCard from "@/components/SecurityScoreCard";
 import SecurityCoverageTab from "@/components/SecurityCoverageTab";
 import ScopeTab from "@/components/ScopeTab";
 import ShareAuditModal from "@/components/ShareAuditModal";
+import { UpgradeToProModal } from "@/components/UpgradeToProModal";
+import { FeatureLockedOverlay } from "@/components/FeatureLockedOverlay";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles } from "lucide-react";
 import { generateMarkdownReport, downloadMarkdown } from "@/lib/exportMarkdown";
 import { toast } from "sonner";
 import { useAudit, useFindings } from "@/hooks/useAudits";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { formatDistanceToNow } from "date-fns";
 import type { CoverageData, Finding } from "@/hooks/useAudits";
 
@@ -28,7 +32,19 @@ const Report = () => {
   const [activeTab, setActiveTab] = useState<string>("scope");
   const [highlightedFindingId, setHighlightedFindingId] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const findingRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  
+  // Feature access based on subscription
+  const { 
+    canViewRemediation, 
+    canExportReport, 
+    canViewQAFindings, 
+    canViewSecurityCoverage,
+    canShareReports,
+    currentPlan,
+    isLoading: accessLoading 
+  } = useFeatureAccess();
   
   // Memoized callback for findings filter
   const handleFilteredChange = useCallback((filtered: any[]) => setFilteredFindings(filtered), []);
@@ -83,6 +99,24 @@ const Report = () => {
     [findings]
   );
 
+  // Filter findings based on plan - Starter users only see Critical, High, Medium
+  const visibleFindings = useMemo(() => {
+    if (canViewQAFindings) {
+      return transformedFindings;
+    }
+    return transformedFindings.filter(f => 
+      ['critical', 'high', 'medium'].includes(f.severity)
+    );
+  }, [transformedFindings, canViewQAFindings]);
+
+  // Count hidden QA findings
+  const hiddenQAFindingsCount = useMemo(() => {
+    if (canViewQAFindings) return 0;
+    return transformedFindings.filter(f => 
+      ['low', 'info'].includes(f.severity)
+    ).length;
+  }, [transformedFindings, canViewQAFindings]);
+
   // Handle "View Issue" from coverage tab - switches to findings tab and scrolls to finding
   const handleViewIssue = useCallback((findingTitle: string) => {
     const finding = transformedFindings.find(f => f.title === findingTitle);
@@ -104,6 +138,11 @@ const Report = () => {
   }, [transformedFindings]);
 
   const handleExportMarkdown = () => {
+    if (!canExportReport) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+
     if (!currentAudit || !findings) {
       toast.error("Unable to export report");
       return;
@@ -118,6 +157,14 @@ const Report = () => {
     const filename = `${currentAudit.project_name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-audit-report.md`;
     downloadMarkdown(markdown, filename);
     toast.success("Report exported successfully");
+  };
+
+  const handleShareClick = () => {
+    if (!canShareReports) {
+      toast.info("Sharing reports requires a Business plan");
+      return;
+    }
+    setShareModalOpen(true);
   };
 
   const isLive = currentAudit?.status === 'analyzing';
@@ -152,7 +199,7 @@ const Report = () => {
                   Live
                 </span>
               )}
-{!isOwner && currentAudit && (
+              {!isOwner && currentAudit && (
                 <Badge variant="secondary" className="gap-1.5">
                   <Users className="w-3 h-3" />
                   {ownerInfo 
@@ -161,11 +208,11 @@ const Report = () => {
                   }
                 </Badge>
               )}
-              {isOwner && (
+              {isOwner && canShareReports && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShareModalOpen(true)}
+                  onClick={handleShareClick}
                   className="gap-2"
                 >
                   <Share2 className="w-4 h-4" />
@@ -173,15 +220,27 @@ const Report = () => {
                 </Button>
               )}
               {currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportMarkdown}
-                  className="gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Export
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportMarkdown}
+                        className={`gap-2 ${!canExportReport ? 'opacity-75' : ''}`}
+                      >
+                        {!canExportReport && <Lock className="w-3 h-3" />}
+                        <Download className="w-4 h-4" />
+                        Export
+                      </Button>
+                    </TooltipTrigger>
+                    {!canExportReport && (
+                      <TooltipContent>
+                        <p>Upgrade to Pro to export reports</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
             <p className="text-sm text-muted-foreground">
@@ -215,10 +274,11 @@ const Report = () => {
                   <TabsTrigger value="coverage" className="flex items-center gap-2">
                     <Shield className="w-4 h-4" />
                     Coverage
+                    {!canViewSecurityCoverage && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
                   </TabsTrigger>
                   <TabsTrigger value="findings" className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" />
-                    Findings ({transformedFindings.length})
+                    Findings ({visibleFindings.length})
                   </TabsTrigger>
                 </TabsList>
 
@@ -232,19 +292,49 @@ const Report = () => {
                 </TabsContent>
 
                 <TabsContent value="coverage" className="mt-4">
-                  <SecurityCoverageTab
-                    coverageData={currentAudit?.coverage_data as CoverageData | null}
-                    onViewIssue={handleViewIssue}
-                  />
+                  {canViewSecurityCoverage ? (
+                    <SecurityCoverageTab
+                      coverageData={currentAudit?.coverage_data as CoverageData | null}
+                      onViewIssue={handleViewIssue}
+                    />
+                  ) : (
+                    <FeatureLockedOverlay
+                      featureName="Security Coverage"
+                      requiredPlan="pro"
+                      description="See a complete ledger of all security tests run on your contracts."
+                      onUpgrade={() => setUpgradeModalOpen(true)}
+                    />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="findings" className="mt-4">
                   <div className="space-y-4">
-                    {transformedFindings.length > 0 ? (
+                    {/* QA Findings Upgrade Banner */}
+                    {hiddenQAFindingsCount > 0 && (
+                      <div className="flex items-center justify-between gap-4 p-4 rounded-lg border bg-primary/5 border-primary/20">
+                        <div className="flex items-center gap-3">
+                          <Sparkles className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              {hiddenQAFindingsCount} additional QA finding{hiddenQAFindingsCount !== 1 ? 's' : ''} available
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Upgrade to Pro to view Low and Informational findings
+                            </p>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => setUpgradeModalOpen(true)}>
+                          Upgrade to Pro
+                        </Button>
+                      </div>
+                    )}
+
+                    {visibleFindings.length > 0 ? (
                       <>
                         <FindingsFilter
-                          findings={transformedFindings}
+                          findings={visibleFindings}
                           onFilteredChange={handleFilteredChange}
+                          hiddenSeverities={!canViewQAFindings ? ['low', 'info'] : []}
                         />
                         <div className="space-y-3">
                           {filteredFindings.map((finding) => (
@@ -253,6 +343,8 @@ const Report = () => {
                               finding={finding}
                               isHighlighted={highlightedFindingId === finding.id}
                               forceExpanded={highlightedFindingId === finding.id}
+                              canViewRemediation={canViewRemediation}
+                              onUpgradeClick={() => setUpgradeModalOpen(true)}
                               onRefReady={(el) => {
                                 if (el) {
                                   findingRefs.current.set(finding.id, el);
@@ -291,6 +383,13 @@ const Report = () => {
           ownerEmail={currentUserEmail}
         />
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeToProModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        reason="scan_limit"
+      />
     </div>
   );
 };

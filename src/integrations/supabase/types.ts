@@ -359,7 +359,7 @@ export type Database = {
         | "failed"
       finding_severity: "critical" | "high" | "medium" | "low" | "info"
       security_grade: "A" | "B" | "C" | "D" | "F"
-      subscription_plan: "starter" | "pro"
+      subscription_plan: "starter" | "pro" | "business"
       subscription_status: "active" | "canceled" | "past_due"
     }
     CompositeTypes: {
@@ -499,7 +499,7 @@ export const Constants = {
       ],
       finding_severity: ["critical", "high", "medium", "low", "info"],
       security_grade: ["A", "B", "C", "D", "F"],
-      subscription_plan: ["starter", "pro"],
+      subscription_plan: ["starter", "pro", "business"],
       subscription_status: ["active", "canceled", "past_due"],
     },
   },

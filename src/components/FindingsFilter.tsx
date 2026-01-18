@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, Filter, X } from "lucide-react";
+import { Search, Filter, X, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { FindingSeverity } from "@/hooks/useAudits";
 
@@ -23,6 +24,7 @@ interface Finding {
 interface FindingsFilterProps {
   findings: Finding[];
   onFilteredChange: (filtered: Finding[]) => void;
+  hiddenSeverities?: FindingSeverity[];
 }
 
 const severityOrder: Record<FindingSeverity, number> = {
@@ -33,12 +35,13 @@ const severityOrder: Record<FindingSeverity, number> = {
   info: 4,
 };
 
-const FindingsFilter = ({ findings, onFilteredChange }: FindingsFilterProps) => {
+const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: FindingsFilterProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSeverities, setSelectedSeverities] = useState<FindingSeverity[]>([]);
   const [showResolved, setShowResolved] = useState(true);
 
-  const severities: FindingSeverity[] = ["critical", "high", "medium", "low", "info"];
+  const allSeverities: FindingSeverity[] = ["critical", "high", "medium", "low", "info"];
+  const availableSeverities = allSeverities.filter(s => !hiddenSeverities.includes(s));
 
   const filteredFindings = useMemo(() => {
     let result = [...findings];
@@ -140,20 +143,45 @@ const FindingsFilter = ({ findings, onFilteredChange }: FindingsFilterProps) => 
         {/* Severity Filters */}
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          {severities.map((severity) => (
-            <button
-              key={severity}
-              onClick={() => toggleSeverity(severity)}
-              className={cn(
-                "px-2.5 py-1 text-xs font-medium rounded-md border transition-colors capitalize",
-                selectedSeverities.includes(severity)
-                  ? getSeverityColor(severity)
-                  : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
-              )}
-            >
-              {severity}
-            </button>
-          ))}
+          {allSeverities.map((severity) => {
+            const isHidden = hiddenSeverities.includes(severity);
+            
+            if (isHidden) {
+              return (
+                <TooltipProvider key={severity}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        disabled
+                        className="px-2.5 py-1 text-xs font-medium rounded-md border transition-colors capitalize bg-muted/50 text-muted-foreground/50 border-border/50 cursor-not-allowed flex items-center gap-1"
+                      >
+                        <Lock className="w-3 h-3" />
+                        {severity}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Upgrade to Pro to view {severity} findings</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            }
+            
+            return (
+              <button
+                key={severity}
+                onClick={() => toggleSeverity(severity)}
+                className={cn(
+                  "px-2.5 py-1 text-xs font-medium rounded-md border transition-colors capitalize",
+                  selectedSeverities.includes(severity)
+                    ? getSeverityColor(severity)
+                    : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
+                )}
+              >
+                {severity}
+              </button>
+            );
+          })}
         </div>
 
         {/* Clear Filters */}

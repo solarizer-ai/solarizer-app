@@ -44,6 +44,13 @@ export const PLAN_LIMITS = {
     unlimitedScans: true,
     initialCredits: 1500,
   },
+  business: {
+    monthlyNloc: 5000,
+    unlimitedScans: true,
+    initialCredits: 5000,
+    teamMembers: 5,
+    sharing: true,
+  },
 } as const;
 
 /**

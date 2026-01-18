@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb } from "lucide-react";
+import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb, Lock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type Severity = "critical" | "high" | "medium" | "low" | "info";
 
@@ -24,6 +25,8 @@ interface FindingItemProps {
   isNew?: boolean;
   isHighlighted?: boolean;
   forceExpanded?: boolean;
+  canViewRemediation?: boolean;
+  onUpgradeClick?: () => void;
   onRefReady?: (el: HTMLDivElement | null) => void;
 }
 
@@ -189,6 +192,8 @@ const FindingItem = ({
   isNew = false, 
   isHighlighted = false,
   forceExpanded = false,
+  canViewRemediation = true,
+  onUpgradeClick,
   onRefReady 
 }: FindingItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -309,18 +314,46 @@ const FindingItem = ({
             </div>
           )}
 
-          {/* Remediation */}
+          {/* Remediation - Locked for Starter users */}
           {finding.remediation && (
             <div>
               <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Lightbulb className="w-3.5 h-3.5 text-success" />
+                {canViewRemediation ? (
+                  <Lightbulb className="w-3.5 h-3.5 text-success" />
+                ) : (
+                  <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
                 Remediation Guide
               </h4>
-              <div className="bg-success/5 border border-success/20 rounded-md p-4">
-                <p className="text-sm text-foreground/90 leading-relaxed">
-                  {renderWithCodeFormatting(finding.remediation)}
-                </p>
-              </div>
+              {canViewRemediation ? (
+                <div className="bg-success/5 border border-success/20 rounded-md p-4">
+                  <p className="text-sm text-foreground/90 leading-relaxed">
+                    {renderWithCodeFormatting(finding.remediation)}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-primary/5 border border-primary/20 rounded-md p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-primary" />
+                      <p className="text-sm text-foreground/90">
+                        Upgrade to Pro to view AI-powered fix recommendations
+                      </p>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpgradeClick?.();
+                      }}
+                      className="shrink-0"
+                    >
+                      <Zap className="w-3.5 h-3.5 mr-1.5" />
+                      Upgrade to Pro
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
