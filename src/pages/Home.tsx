@@ -94,8 +94,8 @@ const Home = () => {
               <span className="font-medium">Security Intelligence Engine</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Security Intelligence That{" "}
-              <span className="text-gradient">Understands Intent.</span>
+              Audit Confidence,{" "}
+              <span className="text-gradient">Simplified.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
               Standard scanners catch syntax errors. Solarizer detects business logic flaws 
