@@ -2,17 +2,18 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, X, Zap, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
+
+interface PricingFeature {
+  text: string;
+  included: boolean;
+  grayed?: boolean;
+  isHeader?: boolean;
+}
 
 interface PricingPlan {
   id: 'launch' | 'pro' | 'business';
@@ -22,8 +23,7 @@ interface PricingPlan {
   annualPrice: number | null;
   baseNloc: number;
   powerUpPrice: number;
-  powerUpDiscount: string | null;
-  features: { text: string; included: boolean; grayed?: boolean }[];
+  features: PricingFeature[];
   popular: boolean;
   hasAnnualDiscount: boolean;
 }
@@ -37,12 +37,12 @@ const pricingPlans: PricingPlan[] = [
     annualPrice: null,
     baseNloc: 150,
     powerUpPrice: 7,
-    powerUpDiscount: null,
     hasAnnualDiscount: false,
     popular: false,
     features: [
       { text: 'Critical, High, and Medium Findings', included: true },
       { text: 'Web Dashboard View Only', included: true },
+      { text: 'NLOC Power Ups available', included: true },
       { text: 'No Remediation', included: false, grayed: true },
       { text: 'No Export', included: false, grayed: true },
     ],
@@ -55,16 +55,16 @@ const pricingPlans: PricingPlan[] = [
     annualPrice: 1990,
     baseNloc: 100,
     powerUpPrice: 5,
-    powerUpDiscount: '29% OFF',
     hasAnnualDiscount: true,
     popular: true,
     features: [
-      { text: 'Everything in Launch, plus:', included: true },
+      { text: 'Everything in Launch, plus:', included: true, isHeader: true },
       { text: 'Interactive Code Editor', included: true },
       { text: 'Finding Recommendations (Remediation)', included: true },
-      { text: 'Export Report (PDF)', included: true },
+      { text: 'Export Report', included: true },
       { text: 'QA Findings (Low, Info)', included: true },
-      { text: 'Security Coverage Score', included: true },
+      { text: 'Security Coverage', included: true },
+      { text: 'NLOC Power Ups at 29% Off', included: true },
     ],
   },
   {
@@ -75,14 +75,14 @@ const pricingPlans: PricingPlan[] = [
     annualPrice: 2990,
     baseNloc: 150,
     powerUpPrice: 4,
-    powerUpDiscount: '43% OFF',
     hasAnnualDiscount: true,
     popular: false,
     features: [
-      { text: 'Everything in Pro, plus:', included: true },
+      { text: 'Everything in Pro, plus:', included: true, isHeader: true },
       { text: 'Share reports in Dashboard', included: true },
       { text: 'Add Team Members', included: true },
       { text: 'Comment & Track Remediation Progress', included: true },
+      { text: 'NLOC Power Ups at 43% Off', included: true },
     ],
   },
 ];
@@ -115,27 +115,30 @@ const faqs = [
   },
 ];
 
-type SimulatedPlan = 'none' | 'launch' | 'pro' | 'business';
-
 const Pricing = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
-  const [simulatedPlan, setSimulatedPlan] = useState<SimulatedPlan>('none');
+  const [customNloc, setCustomNloc] = useState<Record<string, number>>({
+    launch: 150,
+    pro: 100,
+    business: 150
+  });
 
-  const getButtonState = (planId: 'launch' | 'pro' | 'business') => {
-    const planOrder = { none: -1, launch: 0, pro: 1, business: 2 };
-    const currentOrder = planOrder[simulatedPlan];
-    const targetOrder = planOrder[planId];
-
-    if (simulatedPlan === 'none') {
-      return { text: 'Get Started', variant: 'default' as const, disabled: false };
-    }
-    if (currentOrder === targetOrder) {
-      return { text: 'Current Plan', variant: 'outline' as const, disabled: true };
-    }
-    if (targetOrder > currentOrder) {
-      return { text: 'Upgrade', variant: 'default' as const, disabled: false };
-    }
-    return { text: 'Downgrade', variant: 'outline' as const, disabled: false };
+  const calculateEstimate = (plan: PricingPlan) => {
+    const planNloc = customNloc[plan.id];
+    const extraNloc = Math.max(0, planNloc - plan.baseNloc);
+    const extraCost = extraNloc * plan.powerUpPrice;
+    const basePrice = billingPeriod === 'monthly' || !plan.hasAnnualDiscount 
+      ? plan.monthlyPrice 
+      : plan.annualPrice!;
+    
+    return {
+      included: plan.baseNloc,
+      extra: extraNloc,
+      extraCost,
+      basePrice,
+      total: basePrice + extraCost,
+      powerUpPrice: plan.powerUpPrice
+    };
   };
 
   return (
@@ -143,24 +146,8 @@ const Pricing = () => {
       <PublicHeader />
 
       <main className="container mx-auto px-4 py-16 md:py-24">
-        {/* Header Section with Dev Simulator */}
-        <div className="relative text-center mb-12">
-          {/* Dev Simulator Dropdown */}
-          <div className="absolute top-0 right-0 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground hidden sm:inline">Simulate Current Plan</span>
-            <Select value={simulatedPlan} onValueChange={(value) => setSimulatedPlan(value as SimulatedPlan)}>
-              <SelectTrigger className="w-[120px] h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="launch">Launch</SelectItem>
-                <SelectItem value="pro">Pro</SelectItem>
-                <SelectItem value="business">Business</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+        {/* Header Section */}
+        <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             Flexible Pricing for Smart Contract Security
           </h1>
@@ -194,7 +181,6 @@ const Pricing = () => {
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
           {pricingPlans.map((plan, index) => {
-            const buttonState = getButtonState(plan.id);
             const showAnnualBadge = billingPeriod === 'annual' && plan.hasAnnualDiscount;
             const displayPrice = billingPeriod === 'monthly' || !plan.hasAnnualDiscount
               ? plan.monthlyPrice
@@ -202,6 +188,7 @@ const Pricing = () => {
             const priceLabel = billingPeriod === 'monthly' || !plan.hasAnnualDiscount
               ? '/mo'
               : '/yr';
+            const estimate = calculateEstimate(plan);
 
             return (
               <div
@@ -254,57 +241,80 @@ const Pricing = () => {
                   <p className="text-sm text-muted-foreground mt-2">
                     {plan.baseNloc} NLOC included
                   </p>
-
-                  {/* Power-Up Price */}
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-sm font-medium text-primary">
-                      ${plan.powerUpPrice} / extra NLOC
-                    </span>
-                    {plan.powerUpDiscount && (
-                      <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium border border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.3)]">
-                        {plan.powerUpDiscount}
-                      </span>
-                    )}
-                  </div>
                 </div>
 
                 {/* Features List */}
-                <ul className="space-y-3 mb-8 flex-grow">
+                <ul className="space-y-3 mb-6 flex-grow">
                   {plan.features.map((feature, featureIdx) => (
                     <li key={featureIdx} className="flex items-start gap-3">
-                      {feature.included ? (
-                        <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                      {feature.isHeader ? (
+                        <span className="text-sm text-muted-foreground font-medium">
+                          {feature.text}
+                        </span>
                       ) : (
-                        <X className="h-4 w-4 text-muted-foreground/40 flex-shrink-0 mt-0.5" />
+                        <>
+                          {feature.included ? (
+                            <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <X className="h-4 w-4 text-muted-foreground/40 flex-shrink-0 mt-0.5" />
+                          )}
+                          <span
+                            className={cn(
+                              "text-sm",
+                              feature.grayed && "text-muted-foreground/50"
+                            )}
+                          >
+                            {feature.text}
+                          </span>
+                        </>
                       )}
-                      <span
-                        className={cn(
-                          "text-sm",
-                          feature.grayed && "text-muted-foreground/50"
-                        )}
-                      >
-                        {feature.text}
-                      </span>
                     </li>
                   ))}
                 </ul>
 
+                {/* NLOC Calculator */}
+                <div className="bg-muted/50 rounded-lg p-4 mb-6">
+                  <p className="text-sm font-medium mb-3">Estimate Your Cost</p>
+                  <div className="flex items-center gap-2 mb-3">
+                    <label className="text-sm text-muted-foreground">Custom NLOC:</label>
+                    <Input
+                      type="number"
+                      value={customNloc[plan.id]}
+                      onChange={(e) => setCustomNloc(prev => ({
+                        ...prev,
+                        [plan.id]: Math.max(1, parseInt(e.target.value) || 0)
+                      }))}
+                      className="w-24 h-8 text-sm"
+                      min={1}
+                    />
+                  </div>
+                  
+                  <div className="text-xs space-y-1 text-muted-foreground">
+                    <p>Included: {estimate.included} NLOC</p>
+                    {estimate.extra > 0 && (
+                      <p>Extra: {estimate.extra} NLOC × ${estimate.powerUpPrice} = ${estimate.extraCost.toLocaleString()}</p>
+                    )}
+                    <div className="border-t border-border pt-1 mt-2">
+                      <p className="text-foreground font-medium">
+                        Total: ${estimate.basePrice.toLocaleString()}
+                        {estimate.extra > 0 && ` + $${estimate.extraCost.toLocaleString()} = $${estimate.total.toLocaleString()}`}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground/70 mt-2 italic">
+                    Power Ups purchased from dashboard after subscribing
+                  </p>
+                </div>
+
                 {/* CTA Button */}
                 <Button
-                  asChild={!buttonState.disabled}
-                  className={cn(
-                    "w-full",
-                    buttonState.text === 'Upgrade' && "bg-primary hover:bg-primary/90"
-                  )}
+                  asChild
+                  className="w-full"
                   size="lg"
-                  variant={buttonState.variant}
-                  disabled={buttonState.disabled}
+                  variant={plan.popular ? "default" : "outline"}
                 >
-                  {buttonState.disabled ? (
-                    <span>{buttonState.text}</span>
-                  ) : (
-                    <Link to="/coming-soon">{buttonState.text}</Link>
-                  )}
+                  <Link to="/coming-soon">Get Started</Link>
                 </Button>
               </div>
             );
