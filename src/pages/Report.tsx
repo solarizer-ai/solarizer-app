@@ -11,7 +11,9 @@ import ShareAuditModal from "@/components/ShareAuditModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users } from "lucide-react";
+import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download } from "lucide-react";
+import { generateMarkdownReport, downloadMarkdown } from "@/lib/exportMarkdown";
+import { toast } from "sonner";
 import { useAudit, useFindings } from "@/hooks/useAudits";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
@@ -101,6 +103,23 @@ const Report = () => {
     }
   }, [transformedFindings]);
 
+  const handleExportMarkdown = () => {
+    if (!currentAudit || !findings) {
+      toast.error("Unable to export report");
+      return;
+    }
+
+    const markdown = generateMarkdownReport({
+      audit: currentAudit,
+      findings: findings,
+      vulnerabilityCounts: getVulnerabilityCounts(),
+    });
+
+    const filename = `${currentAudit.project_name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-audit-report.md`;
+    downloadMarkdown(markdown, filename);
+    toast.success("Report exported successfully");
+  };
+
   const isLive = currentAudit?.status === 'analyzing';
 
   if (!auditId) {
@@ -151,6 +170,17 @@ const Report = () => {
                 >
                   <Share2 className="w-4 h-4" />
                   Share
+                </Button>
+              )}
+              {currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportMarkdown}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export
                 </Button>
               )}
             </div>
