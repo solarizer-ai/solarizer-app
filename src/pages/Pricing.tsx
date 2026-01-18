@@ -242,7 +242,7 @@ const Pricing = () => {
                 {/* 2 Months Free Badge */}
                 {showAnnualBadge && (
                   <div className="absolute -top-3 right-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-background text-green-400 border border-green-500/50">
                       2 Months Free
                     </span>
                   </div>
