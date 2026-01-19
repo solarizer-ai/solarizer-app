@@ -52,9 +52,9 @@ const intelligenceLoop = [
 ];
 
 const trustMetrics = [
-  { value: "< 5s", label: "Sub-5s Analysis" },
-  { value: "100%", label: "Zero Retention" },
-  { value: "Custom", label: "DNA Matrix" },
+  { value: "On-Demand", label: "Architectural Analysis" },
+  { value: "100% Private", label: "Ephemeral Scanning" },
+  { value: "Comprehensive", label: "Security Coverage Report" },
 ];
 
 const comparisonData = [
@@ -72,11 +72,6 @@ const comparisonData = [
     feature: "Logic Verification",
     manual: "Subjective Human Review",
     solarizer: "Semantic AI Analysis",
-  },
-  {
-    feature: "Transparency",
-    manual: "Static Finding List",
-    solarizer: "Interactive Security Coverage",
   },
   {
     feature: "Availability",
