@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Brain, Dna, ShieldCheck, ArrowRight, CheckCircle2, FileCode2, Shield, Filter, Cpu } from "lucide-react";
+import { Brain, Dna, ShieldCheck, ArrowRight, CheckCircle2, FileCode2, Shield, Lock, Cpu, Check, X, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
@@ -7,23 +7,23 @@ import Footer from "@/components/Footer";
 const features = [
   {
     icon: Brain,
-    title: "Logic & Economic Security",
-    description: "We go beyond reentrancy. Detect broken invariants, insolvent math, and 'phantom' accounting errors that drain liquidity pools.",
+    title: "Logic & Economic Analysis",
+    description: "We go beyond basic scanning to detect broken invariants, insolvent math, and 'phantom' accounting errors that could lead to protocol-wide liquidity drains.",
+  },
+  {
+    icon: FileCheck,
+    title: "Security Coverage Transparency",
+    description: "Every analysis generates a comprehensive report listing every hypothesis tested. You get data-driven proof of your protocol's resilience against smart contract security threats.",
   },
   {
     icon: FileCode2,
-    title: "Context-Aware Remediation",
-    description: "Receive precise, syntax-perfect code fixes tailored to your specific variable naming and architectural style—ready to copy and paste.",
+    title: "AI-Generated Remediation",
+    description: "Receive precise, syntax-perfect Solidity fixes. Our analysis provides remediation code tailored to your specific variable naming and project architecture.",
   },
   {
-    icon: Shield,
-    title: "Ephemeral Processing",
-    description: "Your IP is safe. Analysis occurs in a stateless, isolated environment with zero data retention. Your code is wiped the moment the report is generated.",
-  },
-  {
-    icon: Filter,
-    title: "High-Signal Reporting",
-    description: "Stop wasting time on noise. We automatically downgrade 'Owner Actions' and administrative privileges, focusing your attention on publicly exploitable criticals.",
+    icon: Lock,
+    title: "Private Scanning Environment",
+    description: "Your IP remains protected. Analysis occurs in a stateless, isolated environment with 100% zero data retention. Your code is wiped the moment your report is finalized.",
   },
 ];
 
@@ -31,23 +31,23 @@ const intelligenceLoop = [
   {
     icon: Brain,
     step: "01",
-    title: "Context Modeling",
-    headline: "Architectural Deconstruction",
-    description: "Our engine doesn't just read files; it builds a cognitive model of your entire protocol, mapping state changes, inheritance, and cross-contract relationships to understand the full picture.",
+    title: "Contextual Modeling",
+    headline: "Contextual Modeling",
+    description: "Our engine performs a comprehensive analysis of your architecture, mapping state changes and cross-contract dependencies to understand the global logic of your smart contract.",
   },
   {
     icon: Dna,
     step: "02",
-    title: "Threat Synthesis",
-    headline: "Predictive Risk Matching",
-    description: "Your logic is instantly cross-referenced against our proprietary Vulnerability DNA Matrix—a curated index of complex exploit patterns that standard linters cannot see.",
+    title: "Heuristic Scanning",
+    headline: "Heuristic Scanning",
+    description: "Your code is put through an intensive scanning phase against our proprietary Vulnerability DNA Matrix—an evolving index of complex smart contract security risks and exploit patterns.",
   },
   {
     icon: ShieldCheck,
     step: "03",
-    title: "Logic Verification",
-    headline: "Semantic Validation",
-    description: "A multi-stage verification layer challenges every potential finding, filtering out false positives and distinguishing between critical bugs and acceptable centralization risks.",
+    title: "Semantic AI Validation",
+    headline: "Semantic AI Validation",
+    description: "Results are refined through a dedicated AI analysis layer. This process challenges every finding to eliminate false positives, ensuring your report contains only high-signal security insights.",
   },
 ];
 
@@ -55,6 +55,34 @@ const trustMetrics = [
   { value: "< 5s", label: "Sub-5s Analysis" },
   { value: "100%", label: "Zero Retention" },
   { value: "Custom", label: "DNA Matrix" },
+];
+
+const comparisonData = [
+  {
+    feature: "Delivery Time",
+    manual: "7–21 Days (Average)",
+    solarizer: "Minutes (On-Demand)",
+  },
+  {
+    feature: "Scanning Depth",
+    manual: "Manual Line-by-Line",
+    solarizer: "Multi-Stage AI Scanning",
+  },
+  {
+    feature: "Logic Verification",
+    manual: "Subjective Human Review",
+    solarizer: "Semantic AI Analysis",
+  },
+  {
+    feature: "Transparency",
+    manual: "Static Finding List",
+    solarizer: "Interactive Security Coverage",
+  },
+  {
+    feature: "Availability",
+    manual: "Scheduled Waitlists",
+    solarizer: "Instant Access",
+  },
 ];
 
 const Home = () => {
@@ -94,17 +122,16 @@ const Home = () => {
               <span className="font-medium">Security Intelligence Engine</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Audit Confidence,{" "}
-              <span className="text-gradient">Simplified.</span>
+              Deep Smart Contract Security Analysis.{" "}
+              <span className="text-gradient">Powered by AI.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Standard scanners catch syntax errors. Solarizer detects business logic flaws 
-              and economic vulnerabilities by analyzing your protocol's architecture, not just its code.
+              Move beyond basic scanning. Solarizer utilizes advanced AI analysis to deconstruct your protocol's architecture, identifying critical Solidity vulnerabilities in minutes that manual teams take weeks to uncover.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
                 <Link to="/dashboard">
-                  Start Security Analysis
+                  Start AI Analysis
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -140,41 +167,13 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-24 md:py-32">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Proprietary Intelligence at Work
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Purpose-built detection capabilities that go beyond standard vulnerability scanning.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="p-6 rounded-xl bg-card border border-border hover:border-primary/40 transition-all duration-300 group"
-              >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:glow-orange-sm transition-all duration-300">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Intelligence Loop Section */}
       <section id="how-it-works" className="py-24 md:py-32 bg-card/30 border-y border-border">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">The Solarizer Intelligence Loop</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Sophisticated Analysis for the Solidity Ecosystem.</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A three-stage analysis pipeline that ensures comprehensive coverage
+              Solarizer's pipeline mimics the specialized analysis of a senior security researcher, using AI to validate every layer of your protocol.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -194,6 +193,78 @@ const Home = () => {
                 {index < intelligenceLoop.length - 1 && (
                   <div className="hidden md:block absolute top-1/2 -right-4 w-8 border-t border-dashed border-primary/30" />
                 )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Comparison Table Section */}
+      <section className="py-24 md:py-32">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Compare the Depth of AI Analysis.</h2>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-4 px-6 font-semibold text-foreground">Feature</th>
+                    <th className="text-left py-4 px-6 font-semibold text-muted-foreground">Traditional Manual Review</th>
+                    <th className="text-left py-4 px-6 font-semibold text-primary">Solarizer AI Analysis</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonData.map((row, index) => (
+                    <tr 
+                      key={row.feature} 
+                      className={`border-b border-border/50 ${index % 2 === 0 ? 'bg-card/30' : ''}`}
+                    >
+                      <td className="py-4 px-6 font-medium text-foreground">{row.feature}</td>
+                      <td className="py-4 px-6 text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <X className="w-4 h-4 text-destructive/60" />
+                          {row.manual}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-foreground">
+                        <div className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-primary" />
+                          {row.solarizer}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-24 md:py-32 bg-card/30 border-y border-border">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Core Analysis Pillars
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Purpose-built detection capabilities that go beyond standard vulnerability scanning.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature) => (
+              <div
+                key={feature.title}
+                className="p-6 rounded-xl bg-card border border-border hover:border-primary/40 transition-all duration-300 group"
+              >
+                <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:glow-orange-sm transition-all duration-300">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
