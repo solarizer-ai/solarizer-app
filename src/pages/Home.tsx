@@ -51,11 +51,6 @@ const intelligenceLoop = [
   },
 ];
 
-const trustMetrics = [
-  { value: "On-Demand", label: "Architectural Analysis" },
-  { value: "100% Private", label: "Ephemeral Scanning" },
-  { value: "Comprehensive", label: "Security Coverage Report" },
-];
 
 const comparisonData = [
   {
@@ -139,25 +134,6 @@ const Home = () => {
                 See How It Works
               </Button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Bar */}
-      <section className="border-y border-primary/20 bg-card/50">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-            {trustMetrics.map((metric, index) => (
-              <div key={metric.label} className="flex items-center gap-3">
-                <div className="text-2xl md:text-3xl font-bold text-primary">
-                  {metric.value}
-                </div>
-                <div className="text-sm text-muted-foreground">{metric.label}</div>
-                {index < trustMetrics.length - 1 && (
-                  <div className="hidden md:block w-px h-8 bg-border ml-8" />
-                )}
-              </div>
-            ))}
           </div>
         </div>
       </section>
