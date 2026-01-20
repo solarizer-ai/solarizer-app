@@ -111,10 +111,10 @@ const Home = () => {
               <Cpu className="w-4 h-4" />
               <span className="font-medium">Security Intelligence Engine</span>
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-2">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-2 whitespace-nowrap">
               Architectural Reasoning.
             </h1>
-            <p className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-gradient">
+            <p className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-gradient whitespace-nowrap">
               Automated Rigor.
             </p>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
