@@ -28,6 +28,8 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsWarning, setShowTermsWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -35,7 +37,24 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
 
+  const triggerTermsWarning = () => {
+    setShowTermsWarning(true);
+    toast({
+      variant: 'destructive',
+      title: 'Terms required',
+      description: 'Please accept the Terms of Service and Privacy Policy to continue.',
+    });
+    // Auto-clear after animation
+    setTimeout(() => setShowTermsWarning(false), 2000);
+  };
+
   const handleGoogleSignIn = async () => {
+    // Check terms acceptance for signup
+    if (!isLogin && !acceptedTerms) {
+      triggerTermsWarning();
+      return;
+    }
+    
     setIsGoogleLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -94,6 +113,12 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check terms acceptance for signup
+    if (!isLogin && !acceptedTerms) {
+      triggerTermsWarning();
+      return;
+    }
+    
     if (!validateForm()) return;
     
     setIsSubmitting(true);
@@ -151,8 +176,13 @@ const Auth = () => {
 
   const handleToggleMode = () => {
     setErrors({});
+    setAcceptedTerms(false);
+    setShowTermsWarning(false);
     navigate(isLogin ? '/signup' : '/login', { replace: true });
   };
+
+  // Check if signup buttons should be disabled
+  const isSignupDisabled = !isLogin && !acceptedTerms;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -253,6 +283,38 @@ const Auth = () => {
                 </div>
               )}
 
+              {/* Terms & Privacy Checkbox - Only show on signup */}
+              {!isLogin && (
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="acceptTerms"
+                    checked={acceptedTerms}
+                    onCheckedChange={(checked) => {
+                      setAcceptedTerms(!!checked);
+                      setShowTermsWarning(false);
+                    }}
+                    className={`mt-0.5 transition-all duration-300 ${
+                      showTermsWarning 
+                        ? 'ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse' 
+                        : ''
+                    }`}
+                  />
+                  <Label
+                    htmlFor="acceptTerms"
+                    className="text-sm text-muted-foreground cursor-pointer leading-snug"
+                  >
+                    I agree to the{' '}
+                    <Link to="/terms" className="text-primary hover:underline">
+                      Terms of Service
+                    </Link>
+                    {' '}and{' '}
+                    <Link to="/privacy" className="text-primary hover:underline">
+                      Privacy Policy
+                    </Link>
+                  </Label>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 className="w-full"
@@ -333,7 +395,11 @@ const Auth = () => {
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          By continuing, you agree to our Terms of Service and Privacy Policy.
+          {isLogin ? (
+            <>By signing in, you agree to our Terms of Service and Privacy Policy.</>
+          ) : (
+            <>Please review and accept our terms above to create your account.</>
+          )}
         </p>
       </div>
     </div>
