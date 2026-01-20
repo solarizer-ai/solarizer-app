@@ -21,7 +21,7 @@ interface PricingPlan {
   label: string;
   monthlyPrice: number;
   annualPrice: number | null;
-  baseNloc: number;
+  baseCredits: number;
   powerUpPrice: number;
   features: PricingFeature[];
   popular: boolean;
@@ -35,14 +35,14 @@ const pricingPlans: PricingPlan[] = [
     label: 'Trial / Starter',
     monthlyPrice: 149,
     annualPrice: null,
-    baseNloc: 150,
+    baseCredits: 150,
     powerUpPrice: 7,
     hasAnnualDiscount: false,
     popular: false,
     features: [
       { text: 'Critical, High, and Medium Findings', included: true },
       { text: 'Web Dashboard View Only', included: true },
-      { text: 'NLOC Power Ups available', included: true },
+      { text: 'Power up Credits available', included: true },
       { text: 'No Remediation', included: false, grayed: true },
       { text: 'No Export', included: false, grayed: true },
     ],
@@ -53,8 +53,8 @@ const pricingPlans: PricingPlan[] = [
     label: 'Most Popular',
     monthlyPrice: 199,
     annualPrice: 1990,
-    baseNloc: 150,
-    powerUpPrice: 5,
+    baseCredits: 150,
+    powerUpPrice: 6,
     hasAnnualDiscount: true,
     popular: true,
     features: [
@@ -64,7 +64,7 @@ const pricingPlans: PricingPlan[] = [
       { text: 'Export Report', included: true },
       { text: 'QA Findings (Low, Info)', included: true },
       { text: 'Security Coverage', included: true },
-      { text: 'NLOC Power Ups at 29% Off', included: true },
+      { text: 'Power up Credits at 14% Off', included: true },
     ],
   },
   {
@@ -73,8 +73,8 @@ const pricingPlans: PricingPlan[] = [
     label: 'For Teams',
     monthlyPrice: 499,
     annualPrice: 4990,
-    baseNloc: 150,
-    powerUpPrice: 4,
+    baseCredits: 150,
+    powerUpPrice: 5,
     hasAnnualDiscount: true,
     popular: false,
     features: [
@@ -82,31 +82,36 @@ const pricingPlans: PricingPlan[] = [
       { text: 'Share reports in Dashboard', included: true },
       { text: 'Add Team Members', included: true },
       { text: 'Comment & Track Remediation Progress', included: true },
-      { text: 'NLOC Power Ups at 43% Off', included: true },
+      { text: 'Power up Credits at 29% Off', included: true },
     ],
   },
 ];
 
 const faqs = [
   {
-    question: "What exactly counts towards my NLOC limit?",
+    question: "What is a Power up Credit?",
     answer:
-      "Every line of code in the files you upload is scanned and counted towards your quota. This includes imports and external libraries if they are present in the file. Tip: To save NLOC, we recommend flattening your contracts or only uploading your core logic files.",
+      "Simple: 1 Power up Credit allows you to audit exactly 1 line of Solidity code. It's the fuel for your smart contract's security.",
   },
   {
-    question: "What happens to my NLOC if I switch plans?",
+    question: "What exactly counts towards my Power up Credit limit?",
     answer:
-      "Your NLOC balance is yours. If you Upgrade or Downgrade your plan, your existing NLOC balance (from subscriptions or Power Ups) is maintained and rolls over to the new plan. You never lose the capacity you paid for.",
+      "Every line of code in the files you upload is scanned and counted towards your quota. This includes imports and external libraries if they are present in the file. Tip: To save credits, we recommend flattening your contracts or only uploading your core logic files.",
   },
   {
-    question: "Do my NLOC credits expire?",
+    question: "What happens to my credits if I switch plans?",
     answer:
-      "No. Any NLOC capacity you buy never expires as long as you maintain an active subscription (minimum Launch Plan). Unused credits simply roll over to the next month.",
+      "Your credit balance is yours. If you Upgrade or Downgrade your plan, your existing balance (from subscriptions or Power ups) is maintained and rolls over to the new plan. You never lose the capacity you paid for.",
   },
   {
-    question: "Can I buy Power Ups without a subscription?",
+    question: "Do my Power up Credits expire?",
     answer:
-      "No. You need an active subscription (Launch, Pro, or Business) to access the Solarizer analysis engine. However, you can buy as many Power Ups as you need on top of any active plan.",
+      "No. Any credits you buy never expire as long as you maintain an active subscription (minimum Launch Plan). Unused credits simply roll over to the next month.",
+  },
+  {
+    question: "Can I buy Power ups without a subscription?",
+    answer:
+      "No. You need an active subscription (Launch, Pro, or Business) to access the Solarizer analysis engine. However, you can buy as many Power ups as you need on top of any active plan.",
   },
   {
     question: "Why can't I see remediation recommendations on the Launch Plan?",
@@ -142,23 +147,23 @@ const faqs = [
 
 const Pricing = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
-  const [customNloc, setCustomNloc] = useState<Record<string, number>>({
+  const [customCredits, setCustomCredits] = useState<Record<string, number>>({
     launch: 150,
     pro: 150,
     business: 150
   });
 
   const calculateEstimate = (plan: PricingPlan) => {
-    const planNloc = customNloc[plan.id];
-    const extraNloc = Math.max(0, planNloc - plan.baseNloc);
-    const extraCost = extraNloc * plan.powerUpPrice;
+    const planCredits = customCredits[plan.id];
+    const extraCredits = Math.max(0, planCredits - plan.baseCredits);
+    const extraCost = extraCredits * plan.powerUpPrice;
     const basePrice = billingPeriod === 'monthly' || !plan.hasAnnualDiscount 
       ? plan.monthlyPrice 
       : plan.annualPrice!;
     
     return {
-      included: plan.baseNloc,
-      extra: extraNloc,
+      included: plan.baseCredits,
+      extra: extraCredits,
       extraCost,
       basePrice,
       total: basePrice + extraCost,
@@ -264,7 +269,7 @@ const Pricing = () => {
                   
                   {/* Base Allotment */}
                   <p className="text-sm text-muted-foreground mt-2">
-                    {plan.baseNloc} NLOC included
+                    {plan.baseCredits} Power up Credits included
                   </p>
                 </div>
 
@@ -297,15 +302,15 @@ const Pricing = () => {
                   ))}
                 </ul>
 
-                {/* NLOC Calculator */}
+                {/* Credits Calculator */}
                 <div className="bg-muted/50 rounded-lg p-4 mb-6">
                   <p className="text-sm font-medium mb-3">Estimate Your Cost</p>
                   <div className="flex items-center gap-2 mb-3">
-                    <label className="text-sm text-muted-foreground">Custom NLOC:</label>
+                    <label className="text-sm text-muted-foreground">Custom Credits:</label>
                     <Input
                       type="number"
-                      value={customNloc[plan.id]}
-                      onChange={(e) => setCustomNloc(prev => ({
+                      value={customCredits[plan.id]}
+                      onChange={(e) => setCustomCredits(prev => ({
                         ...prev,
                         [plan.id]: Math.max(1, parseInt(e.target.value) || 0)
                       }))}
@@ -315,9 +320,9 @@ const Pricing = () => {
                   </div>
                   
                   <div className="text-xs space-y-1 text-muted-foreground">
-                    <p>Included: {estimate.included} NLOC</p>
+                    <p>Included: {estimate.included} Credits</p>
                     {estimate.extra > 0 && (
-                      <p>Extra: {estimate.extra} NLOC × ${estimate.powerUpPrice} = ${estimate.extraCost.toLocaleString()}</p>
+                      <p>Extra: {estimate.extra} Credits × ${estimate.powerUpPrice} = ${estimate.extraCost.toLocaleString()}</p>
                     )}
                     <div className="border-t border-border pt-1 mt-2">
                       <p className="text-foreground font-medium">
@@ -328,7 +333,7 @@ const Pricing = () => {
                   </div>
                   
                   <p className="text-xs text-muted-foreground/70 mt-2 italic">
-                    Power Ups purchased from dashboard after subscribing
+                    Power ups purchased from dashboard after subscribing
                   </p>
                 </div>
 
