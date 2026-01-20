@@ -328,6 +328,13 @@ export type Database = {
         Args: { p_is_starter?: boolean; p_nloc_amount: number }
         Returns: Json
       }
+      get_audit_owner_info: {
+        Args: { owner_user_id: string }
+        Returns: {
+          display_name: string
+          email: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -346,6 +353,13 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      search_user_by_email: {
+        Args: { search_email: string }
+        Returns: {
+          display_name: string
+          user_id: string
+        }[]
       }
     }
     Enums: {

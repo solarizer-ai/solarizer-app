@@ -33,19 +33,17 @@ export const useAuditShares = (auditId: string | null) => {
   });
 };
 
-// Search for a user by email
+// Search for a user by email using secure RPC function
 export const useSearchUserByEmail = () => {
   return useMutation({
     mutationFn: async (email: string) => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, email, display_name')
-        .ilike('email', email)
-        .limit(1)
-        .maybeSingle();
+        .rpc('search_user_by_email', { search_email: email });
 
       if (error) throw error;
-      return data;
+      // The RPC returns an array, get the first result
+      const result = Array.isArray(data) ? data[0] : data;
+      return result ? { user_id: result.user_id, display_name: result.display_name, email } : null;
     },
   });
 };
@@ -139,7 +137,7 @@ export const useIsAuditOwner = (auditUserId: string | undefined) => {
   return user?.id === auditUserId;
 };
 
-// Get owner info for a shared audit
+// Get owner info for a shared audit using secure RPC function
 export const useAuditOwnerInfo = (ownerId: string | null) => {
   const { user } = useAuth();
 
@@ -149,13 +147,12 @@ export const useAuditOwnerInfo = (ownerId: string | null) => {
       if (!ownerId) return null;
 
       const { data, error } = await supabase
-        .from('profiles')
-        .select('email, display_name')
-        .eq('user_id', ownerId)
-        .maybeSingle();
+        .rpc('get_audit_owner_info', { owner_user_id: ownerId });
 
       if (error) throw error;
-      return data;
+      // The RPC returns an array, get the first result
+      const result = Array.isArray(data) ? data[0] : data;
+      return result || null;
     },
     enabled: !!user && !!ownerId,
   });
