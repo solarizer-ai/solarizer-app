@@ -148,35 +148,65 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`save-finding: Saving finding "${finding.title}" for audit ${finding.audit_id}`);
+    console.log(`save-finding: Checking for duplicate finding "${finding.title}" for audit ${finding.audit_id}`);
 
-    // Insert the finding
-    const { data, error } = await supabase
+    // Check for duplicate finding - match by title, severity, description, and location
+    const { data: existingFindings, error: checkError } = await supabase
       .from('findings')
-      .insert({
-        audit_id: finding.audit_id,
-        title: finding.title,
-        severity: finding.severity,
-        description: finding.description,
-        location: finding.location || null,
-        line_start: finding.line_start || null,
-        line_end: finding.line_end || null,
-        code_snippet: finding.code_snippet || null,
-        remediation: finding.remediation || null,
-        is_resolved: false,
-      })
-      .select('id')
-      .single();
+      .select('id, title, severity, description, location, code_snippet')
+      .eq('audit_id', finding.audit_id)
+      .eq('title', finding.title)
+      .eq('severity', finding.severity);
 
-    if (error) {
-      console.error('save-finding: Database error:', error);
-      return new Response(
-        JSON.stringify({ error: 'Failed to save finding' }),
-        { status: 500, headers: corsHeaders }
-      );
+    if (checkError) {
+      console.error('save-finding: Error checking for duplicates:', checkError);
     }
 
-    console.log(`save-finding: Successfully saved finding with id ${data.id}`);
+    // Check if an exact match exists (compare all relevant fields)
+    const isDuplicate = existingFindings?.some((existing) => {
+      const descMatch = existing.description === finding.description;
+      const locMatch = (existing.location || null) === (finding.location || null);
+      const snippetMatch = (existing.code_snippet || null) === (finding.code_snippet || null);
+      return descMatch && locMatch && snippetMatch;
+    });
+
+    let findingId: string;
+
+    if (isDuplicate) {
+      console.log(`save-finding: Duplicate finding detected, skipping insert for "${finding.title}"`);
+      findingId = existingFindings![0].id;
+    } else {
+      // Insert the finding
+      const { data, error } = await supabase
+        .from('findings')
+        .insert({
+          audit_id: finding.audit_id,
+          title: finding.title,
+          severity: finding.severity,
+          description: finding.description,
+          location: finding.location || null,
+          line_start: finding.line_start || null,
+          line_end: finding.line_end || null,
+          code_snippet: finding.code_snippet || null,
+          remediation: finding.remediation || null,
+          is_resolved: false,
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('save-finding: Database error:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to save finding' }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      findingId = data.id;
+      console.log(`save-finding: Successfully saved new finding with id ${findingId}`);
+    }
+
+    
 
     // Update audit with coverage_data if provided - MERGE instead of overwrite
     if (coverage_data) {
@@ -241,7 +271,7 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: true, 
-            finding_id: data.id,
+            finding_id: findingId,
             coverage_updated: false,
           }),
           { status: 200, headers: corsHeaders }
@@ -254,8 +284,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        finding_id: data.id,
-        coverage_updated: coverage_data ? true : false
+        finding_id: findingId,
+        coverage_updated: coverage_data ? true : false,
+        was_duplicate: isDuplicate ? true : false
       }),
       { status: 200, headers: corsHeaders }
     );
