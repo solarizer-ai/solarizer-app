@@ -59,6 +59,7 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
 };
 
 // Helper function to parse inline formatting (bold, italic, code)
+// Bold labels (ending with :) render as block elements on new lines
 const parseInlineFormatting = (text: string, keyPrefix: string): JSX.Element[] => {
   const result: JSX.Element[] = [];
   
@@ -71,12 +72,29 @@ const parseInlineFormatting = (text: string, keyPrefix: string): JSX.Element[] =
     if (!part) return;
     
     if (part.startsWith('**') && part.endsWith('**')) {
-      // Bold text
-      result.push(
-        <strong key={`${keyPrefix}-${index}`} className="font-semibold text-foreground">
-          {part.slice(2, -2)}
-        </strong>
-      );
+      const boldContent = part.slice(2, -2);
+      
+      // Check if this is a label (ends with colon - like "Attack Vector:")
+      const isLabel = boldContent.endsWith(':');
+      
+      if (isLabel) {
+        // Render as block element on new line
+        result.push(
+          <strong 
+            key={`${keyPrefix}-${index}`} 
+            className="block mt-3 mb-1 font-semibold text-foreground"
+          >
+            {boldContent}
+          </strong>
+        );
+      } else {
+        // Regular inline bold
+        result.push(
+          <strong key={`${keyPrefix}-${index}`} className="font-semibold text-foreground">
+            {boldContent}
+          </strong>
+        );
+      }
     } else if (part.startsWith('`') && part.endsWith('`')) {
       // Inline code
       result.push(
