@@ -7,7 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { BookOpen, Code, Shield, Zap, AlertTriangle, CheckCircle, HelpCircle } from "lucide-react";
+import { BookOpen, Shield, HelpCircle } from "lucide-react";
 
 const faqs = [
   {
@@ -85,12 +85,7 @@ const Docs = () => {
           <Tabs defaultValue="getting-started" className="space-y-6">
             <TabsList>
               <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
-              <TabsTrigger value="vulnerabilities">Vulnerabilities</TabsTrigger>
-              <TabsTrigger value="best-practices">Best Practices</TabsTrigger>
-              <TabsTrigger value="faq" className="gap-2">
-                <HelpCircle className="w-4 h-4" />
-                FAQ
-              </TabsTrigger>
+              <TabsTrigger value="faq">FAQ</TabsTrigger>
             </TabsList>
 
             <TabsContent value="getting-started" className="space-y-6">
@@ -178,101 +173,6 @@ const Docs = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="vulnerabilities" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-destructive" />
-                    Common Vulnerabilities
-                  </CardTitle>
-                  <CardDescription>
-                    Security issues Solarizer detects
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { name: 'Reentrancy', severity: 'Critical', desc: 'External calls that allow recursive function invocation before state updates.' },
-                    { name: 'Integer Overflow/Underflow', severity: 'High', desc: 'Arithmetic operations that exceed variable bounds.' },
-                    { name: 'Access Control', severity: 'High', desc: 'Missing or improper authorization checks on sensitive functions.' },
-                    { name: 'Unchecked External Calls', severity: 'Medium', desc: 'External calls without proper return value validation.' },
-                    { name: 'Front-Running', severity: 'Medium', desc: 'Transaction ordering manipulation vulnerabilities.' },
-                  ].map((vuln) => (
-                    <div key={vuln.name} className="flex items-start gap-4 p-4 rounded-lg border border-border">
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${
-                        vuln.severity === 'Critical' ? 'bg-critical/10 text-critical' :
-                        vuln.severity === 'High' ? 'bg-destructive/10 text-destructive' :
-                        'bg-warning/10 text-warning'
-                      }`}>
-                        {vuln.severity}
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{vuln.name}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">{vuln.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="best-practices" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-success" />
-                    Security Best Practices
-                  </CardTitle>
-                  <CardDescription>
-                    Recommended patterns for secure smart contracts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { title: 'Use Checks-Effects-Interactions', desc: 'Always update state before making external calls to prevent reentrancy.' },
-                    { title: 'Implement Access Control', desc: 'Use OpenZeppelin\'s Ownable or AccessControl for role-based permissions.' },
-                    { title: 'Validate All Inputs', desc: 'Check for zero addresses, valid ranges, and expected values in all functions.' },
-                    { title: 'Use SafeMath (pre-0.8)', desc: 'For Solidity versions before 0.8, use SafeMath for arithmetic operations.' },
-                    { title: 'Emit Events', desc: 'Log all important state changes for transparency and off-chain tracking.' },
-                    { title: 'Regular Security Reviews', desc: 'Schedule periodic security reviews, especially before major releases.' },
-                  ].map((practice, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <Zap className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
-                      <div>
-                        <h4 className="font-medium">{practice.title}</h4>
-                        <p className="text-sm text-muted-foreground">{practice.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Code className="w-5 h-5 text-primary" />
-                    Secure Pattern Example
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono">
-{`// Secure withdrawal pattern
-function withdraw(uint256 amount) external nonReentrant {
-    // 1. Checks
-    require(balances[msg.sender] >= amount, "Insufficient");
-    
-    // 2. Effects (state change FIRST)
-    balances[msg.sender] -= amount;
-    
-    // 3. Interactions (external call LAST)
-    (bool success, ) = msg.sender.call{value: amount}("");
-    require(success, "Transfer failed");
-    
-    emit Withdrawal(msg.sender, amount);
-}`}
-                  </pre>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="faq" className="space-y-6">
               <Card>
