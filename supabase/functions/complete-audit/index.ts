@@ -131,9 +131,52 @@ Deno.serve(async (req) => {
       updated_at: new Date().toISOString(),
     };
 
-    // Only update coverage_data if explicitly provided (don't overwrite existing)
+    // Only update coverage_data if explicitly provided - MERGE with existing
     if (coverage_data !== undefined) {
-      updateData.coverage_data = coverage_data;
+      console.log(`complete-audit: Merging coverage_data for audit ${audit_id}`);
+      
+      // Fetch existing coverage_data
+      const { data: existingAudit, error: fetchError } = await supabase
+        .from('audits')
+        .select('coverage_data')
+        .eq('id', audit_id)
+        .single();
+      
+      if (fetchError) {
+        console.error('complete-audit: Failed to fetch existing coverage_data:', fetchError);
+      }
+      
+      if (existingAudit?.coverage_data && typeof existingAudit.coverage_data === 'object') {
+        const existingData = existingAudit.coverage_data as CoverageData;
+        const existingDetails = existingData.details || [];
+        const newDetails = coverage_data.details || [];
+        
+        // Merge using test_name + file as unique key
+        const testMap = new Map<string, CoverageTestDetail>();
+        existingDetails.forEach((test: CoverageTestDetail) => {
+          const key = `${test.file}::${test.test_name}`;
+          testMap.set(key, test);
+        });
+        newDetails.forEach((test: CoverageTestDetail) => {
+          const key = `${test.file}::${test.test_name}`;
+          testMap.set(key, test);
+        });
+        
+        const mergedDetails = Array.from(testMap.values());
+        const passed = mergedDetails.filter((t: CoverageTestDetail) => t.status === 'PASSED').length;
+        const failed = mergedDetails.filter((t: CoverageTestDetail) => t.status === 'FAILED').length;
+        
+        updateData.coverage_data = {
+          total_tests: mergedDetails.length,
+          passed,
+          failed,
+          details: mergedDetails,
+        };
+        
+        console.log(`complete-audit: Merged ${existingDetails.length} existing + ${newDetails.length} new = ${mergedDetails.length} total tests`);
+      } else {
+        updateData.coverage_data = coverage_data;
+      }
     }
 
     // Only update system_hologram if explicitly provided

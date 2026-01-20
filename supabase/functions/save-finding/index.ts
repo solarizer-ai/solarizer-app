@@ -178,14 +178,60 @@ Deno.serve(async (req) => {
 
     console.log(`save-finding: Successfully saved finding with id ${data.id}`);
 
-    // Update audit with coverage_data if provided
+    // Update audit with coverage_data if provided - MERGE instead of overwrite
     if (coverage_data) {
-      console.log(`save-finding: Updating coverage_data for audit ${finding.audit_id}`);
+      console.log(`save-finding: Merging coverage_data for audit ${finding.audit_id}`);
+      
+      // First, fetch existing coverage_data
+      const { data: auditData, error: fetchError } = await supabase
+        .from('audits')
+        .select('coverage_data')
+        .eq('id', finding.audit_id)
+        .single();
+
+      if (fetchError) {
+        console.error('save-finding: Failed to fetch existing coverage_data:', fetchError);
+      }
+
+      // Merge coverage data
+      let mergedCoverage = coverage_data;
+      
+      if (auditData?.coverage_data && typeof auditData.coverage_data === 'object') {
+        const existingData = auditData.coverage_data as CoverageData;
+        const existingDetails = existingData.details || [];
+        const newDetails = coverage_data.details || [];
+        
+        // Create a map of existing tests by test_name + file to avoid duplicates
+        const testMap = new Map<string, CoverageTestDetail>();
+        existingDetails.forEach((test: CoverageTestDetail) => {
+          const key = `${test.file}::${test.test_name}`;
+          testMap.set(key, test);
+        });
+        
+        // Add/update with new tests
+        newDetails.forEach((test: CoverageTestDetail) => {
+          const key = `${test.file}::${test.test_name}`;
+          testMap.set(key, test); // Overwrites if same test, adds if new
+        });
+        
+        const mergedDetails = Array.from(testMap.values());
+        const passed = mergedDetails.filter((t: CoverageTestDetail) => t.status === 'PASSED').length;
+        const failed = mergedDetails.filter((t: CoverageTestDetail) => t.status === 'FAILED').length;
+        
+        mergedCoverage = {
+          total_tests: mergedDetails.length,
+          passed,
+          failed,
+          details: mergedDetails,
+        };
+        
+        console.log(`save-finding: Merged ${existingDetails.length} existing + ${newDetails.length} new = ${mergedDetails.length} total tests`);
+      }
       
       const { error: coverageError } = await supabase
         .from('audits')
         .update({
-          coverage_data: coverage_data,
+          coverage_data: mergedCoverage,
           updated_at: new Date().toISOString(),
         })
         .eq('id', finding.audit_id);
@@ -202,7 +248,7 @@ Deno.serve(async (req) => {
         );
       }
       
-      console.log(`save-finding: Coverage data updated successfully`);
+      console.log(`save-finding: Coverage data merged and updated successfully`);
     }
 
     return new Response(
