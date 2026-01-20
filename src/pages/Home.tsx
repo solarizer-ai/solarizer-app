@@ -106,15 +106,15 @@ const Home = () => {
         </div>
         
         <div className="container mx-auto px-6 py-28 md:py-40 relative">
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto text-center overflow-visible">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm mb-8">
               <Cpu className="w-4 h-4" />
               <span className="font-medium">Security Intelligence Engine</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-2 whitespace-nowrap">
+            <h1 className="text-[clamp(1.75rem,5vw,4.5rem)] font-bold tracking-tight mb-2">
               Architectural Reasoning.
             </h1>
-            <p className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-gradient whitespace-nowrap">
+            <p className="text-[clamp(1.5rem,4.5vw,3.75rem)] font-bold tracking-tight mb-6 text-gradient">
               Automated Rigor.
             </p>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
