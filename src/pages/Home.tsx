@@ -235,7 +235,7 @@ const Home = () => {
               Purpose-built detection capabilities that go beyond standard vulnerability scanning.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {features.map((feature) => (
               <div
                 key={feature.title}
