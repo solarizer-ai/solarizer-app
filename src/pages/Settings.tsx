@@ -9,12 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight } from "lucide-react";
+import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { format } from "date-fns";
 
@@ -36,6 +37,7 @@ const Settings = () => {
 
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
+  const { canAddTeamMembers } = useFeatureAccess();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -135,6 +137,11 @@ const Settings = () => {
               <TabsTrigger value="security" className="gap-2">
                 <Shield className="w-4 h-4" />
                 Security
+              </TabsTrigger>
+              <TabsTrigger value="team" className="gap-2">
+                <Users className="w-4 h-4" />
+                Team
+                {!canAddTeamMembers && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
               </TabsTrigger>
             </TabsList>
 
@@ -356,6 +363,63 @@ const Settings = () => {
                       Coming Soon
                     </Button>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="team">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Team Collaboration
+                  </CardTitle>
+                  <CardDescription>
+                    {canAddTeamMembers 
+                      ? "Invite team members to collaborate on security audits"
+                      : "Upgrade to Business to unlock team features"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {canAddTeamMembers ? (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Collaborate with up to 5 team members to share audits, track remediation progress, and comment on findings together.
+                      </p>
+                      <Button onClick={() => navigate("/team")} className="gap-2">
+                        <Users className="w-4 h-4" />
+                        Manage Team
+                        <ArrowUpRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
+                        <ul className="space-y-2 text-sm text-foreground/90">
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-purple-500" />
+                            Invite up to 5 team members
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-purple-500" />
+                            Share audit reports with your team
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-purple-500" />
+                            Comment on findings together
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-purple-500" />
+                            Track remediation progress
+                          </li>
+                        </ul>
+                      </div>
+                      <Button onClick={() => navigate("/pricing")} className="gap-2">
+                        <Zap className="w-4 h-4" />
+                        Upgrade to Business
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
