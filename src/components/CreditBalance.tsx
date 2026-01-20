@@ -62,23 +62,20 @@ export function CreditBalance() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex items-center gap-3 px-4 py-2 bg-muted/50 rounded-lg border border-border/50">
+      <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border border-border/50">
         <Zap className="h-4 w-4 text-primary" />
-        <div className="flex flex-col gap-1 min-w-[140px]">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium">
-              {creditsRemaining.toLocaleString()}
-            </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p>Credits remaining. Your plan includes {totalMonthly.toLocaleString()} credits per month. Purchase Power-Ups for additional capacity.</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <Progress value={100 - usagePercent} className="h-1.5" />
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium">
+            {creditsRemaining.toLocaleString()}
+          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              <p>Credits remaining. Your plan includes {totalMonthly.toLocaleString()} credits per month. Purchase Power-Ups for additional capacity.</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </TooltipProvider>
