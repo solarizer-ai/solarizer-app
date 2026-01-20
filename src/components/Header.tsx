@@ -27,6 +27,7 @@ interface Profile {
 }
 
 const navLinks = [
+  { href: "/", label: "Home" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/audits", label: "History" },
   { href: "/docs", label: "Docs" },
@@ -72,6 +73,9 @@ const Header = () => {
   };
 
   const isActive = (href: string) => {
+    if (href === "/") {
+      return location.pathname === "/";
+    }
     if (href === "/dashboard") {
       return location.pathname === "/dashboard";
     }
@@ -115,7 +119,7 @@ const Header = () => {
                 <span className="text-xs font-medium text-primary">{getInitials()}</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-popover border border-border">
+            <DropdownMenuContent align="end" className="w-56 bg-popover border border-border z-[70]">
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium truncate">
                   {profile?.display_name || 'User'}

@@ -1,7 +1,71 @@
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Code, Shield, Zap, AlertTriangle, CheckCircle } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { BookOpen, Code, Shield, Zap, AlertTriangle, CheckCircle, HelpCircle } from "lucide-react";
+
+const faqs = [
+  {
+    question: "What is a Power up Credit?",
+    answer:
+      "Simple: 1 Power up Credit allows you to audit exactly 1 line of Solidity code. It's the fuel for your smart contract's security.",
+  },
+  {
+    question: "What exactly counts towards my Power up Credit limit?",
+    answer:
+      "Every line of code in the files you upload is scanned and counted towards your quota. This includes imports and external libraries if they are present in the file. Tip: To save credits, we recommend flattening your contracts or only uploading your core logic files.",
+  },
+  {
+    question: "What happens to my credits if I switch plans?",
+    answer:
+      "Your credit balance is yours. If you Upgrade your plan, your existing balance is maintained 1:1. If you Downgrade, credits are converted based on the Credit Fair Usage Policy to preserve their monetary value.",
+  },
+  {
+    question: "Do my Power up Credits expire?",
+    answer:
+      "No. Power up Credits remain in your account forever until used. They never expire as long as you maintain an active subscription.",
+  },
+  {
+    question: "Can I buy Power ups without a subscription?",
+    answer:
+      "No. You need an active subscription (Launch, Pro, or Business) to access the Solarizer analysis engine. However, you can buy as many Power ups as you need on top of any active plan.",
+  },
+  {
+    question: "Why can't I see remediation recommendations on the Launch Plan?",
+    answer:
+      "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation, the interactive code editor, and report exports, you will need to upgrade to the Pro Plan.",
+  },
+  {
+    question: "How does the Annual Discount work?",
+    answer:
+      "If you choose Annual billing for the Pro or Business plans, you pay for 10 months and get 2 months free. The Launch Plan does not offer an annual discount.",
+  },
+  {
+    question: "What is Security Coverage and how is it different from \"Findings\"?",
+    answer:
+      "\"Findings\" only show you what is broken. Security Coverage shows you everything we checked to ensure it was safe. It is a complete ledger of all security hypotheses—such as \"Does this contract have reentrancy protection?\"—and their results.",
+  },
+  {
+    question: "Why is this important for me?",
+    answer:
+      "It provides transparency and trust. Instead of wondering if an auditor simply missed a bug, you can see a line-by-line verification that specific risks (like Integer Overflows or Access Control failures) were tested and passed.",
+  },
+  {
+    question: "What does a \"PASSED\" test mean in the coverage?",
+    answer:
+      "A \"PASSED\" status means the engine specifically analyzed that vector and found the contract to be secure against it. For these tests, we provide Proof—a brief explanation of why that specific logic is safe (e.g., \"Uses OpenZeppelin's ReentrancyGuard\").",
+  },
+  {
+    question: "What happens when a test \"FAILS\"?",
+    answer:
+      "If a test fails, it is automatically linked to a detailed Finding. You can click the \"View Issue\" button next to any failed test to see the exact line of code, the severity of the risk, and the recommended fix.",
+  },
+];
 
 const Docs = () => {
   return (
@@ -23,6 +87,10 @@ const Docs = () => {
               <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
               <TabsTrigger value="vulnerabilities">Vulnerabilities</TabsTrigger>
               <TabsTrigger value="best-practices">Best Practices</TabsTrigger>
+              <TabsTrigger value="faq" className="gap-2">
+                <HelpCircle className="w-4 h-4" />
+                FAQ
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="getting-started" className="space-y-6">
@@ -202,6 +270,38 @@ function withdraw(uint256 amount) external nonReentrant {
     emit Withdrawal(msg.sender, amount);
 }`}
                   </pre>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="faq" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <HelpCircle className="w-5 h-5 text-primary" />
+                    Frequently Asked Questions
+                  </CardTitle>
+                  <CardDescription>
+                    Common questions about Solarizer, credits, and security coverage
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Accordion type="single" collapsible className="space-y-3">
+                    {faqs.map((faq, index) => (
+                      <AccordionItem 
+                        key={index} 
+                        value={`faq-${index}`}
+                        className="border border-border/50 rounded-lg px-4 bg-muted/20 hover:border-primary/30 transition-colors data-[state=open]:border-primary/50 data-[state=open]:bg-muted/40"
+                      >
+                        <AccordionTrigger className="text-left font-medium py-4 hover:text-primary hover:no-underline">
+                          {faq.question}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-muted-foreground text-sm pb-4">
+                          {faq.answer}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
                 </CardContent>
               </Card>
             </TabsContent>

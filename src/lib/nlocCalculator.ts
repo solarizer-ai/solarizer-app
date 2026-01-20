@@ -54,6 +54,30 @@ export const PLAN_LIMITS = {
 } as const;
 
 /**
+ * Credit rates per plan (in cents)
+ */
+export const PLAN_CREDIT_RATES = {
+  starter: 700,  // $7.00 per credit
+  launch: 700,   // $7.00 per credit  
+  pro: 600,      // $6.00 per credit
+  business: 500, // $5.00 per credit
+} as const;
+
+/**
+ * Calculate credits after downgrade using fair usage formula
+ * New Balance = Floor((Remaining Credits * Old Plan Rate) / New Plan Rate)
+ */
+export function calculateDowngradeCredits(
+  currentCredits: number,
+  fromPlan: keyof typeof PLAN_CREDIT_RATES,
+  toPlan: keyof typeof PLAN_CREDIT_RATES
+): number {
+  const oldRate = PLAN_CREDIT_RATES[fromPlan];
+  const newRate = PLAN_CREDIT_RATES[toPlan];
+  return Math.floor((currentCredits * oldRate) / newRate);
+}
+
+/**
  * Power-up options available for Pro users
  */
 export const POWER_UP_OPTIONS = [

@@ -3,19 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Check, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 import { useToast } from "@/hooks/use-toast";
+import { PLAN_CREDIT_RATES } from "@/lib/nlocCalculator";
 
 interface PricingFeature {
   text: string;
@@ -96,70 +92,17 @@ const pricingPlans: PricingPlan[] = [
   },
 ];
 
-const faqs = [
-  {
-    question: "What is a Power up Credit?",
-    answer:
-      "Simple: 1 Power up Credit allows you to audit exactly 1 line of Solidity code. It's the fuel for your smart contract's security.",
-  },
-  {
-    question: "What exactly counts towards my Power up Credit limit?",
-    answer:
-      "Every line of code in the files you upload is scanned and counted towards your quota. This includes imports and external libraries if they are present in the file. Tip: To save credits, we recommend flattening your contracts or only uploading your core logic files.",
-  },
-  {
-    question: "What happens to my credits if I switch plans?",
-    answer:
-      "Your credit balance is yours. If you Upgrade or Downgrade your plan, your existing balance (from subscriptions or Power ups) is maintained and rolls over to the new plan. You never lose the capacity you paid for.",
-  },
-  {
-    question: "Do my Power up Credits expire?",
-    answer:
-      "No. Any credits you buy never expire as long as you maintain an active subscription (minimum Launch Plan). Unused credits simply roll over to the next month.",
-  },
-  {
-    question: "Can I buy Power ups without a subscription?",
-    answer:
-      "No. You need an active subscription (Launch, Pro, or Business) to access the Solarizer analysis engine. However, you can buy as many Power ups as you need on top of any active plan.",
-  },
-  {
-    question: "Why can't I see remediation recommendations on the Launch Plan?",
-    answer:
-      "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation, the interactive code editor, and PDF reporting, you will need to upgrade to the Pro Plan.",
-  },
-  {
-    question: "How does the Annual Discount work?",
-    answer:
-      "If you choose Annual billing for the Pro or Business plans, you pay for 10 months and get 2 months free. The Launch Plan does not offer an annual discount.",
-  },
-  {
-    question: "What is Security Coverage and how is it different from \"Findings\"?",
-    answer:
-      "\"Findings\" only show you what is broken. Security Coverage shows you everything we checked to ensure it was safe. It is a complete ledger of all security hypotheses—such as \"Does this contract have reentrancy protection?\"—and their results.",
-  },
-  {
-    question: "Why is this important for me?",
-    answer:
-      "It provides transparency and trust. Instead of wondering if an auditor simply missed a bug, you can see a line-by-line verification that specific risks (like Integer Overflows or Access Control failures) were tested and passed.",
-  },
-  {
-    question: "What does a \"PASSED\" test mean in the coverage?",
-    answer:
-      "A \"PASSED\" status means the engine specifically analyzed that vector and found the contract to be secure against it. For these tests, we provide Proof—a brief explanation of why that specific logic is safe (e.g., \"Uses OpenZeppelin's ReentrancyGuard\").",
-  },
-  {
-    question: "What happens when a test \"FAILS\"?",
-    answer:
-      "If a test fails, it is automatically linked to a detailed Finding. You can click the \"View Issue\" button next to any failed test to see the exact line of code, the severity of the risk, and the recommended fix.",
-  },
-];
+// FAQ moved to Docs page
 
 const Pricing = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
+  const [downgradeModalOpen, setDowngradeModalOpen] = useState(false);
+  const [targetDowngradePlan, setTargetDowngradePlan] = useState<'launch' | 'pro' | 'business'>('launch');
   
   const { user, loading: authLoading } = useAuth();
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
+  const { data: credits, isLoading: creditsLoading } = useCredits();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -227,13 +170,19 @@ const Pricing = () => {
       text: "Downgrade",
       variant: "outline" as "outline",
       action: () => {
-        toast({
-          title: "Coming Soon",
-          description: "Plan changes will be available shortly.",
-        });
+        setTargetDowngradePlan(planId);
+        setDowngradeModalOpen(true);
       },
       disabled: false,
     };
+  };
+
+  const handleConfirmDowngrade = () => {
+    setDowngradeModalOpen(false);
+    toast({
+      title: "Coming Soon",
+      description: "Plan downgrades will be available shortly. Your credits will be converted based on the Credit Fair Usage Policy.",
+    });
   };
 
   const getDiscountedPrice = () => {
@@ -243,7 +192,12 @@ const Pricing = () => {
     return plan?.powerUpPrice || 7;
   };
 
-  const isLoading = authLoading || subscriptionLoading;
+  const getCurrentPlanForModal = (): 'launch' | 'pro' | 'business' => {
+    const plan = subscription?.plan || 'starter';
+    return plan === 'starter' ? 'launch' : plan as 'launch' | 'pro' | 'business';
+  };
+
+  const isLoading = authLoading || subscriptionLoading || creditsLoading;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -414,28 +368,6 @@ const Pricing = () => {
           </div>
         )}
 
-        {/* FAQ Section */}
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">
-            Frequently Asked Questions
-          </h2>
-          <Accordion type="single" collapsible className="space-y-3">
-            {faqs.map((faq, index) => (
-              <AccordionItem 
-                key={index} 
-                value={`faq-${index}`}
-                className="border border-border/50 rounded-lg px-6 bg-card/30 hover:border-primary/30 transition-colors data-[state=open]:border-primary/50 data-[state=open]:bg-card/50"
-              >
-                <AccordionTrigger className="text-left font-medium py-4 hover:text-primary hover:no-underline">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-sm pb-4">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
       </main>
 
       <Footer />
@@ -444,6 +376,16 @@ const Pricing = () => {
       <PurchasePowerUpModal
         open={powerUpModalOpen}
         onOpenChange={setPowerUpModalOpen}
+      />
+
+      {/* Downgrade Warning Modal */}
+      <DowngradeWarningModal
+        open={downgradeModalOpen}
+        onOpenChange={setDowngradeModalOpen}
+        currentCredits={credits?.credits_remaining || 0}
+        fromPlan={getCurrentPlanForModal()}
+        toPlan={targetDowngradePlan}
+        onConfirm={handleConfirmDowngrade}
       />
     </div>
   );
