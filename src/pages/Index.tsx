@@ -597,7 +597,7 @@ const Index = () => {
       <PurchasePowerUpModal
         open={showPowerUpModal}
         onOpenChange={setShowPowerUpModal}
-        requiredNloc={pendingNloc}
+        requiredCredits={pendingNloc}
         currentCredits={credits?.credits_remaining || 0}
       />
 
