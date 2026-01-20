@@ -144,15 +144,15 @@ const Home = () => {
       <section id="how-it-works" className="py-24 md:py-32 bg-card/30 border-y border-border">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Sophisticated Analysis for the Solidity Ecosystem.</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Protocol Intelligence</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Solarizer's pipeline mimics the specialized analysis of a senior security researcher, using AI to validate every layer of your protocol.
+              Execute high-fidelity analysis of inheritance structures and cross-contract interactions, cross-referencing them with specialized security DNA to harden your protocol.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {intelligenceLoop.map((step, index) => (
-              <div key={step.title} className="relative">
-                <div className="bg-card border border-border rounded-xl p-6 h-full border-l-2 border-l-primary">
+              <div key={step.title} className="relative group">
+                <div className="bg-card border border-border rounded-xl p-6 h-full border-l-2 border-l-primary transition-all duration-300 group-hover:border-primary/60 group-hover:shadow-lg group-hover:shadow-primary/10 group-hover:-translate-y-1">
                   <div className="w-12 h-12 rounded-full border-2 border-primary/40 flex items-center justify-center bg-primary/5 mb-4">
                     <step.icon className="w-6 h-6 text-primary" />
                   </div>
