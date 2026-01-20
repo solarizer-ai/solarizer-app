@@ -97,6 +97,79 @@ export type Database = {
         }
         Relationships: []
       }
+      finding_comments: {
+        Row: {
+          content: string
+          created_at: string
+          finding_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          finding_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          finding_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finding_comments_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "findings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finding_status_history: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          comment: string | null
+          finding_id: string
+          id: string
+          new_resolved: boolean
+          old_resolved: boolean | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          comment?: string | null
+          finding_id: string
+          id?: string
+          new_resolved: boolean
+          old_resolved?: boolean | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          comment?: string | null
+          finding_id?: string
+          id?: string
+          new_resolved?: boolean
+          old_resolved?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finding_status_history_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "findings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       findings: {
         Row: {
           audit_id: string
@@ -109,6 +182,8 @@ export type Database = {
           line_start: number | null
           location: string | null
           remediation: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           severity: Database["public"]["Enums"]["finding_severity"]
           title: string
         }
@@ -123,6 +198,8 @@ export type Database = {
           line_start?: number | null
           location?: string | null
           remediation?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           severity: Database["public"]["Enums"]["finding_severity"]
           title: string
         }
@@ -137,6 +214,8 @@ export type Database = {
           line_start?: number | null
           location?: string | null
           remediation?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           severity?: Database["public"]["Enums"]["finding_severity"]
           title?: string
         }
