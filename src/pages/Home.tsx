@@ -153,14 +153,10 @@ const Home = () => {
             {intelligenceLoop.map((step, index) => (
               <div key={step.title} className="relative">
                 <div className="bg-card border border-border rounded-xl p-6 h-full border-l-2 border-l-primary">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-full border-2 border-primary/40 flex items-center justify-center bg-primary/5">
-                      <span className="text-xl font-bold text-primary">{step.step}</span>
-                    </div>
-                    <step.icon className="w-6 h-6 text-primary/60" />
+                  <div className="w-12 h-12 rounded-full border-2 border-primary/40 flex items-center justify-center bg-primary/5 mb-4">
+                    <step.icon className="w-6 h-6 text-primary" />
                   </div>
-                  <div className="text-xs uppercase tracking-wider text-primary/70 mb-1">{step.title}</div>
-                  <h3 className="text-xl font-semibold mb-3">{step.headline}</h3>
+                  <h3 className="text-xs uppercase tracking-wider text-primary mb-3">{step.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
                 {index < intelligenceLoop.length - 1 && (
