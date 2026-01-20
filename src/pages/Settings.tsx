@@ -235,7 +235,7 @@ const Settings = () => {
                   {/* Usage Card */}
                   <Card>
                     <CardHeader>
-                      <CardTitle>Usage This Period</CardTitle>
+                      <CardTitle>Credits Consumed This Billing Cycle</CardTitle>
                       <CardDescription>
                         {isPro 
                           ? "Your nLOC credit usage for this billing cycle" 
@@ -301,7 +301,7 @@ const Settings = () => {
                           View Power-Up Options
                         </Button>
                         <p className="text-xs text-muted-foreground mt-2">
-                          Power-up credits expire at the end of your current billing period
+                          Power up Credits remain in your account forever until used.
                         </p>
                       </CardContent>
                     </Card>
