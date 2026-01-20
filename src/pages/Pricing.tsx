@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Check, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -413,18 +419,22 @@ const Pricing = () => {
           <h2 className="text-2xl font-bold text-center mb-8">
             Frequently Asked Questions
           </h2>
-          <div className="space-y-6">
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
-              <div
-                key={index}
-                className="border-b border-border pb-6 last:border-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
-                style={{ animationDelay: `${index * 100}ms` }}
+              <AccordionItem 
+                key={index} 
+                value={`faq-${index}`}
+                className="border border-border/50 rounded-lg px-6 bg-card/30 hover:border-primary/30 transition-colors data-[state=open]:border-primary/50 data-[state=open]:bg-card/50"
               >
-                <h3 className="font-medium mb-2">{faq.question}</h3>
-                <p className="text-muted-foreground text-sm">{faq.answer}</p>
-              </div>
+                <AccordionTrigger className="text-left font-medium py-4 hover:text-primary hover:no-underline">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground text-sm pb-4">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         </div>
       </main>
 
