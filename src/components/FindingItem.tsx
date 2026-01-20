@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb, Lock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { FindingComments } from "@/components/FindingComments";
+import { RemediationStatusToggle } from "@/components/RemediationStatusToggle";
+import { FeatureLockedOverlay } from "@/components/FeatureLockedOverlay";
 
 type Severity = "critical" | "high" | "medium" | "low" | "info";
 
@@ -18,6 +21,8 @@ interface Finding {
   startLine?: number;
   remediation?: string;
   is_resolved?: boolean;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
 }
 
 interface FindingItemProps {
@@ -26,6 +31,8 @@ interface FindingItemProps {
   isHighlighted?: boolean;
   forceExpanded?: boolean;
   canViewRemediation?: boolean;
+  canCommentOnFindings?: boolean;
+  currentUserId?: string;
   onUpgradeClick?: () => void;
   onRefReady?: (el: HTMLDivElement | null) => void;
 }
@@ -368,6 +375,8 @@ const FindingItem = ({
   isHighlighted = false,
   forceExpanded = false,
   canViewRemediation = true,
+  canCommentOnFindings = false,
+  currentUserId,
   onUpgradeClick,
   onRefReady 
 }: FindingItemProps) => {
@@ -533,6 +542,62 @@ const FindingItem = ({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Remediation Status Toggle - Business only */}
+          {canCommentOnFindings ? (
+            <RemediationStatusToggle
+              findingId={finding.id}
+              isResolved={finding.is_resolved ?? false}
+              resolvedAt={finding.resolved_at}
+              resolvedBy={finding.resolved_by}
+            />
+          ) : (
+            <div className="relative">
+              <div className="opacity-50 pointer-events-none">
+                <div className="flex items-center justify-between py-2">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Remediation Status
+                  </h4>
+                  <Button variant="outline" size="sm" disabled className="gap-2">
+                    Mark as Resolved
+                  </Button>
+                </div>
+              </div>
+              <FeatureLockedOverlay
+                featureName="Track Remediation Progress"
+                requiredPlan="business"
+                description="Mark findings as resolved and track your remediation progress."
+                variant="inline"
+                onUpgrade={onUpgradeClick}
+              />
+            </div>
+          )}
+
+          {/* Comments Section - Business only */}
+          {canCommentOnFindings ? (
+            <FindingComments 
+              findingId={finding.id} 
+              currentUserId={currentUserId}
+            />
+          ) : (
+            <div className="relative">
+              <div className="opacity-50 pointer-events-none">
+                <div className="flex items-center gap-2 py-2">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Comments
+                  </h4>
+                </div>
+                <p className="text-sm text-muted-foreground">Team collaboration on findings.</p>
+              </div>
+              <FeatureLockedOverlay
+                featureName="Comment on Findings"
+                requiredPlan="business"
+                description="Collaborate with your team by adding comments to findings."
+                variant="inline"
+                onUpgrade={onUpgradeClick}
+              />
             </div>
           )}
         </div>

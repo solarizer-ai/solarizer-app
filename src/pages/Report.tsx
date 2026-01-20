@@ -10,6 +10,7 @@ import ScopeTab from "@/components/ScopeTab";
 import ShareAuditModal from "@/components/ShareAuditModal";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { FeatureLockedOverlay } from "@/components/FeatureLockedOverlay";
+import { RemediationProgressWidget } from "@/components/RemediationProgressWidget";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ const Report = () => {
     canViewQAFindings, 
     canViewSecurityCoverage,
     canShareReports,
+    canCommentOnFindings,
     currentPlan,
     isLoading: accessLoading 
   } = useFeatureAccess();
@@ -263,6 +265,11 @@ const Report = () => {
                 auditId={currentAudit.id}
                 counts={getVulnerabilityCounts()}
               />
+              
+              {/* Remediation Progress - Business only */}
+              {canCommentOnFindings && (
+                <RemediationProgressWidget auditId={currentAudit.id} />
+              )}
 
               {/* Tabbed Interface: Scope, Coverage & Findings */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -344,6 +351,8 @@ const Report = () => {
                               isHighlighted={highlightedFindingId === finding.id}
                               forceExpanded={highlightedFindingId === finding.id}
                               canViewRemediation={canViewRemediation}
+                              canCommentOnFindings={canCommentOnFindings}
+                              currentUserId={user?.id}
                               onUpgradeClick={() => setUpgradeModalOpen(true)}
                               onRefReady={(el) => {
                                 if (el) {
