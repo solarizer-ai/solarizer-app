@@ -112,13 +112,13 @@ const Home = () => {
               <span className="font-medium">Security Intelligence Engine</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-2">
-              Smart Contract Analysis.
+              Architectural Reasoning.
             </h1>
             <p className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-gradient">
-              Powered by AI.
+              Automated Rigor.
             </p>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Move beyond basic scanning. Solarizer utilizes advanced AI analysis to deconstruct your protocol's architecture, identifying critical Solidity vulnerabilities in minutes that manual teams take weeks to uncover.
+              Surface-level scanners catch syntax errors; Solarizer deconstructs your protocol's entire logic model. It performs deep analysis to identify complex Solidity vulnerabilities and economic risks in minutes.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
