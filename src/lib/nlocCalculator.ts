@@ -40,9 +40,9 @@ export const PLAN_LIMITS = {
     initialCredits: 300, // 2 scans x 150 nLOC
   },
   pro: {
-    monthlyNloc: 1500,
+    monthlyNloc: 150,
     unlimitedScans: true,
-    initialCredits: 1500,
+    initialCredits: 150,
   },
   business: {
     monthlyNloc: 5000,

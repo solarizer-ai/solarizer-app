@@ -201,7 +201,7 @@ const Settings = () => {
                           </CardTitle>
                           <CardDescription>
                             {isPro 
-                              ? "Unlimited scans with 1,500 nLOC monthly allowance" 
+                              ? "Unlimited scans with 150 nLOC monthly allowance" 
                               : "2 free scans with 500 nLOC per scan"}
                           </CardDescription>
                         </div>
