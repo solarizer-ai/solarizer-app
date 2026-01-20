@@ -179,11 +179,11 @@ const Home = () => {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Compare the Depth of AI Analysis.</h2>
           </div>
           <div className="max-w-4xl mx-auto">
-            <div className="overflow-x-auto -mx-6 px-6">
-              <table className="w-full border-collapse min-w-[600px] md:min-w-0">
+            <div className="overflow-x-auto -mx-6 px-6 relative">
+              <table className="w-full border-collapse min-w-[500px] md:min-w-0">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-foreground text-xs md:text-base">Feature</th>
+                    <th className="sticky left-0 z-10 bg-background text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-foreground text-xs md:text-base after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50">Feature</th>
                     <th className="text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-muted-foreground text-xs md:text-base">
                       <span className="hidden sm:inline">Traditional Manual Review</span>
                       <span className="sm:hidden">Manual</span>
@@ -200,7 +200,7 @@ const Home = () => {
                       key={row.feature} 
                       className={`border-b border-border/50 ${index % 2 === 0 ? 'bg-card/30' : ''}`}
                     >
-                      <td className="py-3 px-3 md:py-4 md:px-6 font-medium text-foreground text-xs md:text-sm">{row.feature}</td>
+                      <td className="sticky left-0 z-10 bg-background py-3 px-3 md:py-4 md:px-6 font-medium text-foreground text-xs md:text-sm after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50">{row.feature}</td>
                       <td className="py-3 px-3 md:py-4 md:px-6 text-muted-foreground text-xs md:text-sm">
                         <div className="flex items-center gap-1 md:gap-2">
                           <X className="w-3 h-3 md:w-4 md:h-4 text-destructive/60 flex-shrink-0" />

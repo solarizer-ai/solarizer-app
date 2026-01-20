@@ -58,6 +58,31 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
   },
 };
 
+// Helper function to render numbered lists
+const renderNumberedList = (text: string): JSX.Element | null => {
+  const lines = text.split('\n');
+  const listItems: { number: string; content: string }[] = [];
+  
+  for (const line of lines) {
+    const match = line.match(/^(\d+)\.\s+(.*)$/);
+    if (match) {
+      listItems.push({ number: match[1], content: match[2] });
+    }
+  }
+  
+  if (listItems.length === 0) return null;
+  
+  return (
+    <ol className="list-decimal list-outside ml-5 space-y-1.5 my-3">
+      {listItems.map((item, idx) => (
+        <li key={idx} className="text-sm text-foreground/90 pl-1">
+          {item.content}
+        </li>
+      ))}
+    </ol>
+  );
+};
+
 // Helper function to render text with code formatting (both inline and block)
 const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
   // First, split by triple backtick code blocks
@@ -91,24 +116,33 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
       // Render code block with syntax highlighting for Solidity
       const isSolidity = segment.language === 'solidity' || segment.language === 'sol';
       return (
-        <div key={segmentIndex} className="my-3 bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto">
+        <div key={segmentIndex} className="my-3 bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto max-w-full">
           {segment.language && (
             <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">
               {segment.language}
             </div>
           )}
-          <div>
+          <div className="min-w-max">
             {isSolidity || useHighlighting 
               ? highlightSolidityCode(segment.code, 1) 
-              : <pre className="whitespace-pre-wrap text-foreground/90">{segment.code}</pre>
+              : <pre className="whitespace-pre overflow-x-auto text-foreground/90">{segment.code}</pre>
             }
           </div>
         </div>
       );
     }
     
-    // For regular text segments, handle inline backticks
+    // For regular text segments, check for numbered lists first
     const textSegment = segment as string;
+    
+    // Check if this segment contains a numbered list (multiple lines starting with numbers)
+    const listMatch = textSegment.match(/(?:^|\n)(\d+)\.\s+/gm);
+    if (listMatch && listMatch.length >= 2) {
+      const numberedList = renderNumberedList(textSegment);
+      if (numberedList) return <span key={segmentIndex}>{numberedList}</span>;
+    }
+    
+    // Handle inline backticks
     const parts = textSegment.split(/(`[^`]+`)/g);
     return parts.map((part, index) => {
       if (part.startsWith('`') && part.endsWith('`')) {
@@ -298,11 +332,11 @@ const FindingItem = ({
           </div>
 
           {/* Location + Chevron (desktop only) */}
-          <div className="hidden sm:flex items-center gap-3 shrink-0">
+          <div className="hidden sm:flex items-center gap-3 shrink-0 min-w-[80px]">
             {finding.location?.lines && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <FileCode className="w-3.5 h-3.5" />
-                <span className="font-mono">{finding.location.lines}</span>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+                <FileCode className="w-3.5 h-3.5 shrink-0" />
+                <span className="font-mono">L{finding.location.lines}</span>
               </div>
             )}
             <ChevronDown className={cn(
@@ -314,8 +348,8 @@ const FindingItem = ({
           {/* Location on mobile - smaller, below title */}
           {finding.location?.lines && (
             <div className="flex sm:hidden items-center gap-1.5 text-xs text-muted-foreground">
-              <FileCode className="w-3 h-3" />
-              <span className="font-mono text-[11px]">{finding.location.lines}</span>
+              <FileCode className="w-3 h-3 shrink-0" />
+              <span className="font-mono text-[11px] whitespace-nowrap">L{finding.location.lines}</span>
             </div>
           )}
         </div>
@@ -329,38 +363,42 @@ const FindingItem = ({
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               Description
             </h4>
-            <p className="text-sm text-foreground/90 leading-relaxed">
+            <div className="text-sm text-foreground/90 leading-relaxed text-justify">
               {renderWithCodeFormatting(finding.description)}
-            </p>
+            </div>
           </div>
 
           {/* Location */}
           {finding.location && (
             <div>
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                Location
-              </h4>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-mono text-primary">{finding.location.file}</span>
-                {finding.location.lines && (
-                  <>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">Lines {finding.location.lines}</span>
-                  </>
-                )}
-              </div>
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Location
+            </h4>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="font-mono text-primary truncate max-w-[200px] sm:max-w-[300px]" title={finding.location.file}>
+                {finding.location.file}
+              </span>
+              {finding.location.lines && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground whitespace-nowrap">Lines {finding.location.lines}</span>
+                </>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Affected Code */}
-          {finding.code && (
-            <div>
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                Affected Code
-              </h4>
-              <div className="bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto">
+        {/* Affected Code */}
+        {finding.code && (
+          <div>
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Affected Code
+            </h4>
+            <div className="bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto max-w-full">
+              <div className="min-w-max">
                 {highlightSolidityCode(finding.code, finding.startLine)}
               </div>
+            </div>
             </div>
           )}
 
@@ -377,9 +415,9 @@ const FindingItem = ({
               </h4>
               {canViewRemediation ? (
                 <div className="bg-success/5 border border-success/20 rounded-md p-4">
-                  <p className="text-sm text-foreground/90 leading-relaxed">
+                  <div className="text-sm text-foreground/90 leading-relaxed text-justify">
                     {renderWithCodeFormatting(finding.remediation)}
-                  </p>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-primary/5 border border-primary/20 rounded-md p-4">
