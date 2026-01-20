@@ -114,18 +114,18 @@ const Audits = () => {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-row gap-3 sm:gap-4 overflow-x-auto pb-2 -mx-6 px-6 sm:mx-0 sm:px-0 sm:overflow-visible">
+            <div className="relative flex-1 min-w-[180px] sm:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                placeholder="Search assessments..."
+              <Input
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[120px] sm:w-[150px] shrink-0">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -138,7 +138,7 @@ const Audits = () => {
             </Select>
             {hasSharedAudits && (
               <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[120px] sm:w-[160px] shrink-0">
                   <SelectValue placeholder="Ownership" />
                 </SelectTrigger>
                 <SelectContent>
@@ -149,7 +149,7 @@ const Audits = () => {
               </Select>
             )}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[120px] sm:w-[150px] shrink-0">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>

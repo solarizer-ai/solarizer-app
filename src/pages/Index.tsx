@@ -490,12 +490,20 @@ const Index = () => {
                     </Button>
                   </div>
                 )}
+                
+                {/* Score Trend - Mobile only, directly below Recent Analysis */}
+                <div className="lg:hidden">
+                  <SecurityTrend />
+                </div>
               </div>
 
               {/* Sidebar - Takes 1 column */}
               <div className="space-y-4 order-first lg:order-last">
                 <SeverityBreakdown />
-                <SecurityTrend />
+                {/* Score Trend - Desktop only */}
+                <div className="hidden lg:block">
+                  <SecurityTrend />
+                </div>
               </div>
             </div>
           </div>

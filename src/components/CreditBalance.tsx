@@ -68,18 +68,18 @@ export function CreditBalance() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium">
-                {creditsRemaining.toLocaleString()} nLOC
+                {creditsRemaining.toLocaleString()} Credits
               </span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
-                  <p>Pro plan includes {totalMonthly.toLocaleString()} nLOC per month. Purchase Power-Ups for additional capacity.</p>
+                  <p>Your plan includes {totalMonthly.toLocaleString()} credits per month. Purchase Power-Ups for additional capacity.</p>
                 </TooltipContent>
               </Tooltip>
             </div>
-            <span className="text-xs text-muted-foreground">remaining</span>
+            <span className="text-xs text-muted-foreground">Remaining</span>
           </div>
           <Progress value={100 - usagePercent} className="h-1.5" />
         </div>
