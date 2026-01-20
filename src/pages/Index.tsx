@@ -414,7 +414,7 @@ const Index = () => {
                   Overview of your security analysis activity
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                 <CreditBalance />
                 <Button onClick={handleNewAudit} className="gap-2">
                   <Plus className="w-4 h-4" />
