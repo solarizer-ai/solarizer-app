@@ -74,10 +74,9 @@ export function CreditBalance() {
                 <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs">
-                <p>Your plan includes {totalMonthly.toLocaleString()} credits per month. Purchase Power-Ups for additional capacity.</p>
+                <p>Credits remaining. Your plan includes {totalMonthly.toLocaleString()} credits per month. Purchase Power-Ups for additional capacity.</p>
               </TooltipContent>
             </Tooltip>
-            <span className="text-sm font-medium">Credits Remaining</span>
           </div>
           <Progress value={100 - usagePercent} className="h-1.5" />
         </div>
