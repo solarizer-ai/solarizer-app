@@ -111,10 +111,12 @@ const Home = () => {
               <Cpu className="w-4 h-4" />
               <span className="font-medium">Security Intelligence Engine</span>
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Deep Smart Contract Security Analysis.{" "}
-              <span className="text-gradient">Powered by AI.</span>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-2">
+              Smart Contract Analysis.
             </h1>
+            <p className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-gradient">
+              Powered by AI.
+            </p>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
               Move beyond basic scanning. Solarizer utilizes advanced AI analysis to deconstruct your protocol's architecture, identifying critical Solidity vulnerabilities in minutes that manual teams take weeks to uncover.
             </p>
