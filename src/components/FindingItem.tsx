@@ -118,20 +118,32 @@ const parseInlineFormatting = (text: string, keyPrefix: string): JSX.Element[] =
   return result;
 };
 
-// Helper function to render numbered lists with prefix text preservation
-const renderNumberedList = (text: string, keyPrefix: string): { prefixText: string; list: JSX.Element } | null => {
+// Helper function to render numbered lists with proper formatting
+const renderNumberedList = (text: string, keyPrefix: string): { prefixText: string; list: JSX.Element; suffixText: string } | null => {
   const lines = text.split('\n');
   const listItems: { number: string; content: string }[] = [];
   const prefixLines: string[] = [];
+  const suffixLines: string[] = [];
   let foundFirstItem = false;
+  let listEnded = false;
   
   for (const line of lines) {
     const match = line.match(/^(\d+)\.\s+(.*)$/);
-    if (match) {
+    if (match && !listEnded) {
       foundFirstItem = true;
       listItems.push({ number: match[1], content: match[2] });
     } else if (!foundFirstItem && line.trim()) {
+      // Lines before the first numbered item
       prefixLines.push(line);
+    } else if (foundFirstItem && !match) {
+      // Lines after the list has started but aren't list items
+      if (line.trim()) {
+        listEnded = true;
+        suffixLines.push(line);
+      } else if (listEnded) {
+        // Preserve empty lines in suffix for spacing
+        suffixLines.push(line);
+      }
     }
   }
   
@@ -147,7 +159,8 @@ const renderNumberedList = (text: string, keyPrefix: string): { prefixText: stri
           </li>
         ))}
       </ol>
-    )
+    ),
+    suffixText: suffixLines.join(' ').trim()
   };
 };
 
@@ -203,23 +216,28 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
     // For regular text segments, check for numbered lists first
     const textSegment = segment as string;
     
-    // Check if this segment contains a numbered list (multiple lines starting with numbers)
-    const listMatch = textSegment.match(/(?:^|\n)(\d+)\.\s+/gm);
-    if (listMatch && listMatch.length >= 2) {
-      const listResult = renderNumberedList(textSegment, `segment-${segmentIndex}`);
-      if (listResult) {
-        return (
-          <span key={segmentIndex}>
-            {listResult.prefixText && (
-              <p className="mb-2">
-                {parseInlineFormatting(listResult.prefixText, `segment-${segmentIndex}-prefix`)}
-              </p>
-            )}
-            {listResult.list}
-          </span>
-        );
+      // Check if this segment contains a numbered list (multiple lines starting with numbers)
+      const listMatch = textSegment.match(/(?:^|\n)(\d+)\.\s+/gm);
+      if (listMatch && listMatch.length >= 2) {
+        const listResult = renderNumberedList(textSegment, `segment-${segmentIndex}`);
+        if (listResult) {
+          return (
+            <span key={segmentIndex}>
+              {listResult.prefixText && (
+                <p className="mb-2">
+                  {parseInlineFormatting(listResult.prefixText, `segment-${segmentIndex}-prefix`)}
+                </p>
+              )}
+              {listResult.list}
+              {listResult.suffixText && (
+                <p className="mt-2">
+                  {parseInlineFormatting(listResult.suffixText, `segment-${segmentIndex}-suffix`)}
+                </p>
+              )}
+            </span>
+          );
+        }
       }
-    }
     
     // Handle inline formatting (bold, italic, code) for non-list text
     return (
