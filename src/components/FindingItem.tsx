@@ -58,18 +58,68 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
   },
 };
 
-// Helper function to render text with inline code formatting for backtick-wrapped text
-const renderWithCodeFormatting = (text: string) => {
-  const parts = text.split(/(`[^`]+`)/g);
-  return parts.map((part, index) => {
-    if (part.startsWith('`') && part.endsWith('`')) {
+// Helper function to render text with code formatting (both inline and block)
+const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
+  // First, split by triple backtick code blocks
+  const blockPattern = /```(\w+)?\n?([\s\S]*?)```/g;
+  const segments: (string | { type: 'codeblock'; language?: string; code: string })[] = [];
+  
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = blockPattern.exec(text)) !== null) {
+    // Add text before the code block
+    if (match.index > lastIndex) {
+      segments.push(text.slice(lastIndex, match.index));
+    }
+    // Add the code block
+    segments.push({
+      type: 'codeblock',
+      language: match[1],
+      code: match[2].trim(),
+    });
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text after last code block
+  if (lastIndex < text.length) {
+    segments.push(text.slice(lastIndex));
+  }
+  
+  return segments.map((segment, segmentIndex) => {
+    if (typeof segment === 'object' && segment.type === 'codeblock') {
+      // Render code block with syntax highlighting for Solidity
+      const isSolidity = segment.language === 'solidity' || segment.language === 'sol';
       return (
-        <code key={index} className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono text-primary">
-          {part.slice(1, -1)}
-        </code>
+        <div key={segmentIndex} className="my-3 bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto">
+          {segment.language && (
+            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">
+              {segment.language}
+            </div>
+          )}
+          <div>
+            {isSolidity || useHighlighting 
+              ? highlightSolidityCode(segment.code, 1) 
+              : <pre className="whitespace-pre-wrap text-foreground/90">{segment.code}</pre>
+            }
+          </div>
+        </div>
       );
     }
-    return part;
+    
+    // For regular text segments, handle inline backticks
+    const textSegment = segment as string;
+    const parts = textSegment.split(/(`[^`]+`)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('`') && part.endsWith('`')) {
+        return (
+          <code key={`${segmentIndex}-${index}`} className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono text-primary">
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      return <span key={`${segmentIndex}-${index}`}>{part}</span>;
+    });
   });
 };
 
