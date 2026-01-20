@@ -172,7 +172,7 @@ const Home = () => {
       <section className="py-24 md:py-32">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Compare the Depth of AI Analysis.</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Security Framework Comparison</h2>
           </div>
           <div className="max-w-4xl mx-auto">
             <div className="overflow-x-auto -mx-6 px-6 relative">
@@ -184,10 +184,7 @@ const Home = () => {
                       <span className="hidden sm:inline">Traditional Manual Review</span>
                       <span className="sm:hidden">Manual</span>
                     </th>
-                    <th className="text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-primary text-xs md:text-base">
-                      <span className="hidden sm:inline">Solarizer AI Analysis</span>
-                      <span className="sm:hidden">Solarizer</span>
-                    </th>
+                    <th className="text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-primary text-xs md:text-base">Solarizer</th>
                   </tr>
                 </thead>
                 <tbody>
