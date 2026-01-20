@@ -58,29 +58,79 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
   },
 };
 
-// Helper function to render numbered lists
-const renderNumberedList = (text: string): JSX.Element | null => {
+// Helper function to parse inline formatting (bold, italic, code)
+const parseInlineFormatting = (text: string, keyPrefix: string): JSX.Element[] => {
+  const result: JSX.Element[] = [];
+  
+  // Combined regex: **bold**, *italic*, `code`
+  // Order matters: match ** before * to avoid conflicts
+  const inlinePattern = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
+  const parts = text.split(inlinePattern);
+  
+  parts.forEach((part, index) => {
+    if (!part) return;
+    
+    if (part.startsWith('**') && part.endsWith('**')) {
+      // Bold text
+      result.push(
+        <strong key={`${keyPrefix}-${index}`} className="font-semibold text-foreground">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    } else if (part.startsWith('`') && part.endsWith('`')) {
+      // Inline code
+      result.push(
+        <code key={`${keyPrefix}-${index}`} className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono text-primary">
+          {part.slice(1, -1)}
+        </code>
+      );
+    } else if (part.startsWith('*') && part.endsWith('*')) {
+      // Italic text
+      result.push(
+        <em key={`${keyPrefix}-${index}`} className="italic text-foreground/90">
+          {part.slice(1, -1)}
+        </em>
+      );
+    } else {
+      // Regular text
+      result.push(<span key={`${keyPrefix}-${index}`}>{part}</span>);
+    }
+  });
+  
+  return result;
+};
+
+// Helper function to render numbered lists with prefix text preservation
+const renderNumberedList = (text: string, keyPrefix: string): { prefixText: string; list: JSX.Element } | null => {
   const lines = text.split('\n');
   const listItems: { number: string; content: string }[] = [];
+  const prefixLines: string[] = [];
+  let foundFirstItem = false;
   
   for (const line of lines) {
     const match = line.match(/^(\d+)\.\s+(.*)$/);
     if (match) {
+      foundFirstItem = true;
       listItems.push({ number: match[1], content: match[2] });
+    } else if (!foundFirstItem && line.trim()) {
+      prefixLines.push(line);
     }
   }
   
   if (listItems.length === 0) return null;
   
-  return (
-    <ol className="list-decimal list-outside ml-5 space-y-1.5 my-3">
-      {listItems.map((item, idx) => (
-        <li key={idx} className="text-sm text-foreground/90 pl-1">
-          {item.content}
-        </li>
-      ))}
-    </ol>
-  );
+  return {
+    prefixText: prefixLines.join(' '),
+    list: (
+      <ol className="list-decimal list-outside ml-5 space-y-1.5 my-3">
+        {listItems.map((item, idx) => (
+          <li key={idx} className="text-sm text-foreground/90 pl-1">
+            {parseInlineFormatting(item.content, `${keyPrefix}-li-${idx}`)}
+          </li>
+        ))}
+      </ol>
+    )
+  };
 };
 
 // Helper function to render text with code formatting (both inline and block)
@@ -138,22 +188,27 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
     // Check if this segment contains a numbered list (multiple lines starting with numbers)
     const listMatch = textSegment.match(/(?:^|\n)(\d+)\.\s+/gm);
     if (listMatch && listMatch.length >= 2) {
-      const numberedList = renderNumberedList(textSegment);
-      if (numberedList) return <span key={segmentIndex}>{numberedList}</span>;
-    }
-    
-    // Handle inline backticks
-    const parts = textSegment.split(/(`[^`]+`)/g);
-    return parts.map((part, index) => {
-      if (part.startsWith('`') && part.endsWith('`')) {
+      const listResult = renderNumberedList(textSegment, `segment-${segmentIndex}`);
+      if (listResult) {
         return (
-          <code key={`${segmentIndex}-${index}`} className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono text-primary">
-            {part.slice(1, -1)}
-          </code>
+          <span key={segmentIndex}>
+            {listResult.prefixText && (
+              <p className="mb-2">
+                {parseInlineFormatting(listResult.prefixText, `segment-${segmentIndex}-prefix`)}
+              </p>
+            )}
+            {listResult.list}
+          </span>
         );
       }
-      return <span key={`${segmentIndex}-${index}`}>{part}</span>;
-    });
+    }
+    
+    // Handle inline formatting (bold, italic, code) for non-list text
+    return (
+      <span key={segmentIndex}>
+        {parseInlineFormatting(textSegment, `segment-${segmentIndex}`)}
+      </span>
+    );
   });
 };
 
