@@ -1,13 +1,14 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useInactivityLogout } from './useInactivityLogout';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -17,6 +18,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const signOut = useCallback(async () => {
+    localStorage.removeItem('solarizer_last_activity');
+    localStorage.removeItem('solarizer_remember_me');
+    await supabase.auth.signOut();
+  }, []);
+
+  // Use inactivity logout hook
+  useInactivityLogout(user, signOut);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -55,17 +65,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (!error) {
+      // Store session preferences for inactivity tracking
+      localStorage.setItem('solarizer_remember_me', rememberMe ? 'true' : 'false');
+      localStorage.setItem('solarizer_last_activity', Date.now().toString());
+    }
     
     return { error: error as Error | null };
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
   };
 
   return (

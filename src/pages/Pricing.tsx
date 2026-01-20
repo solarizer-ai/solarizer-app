@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Check, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface PricingFeature {
   text: string;
@@ -147,29 +150,94 @@ const faqs = [
 
 const Pricing = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
-  const [customCredits, setCustomCredits] = useState<Record<string, number>>({
-    launch: 150,
-    pro: 150,
-    business: 150
-  });
+  const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
+  
+  const { user, loading: authLoading } = useAuth();
+  const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const calculateEstimate = (plan: PricingPlan) => {
-    const planCredits = customCredits[plan.id];
-    const extraCredits = Math.max(0, planCredits - plan.baseCredits);
-    const extraCost = extraCredits * plan.powerUpPrice;
-    const basePrice = billingPeriod === 'monthly' || !plan.hasAnnualDiscount 
-      ? plan.monthlyPrice 
-      : plan.annualPrice!;
-    
+  const planOrder = { launch: 1, starter: 1, pro: 2, business: 3 };
+
+  const getButtonConfig = (planId: 'launch' | 'pro' | 'business') => {
+    // Not logged in
+    if (!user) {
+      return {
+        text: "Get Started",
+        variant: (planId === 'pro' ? "default" : "outline") as "default" | "outline",
+        action: () => navigate('/signup'),
+        disabled: false,
+      };
+    }
+
+    // Logged in but no subscription
+    const currentPlan = subscription?.plan || null;
+    if (!currentPlan) {
+      return {
+        text: "Subscribe",
+        variant: (planId === 'pro' ? "default" : "outline") as "default" | "outline",
+        action: () => {
+          toast({
+            title: "Coming Soon",
+            description: "Subscription checkout will be available shortly.",
+          });
+        },
+        disabled: false,
+      };
+    }
+
+    // Normalize plan names (starter = launch)
+    const normalizedCurrent = currentPlan === 'starter' ? 'launch' : currentPlan;
+    const currentOrder = planOrder[normalizedCurrent] || 0;
+    const targetOrder = planOrder[planId] || 0;
+
+    // Same plan
+    if (normalizedCurrent === planId || (currentPlan === 'starter' && planId === 'launch')) {
+      return {
+        text: "Current Plan",
+        variant: "outline" as "outline",
+        action: null,
+        disabled: true,
+      };
+    }
+
+    // Upgrade
+    if (targetOrder > currentOrder) {
+      return {
+        text: "Upgrade",
+        variant: "default" as "default",
+        action: () => {
+          toast({
+            title: "Coming Soon",
+            description: "Plan upgrades will be available shortly.",
+          });
+        },
+        disabled: false,
+      };
+    }
+
+    // Downgrade
     return {
-      included: plan.baseCredits,
-      extra: extraCredits,
-      extraCost,
-      basePrice,
-      total: basePrice + extraCost,
-      powerUpPrice: plan.powerUpPrice
+      text: "Downgrade",
+      variant: "outline" as "outline",
+      action: () => {
+        toast({
+          title: "Coming Soon",
+          description: "Plan changes will be available shortly.",
+        });
+      },
+      disabled: false,
     };
   };
+
+  const getDiscountedPrice = () => {
+    const currentPlan = subscription?.plan || 'launch';
+    const normalizedPlan = currentPlan === 'starter' ? 'launch' : currentPlan;
+    const plan = pricingPlans.find(p => p.id === normalizedPlan);
+    return plan?.powerUpPrice || 7;
+  };
+
+  const isLoading = authLoading || subscriptionLoading;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -218,7 +286,7 @@ const Pricing = () => {
             const priceLabel = billingPeriod === 'monthly' || !plan.hasAnnualDiscount
               ? '/mo'
               : '/yr';
-            const estimate = calculateEstimate(plan);
+            const buttonConfig = getButtonConfig(plan.id);
 
             return (
               <div
@@ -247,7 +315,7 @@ const Pricing = () => {
                 {/* 2 Months Free Badge */}
                 {showAnnualBadge && (
                   <div className="absolute -top-3 right-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-background text-green-400 border border-green-500/50">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-background text-primary border border-primary/50">
                       2 Months Free
                     </span>
                   </div>
@@ -302,55 +370,43 @@ const Pricing = () => {
                   ))}
                 </ul>
 
-                {/* Credits Calculator */}
-                <div className="bg-muted/50 rounded-lg p-4 mb-6">
-                  <p className="text-sm font-medium mb-3">Estimate Your Cost</p>
-                  <div className="flex items-center gap-2 mb-3">
-                    <label className="text-sm text-muted-foreground">Custom Credits:</label>
-                    <Input
-                      type="number"
-                      value={customCredits[plan.id]}
-                      onChange={(e) => setCustomCredits(prev => ({
-                        ...prev,
-                        [plan.id]: Math.max(1, parseInt(e.target.value) || 0)
-                      }))}
-                      className="w-24 h-8 text-sm bg-background [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                      min={1}
-                    />
-                  </div>
-                  
-                  <div className="text-xs space-y-1 text-muted-foreground">
-                    <p>Included: {estimate.included} Credits</p>
-                    {estimate.extra > 0 && (
-                      <p>Extra: {estimate.extra} Credits × ${estimate.powerUpPrice} = ${estimate.extraCost.toLocaleString()}</p>
-                    )}
-                    <div className="border-t border-border pt-1 mt-2">
-                      <p className="text-foreground font-medium">
-                        Total: ${estimate.basePrice.toLocaleString()}
-                        {estimate.extra > 0 && ` + $${estimate.extraCost.toLocaleString()} = $${estimate.total.toLocaleString()}`}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground/70 mt-2 italic">
-                    Power ups purchased from dashboard after subscribing
-                  </p>
-                </div>
-
                 {/* CTA Button */}
                 <Button
-                  asChild
                   className="w-full"
                   size="lg"
-                  variant={plan.popular ? "default" : "outline"}
+                  variant={buttonConfig.variant}
+                  disabled={buttonConfig.disabled || isLoading}
+                  onClick={buttonConfig.action || undefined}
                 >
-                  <Link to="/coming-soon">Get Started</Link>
+                  {isLoading ? "Loading..." : buttonConfig.text}
                 </Button>
               </div>
             );
           })}
         </div>
 
+        {/* Power Up Credits Purchase Section - Only for logged-in subscribers */}
+        {user && subscription && (
+          <div
+            className="max-w-lg mx-auto mb-16 p-6 rounded-2xl border border-primary/30 bg-card/50 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            style={{ animationDelay: "600ms" }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Zap className="h-6 w-6 text-primary" />
+              <h3 className="text-xl font-bold">Need More Credits?</h3>
+            </div>
+            <p className="text-muted-foreground mb-4">
+              Purchase additional Power up Credits at ${getDiscountedPrice()}/credit based on your current plan.
+            </p>
+            <Button
+              variant="solarGlow"
+              className="w-full"
+              onClick={() => setPowerUpModalOpen(true)}
+            >
+              Purchase Power up Credits
+            </Button>
+          </div>
+        )}
 
         {/* FAQ Section */}
         <div className="max-w-3xl mx-auto">
@@ -373,6 +429,12 @@ const Pricing = () => {
       </main>
 
       <Footer />
+
+      {/* Power Up Modal */}
+      <PurchasePowerUpModal
+        open={powerUpModalOpen}
+        onOpenChange={setPowerUpModalOpen}
+      />
     </div>
   );
 };

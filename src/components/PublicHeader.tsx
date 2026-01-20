@@ -5,6 +5,7 @@ import solarizerLogo from "@/assets/solarizer-logo.png";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -15,6 +16,7 @@ const navLinks = [
 const PublicHeader = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, loading } = useAuth();
 
   const isActive = (href: string) => {
     return location.pathname === href;
@@ -52,12 +54,22 @@ const PublicHeader = () => {
           
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/coming-soon">Sign In</Link>
-            </Button>
-            <Button asChild variant="solarGlow" size="sm">
-              <Link to="/coming-soon">Get Started</Link>
-            </Button>
+            {!loading && (
+              user ? (
+                <Button asChild variant="solarGlow" size="sm">
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                  <Button asChild variant="solarGlow" size="sm">
+                    <Link to="/signup">Get Started</Link>
+                  </Button>
+                </>
+              )
+            )}
           </div>
           
           {/* Mobile Menu Button */}
@@ -94,16 +106,28 @@ const PublicHeader = () => {
               ))}
             </nav>
             <div className="flex flex-col gap-2 pt-2 border-t border-border">
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/coming-soon" onClick={() => setMobileMenuOpen(false)}>
-                  Sign In
-                </Link>
-              </Button>
-              <Button asChild variant="solarGlow" className="w-full">
-                <Link to="/coming-soon" onClick={() => setMobileMenuOpen(false)}>
-                  Get Started
-                </Link>
-              </Button>
+              {!loading && (
+                user ? (
+                  <Button asChild variant="solarGlow" className="w-full">
+                    <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                      Dashboard
+                    </Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                        Sign In
+                      </Link>
+                    </Button>
+                    <Button asChild variant="solarGlow" className="w-full">
+                      <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+                        Get Started
+                      </Link>
+                    </Button>
+                  </>
+                )
+              )}
             </div>
           </div>
         </div>
