@@ -26,7 +26,8 @@ interface PricingPlan {
   label: string;
   monthlyPrice: number;
   annualPrice: number | null;
-  baseCredits: number;
+  monthlyCredits: number;
+  annualCredits: number;
   powerUpPrice: number;
   features: PricingFeature[];
   popular: boolean;
@@ -40,7 +41,8 @@ const pricingPlans: PricingPlan[] = [
     label: 'Free Trial',
     monthlyPrice: 149,
     annualPrice: null,
-    baseCredits: 150,
+    monthlyCredits: 50,
+    annualCredits: 50,
     powerUpPrice: 7,
     hasAnnualDiscount: false,
     popular: false,
@@ -59,7 +61,8 @@ const pricingPlans: PricingPlan[] = [
     label: 'Most Popular',
     monthlyPrice: 199,
     annualPrice: 1990,
-    baseCredits: 150,
+    monthlyCredits: 50,
+    annualCredits: 500,
     powerUpPrice: 6,
     hasAnnualDiscount: true,
     popular: true,
@@ -80,7 +83,8 @@ const pricingPlans: PricingPlan[] = [
     label: 'For Teams',
     monthlyPrice: 499,
     annualPrice: 4990,
-    baseCredits: 150,
+    monthlyCredits: 50,
+    annualCredits: 500,
     powerUpPrice: 5,
     hasAnnualDiscount: true,
     popular: false,
@@ -297,9 +301,11 @@ const Pricing = () => {
                     <span className="text-muted-foreground">{priceLabel}</span>
                   </div>
                   
-                  {/* Base Allotment */}
+                  {/* Credits Allotment - Dynamic based on billing period */}
                   <p className="text-sm text-muted-foreground mt-2">
-                    {plan.baseCredits} Power up Credits included
+                    {billingPeriod === 'annual' && plan.hasAnnualDiscount
+                      ? `${plan.annualCredits} Credits included`
+                      : `${plan.monthlyCredits} Credits included`}
                   </p>
                 </div>
 

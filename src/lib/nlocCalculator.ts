@@ -36,19 +36,37 @@ export const PLAN_LIMITS = {
   starter: {
     nlocPerScan: 150,
     maxFilesPerScan: 1,
-    initialCredits: 150,
+    initialCredits: 50,
   },
   pro: {
     monthlyNloc: 150,
     unlimitedScans: true,
-    initialCredits: 150,
+    initialCredits: 50,
   },
   business: {
     monthlyNloc: 5000,
     unlimitedScans: true,
-    initialCredits: 150,
+    initialCredits: 50,
     teamMembers: 5,
     sharing: true,
+  },
+} as const;
+
+/**
+ * Credits granted when purchasing a subscription
+ */
+export const SUBSCRIPTION_CREDITS = {
+  monthly: {
+    starter: 50,
+    launch: 50,
+    pro: 50,
+    business: 50,
+  },
+  annual: {
+    starter: 50,
+    launch: 50,
+    pro: 500,
+    business: 500,
   },
 } as const;
 
