@@ -11,6 +11,7 @@ import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
+import { TeamInvitationBanner } from "@/components/TeamInvitationBanner";
 import MinimalFooter from "@/components/MinimalFooter";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight, FileCode, Loader2, Trash2, ChevronRight } from "lucide-react";
@@ -423,6 +424,9 @@ const Index = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Team Invitations Banner */}
+            <TeamInvitationBanner />
 
             {/* Stats Overview */}
             <DashboardStats />
