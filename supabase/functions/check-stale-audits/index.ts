@@ -1,18 +1,41 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// Restrict CORS - this is a cron/admin-only endpoint
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'application/json',
 };
 
 Deno.serve(async (req) => {
+  // Reject CORS preflight - this is server-to-server only
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 403 });
   }
 
-  console.log('Checking for stale audits...');
+  console.log('check-stale-audits: Request received');
 
   try {
+    // Validate cron secret to prevent unauthorized access
+    const cronSecret = req.headers.get('x-cron-secret');
+    const expectedSecret = Deno.env.get('N8N_CALLBACK_SECRET'); // Reuse existing secret
+    
+    if (!expectedSecret) {
+      console.error('check-stale-audits: N8N_CALLBACK_SECRET not configured');
+      return new Response(
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: corsHeaders }
+      );
+    }
+
+    if (cronSecret !== expectedSecret) {
+      console.error('check-stale-audits: Invalid or missing cron secret');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    console.log('check-stale-audits: Authentication successful');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -100,14 +123,14 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: corsHeaders }
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error in check-stale-audits:', errorMessage);
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: corsHeaders }
     );
   }
 });
