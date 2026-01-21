@@ -16,7 +16,7 @@ interface AuditWizardProps {
   isSubmitting?: boolean;
   subscription?: { plan: 'starter' | 'pro' | 'business' } | null;
   credits?: { credits_remaining: number; scans_remaining: number } | null;
-  onUpgradeNeeded?: (reason: 'scan_limit' | 'nloc_limit', nloc: number) => void;
+  onUpgradeNeeded?: (reason: 'nloc_limit' | 'file_limit', nloc: number) => void;
   onPowerUpNeeded?: (nloc: number) => void;
   onProjectNameChange?: (name: string) => void;
 }
@@ -87,7 +87,7 @@ const AuditWizard = ({
     });
   };
 
-  const handleUpgradeNeeded = (reason: 'scan_limit' | 'nloc_limit', nloc: number) => {
+  const handleUpgradeNeeded = (reason: 'nloc_limit' | 'file_limit', nloc: number) => {
     onUpgradeNeeded?.(reason, nloc);
   };
 

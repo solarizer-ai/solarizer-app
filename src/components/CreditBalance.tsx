@@ -1,5 +1,4 @@
 import { Zap, Info } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import {
@@ -15,6 +14,7 @@ export function CreditBalance() {
 
   const isLoading = subLoading || creditsLoading;
   const plan = subscription?.plan || 'starter';
+  const isPaid = plan === 'pro' || plan === 'business';
 
   if (isLoading) {
     return (
@@ -24,59 +24,28 @@ export function CreditBalance() {
     );
   }
 
-  if (plan === 'starter') {
-    const scansRemaining = credits?.scans_remaining ?? 0;
+  const creditsRemaining = credits?.credits_remaining ?? 0;
 
-    return (
-      <TooltipProvider delayDuration={200}>
-        <div className="flex items-center gap-3 px-4 py-2 bg-muted/50 rounded-lg border border-border/50">
-          <Zap className="h-4 w-4 text-primary" />
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-medium">
-                {scansRemaining} scan{scansRemaining !== 1 ? 's' : ''} remaining
-              </span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  <p>Starter plan includes {PLAN_LIMITS.starter.maxScans} free scans, each up to {PLAN_LIMITS.starter.nlocPerScan} nLOC and {PLAN_LIMITS.starter.maxFilesPerScan} file per scan.</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <span className="text-xs text-muted-foreground">
-              Max {PLAN_LIMITS.starter.nlocPerScan} nLOC per scan
-            </span>
-          </div>
-        </div>
-      </TooltipProvider>
-    );
-  }
-
-  // Pro plan
-  const creditsRemaining = credits?.credits_remaining || 0;
-  const creditsUsed = credits?.credits_used_this_period || 0;
-  const totalMonthly = PLAN_LIMITS.pro.monthlyNloc;
-  const usagePercent = Math.min(100, (creditsUsed / totalMonthly) * 100);
-
+  // All plans now show credits-based display
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border border-border/50">
         <Zap className="h-4 w-4 text-primary" />
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium">
-            {creditsRemaining.toLocaleString()}
-          </span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-xs">
-              <p>Credits remaining. Your plan includes {totalMonthly.toLocaleString()} credits per month. Purchase Power-Ups for additional capacity.</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+        <span className="text-sm font-medium">
+          {creditsRemaining.toLocaleString()}
+        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <p>
+              {isPaid 
+                ? "Credits remaining. Purchase Power-Ups for additional capacity." 
+                : `Launch plan: ${PLAN_LIMITS.starter.nlocPerScan} nLOC max per scan, 1 file per scan`}
+            </p>
+          </TooltipContent>
+        </Tooltip>
       </div>
     </TooltipProvider>
   );

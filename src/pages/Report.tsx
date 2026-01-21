@@ -403,7 +403,7 @@ const Report = () => {
       <UpgradeToProModal
         open={upgradeModalOpen}
         onOpenChange={setUpgradeModalOpen}
-        reason="scan_limit"
+        reason="nloc_limit"
       />
     </div>
   );

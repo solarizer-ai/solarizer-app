@@ -23,6 +23,7 @@ const BillingHistory = () => {
 
   const formatPlanName = (plan: string | null) => {
     if (!plan) return 'None';
+    if (plan === 'starter') return 'Launch';
     return plan.charAt(0).toUpperCase() + plan.slice(1);
   };
 

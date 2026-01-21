@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +17,7 @@ import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { format } from "date-fns";
+import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 
 interface Profile {
   display_name: string | null;
@@ -34,6 +34,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [showPowerUpModal, setShowPowerUpModal] = useState(false);
 
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
@@ -94,10 +95,22 @@ const Settings = () => {
 
   const plan = subscription?.plan || 'starter';
   const isPro = plan === 'pro';
+  const isBusiness = plan === 'business';
+  const isPaid = isPro || isBusiness;
   const creditsRemaining = credits?.credits_remaining || 0;
   const creditsUsed = credits?.credits_used_this_period || 0;
-  const totalCredits = isPro ? PLAN_LIMITS.pro.monthlyNloc : PLAN_LIMITS.starter.maxScans * PLAN_LIMITS.starter.nlocPerScan;
-  const usagePercent = totalCredits > 0 ? Math.min(100, (creditsUsed / totalCredits) * 100) : 0;
+
+  const getPlanDisplayName = () => {
+    if (plan === 'business') return 'Business';
+    if (plan === 'pro') return 'Pro';
+    return 'Launch';
+  };
+
+  const getPlanDescription = () => {
+    if (plan === 'business') return 'Unlimited scans, 150 base credits, team collaboration';
+    if (plan === 'pro') return 'Unlimited scans with 150 credits monthly allowance';
+    return `${PLAN_LIMITS.starter.nlocPerScan} nLOC per scan limit, 1 file per scan`;
+  };
 
   if (loading) {
     return (
@@ -202,17 +215,15 @@ const Settings = () => {
                         <div>
                           <CardTitle className="flex items-center gap-2">
                             Current Plan
-                            <Badge variant={isPro ? "default" : "secondary"}>
-                              {isPro ? "Pro" : "Starter"}
+                            <Badge variant={isPaid ? "default" : "secondary"}>
+                              {getPlanDisplayName()}
                             </Badge>
                           </CardTitle>
                           <CardDescription>
-                            {isPro 
-                              ? "Unlimited scans with 150 nLOC monthly allowance" 
-                              : "2 free scans with 500 nLOC per scan"}
+                            {getPlanDescription()}
                           </CardDescription>
                         </div>
-                        {isPro && subscription?.current_period_end && (
+                        {isPaid && subscription?.current_period_end && (
                           <div className="text-right">
                             <p className="text-xs text-muted-foreground">Renews on</p>
                             <p className="text-sm font-medium">
@@ -223,96 +234,94 @@ const Settings = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      {!isPro && (
+                      {!isPaid && (
                         <Button onClick={() => navigate("/pricing")} className="gap-2">
                           <Zap className="w-4 h-4" />
                           Upgrade to Pro
                           <ArrowUpRight className="w-4 h-4" />
                         </Button>
                       )}
-                      {isPro && (
+                      {isPaid && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="w-4 h-4" />
-                          <span>$19/month • Next billing: {subscription?.current_period_end ? format(new Date(subscription.current_period_end), "MMM d, yyyy") : "—"}</span>
+                          <span>
+                            {isPro ? "$19" : "$499"}/month • Next billing: {subscription?.current_period_end ? format(new Date(subscription.current_period_end), "MMM d, yyyy") : "—"}
+                          </span>
                         </div>
                       )}
                     </CardContent>
                   </Card>
 
-                  {/* Usage Card */}
+                  {/* Credits Card */}
                   <Card>
                     <CardHeader>
-                      <CardTitle>Credits Consumed This Billing Cycle</CardTitle>
+                      <CardTitle>
+                        {isPaid ? "Power-Up Credits" : "Credit Balance"}
+                      </CardTitle>
                       <CardDescription>
-                        {isPro 
-                          ? "Your nLOC credit usage for this billing cycle" 
-                          : "Your scan usage"}
+                        {isPaid 
+                          ? "Your credit balance and usage this billing cycle" 
+                          : "Your Launch plan credit balance"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {isPro ? (
+                      {isPaid ? (
                         <>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">nLOC Used</span>
-                            <span className="font-medium">
-                              {creditsUsed.toLocaleString()} / {totalCredits.toLocaleString()}
-                            </span>
+                          {/* Two Stat Boxes Side by Side */}
+                          <div className="grid grid-cols-2 gap-4">
+                            {/* Credits Left */}
+                            <div className="p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors cursor-default">
+                              <p className="text-3xl font-bold text-foreground">
+                                {creditsRemaining.toLocaleString()}
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-1">Credits Left</p>
+                            </div>
+                            
+                            {/* Used This Cycle */}
+                            <div className="p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors cursor-default">
+                              <p className="text-3xl font-bold text-foreground">
+                                {creditsUsed.toLocaleString()}
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-1">Used This Cycle</p>
+                            </div>
                           </div>
-                          <Progress value={usagePercent} className="h-2" />
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Credits Remaining</span>
-                            <span className="font-medium text-primary">
-                              {creditsRemaining.toLocaleString()} nLOC
-                            </span>
-                          </div>
+                          
+                          {/* Cycle Reset Date */}
                           {credits?.period_reset_at && (
                             <p className="text-xs text-muted-foreground">
-                              Credits reset on {format(new Date(credits.period_reset_at), "MMM d, yyyy")}
+                              Cycle resets on {format(new Date(credits.period_reset_at), "MMM d, yyyy")}
                             </p>
                           )}
+                          
+                          {/* Purchase Button */}
+                          <Button 
+                            onClick={() => setShowPowerUpModal(true)} 
+                            className="w-full gap-2"
+                          >
+                            <Zap className="w-4 h-4" />
+                            Purchase More Credits
+                          </Button>
                         </>
                       ) : (
                         <>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Scans Remaining</span>
-                            <span className="font-medium">
-                              {credits?.scans_remaining ?? 0} / {PLAN_LIMITS.starter.maxScans}
-                            </span>
+                          {/* Single stat box for Launch users */}
+                          <div className="p-4 rounded-lg bg-muted/30 border border-border/50">
+                            <p className="text-3xl font-bold text-foreground">
+                              {creditsRemaining.toLocaleString()}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">Credits Remaining</p>
                           </div>
-                          <Progress 
-                            value={((credits?.scans_remaining ?? 0) / PLAN_LIMITS.starter.maxScans) * 100} 
-                            className="h-2" 
-                          />
                           <p className="text-xs text-muted-foreground">
-                            Each scan limited to {PLAN_LIMITS.starter.nlocPerScan} nLOC
+                            Each scan uses up to {PLAN_LIMITS.starter.nlocPerScan} credits (1 file max)
                           </p>
+                          <Button onClick={() => navigate("/pricing")} className="w-full gap-2">
+                            <Zap className="w-4 h-4" />
+                            Upgrade to Pro for larger projects
+                          </Button>
                         </>
                       )}
                     </CardContent>
                   </Card>
-
-                  {/* Power-Up Card (Pro only) */}
-                  {isPro && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Zap className="w-5 h-5 text-primary" />
-                          Need More Credits?
-                        </CardTitle>
-                        <CardDescription>
-                          Purchase additional nLOC for large analyses
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button variant="outline" onClick={() => navigate("/pricing")}>
-                          View Power-Up Options
-                        </Button>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Power up Credits remain in your account forever until used.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
 
                   {/* Billing History Link */}
                   <Card>
@@ -418,7 +427,7 @@ const Settings = () => {
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
-                            Collaborators access Business features on shared reports
+                            Collaborators get Business features on shared reports
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
@@ -444,6 +453,12 @@ const Settings = () => {
       </main>
 
       <MinimalFooter />
+
+      {/* Power-Up Modal */}
+      <PurchasePowerUpModal
+        open={showPowerUpModal}
+        onOpenChange={setShowPowerUpModal}
+      />
     </div>
   );
 };

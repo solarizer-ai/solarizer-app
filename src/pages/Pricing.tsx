@@ -37,7 +37,7 @@ const pricingPlans: PricingPlan[] = [
   {
     id: 'launch',
     name: 'Launch',
-    label: 'Trial / Starter',
+    label: 'Free Trial',
     monthlyPrice: 149,
     annualPrice: null,
     baseCredits: 150,
