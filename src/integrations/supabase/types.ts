@@ -16,28 +16,40 @@ export type Database = {
     Tables: {
       audit_shares: {
         Row: {
+          accepted_at: string | null
           audit_id: string
           created_at: string
+          expires_at: string
           id: string
+          invited_at: string
           owner_id: string
           shared_with_email: string
           shared_with_user_id: string
+          status: string
         }
         Insert: {
+          accepted_at?: string | null
           audit_id: string
           created_at?: string
+          expires_at?: string
           id?: string
+          invited_at?: string
           owner_id: string
           shared_with_email: string
           shared_with_user_id: string
+          status?: string
         }
         Update: {
+          accepted_at?: string | null
           audit_id?: string
           created_at?: string
+          expires_at?: string
           id?: string
+          invited_at?: string
           owner_id?: string
           shared_with_email?: string
           shared_with_user_id?: string
+          status?: string
         }
         Relationships: [
           {
@@ -377,106 +389,6 @@ export type Database = {
         }
         Relationships: []
       }
-      team_invitations: {
-        Row: {
-          accepted_at: string | null
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          invited_by: string
-          role: string
-          team_id: string
-        }
-        Insert: {
-          accepted_at?: string | null
-          created_at?: string
-          email: string
-          expires_at?: string
-          id?: string
-          invited_by: string
-          role?: string
-          team_id: string
-        }
-        Update: {
-          accepted_at?: string | null
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          invited_by?: string
-          role?: string
-          team_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_invitations_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      team_members: {
-        Row: {
-          id: string
-          invited_by: string | null
-          joined_at: string
-          role: string
-          team_id: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          role?: string
-          team_id: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          role?: string
-          team_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_members_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      teams: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          owner_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          owner_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          owner_id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -503,7 +415,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_team_invitation: { Args: { invitation_id: string }; Returns: Json }
+      accept_share_invitation: { Args: { p_share_id: string }; Returns: Json }
       deduct_credits: {
         Args: { p_is_starter?: boolean; p_nloc_amount: number }
         Returns: Json
@@ -514,6 +426,19 @@ export type Database = {
         Returns: {
           display_name: string
           email: string
+        }[]
+      }
+      get_my_pending_share_invitations: {
+        Args: never
+        Returns: {
+          audit_id: string
+          expires_at: string
+          id: string
+          invited_at: string
+          owner_display_name: string
+          owner_email: string
+          owner_id: string
+          project_name: string
         }[]
       }
       has_role: {

@@ -12,7 +12,6 @@ export interface FeatureAccess {
   
   // Business only features
   canShareReports: boolean;
-  canAddTeamMembers: boolean;
   canCommentOnFindings: boolean;
   
   // Plan info
@@ -26,7 +25,7 @@ export interface FeatureAccess {
  * Plan hierarchy:
  * - starter: Basic features only
  * - pro: Remediation, Export, QA Findings, Security Coverage
- * - business: All Pro features + Sharing, Team Members, Comments
+ * - business: All Pro features + Sharing, Comments
  */
 export function useFeatureAccess(): FeatureAccess {
   const { data: subscription, isLoading } = useSubscription();
@@ -47,7 +46,6 @@ export function useFeatureAccess(): FeatureAccess {
       
       // Business only features
       canShareReports: isBusiness,
-      canAddTeamMembers: isBusiness,
       canCommentOnFindings: isBusiness,
       
       // Plan info
@@ -63,6 +61,6 @@ export function useFeatureAccess(): FeatureAccess {
  * Get the required plan for a specific feature
  */
 export function getRequiredPlanForFeature(feature: keyof Omit<FeatureAccess, 'currentPlan' | 'isLoading'>): 'pro' | 'business' {
-  const businessFeatures = ['canShareReports', 'canAddTeamMembers', 'canCommentOnFindings'];
+  const businessFeatures = ['canShareReports', 'canCommentOnFindings'];
   return businessFeatures.includes(feature) ? 'business' : 'pro';
 }

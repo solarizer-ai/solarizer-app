@@ -8,10 +8,14 @@ export interface AuditShare {
   owner_id: string;
   shared_with_user_id: string;
   shared_with_email: string;
+  status: string;
+  invited_at: string;
+  accepted_at: string | null;
+  expires_at: string;
   created_at: string;
 }
 
-// Fetch all shares for an audit
+// Fetch all shares for an audit (for owners to see who has access)
 export const useAuditShares = (auditId: string | null) => {
   const { user } = useAuth();
 
@@ -48,7 +52,7 @@ export const useSearchUserByEmail = () => {
   });
 };
 
-// Add a share
+// Add a share (creates pending invitation)
 export const useAddShare = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -72,13 +76,14 @@ export const useAddShare = () => {
           owner_id: user.id,
           shared_with_user_id: sharedWithUserId,
           shared_with_email: sharedWithEmail,
+          status: 'pending',
         })
         .select()
         .single();
 
       if (error) {
         if (error.code === '23505') {
-          throw new Error('This user already has access to this audit');
+          throw new Error('This user already has a pending invitation or access to this report');
         }
         throw error;
       }
@@ -90,7 +95,7 @@ export const useAddShare = () => {
   });
 };
 
-// Remove a share
+// Remove a share (owner cancels invitation or revokes access)
 export const useRemoveShare = () => {
   const queryClient = useQueryClient();
 
@@ -110,7 +115,7 @@ export const useRemoveShare = () => {
   });
 };
 
-// Get share count for an audit
+// Get share count for an audit (only accepted shares)
 export const useAuditShareCount = (auditId: string | null) => {
   const { user } = useAuth();
 
@@ -122,7 +127,8 @@ export const useAuditShareCount = (auditId: string | null) => {
       const { count, error } = await supabase
         .from('audit_shares')
         .select('*', { count: 'exact', head: true })
-        .eq('audit_id', auditId);
+        .eq('audit_id', auditId)
+        .eq('status', 'accepted');
 
       if (error) throw error;
       return count || 0;

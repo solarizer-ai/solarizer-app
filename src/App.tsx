@@ -13,7 +13,6 @@ import Auth from "./pages/Auth";
 import Audits from "./pages/Audits";
 import Docs from "./pages/Docs";
 import Settings from "./pages/Settings";
-import TeamSettings from "./pages/TeamSettings";
 import BillingHistory from "./pages/BillingHistory";
 import Report from "./pages/Report";
 import NotFound from "./pages/NotFound";
@@ -72,14 +71,6 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <BillingHistory />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/team"
-                element={
-                  <ProtectedRoute>
-                    <TeamSettings />
                   </ProtectedRoute>
                 }
               />
