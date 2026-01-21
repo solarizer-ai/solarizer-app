@@ -209,6 +209,12 @@ const Report = () => {
                   }
                 </Badge>
               )}
+              {isOwner && shareCount > 0 && (
+                <Badge variant="outline" className="gap-1.5 border-primary/30 text-primary">
+                  <Share2 className="w-3 h-3" />
+                  Sharing with {shareCount}
+                </Badge>
+              )}
               {isOwner && canShareReports && (
                 <Button
                   variant="outline"

@@ -459,27 +459,34 @@ const Index = () => {
                   </div>
                 ) : audits && audits.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {audits.slice(0, 4).map((audit) => (
-                      <div key={audit.id} className="relative group">
-                        <AuditCard
-                          projectName={audit.project_name}
-                          contractCount={audit.contract_count}
-                          grade={audit.grade || undefined}
-                          status={audit.status}
-                          timestamp={formatTimestamp(audit.created_at)}
-                          onClick={() => handleViewResults(audit.id)}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteAuditId(audit.id);
-                          }}
-                          className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                    {audits.slice(0, 4).map((audit) => {
+                      const isOwned = audit.user_id === user?.id;
+                      return (
+                        <div key={audit.id} className="relative group">
+                          <AuditCard
+                            projectName={audit.project_name}
+                            contractCount={audit.contract_count}
+                            grade={audit.grade || undefined}
+                            status={audit.status}
+                            timestamp={formatTimestamp(audit.created_at)}
+                            onClick={() => handleViewResults(audit.id)}
+                            isShared={!isOwned}
+                            hasShares={isOwned && (audit.share_count || 0) > 0}
+                          />
+                          {isOwned && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteAuditId(audit.id);
+                              }}
+                              className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-16 border border-dashed border-border rounded-lg">

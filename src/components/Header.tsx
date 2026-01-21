@@ -1,15 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Settings, LogOut, Menu } from "lucide-react";
+import { Menu, ChevronRight } from "lucide-react";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -68,10 +61,6 @@ const Header = () => {
     return 'EP';
   };
 
-  const handleLogout = async () => {
-    await signOut();
-  };
-
   const isActive = (href: string) => {
     if (href === "/") {
       return location.pathname === "/";
@@ -112,37 +101,13 @@ const Header = () => {
         <div className="flex items-center gap-1">
           <ThemeToggle />
           
-          {/* Desktop User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="hidden sm:flex w-8 h-8 rounded-full bg-primary/20 border border-primary/30 items-center justify-center ml-2 hover:bg-primary/30 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <span className="text-xs font-medium text-primary">{getInitials()}</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-popover border border-border z-[70]">
-              <div className="px-2 py-1.5">
-                <p className="text-sm font-medium truncate">
-                  {profile?.display_name || 'User'}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {profile?.email || user?.email}
-                </p>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/settings")}>
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="cursor-pointer text-destructive focus:text-destructive"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Desktop Profile Button - Direct to Settings */}
+          <button 
+            onClick={() => navigate("/settings")}
+            className="hidden sm:flex w-8 h-8 rounded-full bg-primary/20 border border-primary/30 items-center justify-center ml-2 hover:bg-primary/30 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <span className="text-xs font-medium text-primary">{getInitials()}</span>
+          </button>
 
           {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -153,8 +118,14 @@ const Header = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-72 bg-background border-border">
               <div className="flex flex-col h-full py-6">
-                {/* User Info */}
-                <div className="flex items-center gap-3 px-2 mb-6">
+                {/* User Info - Clickable to Settings */}
+                <button
+                  onClick={() => {
+                    navigate("/settings");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 px-2 mb-6 w-full hover:bg-muted rounded-lg py-2 transition-colors text-left"
+                >
                   <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
                     <span className="text-sm font-medium text-primary">{getInitials()}</span>
                   </div>
@@ -166,7 +137,8 @@ const Header = () => {
                       {profile?.email || user?.email}
                     </p>
                   </div>
-                </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
 
                 {/* Navigation Links */}
                 <nav className="flex flex-col gap-1">
@@ -186,31 +158,6 @@ const Header = () => {
                     </Link>
                   ))}
                 </nav>
-
-                {/* Divider */}
-                <div className="my-4 border-t border-border" />
-
-                {/* Settings & Logout */}
-                <button
-                  onClick={() => {
-                    navigate("/settings");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </button>
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors mt-auto"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign out
-                </button>
               </div>
             </SheetContent>
           </Sheet>
