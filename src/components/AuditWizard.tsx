@@ -6,6 +6,7 @@ import { FileNode, createFileNode, getAllFiles, mergeFileTrees } from "@/types/f
 import ProjectNameStep from "./wizard/ProjectNameStep";
 import UploadMethodStep, { UploadMethod } from "./wizard/UploadMethodStep";
 import EstimatorStep from "./wizard/EstimatorStep";
+import ContextStep from "./wizard/ContextStep";
 import GitHubImportStep from "./wizard/GitHubImportStep";
 import FolderUploader from "./FolderUploader";
 import SandpackEditor from "./SandpackEditor";
@@ -28,7 +29,7 @@ interface AuditWizardProps {
   onProjectNameChange?: (name: string) => void;
 }
 
-type WizardStep = 'name' | 'method' | 'input' | 'estimate';
+type WizardStep = 'name' | 'method' | 'input' | 'estimate' | 'context';
 
 const SAMPLE_CODE = `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
@@ -52,6 +53,8 @@ const AuditWizard = ({
   const [uploadMethod, setUploadMethod] = useState<UploadMethod | null>(null);
   const [files, setFiles] = useState<FileNode[]>([]);
   const [editorCode, setEditorCode] = useState(SAMPLE_CODE);
+  const [additionalContext, setAdditionalContext] = useState("");
+  const [clocResult, setClocResult] = useState<ClocResult | null>(null);
 
   const handleProjectNameChange = (name: string) => {
     setProjectName(name);
@@ -74,6 +77,8 @@ const AuditWizard = ({
       setFiles([]);
     } else if (step === 'estimate') {
       setStep('input');
+    } else if (step === 'context') {
+      setStep('estimate');
     }
   };
 
@@ -81,8 +86,12 @@ const AuditWizard = ({
     setStep('estimate');
   };
 
-  const handleEstimateComplete = (clocResult: ClocResult, additionalContext?: string) => {
-    // Collect all code from files
+  const handleEstimateComplete = (result: ClocResult) => {
+    setClocResult(result);
+    setStep('context');
+  };
+
+  const handleContextComplete = () => {
     const allFiles = getAllFiles(files);
     const combinedCode = allFiles.map(f => f.content || '').join('\n\n');
     
@@ -90,8 +99,8 @@ const AuditWizard = ({
       projectName,
       files,
       code: combinedCode || editorCode,
-      clocResult,
-      additionalContext,
+      clocResult: clocResult!,
+      additionalContext: additionalContext || undefined,
     });
   };
 
@@ -134,6 +143,7 @@ const AuditWizard = ({
       case 'method': return 2;
       case 'input': return 3;
       case 'estimate': return 4;
+      case 'context': return 5;
     }
   };
 
@@ -141,7 +151,7 @@ const AuditWizard = ({
     <div className="space-y-6">
       {/* Progress Indicator */}
       <div className="flex items-center justify-center gap-2">
-        {[1, 2, 3, 4].map((num) => (
+        {[1, 2, 3, 4, 5].map((num) => (
           <div key={num} className="flex items-center gap-2">
             <div
               className={cn(
@@ -153,7 +163,7 @@ const AuditWizard = ({
             >
               {num}
             </div>
-            {num < 4 && (
+            {num < 5 && (
               <div
                 className={cn(
                   "w-12 h-0.5 transition-colors",
@@ -259,7 +269,18 @@ const AuditWizard = ({
             onPowerUpNeeded={handlePowerUpNeeded}
             subscription={subscription}
             credits={credits}
+            isSubmitting={false}
+          />
+        )}
+
+        {step === 'context' && (
+          <ContextStep
+            additionalContext={additionalContext}
+            onContextChange={setAdditionalContext}
+            onBack={handleBack}
+            onProceed={handleContextComplete}
             isSubmitting={isSubmitting}
+            nloc={clocResult?.totalNloc || 0}
           />
         )}
       </div>
