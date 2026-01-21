@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import MinimalFooter from "@/components/MinimalFooter";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock } from "lucide-react";
+import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock, Link2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { format } from "date-fns";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { GitHubIntegration } from "@/components/settings/GitHubIntegration";
 
 interface Profile {
   display_name: string | null;
@@ -29,6 +30,8 @@ const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'profile';
   
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,8 +140,8 @@ const Settings = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList>
+          <Tabs defaultValue={initialTab} className="space-y-6">
+            <TabsList className="flex-wrap">
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
                 Profile
@@ -155,6 +158,10 @@ const Settings = () => {
                 <Users className="w-4 h-4" />
                 Sharing
                 {!canShareReports && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
+              </TabsTrigger>
+              <TabsTrigger value="integrations" className="gap-2">
+                <Link2 className="w-4 h-4" />
+                Integrations
               </TabsTrigger>
             </TabsList>
 
@@ -450,6 +457,12 @@ const Settings = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="integrations">
+              <div className="space-y-4">
+                <GitHubIntegration />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
