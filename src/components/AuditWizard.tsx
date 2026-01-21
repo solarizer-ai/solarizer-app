@@ -2,16 +2,23 @@ import { useState } from "react";
 import { ArrowLeft, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FileNode, createFileNode, getAllFiles } from "@/types/files";
+import { FileNode, createFileNode, getAllFiles, mergeFileTrees } from "@/types/files";
 import ProjectNameStep from "./wizard/ProjectNameStep";
 import UploadMethodStep, { UploadMethod } from "./wizard/UploadMethodStep";
 import EstimatorStep from "./wizard/EstimatorStep";
+import GitHubImportStep from "./wizard/GitHubImportStep";
 import FolderUploader from "./FolderUploader";
 import SandpackEditor from "./SandpackEditor";
 import { ClocResult } from "@/hooks/useClocEstimate";
 
 interface AuditWizardProps {
-  onComplete: (data: { projectName: string; files: FileNode[]; code: string; clocResult?: ClocResult }) => void;
+  onComplete: (data: { 
+    projectName: string; 
+    files: FileNode[]; 
+    code: string; 
+    clocResult?: ClocResult;
+    additionalContext?: string;
+  }) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
   subscription?: { plan: 'starter' | 'pro' | 'business' } | null;
@@ -74,7 +81,7 @@ const AuditWizard = ({
     setStep('estimate');
   };
 
-  const handleEstimateComplete = (clocResult: ClocResult) => {
+  const handleEstimateComplete = (clocResult: ClocResult, additionalContext?: string) => {
     // Collect all code from files
     const allFiles = getAllFiles(files);
     const combinedCode = allFiles.map(f => f.content || '').join('\n\n');
@@ -84,7 +91,18 @@ const AuditWizard = ({
       files,
       code: combinedCode || editorCode,
       clocResult,
+      additionalContext,
     });
+  };
+
+  const handleGitHubFilesImported = (importedFiles: FileNode[]) => {
+    // Merge with existing files if any
+    if (files.length > 0) {
+      setFiles(mergeFileTrees(files, importedFiles));
+    } else {
+      setFiles(importedFiles);
+    }
+    setStep('estimate');
   };
 
   const handleUpgradeNeeded = (reason: 'nloc_limit' | 'file_limit', nloc: number) => {
@@ -223,6 +241,13 @@ const AuditWizard = ({
               readOnly={false}
             />
           </div>
+        )}
+
+        {step === 'input' && uploadMethod === 'github' && (
+          <GitHubImportStep
+            onFilesImported={handleGitHubFilesImported}
+            onBack={handleBack}
+          />
         )}
 
         {step === 'estimate' && (

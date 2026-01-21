@@ -187,3 +187,34 @@ export const moveNodeInTree = (
   // Add to new location
   return addNodeToTree(newTree, targetFolderPath, updatedNode);
 };
+
+/**
+ * Merge two file trees, combining folders and replacing files with same path
+ * Used for "Add More Files" functionality
+ */
+export const mergeFileTrees = (
+  existing: FileNode[],
+  incoming: FileNode[]
+): FileNode[] => {
+  const merged = [...existing];
+
+  for (const incomingNode of incoming) {
+    const existingIndex = merged.findIndex(n => n.path === incomingNode.path);
+
+    if (existingIndex === -1) {
+      // New path - add to tree
+      merged.push(incomingNode);
+    } else if (incomingNode.type === 'file') {
+      // Existing file - replace content
+      merged[existingIndex] = incomingNode;
+    } else if (incomingNode.type === 'folder' && incomingNode.children) {
+      // Existing folder - recursively merge children
+      merged[existingIndex] = {
+        ...merged[existingIndex],
+        children: mergeFileTrees(merged[existingIndex].children || [], incomingNode.children),
+      };
+    }
+  }
+
+  return merged;
+};

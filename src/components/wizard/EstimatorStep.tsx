@@ -1,14 +1,17 @@
-import { useEffect } from "react";
-import { ArrowLeft, Play, Loader2, Check, AlertTriangle, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Play, Loader2, Check, AlertTriangle, Zap, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useClocEstimate, FileInput, ClocResult } from "@/hooks/useClocEstimate";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
+import { cn } from "@/lib/utils";
 
 interface EstimatorStepProps {
   files: FileInput[];
   onBack: () => void;
-  onProceed: (clocResult: ClocResult) => void;
+  onProceed: (clocResult: ClocResult, additionalContext?: string) => void;
   onUpgradeNeeded: (reason: 'nloc_limit' | 'file_limit', nloc: number) => void;
   onPowerUpNeeded: (nloc: number) => void;
   subscription: { plan: 'starter' | 'pro' | 'business' } | null | undefined;
@@ -28,6 +31,10 @@ const EstimatorStep = ({
 }: EstimatorStepProps) => {
   const clocEstimate = useClocEstimate();
   const { data: clocResult, isPending, isError, error } = clocEstimate;
+  
+  // Additional context state
+  const [additionalContext, setAdditionalContext] = useState("");
+  const [isContextOpen, setIsContextOpen] = useState(false);
 
   // Auto-trigger estimation when component mounts
   useEffect(() => {
@@ -83,7 +90,8 @@ const EstimatorStep = ({
       return;
     }
 
-    onProceed(clocResult);
+    // Pass additional context as-is (no trimming per requirements)
+    onProceed(clocResult, additionalContext || undefined);
   };
 
   return (
@@ -173,7 +181,28 @@ const EstimatorStep = ({
         )}
       </div>
 
-      {/* Actions */}
+      {/* Additional Context Section */}
+      {clocResult && (
+        <Collapsible open={isContextOpen} onOpenChange={setIsContextOpen}>
+          <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">
+            <ChevronRight className={cn("w-4 h-4 transition-transform", isContextOpen && "rotate-90")} />
+            Add Context for Analysis (optional)
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3 space-y-2">
+            <Textarea
+              placeholder="Provide additional context for the auditor... e.g., specific areas of concern, known issues, intended functionality, protocol integrations, etc."
+              value={additionalContext}
+              onChange={(e) => setAdditionalContext(e.target.value)}
+              rows={4}
+              maxLength={5000}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {additionalContext.length.toLocaleString()}/5,000 characters
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} className="gap-2">
           <ArrowLeft className="w-4 h-4" />
