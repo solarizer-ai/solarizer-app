@@ -46,7 +46,7 @@ export const PLAN_LIMITS = {
   business: {
     monthlyNloc: 5000,
     unlimitedScans: true,
-    initialCredits: 5000,
+    initialCredits: 150,
     teamMembers: 5,
     sharing: true,
   },
