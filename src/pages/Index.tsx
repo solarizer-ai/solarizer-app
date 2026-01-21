@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
 import AuditWizard from "@/components/AuditWizard";
-import ScanProgressWidget from "@/components/ScanProgressWidget";
 import { CreditBalance } from "@/components/CreditBalance";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
@@ -24,6 +23,7 @@ import { calculateNLOC } from "@/lib/nlocCalculator";
 import { formatDistanceToNow } from "date-fns";
 import { FileNode, getAllFiles } from "@/types/files";
 import { useAuth } from "@/hooks/useAuth";
+import { useScan } from "@/contexts/ScanContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -78,7 +78,6 @@ const Index = () => {
   const [code, setCode] = useState(sampleCode);
   const [projectName, setProjectName] = useState("");
   const [wizardProjectName, setWizardProjectName] = useState("");
-  const [isScanning, setIsScanning] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
@@ -87,14 +86,8 @@ const Index = () => {
   // Store files for the n8n API call
   const [pendingFiles, setPendingFiles] = useState<{ name: string; content: string }[]>([]);
   
-  // Realtime findings during scan
-  const [realtimeFindings, setRealtimeFindings] = useState<{ id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' }[]>([]);
-  const [realtimeAuditStatus, setRealtimeAuditStatus] = useState<'pending' | 'analyzing' | 'secured' | 'issues' | null>(null);
-  
-  // Widget visibility state
-  const [showWidget, setShowWidget] = useState(false);
-  // AbortController ref for cancellation
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // Global scan context
+  const { startScan, isScanning } = useScan();
   
   // Subscription & credits state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -157,21 +150,7 @@ const Index = () => {
     
     setProjectName(name);
     setCode(codeContent);
-    setIsScanning(true);
     setShowResults(false);
-    setRealtimeFindings([]);
-    setRealtimeAuditStatus('analyzing');
-    setShowWidget(true);
-    
-    // Show toast notification
-    toast.info("Security analysis started", {
-      description: `Analyzing ${name}...`,
-      duration: 4000,
-    });
-
-    // Create abort controller for cancellation
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
 
     try {
       const contractCount = getAllFiles(files).length || 1;
@@ -192,6 +171,9 @@ const Index = () => {
 
       setCurrentAuditId(audit.id);
 
+      // Start global scan (sets up realtime subscriptions in context)
+      startScan(audit.id, name);
+
       // Navigate to dashboard IMMEDIATELY so user sees progress widget
       setView("dashboard");
 
@@ -201,72 +183,6 @@ const Index = () => {
       await updateAudit.mutateAsync({
         id: audit.id,
         status: "analyzing" as AuditStatus,
-      });
-
-      // Set up realtime subscriptions for findings and audit status
-      const findingsChannel = supabase
-        .channel(`findings-${audit.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'findings',
-            filter: `audit_id=eq.${audit.id}`,
-          },
-          (payload) => {
-            console.log('Realtime finding received:', payload.new);
-            const newFinding = payload.new as { id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'info' };
-            // Skip info severity findings
-            if (newFinding.severity === 'info') return;
-            
-            setRealtimeFindings(prev => [...prev, {
-              id: newFinding.id,
-              title: newFinding.title,
-              severity: newFinding.severity as 'critical' | 'high' | 'medium' | 'low',
-            }]);
-            
-            // Invalidate findings query to update the report view in real-time
-            queryClient.invalidateQueries({ queryKey: ['findings', audit.id] });
-          }
-        )
-        .subscribe();
-
-      const auditChannel = supabase
-        .channel(`audit-${audit.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'audits',
-            filter: `id=eq.${audit.id}`,
-          },
-          async (payload) => {
-            console.log('Realtime audit update received:', payload.new);
-            const updatedAudit = payload.new as { status: 'pending' | 'analyzing' | 'secured' | 'issues' };
-            setRealtimeAuditStatus(updatedAudit.status);
-            
-            // Invalidate audit query to update score/grade in report view
-            queryClient.invalidateQueries({ queryKey: ['audit', audit.id] });
-            
-            // If audit is complete, clean up
-            if (updatedAudit.status === 'secured' || updatedAudit.status === 'issues') {
-              supabase.removeChannel(findingsChannel);
-              supabase.removeChannel(auditChannel);
-              
-              setIsScanning(false);
-              setShowResults(true);
-              abortControllerRef.current = null;
-            }
-          }
-        )
-        .subscribe();
-
-      // Store channels for cleanup on cancel
-      abortController.signal.addEventListener('abort', () => {
-        supabase.removeChannel(findingsChannel);
-        supabase.removeChannel(auditChannel);
       });
 
       // Call the run-audit edge function (fire-and-forget now)
@@ -284,22 +200,7 @@ const Index = () => {
 
       console.log('run-audit started:', result);
 
-      // Check if cancelled
-      if (abortControllerRef.current?.signal.aborted) {
-        return;
-      }
-
-      // The function now returns immediately - we wait for realtime updates
-
     } catch (error) {
-      // Check if this was a cancellation
-      if (abortControllerRef.current?.signal.aborted) {
-        return;
-      }
-      
-      setIsScanning(false);
-      setRealtimeAuditStatus(null);
-      abortControllerRef.current = null;
       toast.error("Failed to start analysis", {
         description: error instanceof Error ? error.message : "Please try again.",
       });
@@ -317,55 +218,15 @@ const Index = () => {
     setShowPowerUpModal(true);
   };
 
-  const handleCancelScan = async () => {
-    // Abort the ongoing request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-
-    // Update audit status to cancelled (user-initiated)
-    if (currentAuditId) {
-      try {
-        await updateAudit.mutateAsync({
-          id: currentAuditId,
-          status: "cancelled" as AuditStatus,
-        });
-      } catch (e) {
-        // Ignore errors when updating cancelled audit
-      }
-    }
-
-    setIsScanning(false);
-    setCurrentAuditId(null);
-    
-    setPendingFiles([]);
-    setRealtimeFindings([]);
-    setRealtimeAuditStatus(null);
-    setShowWidget(false);
-
-    toast.info("Analysis cancelled", {
-      description: "Note: Credits used for this analysis have already been consumed.",
-    });
-  };
-
   const handleNewAudit = () => {
     setSearchParams({});
     setView("editor");
     setShowResults(false);
-    setIsScanning(false);
     setCurrentAuditId(null);
     setProjectName("");
     setWizardProjectName("");
     setCode(sampleCode);
     setPendingFiles([]);
-    setRealtimeFindings([]);
-    setRealtimeAuditStatus(null);
-    setShowWidget(false);
-  };
-
-  const handleCloseWidget = () => {
-    setShowWidget(false);
   };
 
   const handleBackToDashboard = () => {
@@ -629,22 +490,6 @@ const Index = () => {
         onOpenChange={setShowPowerUpModal}
         requiredCredits={pendingNloc}
         currentCredits={credits?.credits_remaining || 0}
-      />
-
-      {/* Scan Progress Widget */}
-      <ScanProgressWidget
-        isVisible={showWidget}
-        projectName={projectName}
-        findings={realtimeFindings}
-        auditStatus={realtimeAuditStatus}
-        onCancel={handleCancelScan}
-        onViewResults={() => {
-          if (currentAuditId) {
-            handleViewResults(currentAuditId);
-            setShowWidget(false);
-          }
-        }}
-        onClose={handleCloseWidget}
       />
 
       <MinimalFooter />

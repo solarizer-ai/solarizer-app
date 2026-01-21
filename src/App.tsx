@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { ScanProvider } from "@/contexts/ScanContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import GlobalScanWidget from "@/components/GlobalScanWidget";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Index from "./pages/Index";
@@ -27,10 +29,11 @@ const App = () => (
     <ThemeProvider>
       <TooltipProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
+          <ScanProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/pricing" element={<Pricing />} />
@@ -85,11 +88,13 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <GlobalScanWidget />
           </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+        </ScanProvider>
+      </AuthProvider>
+    </TooltipProvider>
+  </ThemeProvider>
+</QueryClientProvider>
 );
 
 export default App;
