@@ -48,6 +48,7 @@ const pricingPlans: PricingPlan[] = [
       { text: 'Critical, High, and Medium Findings', included: true },
       { text: 'Web Dashboard View Only', included: true },
       { text: 'Power up Credits available', included: true },
+      { text: 'No GitHub Import', included: false, grayed: true },
       { text: 'No Remediation', included: false, grayed: true },
       { text: 'No Export', included: false, grayed: true },
     ],
@@ -64,6 +65,7 @@ const pricingPlans: PricingPlan[] = [
     popular: true,
     features: [
       { text: 'Everything in Launch, plus:', included: true, isHeader: true },
+      { text: 'GitHub Import', included: true },
       { text: 'Interactive Code Editor', included: true },
       { text: 'Finding Recommendations (Remediation)', included: true },
       { text: 'Export Report', included: true },
