@@ -22,7 +22,7 @@ interface GitHubFile {
 
 const ALLOWED_EXTENSIONS = ['.sol', '.json', '.md', '.txt', '.js', '.ts', '.yaml', '.yml', '.toml'];
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
-const MAX_FILES = 100;
+const MAX_FILES = 500;
 
 function shouldIncludeFile(name: string): boolean {
   const ext = name.substring(name.lastIndexOf('.')).toLowerCase();

@@ -24,7 +24,7 @@ interface ClocResponse {
 }
 
 // Security constants for input validation
-const MAX_FILES = 100; // Maximum number of files allowed per request
+const MAX_FILES = 500; // Maximum number of files allowed per request
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB per file
 const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB total
 const MAX_FILENAME_LENGTH = 255;
