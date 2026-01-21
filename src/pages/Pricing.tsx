@@ -345,28 +345,42 @@ const Pricing = () => {
           })}
         </div>
 
-        {/* Power Up Credits Purchase Section - Only for logged-in subscribers */}
-        {user && subscription && (
-          <div
-            className="max-w-lg mx-auto mb-16 p-6 rounded-2xl border border-primary/30 bg-card/50 animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: "600ms" }}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <Zap className="h-6 w-6 text-primary" />
-              <h3 className="text-xl font-bold">Need More Credits?</h3>
-            </div>
-            <p className="text-muted-foreground mb-4">
-              Purchase additional Power up Credits at ${getDiscountedPrice()}/credit based on your current plan.
-            </p>
-            <Button
-              variant="solarGlow"
-              className="w-full"
-              onClick={() => setPowerUpModalOpen(true)}
-            >
-              Purchase Power up Credits
-            </Button>
+        {/* Power Up Credits Purchase Section - Visible to everyone */}
+        <div
+          className="max-w-lg mx-auto mb-16 p-6 rounded-2xl border border-primary/30 bg-card/50 animate-in fade-in slide-in-from-bottom-4 duration-500"
+          style={{ animationDelay: "600ms" }}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <Zap className="h-6 w-6 text-primary" />
+            <h3 className="text-xl font-bold">Need More Credits?</h3>
           </div>
-        )}
+          <p className="text-muted-foreground mb-4">
+            {user && subscription
+              ? `Purchase additional Power up Credits at $${getDiscountedPrice()}/credit based on your current plan.`
+              : `Purchase additional Power up Credits starting at $5/credit with a subscription.`
+            }
+          </p>
+          <Button
+            variant="solarGlow"
+            className="w-full"
+            onClick={() => {
+              if (!user) {
+                navigate('/auth?redirect=/pricing');
+                return;
+              }
+              if (!subscription) {
+                toast({
+                  title: "Subscription Required",
+                  description: "Please subscribe to a plan before purchasing power-up credits.",
+                });
+                return;
+              }
+              setPowerUpModalOpen(true);
+            }}
+          >
+            {!user ? "Sign in to Purchase" : "Purchase Power up Credits"}
+          </Button>
+        </div>
 
       </main>
 
