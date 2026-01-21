@@ -15,7 +15,7 @@ interface FolderUploaderProps {
 const ALLOWED_EXTENSIONS = ['.sol', '.json', '.md', '.txt', '.js', '.ts', '.yaml', '.yml', '.toml'];
 
 // Client-side validation limits (matching server-side)
-const MAX_FILES = 100;
+const MAX_FILES = 500;
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB per file
 const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB total
 
