@@ -37,7 +37,7 @@ const Settings = () => {
 
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
-  const { canAddTeamMembers } = useFeatureAccess();
+  const { canShareReports } = useFeatureAccess();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -138,10 +138,10 @@ const Settings = () => {
                 <Shield className="w-4 h-4" />
                 Security
               </TabsTrigger>
-              <TabsTrigger value="team" className="gap-2">
+              <TabsTrigger value="sharing" className="gap-2">
                 <Users className="w-4 h-4" />
-                Team
-                {!canAddTeamMembers && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
+                Sharing
+                {!canShareReports && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
               </TabsTrigger>
             </TabsList>
 
@@ -367,30 +367,46 @@ const Settings = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="team">
+            <TabsContent value="sharing">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="w-5 h-5" />
-                    Team Collaboration
+                    Report Sharing
                   </CardTitle>
                   <CardDescription>
-                    {canAddTeamMembers 
-                      ? "Invite team members to collaborate on security audits"
-                      : "Upgrade to Business to unlock team features"}
+                    {canShareReports 
+                      ? "Share audit reports with collaborators directly from each report"
+                      : "Upgrade to Business to share reports with others"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {canAddTeamMembers ? (
+                  {canShareReports ? (
                     <div className="space-y-4">
                       <p className="text-sm text-muted-foreground">
-                        Invite up to 5 collaborators to share audit reports, track remediation progress, and comment on findings together.
+                        You can share individual audit reports with collaborators by clicking the "Share" button on any report. 
+                        Collaborators will receive an in-app invitation and can accept or decline.
                       </p>
-                      <Button onClick={() => navigate("/team")} className="gap-2">
-                        <Users className="w-4 h-4" />
-                        Manage Team
-                        <ArrowUpRight className="w-4 h-4" />
-                      </Button>
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <ul className="space-y-2 text-sm text-foreground/90">
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-primary" />
+                            Share reports directly from the report page
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-primary" />
+                            Collaborators get Business features on shared reports
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-primary" />
+                            Comment on findings together
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-primary" />
+                            Track remediation progress as a team
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -398,11 +414,11 @@ const Settings = () => {
                         <ul className="space-y-2 text-sm text-foreground/90">
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
-                            Invite up to 5 collaborators
+                            Share audit reports with collaborators
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
-                            Share audit reports with your team
+                            Collaborators access Business features on shared reports
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
@@ -410,7 +426,7 @@ const Settings = () => {
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
-                            Track remediation progress
+                            Track remediation progress as a team
                           </li>
                         </ul>
                       </div>
