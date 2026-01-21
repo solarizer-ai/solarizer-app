@@ -180,6 +180,7 @@ const Audits = () => {
                       timestamp={formatTimestamp(audit.created_at)}
                       onClick={() => navigate(`/reports/${audit.id}`)}
                       isShared={!isOwned}
+                      hasShares={isOwned && (audit.share_count || 0) > 0}
                     />
                     {isOwned && (
                       <button

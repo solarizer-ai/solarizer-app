@@ -35,6 +35,7 @@ export interface Audit {
   system_hologram: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+  share_count?: number;
 }
 
 export interface Finding {
@@ -71,20 +72,46 @@ export interface CreateFindingInput {
   remediation?: string;
 }
 
-// Fetch all audits for the current user
+// Fetch all audits for the current user (including share count for owned audits)
 export const useAudits = () => {
   const { user } = useAuth();
   
   return useQuery({
     queryKey: ['audits', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch audits
+      const { data: audits, error } = await supabase
         .from('audits')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as unknown as Audit[];
+      
+      // Fetch share counts for owned audits
+      const ownedAuditIds = (audits || [])
+        .filter(a => a.user_id === user?.id)
+        .map(a => a.id);
+      
+      let shareCounts: Record<string, number> = {};
+      if (ownedAuditIds.length > 0) {
+        const { data: shares } = await supabase
+          .from('audit_shares')
+          .select('audit_id')
+          .in('audit_id', ownedAuditIds)
+          .eq('status', 'accepted');
+        
+        if (shares) {
+          shares.forEach(share => {
+            shareCounts[share.audit_id] = (shareCounts[share.audit_id] || 0) + 1;
+          });
+        }
+      }
+      
+      // Merge share counts into audits
+      return (audits || []).map(audit => ({
+        ...audit,
+        share_count: shareCounts[audit.id] || 0,
+      })) as unknown as Audit[];
     },
     enabled: !!user,
   });
