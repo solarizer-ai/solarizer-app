@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock, Link2 } from "lucide-react";
+import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock, Link2, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -196,14 +196,27 @@ const Settings = () => {
                       placeholder="Your name"
                     />
                   </div>
-                  <Button onClick={handleSaveProfile} disabled={saving} className="gap-2">
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Check className="w-4 h-4" />
-                    )}
-                    Save Changes
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <Button onClick={handleSaveProfile} disabled={saving} className="gap-2">
+                      {saving ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                      Save Changes
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        navigate('/login');
+                      }}
+                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
