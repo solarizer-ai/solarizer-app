@@ -365,7 +365,7 @@ const Pricing = () => {
             className="w-full"
             onClick={() => {
               if (!user) {
-                navigate('/auth?redirect=/pricing');
+                navigate('/login?redirect=/pricing');
                 return;
               }
               if (!subscription) {
