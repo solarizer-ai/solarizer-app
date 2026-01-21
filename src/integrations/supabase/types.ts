@@ -485,6 +485,10 @@ export type Database = {
         Args: { p_nloc_amount: number; p_price_cents: number }
         Returns: Json
       }
+      purchase_subscription: {
+        Args: { p_billing_period: string; p_plan: string }
+        Returns: Json
+      }
       refund_credits: {
         Args: {
           p_is_starter?: boolean
