@@ -384,7 +384,7 @@ const Settings = () => {
                   {canAddTeamMembers ? (
                     <div className="space-y-4">
                       <p className="text-sm text-muted-foreground">
-                        Collaborate with up to 5 team members to share audits, track remediation progress, and comment on findings together.
+                        Invite up to 5 collaborators to share audit reports, track remediation progress, and comment on findings together.
                       </p>
                       <Button onClick={() => navigate("/team")} className="gap-2">
                         <Users className="w-4 h-4" />
@@ -398,7 +398,7 @@ const Settings = () => {
                         <ul className="space-y-2 text-sm text-foreground/90">
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
-                            Invite up to 5 team members
+                            Invite up to 5 collaborators
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />

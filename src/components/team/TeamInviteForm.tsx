@@ -45,7 +45,7 @@ export function TeamInviteForm({ teamId }: TeamInviteFormProps) {
           Invite Team Member
         </CardTitle>
         <CardDescription>
-          Send an invitation to join your team. They'll receive access to all team audits.
+          Invite collaborators to share and work on audit reports together.
         </CardDescription>
       </CardHeader>
       <CardContent>

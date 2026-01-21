@@ -58,7 +58,7 @@ export function TeamMembersList({ teamId }: TeamMembersListProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Users className="w-4 h-4" />
-          Team Members ({members?.length || 0})
+          Team ({members?.length || 0})
         </CardTitle>
       </CardHeader>
       <CardContent>
