@@ -118,7 +118,11 @@ Deno.serve(async (req) => {
 
     // Generate unique order ID
     const orderId = `order_${crypto.randomUUID().replace(/-/g, "").slice(0, 20)}`;
+    
+    // Convert cents to INR (approximate conversion rate: 1 USD = 83 INR)
+    const USD_TO_INR_RATE = 83;
     const amountDollars = amountCents / 100;
+    const amountINR = Math.round(amountDollars * USD_TO_INR_RATE);
 
     // Get user profile for customer details
     const { data: profile } = await supabaseClient
@@ -142,8 +146,8 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         order_id: orderId,
-        order_amount: amountDollars,
-        order_currency: "USD",
+        order_amount: amountINR,
+        order_currency: "INR",
         customer_details: {
           customer_id: user.id,
           customer_email: profile?.email || user.email,
@@ -196,8 +200,8 @@ Deno.serve(async (req) => {
         success: true,
         orderId,
         paymentSessionId: cashfreeOrder.payment_session_id,
-        orderAmount: amountDollars,
-        orderCurrency: "USD",
+        orderAmount: amountINR,
+        orderCurrency: "INR",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
