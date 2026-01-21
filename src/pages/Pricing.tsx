@@ -12,6 +12,7 @@ import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 import { useToast } from "@/hooks/use-toast";
 import { PLAN_CREDIT_RATES } from "@/lib/nlocCalculator";
+import { useCashfreeCheckout } from "@/hooks/useCashfreeCheckout";
 
 interface PricingFeature {
   text: string;
@@ -111,8 +112,17 @@ const Pricing = () => {
   const { data: credits, isLoading: creditsLoading } = useCredits();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { initiateCheckout, isLoading: checkoutLoading } = useCashfreeCheckout();
 
   const planOrder = { launch: 1, starter: 1, pro: 2, business: 3 };
+
+  const handleSubscribe = async (planId: 'launch' | 'pro' | 'business') => {
+    await initiateCheckout({
+      orderType: 'subscription',
+      plan: planId,
+      billingPeriod: billingPeriod,
+    });
+  };
 
   const getButtonConfig = (planId: 'launch' | 'pro' | 'business') => {
     // Not logged in
@@ -131,13 +141,8 @@ const Pricing = () => {
       return {
         text: "Subscribe",
         variant: (planId === 'pro' ? "default" : "outline") as "default" | "outline",
-        action: () => {
-          toast({
-            title: "Coming Soon",
-            description: "Subscription checkout will be available shortly.",
-          });
-        },
-        disabled: false,
+        action: () => handleSubscribe(planId),
+        disabled: checkoutLoading,
       };
     }
 
@@ -161,13 +166,8 @@ const Pricing = () => {
       return {
         text: "Upgrade",
         variant: "default" as "default",
-        action: () => {
-          toast({
-            title: "Coming Soon",
-            description: "Plan upgrades will be available shortly.",
-          });
-        },
-        disabled: false,
+        action: () => handleSubscribe(planId),
+        disabled: checkoutLoading,
       };
     }
 
@@ -183,11 +183,12 @@ const Pricing = () => {
     };
   };
 
-  const handleConfirmDowngrade = () => {
+  const handleConfirmDowngrade = async () => {
     setDowngradeModalOpen(false);
-    toast({
-      title: "Coming Soon",
-      description: "Plan downgrades will be available shortly. Your credits will be converted based on the Credit Fair Usage Policy.",
+    await initiateCheckout({
+      orderType: 'subscription',
+      plan: targetDowngradePlan,
+      billingPeriod: billingPeriod,
     });
   };
 
@@ -203,7 +204,7 @@ const Pricing = () => {
     return plan === 'starter' ? 'launch' : plan as 'launch' | 'pro' | 'business';
   };
 
-  const isLoading = authLoading || subscriptionLoading || creditsLoading;
+  const isLoading = authLoading || subscriptionLoading || creditsLoading || checkoutLoading;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

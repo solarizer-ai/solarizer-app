@@ -307,6 +307,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_orders: {
+        Row: {
+          amount_cents: number
+          billing_period: string | null
+          cf_payment_id: string | null
+          created_at: string | null
+          credits_amount: number | null
+          currency: string | null
+          id: string
+          metadata: Json | null
+          order_id: string
+          order_type: string
+          payment_session_id: string | null
+          plan: string | null
+          processed_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          billing_period?: string | null
+          cf_payment_id?: string | null
+          created_at?: string | null
+          credits_amount?: number | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          order_type: string
+          payment_session_id?: string | null
+          plan?: string | null
+          processed_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          billing_period?: string | null
+          cf_payment_id?: string | null
+          created_at?: string | null
+          credits_amount?: number | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          order_type?: string
+          payment_session_id?: string | null
+          plan?: string | null
+          processed_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       power_up_purchases: {
         Row: {
           id: string
@@ -449,6 +506,19 @@ export type Database = {
     }
     Functions: {
       accept_share_invitation: { Args: { p_share_id: string }; Returns: Json }
+      create_payment_order: {
+        Args: {
+          p_amount_cents: number
+          p_billing_period?: string
+          p_credits_amount?: number
+          p_order_id: string
+          p_order_type: string
+          p_payment_session_id: string
+          p_plan?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       deduct_credits: {
         Args: { p_is_starter?: boolean; p_nloc_amount: number }
         Returns: Json
@@ -480,6 +550,11 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      mark_payment_failed: { Args: { p_order_id: string }; Returns: Json }
+      process_payment_success: {
+        Args: { p_cf_payment_id: string; p_order_id: string }
+        Returns: Json
       }
       purchase_power_up: {
         Args: { p_nloc_amount: number; p_price_cents: number }

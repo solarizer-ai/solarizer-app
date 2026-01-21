@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { usePurchasePowerUp, useSubscription } from "@/hooks/useSubscription";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useCashfreeCheckout } from "@/hooks/useCashfreeCheckout";
 import { toast } from "@/hooks/use-toast";
 
 interface PurchasePowerUpModalProps {
@@ -31,8 +32,8 @@ export function PurchasePowerUpModal({
 }: PurchasePowerUpModalProps) {
   const [customCredits, setCustomCredits] = useState<number>(1000);
   const [inputValue, setInputValue] = useState<string>("1000");
-  const purchasePowerUp = usePurchasePowerUp();
   const { data: subscription } = useSubscription();
+  const { initiateCheckout, isLoading: checkoutLoading } = useCashfreeCheckout();
 
   const plan = subscription?.plan || 'starter';
 
@@ -91,25 +92,13 @@ export function PurchasePowerUpModal({
       return;
     }
 
-    try {
-      await purchasePowerUp.mutateAsync({
-        nlocAmount: customCredits,
-        priceCents: totalPriceCents,
-      });
+    const success = await initiateCheckout({
+      orderType: "power_up",
+      creditsAmount: customCredits,
+    });
 
-      toast({
-        title: "Power up Credits Purchased!",
-        description: `Added ${customCredits.toLocaleString()} credits to your account.`,
-      });
-      
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: "Purchase Failed",
-        description: "Please try again or contact support.",
-        variant: "destructive",
-      });
-    }
+    // If checkout initiated successfully, modal will close when user redirects
+    // If it failed, toast is already shown by the hook
   };
 
   const getPlanLabel = () => {
@@ -212,9 +201,9 @@ export function PurchasePowerUpModal({
               className="w-full" 
               size="lg"
               onClick={handlePurchase}
-              disabled={purchasePowerUp.isPending || customCredits < MIN_CREDITS}
+              disabled={checkoutLoading || customCredits < MIN_CREDITS}
             >
-              {purchasePowerUp.isPending ? "Processing..." : "Purchase Power up Credits"}
+              {checkoutLoading ? "Processing..." : "Purchase Power up Credits"}
             </Button>
             <Button
               variant="ghost"
