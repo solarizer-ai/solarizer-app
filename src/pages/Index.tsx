@@ -8,6 +8,7 @@ import ScanProgressWidget from "@/components/ScanProgressWidget";
 import { CreditBalance } from "@/components/CreditBalance";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { LowCreditPrompt } from "@/components/LowCreditPrompt";
 import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
@@ -98,7 +99,7 @@ const Index = () => {
   // Subscription & credits state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
-  const [upgradeReason, setUpgradeReason] = useState<'scan_limit' | 'nloc_limit'>('scan_limit');
+  const [upgradeReason, setUpgradeReason] = useState<'nloc_limit' | 'file_limit'>('nloc_limit');
   const [pendingNloc, setPendingNloc] = useState(0);
   
   // Auth and profile
@@ -304,7 +305,7 @@ const Index = () => {
     }
   };
   
-  const handleUpgradeNeeded = (reason: 'scan_limit' | 'nloc_limit', nloc: number) => {
+  const handleUpgradeNeeded = (reason: 'nloc_limit' | 'file_limit', nloc: number) => {
     setUpgradeReason(reason);
     setPendingNloc(nloc);
     setShowUpgradeModal(true);
@@ -427,6 +428,15 @@ const Index = () => {
 
             {/* Share Invitations Banner */}
             <ShareInvitationBanner />
+
+            {/* Low Credit Warning */}
+            {(subscription?.plan === 'pro' || subscription?.plan === 'business') && 
+             (credits?.credits_remaining ?? 0) < 70 && (
+              <LowCreditPrompt 
+                creditsRemaining={credits?.credits_remaining ?? 0}
+                onPurchase={() => setShowPowerUpModal(true)}
+              />
+            )}
 
             {/* Stats Overview */}
             <DashboardStats />

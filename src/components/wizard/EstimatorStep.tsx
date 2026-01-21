@@ -9,7 +9,7 @@ interface EstimatorStepProps {
   files: FileInput[];
   onBack: () => void;
   onProceed: (clocResult: ClocResult) => void;
-  onUpgradeNeeded: (reason: 'scan_limit' | 'nloc_limit', nloc: number) => void;
+  onUpgradeNeeded: (reason: 'nloc_limit' | 'file_limit', nloc: number) => void;
   onPowerUpNeeded: (nloc: number) => void;
   subscription: { plan: 'starter' | 'pro' | 'business' } | null | undefined;
   credits: { credits_remaining: number; scans_remaining: number } | null | undefined;
@@ -37,27 +37,26 @@ const EstimatorStep = ({
   }, [files, clocResult, isPending, isError]);
 
   const plan = subscription?.plan || 'starter';
-  const scansRemaining = credits?.scans_remaining ?? 0;
   const creditsRemaining = credits?.credits_remaining ?? 0;
   const totalNloc = clocResult?.totalNloc || 0;
 
   const fileCount = files.length;
 
-  // Validation logic
+  // Validation logic - scan limits removed, only nLOC and file limits for Launch
   const getValidationStatus = () => {
     if (!clocResult) return null;
 
     if (plan === 'starter') {
-      if (scansRemaining <= 0) {
-        return { valid: false, reason: 'scan_limit' as const, message: 'You have no scans remaining on your Starter plan.' };
-      }
       if (fileCount > PLAN_LIMITS.starter.maxFilesPerScan) {
-        return { valid: false, reason: 'file_limit' as const, message: `Starter plan allows only ${PLAN_LIMITS.starter.maxFilesPerScan} file per scan. You have ${fileCount} files.` };
+        return { valid: false, reason: 'file_limit' as const, message: `Launch plan allows only ${PLAN_LIMITS.starter.maxFilesPerScan} file per scan. You have ${fileCount} files.` };
       }
       if (totalNloc > PLAN_LIMITS.starter.nlocPerScan) {
-        return { valid: false, reason: 'nloc_limit' as const, message: `This project (${totalNloc} nLOC) exceeds the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit per scan on Starter.` };
+        return { valid: false, reason: 'nloc_limit' as const, message: `This project (${totalNloc} nLOC) exceeds the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit per scan on Launch.` };
       }
-      return { valid: true, message: `Within your plan limit (${scansRemaining} scan${scansRemaining !== 1 ? 's' : ''} remaining)` };
+      if (totalNloc > creditsRemaining) {
+        return { valid: false, reason: 'credits' as const, message: `You need ${totalNloc} credits but only have ${creditsRemaining} remaining.` };
+      }
+      return { valid: true, message: 'Within your plan limits' };
     }
 
     if (plan === 'pro' || plan === 'business') {
@@ -76,8 +75,8 @@ const EstimatorStep = ({
     if (!clocResult || !validation) return;
 
     if (!validation.valid) {
-      if (validation.reason === 'scan_limit' || validation.reason === 'nloc_limit' || validation.reason === 'file_limit') {
-        onUpgradeNeeded(validation.reason as 'scan_limit' | 'nloc_limit', totalNloc);
+      if (validation.reason === 'nloc_limit' || validation.reason === 'file_limit') {
+        onUpgradeNeeded(validation.reason, totalNloc);
       } else if (validation.reason === 'credits') {
         onPowerUpNeeded(totalNloc);
       }

@@ -1,4 +1,4 @@
-import { Check, Zap, Shield, Code2 } from "lucide-react";
+import { Zap, Shield, Code2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,20 +12,20 @@ import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 interface UpgradeToProModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  reason?: 'scan_limit' | 'nloc_limit';
+  reason?: 'nloc_limit' | 'file_limit';
   currentNloc?: number;
 }
 
 export function UpgradeToProModal({ 
   open, 
   onOpenChange, 
-  reason = 'scan_limit',
+  reason = 'nloc_limit',
   currentNloc 
 }: UpgradeToProModalProps) {
   const features = [
-    { icon: Zap, text: "Unlimited scans" },
-    { icon: Shield, text: `${PLAN_LIMITS.pro.monthlyNloc.toLocaleString()} nLOC monthly allowance` },
+    { icon: Shield, text: "150 credits monthly allowance" },
     { icon: Code2, text: "Multi-file analysis" },
+    { icon: Zap, text: "Purchase Power-Ups for larger projects" },
   ];
 
   return (
@@ -37,9 +37,9 @@ export function UpgradeToProModal({
             Upgrade to Pro
           </DialogTitle>
           <DialogDescription>
-            {reason === 'scan_limit' 
-              ? "You've used all your free trial scans. Upgrade to Pro for unlimited scans."
-              : `Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit for Starter.`
+            {reason === 'file_limit' 
+              ? "Launch plan only supports 1 file per scan. Upgrade to Pro for multi-file analysis."
+              : `Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit for Launch.`
             }
           </DialogDescription>
         </DialogHeader>
