@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { decrypt, isEncrypted } from '../_shared/encryption.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -137,6 +138,7 @@ Deno.serve(async (req) => {
     if (authHeader) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const encryptionKey = Deno.env.get('GITHUB_TOKEN_ENCRYPTION_KEY');
       const supabase = createClient(supabaseUrl, supabaseKey);
 
       // Get user from JWT
@@ -151,8 +153,19 @@ Deno.serve(async (req) => {
           .eq('user_id', user.id)
           .single();
 
-        if (connection) {
-          accessToken = connection.github_access_token;
+        if (connection?.github_access_token && encryptionKey) {
+          // Decrypt the token if it's encrypted
+          if (isEncrypted(connection.github_access_token)) {
+            try {
+              accessToken = await decrypt(connection.github_access_token, encryptionKey);
+            } catch (e) {
+              console.error('Failed to decrypt GitHub token:', e);
+              // Token may be corrupted or key changed, continue without token
+            }
+          } else {
+            // Legacy unencrypted token (for migration period)
+            accessToken = connection.github_access_token;
+          }
         }
       }
     }
