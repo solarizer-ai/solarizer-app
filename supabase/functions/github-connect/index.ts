@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { encrypt } from '../_shared/encryption.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,10 +21,19 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const githubClientId = Deno.env.get('GITHUB_CLIENT_ID');
     const githubClientSecret = Deno.env.get('GITHUB_CLIENT_SECRET');
+    const encryptionKey = Deno.env.get('GITHUB_TOKEN_ENCRYPTION_KEY');
 
     if (!githubClientId || !githubClientSecret) {
       return new Response(
         JSON.stringify({ success: false, error: 'GitHub OAuth not configured' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!encryptionKey) {
+      console.error('GITHUB_TOKEN_ENCRYPTION_KEY not configured');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Server configuration error' }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -103,13 +113,16 @@ Deno.serve(async (req) => {
 
     const githubUser = await userResponse.json();
 
-    // Store connection in database
+    // Encrypt the access token before storing
+    const encryptedToken = await encrypt(accessToken, encryptionKey);
+
+    // Store connection in database with encrypted token
     const { error: upsertError } = await supabase
       .from('github_connections')
       .upsert({
         user_id: user.id,
         github_username: githubUser.login,
-        github_access_token: accessToken,
+        github_access_token: encryptedToken, // Now encrypted
         github_avatar_url: githubUser.avatar_url,
         scopes,
       }, { onConflict: 'user_id' });
