@@ -241,6 +241,39 @@ export type Database = {
           },
         ]
       }
+      github_connections: {
+        Row: {
+          connected_at: string | null
+          github_access_token: string
+          github_avatar_url: string | null
+          github_username: string
+          id: string
+          scopes: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string | null
+          github_access_token: string
+          github_avatar_url?: string | null
+          github_username: string
+          id?: string
+          scopes?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          connected_at?: string | null
+          github_access_token?: string
+          github_avatar_url?: string | null
+          github_username?: string
+          id?: string
+          scopes?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       nloc_credits: {
         Row: {
           created_at: string

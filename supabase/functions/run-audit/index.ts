@@ -14,6 +14,7 @@ interface AuditRequest {
   audit_id: string;
   project_name: string;
   files: FileInput[];
+  additional_context?: string;
   metadata: {
     nloc_count: number;
     contract_count: number;
@@ -123,7 +124,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { audit_id, project_name, files, metadata } = body;
+    const { audit_id, project_name, files, additional_context, metadata } = body;
 
     // Validate required fields
     if (!audit_id || typeof audit_id !== 'string') {
@@ -177,6 +178,7 @@ Deno.serve(async (req) => {
         audit_id,
         project_name,
         files: validation.sanitizedFiles,
+        additional_context: additional_context || '',
         metadata,
         // Include callback info for n8n to save findings incrementally
         callbacks: {

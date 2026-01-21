@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react";
-import { FolderUp, Loader2, X, Upload } from "lucide-react";
+import { FolderUp, Loader2, X, Upload, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FileNode, generateId, deleteNodeFromTree } from "@/types/files";
+import { FileNode, generateId, deleteNodeFromTree, mergeFileTrees } from "@/types/files";
 import FileTypeIcon from "./FileTypeIcon";
 import { toast } from "@/hooks/use-toast";
 
@@ -106,7 +106,7 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
     return tree;
   };
 
-  const processFiles = async (files: File[]) => {
+  const processFiles = async (files: File[], shouldMerge: boolean = false) => {
     setIsLoading(true);
     setProgress(0);
 
@@ -121,12 +121,16 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
         return !shouldSkipFolder && shouldIncludeFile(fileName);
       });
 
-      if (validFiles.length > MAX_FILES) {
-        throw new Error(`Too many files. Maximum ${MAX_FILES} allowed, found ${validFiles.length}.`);
+      // When merging, count existing files too
+      const existingFileCount = shouldMerge ? countFiles(uploadedFiles) : 0;
+      const totalFileCount = existingFileCount + validFiles.length;
+
+      if (totalFileCount > MAX_FILES) {
+        throw new Error(`Too many files. Maximum ${MAX_FILES} allowed, found ${totalFileCount}.`);
       }
 
       // Pre-validation: Check total size before reading content
-      let totalSize = 0;
+      let totalSize = shouldMerge ? getTotalSize(uploadedFiles) : 0;
       for (const file of validFiles) {
         if (file.size > MAX_FILE_SIZE) {
           throw new Error(`File "${file.name}" exceeds ${MAX_FILE_SIZE / 1024}KB limit.`);
@@ -138,10 +142,20 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
       }
 
       const tree = await buildTreeFromFiles(files);
-      onFilesUploaded(tree);
+      
+      // Merge with existing files if requested
+      if (shouldMerge && uploadedFiles.length > 0) {
+        const merged = mergeFileTrees(uploadedFiles, tree);
+        onFilesUploaded(merged);
+        toast({
+          title: "Files added",
+          description: `Added ${validFiles.length} new files to your project.`,
+        });
+      } else {
+        onFilesUploaded(tree);
+      }
     } catch (error) {
       console.error('Error processing files:', error);
-      // Re-throw to let caller handle the error (could show toast)
       throw error;
     } finally {
       setIsLoading(false);
@@ -152,8 +166,10 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
   const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
+      // If we already have files, merge. Otherwise replace.
+      const shouldMerge = uploadedFiles.length > 0;
       try {
-        await processFiles(files);
+        await processFiles(files, shouldMerge);
       } catch (error) {
         toast({
           title: "Upload failed",
@@ -212,8 +228,10 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
     }
 
     if (files.length > 0) {
+      // If we already have files, merge. Otherwise replace.
+      const shouldMerge = uploadedFiles.length > 0;
       try {
-        await processFiles(files);
+        await processFiles(files, shouldMerge);
       } catch (error) {
         toast({
           title: "Upload failed",
@@ -222,7 +240,7 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
         });
       }
     }
-  }, []);
+  }, [uploadedFiles]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -296,6 +314,16 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
 
     return (
       <div className="border border-border rounded-lg p-4 bg-card">
+        <input
+          ref={inputRef}
+          type="file"
+          // @ts-ignore - webkitdirectory is not in React types
+          webkitdirectory=""
+          directory=""
+          multiple
+          className="hidden"
+          onChange={handleFolderSelect}
+        />
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
@@ -310,10 +338,21 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClear}>
-            <X className="w-4 h-4 mr-1" />
-            Clear
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => inputRef.current?.click()}
+              className="gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              Add More
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onClear}>
+              <X className="w-4 h-4 mr-1" />
+              Clear
+            </Button>
+          </div>
         </div>
         <div className="max-h-48 overflow-y-auto border border-border rounded-md p-2 bg-muted/30">
           {renderTree(uploadedFiles)}

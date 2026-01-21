@@ -148,8 +148,8 @@ const Index = () => {
   const runAudit = useRunAudit();
   const queryClient = useQueryClient();
 
-  const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string; clocResult?: { totalNloc: number } }) => {
-    const { projectName: name, files, code: codeContent, clocResult } = wizardData;
+  const handleStartScan = async (wizardData: { projectName: string; files: FileNode[]; code: string; clocResult?: { totalNloc: number }; additionalContext?: string }) => {
+    const { projectName: name, files, code: codeContent, clocResult, additionalContext } = wizardData;
     
     // Use CLOC result from estimator step, fallback to local calculation
     const nloc = clocResult?.totalNloc || calculateNLOC(codeContent);
@@ -274,6 +274,7 @@ const Index = () => {
         audit_id: audit.id,
         project_name: name,
         files: fileList,
+        additional_context: additionalContext,
         metadata: {
           nloc_count: nloc,
           contract_count: contractCount,
