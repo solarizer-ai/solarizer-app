@@ -39,10 +39,11 @@ const TeamSettings = () => {
   };
 
   const isLoading = accessLoading || teamLoading;
-  const memberCount = members?.length || 0;
+  // Count only non-owner members (collaborators)
+  const collaboratorCount = members?.filter(m => m.role !== 'owner').length || 0;
   const pendingCount = invitations?.length || 0;
-  const totalSlots = 5;
-  const remainingSlots = totalSlots - memberCount - pendingCount;
+  const totalCollaboratorSlots = 5;
+  const remainingSlots = totalCollaboratorSlots - collaboratorCount - pendingCount;
 
   if (isLoading) {
     return (
@@ -72,7 +73,7 @@ const TeamSettings = () => {
             <FeatureLockedOverlay
               featureName="Team Management"
               requiredPlan="business"
-              description="Collaborate with your team by inviting up to 5 members to share audits and track remediation progress together."
+              description="Collaborate with your team by inviting up to 5 collaborators to share audits and track remediation progress together."
               onUpgrade={() => navigate("/pricing")}
             />
           </div>
@@ -162,13 +163,13 @@ const TeamSettings = () => {
                       )}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {memberCount}/{totalSlots} members
+                      {collaboratorCount}/{totalCollaboratorSlots} collaborators
                     </div>
                   </div>
                   <CardDescription>
                     {remainingSlots > 0 
-                      ? `You can invite ${remainingSlots} more team member${remainingSlots !== 1 ? 's' : ''}`
-                      : "Your team is at maximum capacity"
+                      ? `You can invite ${remainingSlots} more collaborator${remainingSlots !== 1 ? 's' : ''}`
+                      : "Your team has reached maximum collaborators"
                     }
                   </CardDescription>
                 </CardHeader>

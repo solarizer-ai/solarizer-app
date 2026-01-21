@@ -31,7 +31,7 @@ export function CreateTeamCard() {
           Create Your Team
         </CardTitle>
         <CardDescription>
-          Get started by creating a team. You can invite up to 5 team members to collaborate on audits.
+          Get started by creating a team. You can invite up to 5 collaborators to work on audits together.
         </CardDescription>
       </CardHeader>
       <CardContent>

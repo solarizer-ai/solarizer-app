@@ -85,7 +85,7 @@ const pricingPlans: PricingPlan[] = [
     features: [
       { text: 'Everything in Pro, plus:', included: true, isHeader: true },
       { text: 'Share reports in Dashboard', included: true },
-      { text: 'Add Team Members', included: true },
+      { text: 'Invite up to 5 Collaborators', included: true },
       { text: 'Comment & Track Remediation Progress', included: true },
       { text: 'Power up Credits at 29% Off', included: true },
     ],
