@@ -508,6 +508,7 @@ export type Database = {
         Args: { p_is_starter?: boolean; p_nloc_amount: number }
         Returns: Json
       }
+      get_audit_access_context: { Args: { p_audit_id: string }; Returns: Json }
       get_audit_owner_info: {
         Args: { owner_user_id: string }
         Returns: {

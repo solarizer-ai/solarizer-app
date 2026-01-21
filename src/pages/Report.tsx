@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { useAudit, useFindings } from "@/hooks/useAudits";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
-import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useReportFeatureAccess } from "@/hooks/useReportFeatureAccess";
 import { formatDistanceToNow } from "date-fns";
 import type { CoverageData, Finding } from "@/hooks/useAudits";
 
@@ -36,7 +36,7 @@ const Report = () => {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const findingRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   
-  // Feature access based on subscription
+  // Contextual feature access based on audit ownership and owner's subscription
   const { 
     canViewRemediation, 
     canExportReport, 
@@ -44,9 +44,11 @@ const Report = () => {
     canViewSecurityCoverage,
     canShareReports,
     canCommentOnFindings,
-    currentPlan,
+    canEditCode,
+    isOwner,
+    effectivePlan,
     isLoading: accessLoading 
-  } = useFeatureAccess();
+  } = useReportFeatureAccess(auditId || null);
   
   // Memoized callback for findings filter
   const handleFilteredChange = useCallback((filtered: any[]) => setFilteredFindings(filtered), []);
@@ -55,10 +57,7 @@ const Report = () => {
   const { data: findings } = useFindings(auditId || null);
   const { data: shareCount } = useAuditShareCount(auditId || null);
 
-  // Check if current user is the owner
-  const isOwner = user?.id === currentAudit?.user_id;
-
-  // Get owner info for shared audits
+  // Get owner info for shared audits (use isOwner from hook)
   const { data: ownerInfo } = useAuditOwnerInfo(
     !isOwner && currentAudit ? currentAudit.user_id : null
   );
@@ -295,6 +294,7 @@ const Report = () => {
                     findings={(findings ?? []) as Finding[]}
                     contractCount={currentAudit?.contract_count || 0}
                     nlocCount={currentAudit?.nloc_count || null}
+                    readOnly={!canEditCode}
                   />
                 </TabsContent>
 

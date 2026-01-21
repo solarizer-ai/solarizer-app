@@ -17,9 +17,10 @@ interface ScopeTabProps {
   findings: Finding[];
   contractCount: number;
   nlocCount: number | null;
+  readOnly?: boolean;
 }
 
-const ScopeTab = ({ coverageData, findings, contractCount, nlocCount }: ScopeTabProps) => {
+const ScopeTab = ({ coverageData, findings, contractCount, nlocCount, readOnly = false }: ScopeTabProps) => {
   // Extract unique contracts from coverage data
   const contractSummaries: ContractSummary[] = (() => {
     if (!coverageData?.details?.length) return [];
