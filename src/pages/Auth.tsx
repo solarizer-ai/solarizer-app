@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -394,13 +394,19 @@ const Auth = () => {
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          {isLogin ? (
-            <>By signing in, you agree to our Terms of Service and Privacy Policy.</>
-          ) : (
-            <>Please review and accept our terms above to create your account.</>
-          )}
-        </p>
+        <div className="mt-6 text-center">
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
+            <Shield className="w-3.5 h-3.5 text-primary" />
+            <span>Secure login with encrypted authentication</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {isLogin ? (
+              <>By signing in, you agree to our <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.</>
+            ) : (
+              <>Please review and accept our terms above to create your account.</>
+            )}
+          </p>
+        </div>
       </div>
     </div>
   );
