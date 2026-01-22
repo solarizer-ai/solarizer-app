@@ -173,17 +173,22 @@ const renderNumberedList = (text: string, keyPrefix: string): { prefixText: stri
 
 // Helper function to render text with code formatting (both inline and block)
 const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
-  // First, split by triple backtick code blocks
-  const blockPattern = /```(\w+)?\n?([\s\S]*?)```/g;
+  // Normalize line endings and whitespace around code blocks
+  const normalizedText = text
+    .replace(/\r\n/g, '\n')  // Windows -> Unix line endings
+    .replace(/```\s*(\w+)\s*\n/g, '```$1\n'); // Clean up language tag spacing
+  
+  // First, split by triple backtick code blocks - more permissive pattern
+  const blockPattern = /```(\w+)?(?:\n|\s)?([\s\S]*?)```/g;
   const segments: (string | { type: 'codeblock'; language?: string; code: string })[] = [];
   
   let lastIndex = 0;
   let match;
   
-  while ((match = blockPattern.exec(text)) !== null) {
+  while ((match = blockPattern.exec(normalizedText)) !== null) {
     // Add text before the code block
     if (match.index > lastIndex) {
-      segments.push(text.slice(lastIndex, match.index));
+      segments.push(normalizedText.slice(lastIndex, match.index));
     }
     // Add the code block
     segments.push({
@@ -195,8 +200,8 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
   }
   
   // Add remaining text after last code block
-  if (lastIndex < text.length) {
-    segments.push(text.slice(lastIndex));
+  if (lastIndex < normalizedText.length) {
+    segments.push(normalizedText.slice(lastIndex));
   }
   
   return segments.map((segment, segmentIndex) => {
