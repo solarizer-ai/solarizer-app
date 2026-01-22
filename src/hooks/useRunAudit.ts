@@ -5,6 +5,7 @@ interface RunAuditParams {
   audit_id: string;
   project_name: string;
   files: { name: string; content: string }[];
+  scope?: string[];  // In-scope file names for audit
   additional_context?: string;
   metadata: {
     nloc_count: number;
