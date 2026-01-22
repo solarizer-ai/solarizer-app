@@ -12,3 +12,12 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /audits
+Disallow: /settings
+Disallow: /billing
+Disallow: /reports/
+Disallow: /payment-success
+Disallow: /subscription-success
+
+Sitemap: https://solarizer.io/sitemap.xml

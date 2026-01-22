@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, Loader2, AlertCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ const SubscriptionSuccess = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [attempts, setAttempts] = useState(0);
+  const metaTagRef = useRef<HTMLMetaElement | null>(null);
   
   const subId = searchParams.get("sub_id");
   const plan = searchParams.get("plan");
@@ -21,6 +22,21 @@ const SubscriptionSuccess = () => {
   
   const { data: subscription, refetch: refetchSubscription } = useSubscription();
   const { data: credits, refetch: refetchCredits } = useCredits();
+
+  // Add noindex meta tag to prevent search engine indexing
+  useEffect(() => {
+    const metaRobots = document.createElement('meta');
+    metaRobots.name = 'robots';
+    metaRobots.content = 'noindex, nofollow';
+    document.head.appendChild(metaRobots);
+    metaTagRef.current = metaRobots;
+    
+    return () => {
+      if (metaTagRef.current) {
+        document.head.removeChild(metaTagRef.current);
+      }
+    };
+  }, []);
 
   // Poll for subscription activation
   useEffect(() => {
