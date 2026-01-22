@@ -10,7 +10,7 @@ const TermsOfService = () => {
       <main className="flex-1 container max-w-4xl mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
-          <p className="text-muted-foreground">Last updated: January 20, 2026</p>
+          <p className="text-muted-foreground">Last updated: January 22, 2026</p>
         </div>
 
         {/* Table of Contents */}
@@ -23,6 +23,7 @@ const TermsOfService = () => {
             <a href="#acceptable-use" className="block text-primary hover:underline">4. Acceptable Use Policy</a>
             <a href="#subscriptions" className="block text-primary hover:underline">5. Subscriptions, Power up Credits & Payments</a>
             <a href="#liability" className="block text-primary hover:underline">6. Limitation of Liability</a>
+            <a href="#refunds" className="block text-primary hover:underline">7. Refunds and Termination</a>
           </nav>
         </div>
 
@@ -150,6 +151,43 @@ const TermsOfService = () => {
             <p className="text-muted-foreground leading-relaxed">
               Total liability shall not exceed the amount paid in the 12 months preceding a claim.
             </p>
+          </section>
+
+          {/* Section 7 */}
+          <section id="refunds">
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2 mb-4">
+              7. Refunds and Termination
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium text-foreground mb-2">7.1 Forfeiture on Termination</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  If your account or access to the Service is terminated by Solarizer for a breach of these Terms, 
+                  any remaining Power up Credits (whether from your subscription allowance or purchased separately) 
+                  will be forfeited. If you cancel your account or subscription, your remaining Power up Credits 
+                  will remain available until the end of your current billing period. If we terminate your account 
+                  for any reason other than your breach of these Terms (including for security, legal, or other 
+                  reasons not attributable to you), any remaining Power up Credits will be applied to fees owed 
+                  through the effective date of termination, after which they will expire.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-foreground mb-2">7.2 No Refunds</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Except where required by applicable law, all fees paid for subscriptions and Power up Credits 
+                  are non-refundable.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-foreground mb-2">7.3 Effect of Termination</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Termination of your account or these Terms ends your right to access the Service, but does not 
+                  affect any rights or obligations that, by their nature, should continue. This includes, but is 
+                  not limited to: intellectual property rights, disclaimers, limitations of liability, 
+                  indemnification obligations, and any outstanding payment obligations.
+                </p>
+              </div>
+            </div>
           </section>
         </div>
 
