@@ -13,6 +13,14 @@ import FolderUploader from "./FolderUploader";
 import SandpackEditor from "./SandpackEditor";
 import { ClocResult } from "@/hooks/useClocEstimate";
 
+interface CombinedClocResult {
+  scopeNloc: number;
+  contextNloc: number;
+  totalCredits: number;
+  scopeLanguages: ClocResult['languages'];
+  contextLanguages: ClocResult['languages'];
+}
+
 interface AuditWizardProps {
   onComplete: (data: { 
     projectName: string; 
@@ -56,7 +64,7 @@ const AuditWizard = ({
   const [files, setFiles] = useState<FileNode[]>([]);
   const [editorCode, setEditorCode] = useState(SAMPLE_CODE);
   const [additionalContext, setAdditionalContext] = useState("");
-  const [clocResult, setClocResult] = useState<ClocResult | null>(null);
+  const [combinedClocResult, setCombinedClocResult] = useState<CombinedClocResult | null>(null);
   const [selectedScope, setSelectedScope] = useState<string[]>([]);
 
   const handleProjectNameChange = (name: string) => {
@@ -100,8 +108,8 @@ const AuditWizard = ({
     setStep('estimate');
   };
 
-  const handleEstimateComplete = (result: ClocResult) => {
-    setClocResult(result);
+  const handleEstimateComplete = (result: CombinedClocResult) => {
+    setCombinedClocResult(result);
     setStep('context');
   };
 
@@ -109,11 +117,17 @@ const AuditWizard = ({
     const allFiles = getAllFiles(files);
     const combinedCode = allFiles.map(f => f.content || '').join('\n\n');
     
+    // Convert combined result back to ClocResult format for compatibility
+    const clocResult: ClocResult = {
+      totalNloc: combinedClocResult?.totalCredits || 0,
+      languages: combinedClocResult?.scopeLanguages || {},
+    };
+    
     onComplete({
       projectName,
       files,
       code: combinedCode || editorCode,
-      clocResult: clocResult!,
+      clocResult,
       additionalContext: additionalContext || undefined,
       scope: selectedScope,
     });
@@ -148,8 +162,8 @@ const AuditWizard = ({
     return files.length > 0 && getAllFiles(files).some(f => f.content?.trim());
   };
 
-  // Only return in-scope files for nLOC estimation
-  const getFilesForEstimation = () => {
+  // Get in-scope files for nLOC estimation (100% credits)
+  const getScopeFilesForEstimation = () => {
     const allFiles = getAllFiles(files);
     return allFiles
       .filter(f => selectedScope.includes(f.name))
@@ -159,14 +173,15 @@ const AuditWizard = ({
       }));
   };
 
-  // Get all files for scope selection display
-  const getAllFilesForScope = () => {
+  // Get out-of-scope Solidity files for context estimation (35% credits)
+  const getContextFilesForEstimation = () => {
     const allFiles = getAllFiles(files);
-    return allFiles.map(f => ({
-      name: f.name,
-      content: f.content || '',
-      path: f.path,
-    }));
+    return allFiles
+      .filter(f => !selectedScope.includes(f.name) && f.name.endsWith('.sol'))
+      .map(f => ({
+        name: f.name,
+        content: f.content || '',
+      }));
   };
 
   const getStepNumber = (): number => {
@@ -295,7 +310,7 @@ const AuditWizard = ({
 
         {step === 'scope' && (
           <ScopeSelectionStep
-            files={getAllFilesForScope()}
+            fileTree={files}
             selectedScope={selectedScope}
             onScopeChange={setSelectedScope}
             onBack={handleBack}
@@ -305,7 +320,8 @@ const AuditWizard = ({
 
         {step === 'estimate' && (
           <EstimatorStep
-            files={getFilesForEstimation()}
+            scopeFiles={getScopeFilesForEstimation()}
+            contextFiles={getContextFilesForEstimation()}
             onBack={handleBack}
             onProceed={handleEstimateComplete}
             onUpgradeNeeded={handleUpgradeNeeded}
@@ -323,7 +339,7 @@ const AuditWizard = ({
             onBack={handleBack}
             onProceed={handleContextComplete}
             isSubmitting={isSubmitting}
-            nloc={clocResult?.totalNloc || 0}
+            nloc={combinedClocResult?.totalCredits || 0}
           />
         )}
       </div>
