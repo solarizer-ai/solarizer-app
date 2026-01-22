@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2, CreditCard, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,24 @@ export default function PaymentSuccess() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pollCount, setPollCount] = useState(0);
+  const metaTagRef = useRef<HTMLMetaElement | null>(null);
 
   const orderId = searchParams.get("order_id");
+
+  // Add noindex meta tag to prevent search engine indexing
+  useEffect(() => {
+    const metaRobots = document.createElement('meta');
+    metaRobots.name = 'robots';
+    metaRobots.content = 'noindex, nofollow';
+    document.head.appendChild(metaRobots);
+    metaTagRef.current = metaRobots;
+    
+    return () => {
+      if (metaTagRef.current) {
+        document.head.removeChild(metaTagRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!orderId) {
