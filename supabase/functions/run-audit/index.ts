@@ -84,6 +84,47 @@ Deno.serve(async (req) => {
   console.log('run-audit: Request received');
 
   try {
+    // ===== AUTHENTICATION CHECK =====
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('run-audit: Missing or invalid authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('run-audit: Supabase configuration missing');
+      return new Response(
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Validate the JWT token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error('run-audit: Invalid authentication token', claimsError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log(`run-audit: Authenticated user: ${userId}`);
+    // ===== END AUTHENTICATION CHECK =====
+
     const webhookUrl = Deno.env.get('N8N_AUDIT_WEBHOOK_URL');
     if (!webhookUrl) {
       console.error('run-audit: N8N_AUDIT_WEBHOOK_URL not configured');
@@ -97,16 +138,6 @@ Deno.serve(async (req) => {
     const callbackSecret = Deno.env.get('N8N_CALLBACK_SECRET');
     if (!callbackSecret) {
       console.error('run-audit: N8N_CALLBACK_SECRET not configured');
-      return new Response(
-        JSON.stringify({ error: 'Service temporarily unavailable' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Get Supabase URL for n8n to call back
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    if (!supabaseUrl) {
-      console.error('run-audit: SUPABASE_URL not configured');
       return new Response(
         JSON.stringify({ error: 'Service temporarily unavailable' }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -148,6 +179,30 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // ===== AUTHORIZATION CHECK: Verify audit ownership =====
+    const { data: audit, error: auditError } = await supabase
+      .from('audits')
+      .select('user_id')
+      .eq('id', audit_id)
+      .single();
+
+    if (auditError || !audit) {
+      console.error('run-audit: Audit not found', auditError);
+      return new Response(
+        JSON.stringify({ error: 'Audit not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (audit.user_id !== userId) {
+      console.error(`run-audit: User ${userId} attempted to access audit owned by ${audit.user_id}`);
+      return new Response(
+        JSON.stringify({ error: 'Access denied' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // ===== END AUTHORIZATION CHECK =====
 
     // Validate and sanitize files
     const validation = validateFiles(files);
@@ -211,7 +266,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('run-audit: Unexpected error:', errorMessage);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: errorMessage }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
