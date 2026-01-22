@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, X, Zap } from "lucide-react";
+import { Check, X, Zap, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -10,9 +11,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
+import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { useToast } from "@/hooks/use-toast";
 import { PLAN_CREDIT_RATES } from "@/lib/nlocCalculator";
-import { useCashfreeCheckout } from "@/hooks/useCashfreeCheckout";
+import { useCashfreeSubscription } from "@/hooks/useCashfreeSubscription";
+import { format } from "date-fns";
 
 interface PricingFeature {
   text: string;
@@ -105,23 +108,44 @@ const Pricing = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
   const [downgradeModalOpen, setDowngradeModalOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [targetDowngradePlan, setTargetDowngradePlan] = useState<'launch' | 'pro' | 'business'>('launch');
+  const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'business'>('pro');
   
   const { user, loading: authLoading } = useAuth();
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { initiateCheckout, isLoading: checkoutLoading } = useCashfreeCheckout();
+  const { 
+    createSubscription, 
+    upgradeSubscription, 
+    scheduleDowngrade, 
+    cancelPendingDowngrade,
+    isLoading: subscriptionActionLoading,
+    isSchedulingDowngrade 
+  } = useCashfreeSubscription();
 
   const planOrder = { launch: 1, starter: 1, pro: 2, business: 3 };
 
+  // Price lookup
+  const getPlanPrice = (planId: string, period: 'monthly' | 'annual') => {
+    const plan = pricingPlans.find(p => p.id === planId);
+    if (!plan) return 0;
+    if (period === 'annual' && plan.annualPrice) return plan.annualPrice;
+    return plan.monthlyPrice;
+  };
+
   const handleSubscribe = async (planId: 'launch' | 'pro' | 'business') => {
-    await initiateCheckout({
-      orderType: 'subscription',
+    await createSubscription({
       plan: planId,
       billingPeriod: billingPeriod,
     });
+  };
+
+  const handleUpgrade = async () => {
+    setUpgradeModalOpen(false);
+    await upgradeSubscription({ toPlan: targetUpgradePlan });
   };
 
   const getButtonConfig = (planId: 'launch' | 'pro' | 'business') => {
@@ -142,7 +166,7 @@ const Pricing = () => {
         text: "Subscribe",
         variant: (planId === 'pro' ? "default" : "outline") as "default" | "outline",
         action: () => handleSubscribe(planId),
-        disabled: checkoutLoading,
+        disabled: subscriptionActionLoading,
       };
     }
 
@@ -151,8 +175,31 @@ const Pricing = () => {
     const currentOrder = planOrder[normalizedCurrent] || 0;
     const targetOrder = planOrder[planId] || 0;
 
+    // Check for pending downgrade to this plan
+    if (subscription?.pending_plan === planId) {
+      return {
+        text: "Downgrade Scheduled",
+        variant: "outline" as "outline",
+        action: () => cancelPendingDowngrade(),
+        disabled: isSchedulingDowngrade,
+        showPendingBadge: true,
+        pendingDate: subscription.pending_plan_effective_date,
+      };
+    }
+
     // Same plan
     if (normalizedCurrent === planId || (currentPlan === 'starter' && planId === 'launch')) {
+      // Check if cancellation is pending
+      if (subscription?.cancel_at_period_end) {
+        return {
+          text: "Cancelling",
+          variant: "outline" as "outline",
+          action: null,
+          disabled: true,
+          showCancelBadge: true,
+          cancelDate: subscription.current_period_end,
+        };
+      }
       return {
         text: "Current Plan",
         variant: "outline" as "outline",
@@ -166,8 +213,11 @@ const Pricing = () => {
       return {
         text: "Upgrade",
         variant: "default" as "default",
-        action: () => handleSubscribe(planId),
-        disabled: checkoutLoading,
+        action: () => {
+          setTargetUpgradePlan(planId as 'pro' | 'business');
+          setUpgradeModalOpen(true);
+        },
+        disabled: subscriptionActionLoading,
       };
     }
 
@@ -179,17 +229,21 @@ const Pricing = () => {
         setTargetDowngradePlan(planId);
         setDowngradeModalOpen(true);
       },
-      disabled: false,
+      disabled: isSchedulingDowngrade,
     };
   };
 
-  const handleConfirmDowngrade = async () => {
+  const handleConfirmDowngrade = () => {
     setDowngradeModalOpen(false);
-    await initiateCheckout({
-      orderType: 'subscription',
-      plan: targetDowngradePlan,
-      billingPeriod: billingPeriod,
-    });
+    scheduleDowngrade(targetDowngradePlan);
+  };
+
+  const getProrationAmount = () => {
+    const currentPlan = subscription?.plan || 'starter';
+    const normalizedCurrent = currentPlan === 'starter' ? 'launch' : currentPlan;
+    const currentPrice = getPlanPrice(normalizedCurrent, billingPeriod);
+    const newPrice = getPlanPrice(targetUpgradePlan, billingPeriod);
+    return (newPrice - currentPrice) * 100; // Convert to cents
   };
 
   const getDiscountedPrice = () => {
@@ -204,7 +258,11 @@ const Pricing = () => {
     return plan === 'starter' ? 'launch' : plan as 'launch' | 'pro' | 'business';
   };
 
-  const isLoading = authLoading || subscriptionLoading || creditsLoading || checkoutLoading;
+  const isLoading = authLoading || subscriptionLoading || creditsLoading || subscriptionActionLoading;
+
+  // Check for pending states to show banner
+  const hasPendingDowngrade = subscription?.pending_plan !== null && subscription?.pending_plan !== undefined;
+  const hasPendingCancellation = subscription?.cancel_at_period_end === true;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -409,6 +467,18 @@ const Pricing = () => {
         fromPlan={getCurrentPlanForModal()}
         toPlan={targetDowngradePlan}
         onConfirm={handleConfirmDowngrade}
+      />
+
+      {/* Upgrade Confirmation Modal */}
+      <UpgradeConfirmationModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        fromPlan={getCurrentPlanForModal()}
+        toPlan={targetUpgradePlan}
+        prorationAmount={getProrationAmount()}
+        billingPeriod={billingPeriod}
+        onConfirm={handleUpgrade}
+        isLoading={subscriptionActionLoading}
       />
     </div>
   );
