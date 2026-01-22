@@ -87,12 +87,14 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ERYONIX TECHLABS PRIVATE LIMITED. All rights reserved.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Powering secure deployments worldwide
-          </p>
+          <div className="text-sm text-muted-foreground text-center md:text-left">
+            <p>© {new Date().getFullYear()} ERYONIX TECHLABS PRIVATE LIMITED. All rights reserved.</p>
+            <p className="mt-1">CIN: U72900TG2025PTC195413 | Hyderabad, India</p>
+          </div>
+          <div className="text-sm text-muted-foreground text-center md:text-right">
+            <p>Powering secure deployments worldwide</p>
+            <p className="mt-1">Contact: hello@solarizer.io</p>
+          </div>
         </div>
       </div>
     </footer>
