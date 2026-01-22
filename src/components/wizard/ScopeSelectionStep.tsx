@@ -1,65 +1,239 @@
-import { useState, useMemo } from "react";
-import { ArrowLeft, ArrowRight, CheckSquare, Square, FileCode, Info } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { ArrowLeft, ArrowRight, FileCode, Info, ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-
-interface FileItem {
-  name: string;
-  content: string;
-  path?: string;
-}
+import { FileNode, getAllFiles } from "@/types/files";
 
 interface ScopeSelectionStepProps {
-  files: FileItem[];
+  fileTree: FileNode[];
   selectedScope: string[];
   onScopeChange: (scope: string[]) => void;
   onBack: () => void;
   onProceed: () => void;
 }
 
+interface ScopeTreeItemProps {
+  node: FileNode;
+  depth: number;
+  selectedScope: string[];
+  expandedFolders: Set<string>;
+  onToggleFile: (fileName: string) => void;
+  onToggleFolder: (folderPath: string, fileNames: string[]) => void;
+  onToggleExpand: (folderPath: string) => void;
+  getSolidityFilesInFolder: (node: FileNode) => string[];
+}
+
+const ScopeTreeItem = ({
+  node,
+  depth,
+  selectedScope,
+  expandedFolders,
+  onToggleFile,
+  onToggleFolder,
+  onToggleExpand,
+  getSolidityFilesInFolder,
+}: ScopeTreeItemProps) => {
+  const isFile = node.type === 'file';
+  const isSolidity = node.name.endsWith('.sol');
+  const isExpanded = expandedFolders.has(node.path);
+
+  // For files
+  if (isFile) {
+    if (!isSolidity) return null; // Only show Solidity files
+    
+    const isSelected = selectedScope.includes(node.name);
+    const lineCount = node.content?.split('\n').length || 0;
+    const bytes = new Blob([node.content || '']).size;
+    const fileSize = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+
+    return (
+      <div
+        onClick={() => onToggleFile(node.name)}
+        className={cn(
+          "flex items-center gap-3 py-2 px-3 cursor-pointer transition-colors rounded-md mx-1",
+          isSelected 
+            ? "bg-primary/10 hover:bg-primary/15" 
+            : "hover:bg-muted/50"
+        )}
+        style={{ paddingLeft: `${depth * 20 + 12}px` }}
+      >
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onToggleFile(node.name)}
+          className="data-[state=checked]:bg-primary"
+        />
+        <FileCode className="w-4 h-4 text-primary shrink-0" />
+        <span className={cn(
+          "text-sm font-medium truncate flex-1",
+          isSelected ? "text-foreground" : "text-muted-foreground"
+        )}>
+          {node.name}
+        </span>
+        <div className="text-right shrink-0 text-xs text-muted-foreground">
+          <span>{lineCount} lines</span>
+          <span className="mx-1">·</span>
+          <span>{fileSize}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // For folders
+  const solidityFilesInFolder = getSolidityFilesInFolder(node);
+  if (solidityFilesInFolder.length === 0) return null; // Skip folders with no Solidity files
+
+  const selectedCount = solidityFilesInFolder.filter(f => selectedScope.includes(f)).length;
+  const allSelected = selectedCount === solidityFilesInFolder.length;
+  const someSelected = selectedCount > 0 && selectedCount < solidityFilesInFolder.length;
+
+  return (
+    <div>
+      <div
+        className={cn(
+          "flex items-center gap-2 py-2 px-3 cursor-pointer transition-colors rounded-md mx-1 hover:bg-muted/50",
+          someSelected && "bg-muted/30"
+        )}
+        style={{ paddingLeft: `${depth * 20 + 12}px` }}
+      >
+        <Checkbox
+          checked={allSelected}
+          // @ts-ignore - indeterminate is valid
+          data-state={someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
+          onCheckedChange={() => onToggleFolder(node.path, solidityFilesInFolder)}
+          className={cn(
+            "data-[state=checked]:bg-primary",
+            someSelected && "data-[state=indeterminate]:bg-primary/50"
+          )}
+        />
+        <div 
+          className="flex items-center gap-2 flex-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand(node.path);
+          }}
+        >
+          {isExpanded ? (
+            <>
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <FolderOpen className="w-4 h-4 text-amber-500" />
+            </>
+          ) : (
+            <>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              <Folder className="w-4 h-4 text-amber-500" />
+            </>
+          )}
+          <span className="text-sm font-medium text-foreground truncate">
+            {node.name}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            ({selectedCount}/{solidityFilesInFolder.length})
+          </span>
+        </div>
+      </div>
+      
+      {isExpanded && node.children && (
+        <div>
+          {node.children.map((child) => (
+            <ScopeTreeItem
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              selectedScope={selectedScope}
+              expandedFolders={expandedFolders}
+              onToggleFile={onToggleFile}
+              onToggleFolder={onToggleFolder}
+              onToggleExpand={onToggleExpand}
+              getSolidityFilesInFolder={getSolidityFilesInFolder}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ScopeSelectionStep = ({
-  files,
+  fileTree,
   selectedScope,
   onScopeChange,
   onBack,
   onProceed,
 }: ScopeSelectionStepProps) => {
-  // Filter to only show Solidity files
-  const solidityFiles = useMemo(() => 
-    files.filter(f => f.name.endsWith('.sol')),
-    [files]
+  // Get all Solidity files flattened
+  const allSolidityFiles = useMemo(() => 
+    getAllFiles(fileTree).filter(f => f.name.endsWith('.sol')),
+    [fileTree]
   );
 
-  const allSelected = solidityFiles.length > 0 && selectedScope.length === solidityFiles.length;
-  const someSelected = selectedScope.length > 0 && selectedScope.length < solidityFiles.length;
+  const allSolidityFileNames = useMemo(() => 
+    allSolidityFiles.map(f => f.name),
+    [allSolidityFiles]
+  );
+
+  // Track expanded folders
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
+    // Auto-expand root folders
+    const rootFolders = fileTree.filter(n => n.type === 'folder').map(n => n.path);
+    return new Set(rootFolders);
+  });
+
+  const allSelected = allSolidityFileNames.length > 0 && selectedScope.length === allSolidityFileNames.length;
+  const someSelected = selectedScope.length > 0 && selectedScope.length < allSolidityFileNames.length;
 
   const handleToggleAll = () => {
     if (allSelected) {
       onScopeChange([]);
     } else {
-      onScopeChange(solidityFiles.map(f => f.name));
+      onScopeChange(allSolidityFileNames);
     }
   };
 
-  const handleToggleFile = (fileName: string) => {
+  const handleToggleFile = useCallback((fileName: string) => {
     if (selectedScope.includes(fileName)) {
       onScopeChange(selectedScope.filter(f => f !== fileName));
     } else {
       onScopeChange([...selectedScope, fileName]);
     }
-  };
+  }, [selectedScope, onScopeChange]);
 
-  const getFileSize = (content: string) => {
-    const bytes = new Blob([content]).size;
-    if (bytes < 1024) return `${bytes} B`;
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  };
+  const handleToggleFolder = useCallback((folderPath: string, fileNames: string[]) => {
+    const allInFolder = fileNames.every(f => selectedScope.includes(f));
+    if (allInFolder) {
+      // Deselect all files in folder
+      onScopeChange(selectedScope.filter(f => !fileNames.includes(f)));
+    } else {
+      // Select all files in folder
+      const newScope = new Set([...selectedScope, ...fileNames]);
+      onScopeChange(Array.from(newScope));
+    }
+  }, [selectedScope, onScopeChange]);
 
-  const getLineCount = (content: string) => {
-    return content.split('\n').length;
-  };
+  const handleToggleExpand = useCallback((folderPath: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderPath)) {
+        next.delete(folderPath);
+      } else {
+        next.add(folderPath);
+      }
+      return next;
+    });
+  }, []);
+
+  // Get all Solidity file names within a folder (recursively)
+  const getSolidityFilesInFolder = useCallback((node: FileNode): string[] => {
+    if (node.type === 'file') {
+      return node.name.endsWith('.sol') ? [node.name] : [];
+    }
+    if (!node.children) return [];
+    return node.children.flatMap(child => getSolidityFilesInFolder(child));
+  }, []);
+
+  // Check if tree has any structure (folders) or just flat files
+  const hasTreeStructure = fileTree.some(n => n.type === 'folder');
 
   return (
     <div className="space-y-6">
@@ -69,8 +243,7 @@ const ScopeSelectionStep = ({
           Select Audit Scope
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Choose which contracts are in scope for security analysis. 
-          Only in-scope files count toward your nLOC credits.
+          Choose which contracts are in scope for security analysis.
         </p>
       </div>
 
@@ -79,9 +252,10 @@ const ScopeSelectionStep = ({
         <Info className="w-5 h-5 text-primary mt-0.5 shrink-0" />
         <div className="text-sm text-muted-foreground">
           <p>
-            <span className="font-medium text-foreground">All files</span> will be sent for context, 
-            but only <span className="font-medium text-foreground">in-scope files</span> will be 
-            analyzed for vulnerabilities and count toward your credits.
+            <span className="font-medium text-foreground">In-scope files</span> are fully analyzed 
+            for vulnerabilities (100% credits). 
+            <span className="font-medium text-foreground"> Out-of-scope files</span> are sent as 
+            context only (35% credits).
           </p>
         </div>
       </div>
@@ -93,6 +267,8 @@ const ScopeSelectionStep = ({
           <div className="flex items-center gap-3">
             <Checkbox
               checked={allSelected}
+              // @ts-ignore
+              data-state={someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"}
               onCheckedChange={handleToggleAll}
               className="data-[state=checked]:bg-primary"
             />
@@ -101,31 +277,52 @@ const ScopeSelectionStep = ({
             </span>
           </div>
           <div className="text-sm text-muted-foreground">
-            {selectedScope.length} of {solidityFiles.length} selected
+            {selectedScope.length} of {allSolidityFileNames.length} in scope
           </div>
         </div>
 
-        {/* File List */}
+        {/* File Tree */}
         <ScrollArea className="h-[300px]">
-          {solidityFiles.length === 0 ? (
+          {allSolidityFiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-12 text-center">
               <FileCode className="w-12 h-12 text-muted-foreground mb-3" />
               <p className="text-sm text-muted-foreground">
                 No Solidity files found in your project
               </p>
             </div>
+          ) : hasTreeStructure ? (
+            <div className="py-2">
+              {fileTree.map((node) => (
+                <ScopeTreeItem
+                  key={node.id}
+                  node={node}
+                  depth={0}
+                  selectedScope={selectedScope}
+                  expandedFolders={expandedFolders}
+                  onToggleFile={handleToggleFile}
+                  onToggleFolder={handleToggleFolder}
+                  onToggleExpand={handleToggleExpand}
+                  getSolidityFilesInFolder={getSolidityFilesInFolder}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="divide-y divide-border">
-              {solidityFiles.map((file) => {
+            // Flat list fallback for files without folder structure
+            <div className="py-2">
+              {allSolidityFiles.map((file) => {
                 const isSelected = selectedScope.includes(file.name);
+                const lineCount = file.content?.split('\n').length || 0;
+                const bytes = new Blob([file.content || '']).size;
+                const fileSize = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+
                 return (
                   <div
-                    key={file.name}
+                    key={file.id}
                     onClick={() => handleToggleFile(file.name)}
                     className={cn(
-                      "flex items-center gap-4 p-4 cursor-pointer transition-colors",
+                      "flex items-center gap-3 py-2 px-4 cursor-pointer transition-colors",
                       isSelected 
-                        ? "bg-primary/5 hover:bg-primary/10" 
+                        ? "bg-primary/10 hover:bg-primary/15" 
                         : "hover:bg-muted/50"
                     )}
                   >
@@ -134,29 +331,17 @@ const ScopeSelectionStep = ({
                       onCheckedChange={() => handleToggleFile(file.name)}
                       className="data-[state=checked]:bg-primary"
                     />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <FileCode className="w-4 h-4 text-primary shrink-0" />
-                        <span className={cn(
-                          "text-sm font-medium truncate",
-                          isSelected ? "text-foreground" : "text-muted-foreground"
-                        )}>
-                          {file.name}
-                        </span>
-                      </div>
-                      {file.path && file.path !== file.name && (
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {file.path}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs text-muted-foreground">
-                        {getLineCount(file.content)} lines
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {getFileSize(file.content)}
-                      </p>
+                    <FileCode className="w-4 h-4 text-primary shrink-0" />
+                    <span className={cn(
+                      "text-sm font-medium truncate flex-1",
+                      isSelected ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                      {file.name}
+                    </span>
+                    <div className="text-right shrink-0 text-xs text-muted-foreground">
+                      <span>{lineCount} lines</span>
+                      <span className="mx-1">·</span>
+                      <span>{fileSize}</span>
                     </div>
                   </div>
                 );
