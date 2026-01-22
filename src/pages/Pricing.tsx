@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, X, Zap, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { PLAN_CREDIT_RATES } from "@/lib/nlocCalculator";
 import { useCashfreeSubscription } from "@/hooks/useCashfreeSubscription";
 import { format } from "date-fns";
+import { currencies, Currency, defaultCurrency, convertPrice, formatPrice, getCurrencyByCode } from "@/lib/currencyConfig";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PricingFeature {
   text: string;
@@ -106,11 +108,26 @@ const pricingPlans: PricingPlan[] = [
 
 const Pricing = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(defaultCurrency);
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
   const [downgradeModalOpen, setDowngradeModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [targetDowngradePlan, setTargetDowngradePlan] = useState<'launch' | 'pro' | 'business'>('launch');
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'business'>('pro');
+
+  // Load saved currency preference
+  useEffect(() => {
+    const saved = localStorage.getItem('preferredCurrency');
+    if (saved) {
+      setSelectedCurrency(getCurrencyByCode(saved));
+    }
+  }, []);
+
+  const handleCurrencyChange = (code: string) => {
+    const currency = getCurrencyByCode(code);
+    setSelectedCurrency(currency);
+    localStorage.setItem('preferredCurrency', code);
+  };
   
   const { user, loading: authLoading } = useAuth();
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
@@ -282,6 +299,26 @@ const Pricing = () => {
           </p>
         </div>
 
+        {/* Currency Selector */}
+        <div className="flex items-center justify-center gap-3 mb-4 animate-in fade-in duration-500" style={{ animationDelay: "150ms" }}>
+          <span className="text-sm text-muted-foreground">Display prices in:</span>
+          <Select value={selectedCurrency.code} onValueChange={handleCurrencyChange}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {currencies.map((currency) => (
+                <SelectItem key={currency.code} value={currency.code}>
+                  {currency.symbol} {currency.code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-xs text-muted-foreground text-center mb-6 animate-in fade-in duration-500" style={{ animationDelay: "175ms" }}>
+          *Prices shown are approximate. All payments are processed in INR.
+        </p>
+
         {/* Billing Toggle */}
         <div className="flex items-center justify-center gap-4 mb-12 animate-in fade-in duration-500" style={{ animationDelay: "200ms" }}>
           <span className={cn(
@@ -355,7 +392,7 @@ const Pricing = () => {
                 <div className="mb-6">
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-bold">
-                      ${displayPrice?.toLocaleString()}
+                      {formatPrice(convertPrice(displayPrice || 0, selectedCurrency), selectedCurrency)}
                     </span>
                     <span className="text-muted-foreground">{priceLabel}</span>
                   </div>
@@ -423,8 +460,8 @@ const Pricing = () => {
           </div>
           <p className="text-muted-foreground mb-4">
             {user && subscription
-              ? `Purchase additional Power up Credits at $${getDiscountedPrice()}/credit based on your current plan.`
-              : `Purchase additional Power up Credits starting at $5/credit with a subscription.`
+              ? `Purchase additional Power up Credits at ${formatPrice(convertPrice(getDiscountedPrice(), selectedCurrency), selectedCurrency)}/credit based on your current plan.`
+              : `Purchase additional Power up Credits starting at ${formatPrice(convertPrice(5, selectedCurrency), selectedCurrency)}/credit with a subscription.`
             }
           </p>
           <Button
