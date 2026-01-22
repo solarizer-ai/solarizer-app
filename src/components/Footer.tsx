@@ -88,7 +88,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Solarizer. All rights reserved.
+            © {new Date().getFullYear()} ERYONIX TECHLABS PRIVATE LIMITED. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
             Powering secure deployments worldwide
