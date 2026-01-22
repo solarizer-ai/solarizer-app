@@ -8,16 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock, Link2, LogOut } from "lucide-react";
+import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock, Link2, LogOut, AlertCircle, Clock, XCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useCashfreeSubscription } from "@/hooks/useCashfreeSubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { format } from "date-fns";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { CancelSubscriptionModal } from "@/components/CancelSubscriptionModal";
 import { GitHubIntegration } from "@/components/settings/GitHubIntegration";
 
 interface Profile {
@@ -38,10 +40,19 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
   const { canShareReports } = useFeatureAccess();
+  const { 
+    cancelSubscription, 
+    reactivateSubscription, 
+    cancelPendingDowngrade,
+    isLoading: subscriptionActionLoading,
+    isReactivating,
+    isCancellingDowngrade,
+  } = useCashfreeSubscription();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -102,17 +113,38 @@ const Settings = () => {
   const isPaid = isPro || isBusiness;
   const creditsRemaining = credits?.credits_remaining || 0;
   const creditsUsed = credits?.credits_used_this_period || 0;
+  
+  // New subscription status flags
+  const hasPendingDowngrade = subscription?.pending_plan !== null && subscription?.pending_plan !== undefined;
+  const hasPendingCancellation = subscription?.cancel_at_period_end === true;
+  const hasPaymentMethod = subscription?.payment_method_saved === true;
 
   const getPlanDisplayName = () => {
+    if (subscription?.pending_plan) {
+      const pendingName = subscription.pending_plan === 'business' ? 'Business' : 
+                          subscription.pending_plan === 'pro' ? 'Pro' : 'Launch';
+      return `${plan === 'business' ? 'Business' : plan === 'pro' ? 'Pro' : 'Launch'} → ${pendingName}`;
+    }
     if (plan === 'business') return 'Business';
     if (plan === 'pro') return 'Pro';
     return 'Launch';
   };
 
   const getPlanDescription = () => {
+    if (hasPendingCancellation && subscription?.current_period_end) {
+      return `Access until ${format(new Date(subscription.current_period_end), "MMM d, yyyy")}`;
+    }
+    if (hasPendingDowngrade && subscription?.pending_plan_effective_date) {
+      return `Changes on ${format(new Date(subscription.pending_plan_effective_date), "MMM d, yyyy")}`;
+    }
     if (plan === 'business') return 'Unlimited scans, 150 base credits, team collaboration';
     if (plan === 'pro') return 'Unlimited scans with 150 credits monthly allowance';
     return `${PLAN_LIMITS.starter.nlocPerScan} nLOC per scan limit, 1 file per scan`;
+  };
+
+  const handleCancelSubscription = async () => {
+    setShowCancelModal(false);
+    await cancelSubscription();
   };
 
   if (loading) {
@@ -253,7 +285,48 @@ const Settings = () => {
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-4">
+                      {/* Pending Status Alerts */}
+                      {hasPendingCancellation && (
+                        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-3">
+                          <XCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-destructive">Cancellation Scheduled</p>
+                            <p className="text-xs text-muted-foreground">
+                              Your subscription ends on {subscription?.current_period_end && format(new Date(subscription.current_period_end), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => reactivateSubscription()}
+                            disabled={isReactivating}
+                          >
+                            {isReactivating ? "..." : "Reactivate"}
+                          </Button>
+                        </div>
+                      )}
+
+                      {hasPendingDowngrade && !hasPendingCancellation && (
+                        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+                          <Clock className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Downgrade Scheduled</p>
+                            <p className="text-xs text-muted-foreground">
+                              Changes to {subscription?.pending_plan} on {subscription?.pending_plan_effective_date && format(new Date(subscription.pending_plan_effective_date), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => cancelPendingDowngrade()}
+                            disabled={isCancellingDowngrade}
+                          >
+                            {isCancellingDowngrade ? "..." : "Cancel"}
+                          </Button>
+                        </div>
+                      )}
+
                       {!isPaid && (
                         <Button onClick={() => navigate("/pricing")} className="gap-2">
                           <Zap className="w-4 h-4" />
@@ -261,15 +334,27 @@ const Settings = () => {
                           <ArrowUpRight className="w-4 h-4" />
                         </Button>
                       )}
-                      {isPaid && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="w-4 h-4" />
-                          <span>
-                            {isPro ? "$199" : "$499"}/month
-                            {subscription?.current_period_end && (
-                              <> • Next billing: {format(new Date(subscription.current_period_end), "MMM d, yyyy")}</>
-                            )}
-                          </span>
+                      
+                      {isPaid && !hasPendingCancellation && (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            <span>
+                              {isPro ? "$199" : "$499"}/{subscription?.billing_period === 'annual' ? 'year' : 'month'}
+                              {subscription?.current_period_end && (
+                                <> • Next billing: {format(new Date(subscription.current_period_end), "MMM d, yyyy")}</>
+                              )}
+                            </span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setShowCancelModal(true)}
+                            disabled={subscriptionActionLoading}
+                          >
+                            Cancel Subscription
+                          </Button>
                         </div>
                       )}
                     </CardContent>
@@ -487,6 +572,16 @@ const Settings = () => {
       <PurchasePowerUpModal
         open={showPowerUpModal}
         onOpenChange={setShowPowerUpModal}
+      />
+
+      {/* Cancel Subscription Modal */}
+      <CancelSubscriptionModal
+        open={showCancelModal}
+        onOpenChange={setShowCancelModal}
+        accessUntil={subscription?.current_period_end ? new Date(subscription.current_period_end) : null}
+        currentPlan={subscription?.plan || 'starter'}
+        onConfirm={handleCancelSubscription}
+        isLoading={subscriptionActionLoading}
       />
     </div>
   );
