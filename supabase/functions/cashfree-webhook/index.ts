@@ -63,8 +63,10 @@ Deno.serve(async (req) => {
     const eventType = payload.type;
     const data = payload.data;
 
-    console.log("Webhook received:", eventType, data?.order?.order_id);
+    console.log("Webhook received:", eventType, JSON.stringify(data, null, 2));
 
+    // ==================== PAYMENT EVENTS (One-time orders) ====================
+    
     if (eventType === "PAYMENT_SUCCESS" || eventType === "PAYMENT_SUCCESS_WEBHOOK") {
       const orderId = data.order?.order_id;
       const cfPaymentId = data.payment?.cf_payment_id?.toString();
@@ -77,7 +79,41 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Process payment with idempotency (the RPC handles duplicate calls)
+      // Check if this is an upgrade order
+      const { data: order } = await supabaseClient
+        .from("payment_orders")
+        .select("order_type, plan, billing_period, user_id")
+        .eq("order_id", orderId)
+        .single();
+
+      if (order?.order_type === "upgrade") {
+        // Handle upgrade completion - update plan immediately
+        const { data: result, error } = await supabaseClient.rpc("process_upgrade_success", {
+          p_user_id: order.user_id,
+          p_new_plan: order.plan,
+          p_new_cf_subscription_id: null, // Will be set when new subscription activates
+          p_new_cf_plan_id: `solarizer_${order.plan}_${order.billing_period}`,
+        });
+
+        if (error) {
+          console.error("Error processing upgrade:", error);
+        } else {
+          console.log("Upgrade processed:", result);
+        }
+
+        // Still process the payment order
+        await supabaseClient.rpc("process_payment_success", {
+          p_order_id: orderId,
+          p_cf_payment_id: cfPaymentId,
+        });
+
+        return new Response(
+          JSON.stringify({ success: true, type: "upgrade", result }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Process regular payment with idempotency
       const { data: result, error } = await supabaseClient.rpc("process_payment_success", {
         p_order_id: orderId,
         p_cf_payment_id: cfPaymentId,
@@ -112,10 +148,164 @@ Deno.serve(async (req) => {
       );
     }
 
-    // For other events, just acknowledge
+    // ==================== SUBSCRIPTION EVENTS ====================
+
+    if (eventType === "SUBSCRIPTION_ACTIVATED" || eventType === "SUBSCRIPTION_NEW_ACTIVATION") {
+      const cfSubscriptionId = data.cf_subscription_id || data.subscription?.cf_subscription_id;
+      const customerId = data.customer_details?.customer_id || data.subscription?.customer_details?.customer_id;
+      const planId = data.plan_details?.plan_id || data.subscription?.plan_details?.plan_id;
+      
+      if (!cfSubscriptionId || !customerId) {
+        console.error("Missing subscription data:", { cfSubscriptionId, customerId });
+        return new Response(
+          JSON.stringify({ error: "Missing subscription data" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Extract plan and billing period from plan_id (e.g., "solarizer_pro_monthly")
+      let plan = "pro";
+      let billingPeriod = "monthly";
+      if (planId) {
+        const parts = planId.split("_");
+        if (parts.length >= 3) {
+          plan = parts[1]; // "launch", "pro", or "business"
+          billingPeriod = parts[2]; // "monthly" or "annual"
+        }
+      }
+
+      // Activate subscription in database
+      const { data: result, error } = await supabaseClient.rpc("activate_subscription", {
+        p_user_id: customerId,
+        p_cf_subscription_id: cfSubscriptionId,
+        p_cf_plan_id: planId,
+        p_billing_period: billingPeriod,
+      });
+
+      if (error) {
+        console.error("Error activating subscription:", error);
+        return new Response(
+          JSON.stringify({ error: "Failed to activate subscription" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Log the event
+      await supabaseClient
+        .from("cf_subscription_events")
+        .insert({
+          cf_subscription_id: cfSubscriptionId,
+          event_type: eventType,
+          status: "activated",
+          raw_payload: payload,
+        });
+
+      console.log("Subscription activated:", result);
+      return new Response(
+        JSON.stringify({ success: true, result }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (eventType === "SUBSCRIPTION_PAYMENT_SUCCESS" || eventType === "SUBSCRIPTION_CHARGED") {
+      const cfSubscriptionId = data.cf_subscription_id || data.subscription?.cf_subscription_id;
+      const cfPaymentId = data.cf_payment_id?.toString() || data.payment?.cf_payment_id?.toString();
+      const amountInr = data.subscription_amount || data.payment?.payment_amount;
+
+      if (!cfSubscriptionId) {
+        console.error("Missing cf_subscription_id for renewal");
+        return new Response(
+          JSON.stringify({ error: "Missing subscription ID" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Process subscription renewal (handles credits, downgrade, cancellation)
+      const { data: result, error } = await supabaseClient.rpc("process_subscription_renewal", {
+        p_cf_subscription_id: cfSubscriptionId,
+        p_cf_payment_id: cfPaymentId || `charge_${Date.now()}`,
+        p_amount_inr: amountInr || null,
+      });
+
+      if (error) {
+        console.error("Error processing subscription renewal:", error);
+        return new Response(
+          JSON.stringify({ error: "Failed to process renewal" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Subscription renewal processed:", result);
+      return new Response(
+        JSON.stringify({ success: true, result }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (eventType === "SUBSCRIPTION_PAYMENT_FAILED" || eventType === "SUBSCRIPTION_PAYMENT_DECLINED") {
+      const cfSubscriptionId = data.cf_subscription_id || data.subscription?.cf_subscription_id;
+      const cfPaymentId = data.cf_payment_id?.toString() || data.payment?.cf_payment_id?.toString();
+
+      if (cfSubscriptionId) {
+        const { error } = await supabaseClient.rpc("handle_subscription_payment_failed", {
+          p_cf_subscription_id: cfSubscriptionId,
+          p_cf_payment_id: cfPaymentId || `failed_${Date.now()}`,
+        });
+
+        if (error) {
+          console.error("Error handling payment failure:", error);
+        } else {
+          console.log("Subscription payment failed recorded:", cfSubscriptionId);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, status: "payment_failed" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (eventType === "SUBSCRIPTION_CANCELLED" || eventType === "SUBSCRIPTION_EXPIRED") {
+      const cfSubscriptionId = data.cf_subscription_id || data.subscription?.cf_subscription_id;
+
+      if (cfSubscriptionId) {
+        // Log the event
+        await supabaseClient
+          .from("cf_subscription_events")
+          .insert({
+            cf_subscription_id: cfSubscriptionId,
+            event_type: eventType,
+            status: eventType.toLowerCase(),
+            raw_payload: payload,
+          });
+
+        // Update subscription status if not already handled by cancellation flow
+        const { data: sub } = await supabaseClient
+          .from("subscriptions")
+          .select("status")
+          .eq("cf_subscription_id", cfSubscriptionId)
+          .single();
+
+        if (sub && sub.status !== "canceled") {
+          await supabaseClient
+            .from("subscriptions")
+            .update({ status: "canceled", updated_at: new Date().toISOString() })
+            .eq("cf_subscription_id", cfSubscriptionId);
+        }
+
+        console.log("Subscription cancelled/expired:", cfSubscriptionId);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, status: eventType.toLowerCase() }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // For other events, just acknowledge and log
     console.log("Unhandled event type:", eventType);
     return new Response(
-      JSON.stringify({ success: true, message: "Event acknowledged" }),
+      JSON.stringify({ success: true, message: "Event acknowledged", eventType }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

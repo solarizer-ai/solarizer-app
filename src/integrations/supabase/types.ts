@@ -109,6 +109,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cf_subscription_events: {
+        Row: {
+          amount_inr: number | null
+          cf_payment_id: string | null
+          cf_subscription_id: string
+          created_at: string | null
+          event_type: string
+          id: string
+          processed_at: string | null
+          raw_payload: Json | null
+          status: string | null
+        }
+        Insert: {
+          amount_inr?: number | null
+          cf_payment_id?: string | null
+          cf_subscription_id: string
+          created_at?: string | null
+          event_type: string
+          id?: string
+          processed_at?: string | null
+          raw_payload?: Json | null
+          status?: string | null
+        }
+        Update: {
+          amount_inr?: number | null
+          cf_payment_id?: string | null
+          cf_subscription_id?: string
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          processed_at?: string | null
+          raw_payload?: Json | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       finding_comments: {
         Row: {
           content: string
@@ -448,30 +484,51 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_period: string | null
+          cancel_at_period_end: boolean | null
+          cf_plan_id: string | null
+          cf_subscription_id: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string
           id: string
+          payment_method_saved: boolean | null
+          pending_plan: Database["public"]["Enums"]["subscription_plan"] | null
+          pending_plan_effective_date: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string
           user_id: string
         }
         Insert: {
+          billing_period?: string | null
+          cancel_at_period_end?: boolean | null
+          cf_plan_id?: string | null
+          cf_subscription_id?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string
           id?: string
+          payment_method_saved?: boolean | null
+          pending_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          pending_plan_effective_date?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           user_id: string
         }
         Update: {
+          billing_period?: string | null
+          cancel_at_period_end?: boolean | null
+          cf_plan_id?: string | null
+          cf_subscription_id?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string
           id?: string
+          payment_method_saved?: boolean | null
+          pending_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          pending_plan_effective_date?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
@@ -506,6 +563,17 @@ export type Database = {
     }
     Functions: {
       accept_share_invitation: { Args: { p_share_id: string }; Returns: Json }
+      activate_subscription: {
+        Args: {
+          p_billing_period?: string
+          p_cf_plan_id: string
+          p_cf_subscription_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      cancel_pending_downgrade: { Args: never; Returns: Json }
+      cancel_subscription: { Args: never; Returns: Json }
       create_payment_order: {
         Args: {
           p_amount_cents: number
@@ -544,6 +612,10 @@ export type Database = {
           project_name: string
         }[]
       }
+      handle_subscription_payment_failed: {
+        Args: { p_cf_payment_id: string; p_cf_subscription_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -556,6 +628,23 @@ export type Database = {
         Args: { p_cf_payment_id: string; p_order_id: string }
         Returns: Json
       }
+      process_subscription_renewal: {
+        Args: {
+          p_amount_inr?: number
+          p_cf_payment_id: string
+          p_cf_subscription_id: string
+        }
+        Returns: Json
+      }
+      process_upgrade_success: {
+        Args: {
+          p_new_cf_plan_id: string
+          p_new_cf_subscription_id: string
+          p_new_plan: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       purchase_power_up: {
         Args: { p_nloc_amount: number; p_price_cents: number }
         Returns: Json
@@ -564,6 +653,7 @@ export type Database = {
         Args: { p_billing_period: string; p_plan: string }
         Returns: Json
       }
+      reactivate_subscription: { Args: never; Returns: Json }
       refund_credits: {
         Args: {
           p_is_starter?: boolean
@@ -572,6 +662,7 @@ export type Database = {
         }
         Returns: Json
       }
+      schedule_downgrade: { Args: { p_target_plan: string }; Returns: Json }
       search_user_by_email: {
         Args: { search_email: string }
         Returns: {
