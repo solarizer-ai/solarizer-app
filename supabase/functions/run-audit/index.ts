@@ -14,6 +14,7 @@ interface AuditRequest {
   audit_id: string;
   project_name: string;
   files: FileInput[];
+  scope?: string[];  // In-scope file names for audit
   additional_context?: string;
   metadata: {
     nloc_count: number;
@@ -124,7 +125,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { audit_id, project_name, files, additional_context, metadata } = body;
+    const { audit_id, project_name, files, scope, additional_context, metadata } = body;
 
     // Validate required fields
     if (!audit_id || typeof audit_id !== 'string') {
@@ -178,6 +179,7 @@ Deno.serve(async (req) => {
         audit_id,
         project_name,
         files: validation.sanitizedFiles,
+        scope: scope || validation.sanitizedFiles!.map(f => f.name),  // Default to all files if not specified
         additional_context: additional_context || '',
         metadata,
         // Include callback info for n8n to save findings incrementally

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { FileNode, createFileNode, getAllFiles, mergeFileTrees } from "@/types/files";
 import ProjectNameStep from "./wizard/ProjectNameStep";
 import UploadMethodStep, { UploadMethod } from "./wizard/UploadMethodStep";
+import ScopeSelectionStep from "./wizard/ScopeSelectionStep";
 import EstimatorStep from "./wizard/EstimatorStep";
 import ContextStep from "./wizard/ContextStep";
 import GitHubImportStep from "./wizard/GitHubImportStep";
@@ -19,6 +20,7 @@ interface AuditWizardProps {
     code: string; 
     clocResult?: ClocResult;
     additionalContext?: string;
+    scope?: string[];
   }) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -29,7 +31,7 @@ interface AuditWizardProps {
   onProjectNameChange?: (name: string) => void;
 }
 
-type WizardStep = 'name' | 'method' | 'input' | 'estimate' | 'context';
+type WizardStep = 'name' | 'method' | 'input' | 'scope' | 'estimate' | 'context';
 
 const SAMPLE_CODE = `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
@@ -55,6 +57,7 @@ const AuditWizard = ({
   const [editorCode, setEditorCode] = useState(SAMPLE_CODE);
   const [additionalContext, setAdditionalContext] = useState("");
   const [clocResult, setClocResult] = useState<ClocResult | null>(null);
+  const [selectedScope, setSelectedScope] = useState<string[]>([]);
 
   const handleProjectNameChange = (name: string) => {
     setProjectName(name);
@@ -75,14 +78,25 @@ const AuditWizard = ({
     } else if (step === 'input') {
       setStep('method');
       setFiles([]);
-    } else if (step === 'estimate') {
+      setSelectedScope([]);
+    } else if (step === 'scope') {
       setStep('input');
+    } else if (step === 'estimate') {
+      setStep('scope');
     } else if (step === 'context') {
       setStep('estimate');
     }
   };
 
-  const handleProceedToEstimate = () => {
+  const handleProceedToScope = () => {
+    // Auto-select all Solidity files when entering scope step
+    const allFiles = getAllFiles(files);
+    const solFiles = allFiles.filter(f => f.name.endsWith('.sol')).map(f => f.name);
+    setSelectedScope(solFiles);
+    setStep('scope');
+  };
+
+  const handleScopeProceed = () => {
     setStep('estimate');
   };
 
@@ -101,6 +115,7 @@ const AuditWizard = ({
       code: combinedCode || editorCode,
       clocResult: clocResult!,
       additionalContext: additionalContext || undefined,
+      scope: selectedScope,
     });
   };
 
@@ -111,7 +126,11 @@ const AuditWizard = ({
     } else {
       setFiles(importedFiles);
     }
-    setStep('estimate');
+    // Auto-select all Solidity files when entering scope step
+    const allFiles = getAllFiles(importedFiles);
+    const solFiles = allFiles.filter(f => f.name.endsWith('.sol')).map(f => f.name);
+    setSelectedScope(solFiles);
+    setStep('scope');
   };
 
   const handleUpgradeNeeded = (reason: 'nloc_limit' | 'file_limit', nloc: number) => {
@@ -122,18 +141,31 @@ const AuditWizard = ({
     onPowerUpNeeded?.(nloc);
   };
 
-  const canProceedToEstimate = () => {
+  const canProceedToScope = () => {
     if (uploadMethod === 'folder') {
       return files.length > 0 && getAllFiles(files).length > 0;
     }
     return files.length > 0 && getAllFiles(files).some(f => f.content?.trim());
   };
 
+  // Only return in-scope files for nLOC estimation
   const getFilesForEstimation = () => {
+    const allFiles = getAllFiles(files);
+    return allFiles
+      .filter(f => selectedScope.includes(f.name))
+      .map(f => ({
+        name: f.name,
+        content: f.content || '',
+      }));
+  };
+
+  // Get all files for scope selection display
+  const getAllFilesForScope = () => {
     const allFiles = getAllFiles(files);
     return allFiles.map(f => ({
       name: f.name,
       content: f.content || '',
+      path: f.path,
     }));
   };
 
@@ -142,8 +174,9 @@ const AuditWizard = ({
       case 'name': return 1;
       case 'method': return 2;
       case 'input': return 3;
-      case 'estimate': return 4;
-      case 'context': return 5;
+      case 'scope': return 4;
+      case 'estimate': return 5;
+      case 'context': return 6;
     }
   };
 
@@ -151,7 +184,7 @@ const AuditWizard = ({
     <div className="space-y-6">
       {/* Progress Indicator */}
       <div className="flex items-center justify-center gap-2">
-        {[1, 2, 3, 4, 5].map((num) => (
+        {[1, 2, 3, 4, 5, 6].map((num) => (
           <div key={num} className="flex items-center gap-2">
             <div
               className={cn(
@@ -163,7 +196,7 @@ const AuditWizard = ({
             >
               {num}
             </div>
-            {num < 5 && (
+            {num < 6 && (
               <div
                 className={cn(
                   "w-12 h-0.5 transition-colors",
@@ -216,8 +249,8 @@ const AuditWizard = ({
                 Back
               </Button>
               <Button
-                onClick={handleProceedToEstimate}
-                disabled={!canProceedToEstimate()}
+                onClick={handleProceedToScope}
+                disabled={!canProceedToScope()}
                 className="gap-2"
               >
                 <Play className="w-4 h-4" />
@@ -235,8 +268,8 @@ const AuditWizard = ({
                 Back
               </Button>
               <Button
-                onClick={handleProceedToEstimate}
-                disabled={!canProceedToEstimate()}
+                onClick={handleProceedToScope}
+                disabled={!canProceedToScope()}
                 className="gap-2"
               >
                 <Play className="w-4 h-4" />
@@ -257,6 +290,16 @@ const AuditWizard = ({
           <GitHubImportStep
             onFilesImported={handleGitHubFilesImported}
             onBack={handleBack}
+          />
+        )}
+
+        {step === 'scope' && (
+          <ScopeSelectionStep
+            files={getAllFilesForScope()}
+            selectedScope={selectedScope}
+            onScopeChange={setSelectedScope}
+            onBack={handleBack}
+            onProceed={handleScopeProceed}
           />
         )}
 
