@@ -23,12 +23,6 @@ const MinimalFooter = () => {
           >
             Terms
           </Link>
-          <Link 
-            to="/support" 
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Support
-          </Link>
         </div>
       </div>
     </footer>
