@@ -109,7 +109,7 @@ const Home = () => {
           <div className="max-w-4xl mx-auto text-center overflow-visible">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm mb-8">
               <Cpu className="w-4 h-4" />
-              <span className="font-medium">AI-Powered Security Intelligence</span>
+              <span className="font-medium">AI-Powered Security</span>
             </div>
             <h1 className="text-[clamp(1.75rem,5vw,4.5rem)] font-bold tracking-tight mb-2">
               Architectural Reasoning.
