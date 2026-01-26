@@ -119,10 +119,8 @@ Deno.serve(async (req) => {
     // Generate unique order ID
     const orderId = `order_${crypto.randomUUID().replace(/-/g, "").slice(0, 20)}`;
     
-    // Convert cents to INR (approximate conversion rate: 1 USD = 83 INR)
-    const USD_TO_INR_RATE = 83;
-    const amountDollars = amountCents / 100;
-    const amountINR = Math.round(amountDollars * USD_TO_INR_RATE);
+    // Convert cents to dollars for Cashfree
+    const amountUSD = amountCents / 100;
 
     // Get user profile for customer details
     const { data: profile } = await supabaseClient
@@ -146,8 +144,8 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         order_id: orderId,
-        order_amount: amountINR,
-        order_currency: "INR",
+        order_amount: amountUSD,
+        order_currency: "USD",
         customer_details: {
           customer_id: user.id,
           customer_email: profile?.email || user.email,
@@ -175,7 +173,7 @@ Deno.serve(async (req) => {
 
     const cashfreeOrder = await cashfreeResponse.json();
 
-    // Store order in database using RPC
+    // Store order in database using RPC (store in USD cents)
     const { error: insertError } = await supabaseClient.rpc("create_payment_order", {
       p_user_id: user.id,
       p_order_id: orderId,
@@ -200,8 +198,8 @@ Deno.serve(async (req) => {
         success: true,
         orderId,
         paymentSessionId: cashfreeOrder.payment_session_id,
-        orderAmount: amountINR,
-        orderCurrency: "INR",
+        orderAmount: amountUSD,
+        orderCurrency: "USD",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

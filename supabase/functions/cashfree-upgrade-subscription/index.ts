@@ -12,18 +12,11 @@ const SUBSCRIPTION_PRICES: Record<string, number> = {
   business: 49900,
 };
 
-// Subscription prices in INR
-const SUBSCRIPTION_PRICES_INR: Record<string, number> = {
-  launch: 12367,
-  pro: 16517,
-  business: 41417,
-};
-
-// Cashfree plan IDs
+// Cashfree plan IDs for USD billing
 const CF_PLAN_IDS: Record<string, string> = {
-  launch: "solarizer_launch_monthly",
-  pro: "solarizer_pro_monthly",
-  business: "solarizer_business_monthly",
+  launch: "solarizer_launch_monthly_usd",
+  pro: "solarizer_pro_monthly_usd",
+  business: "solarizer_business_monthly_usd",
 };
 
 interface UpgradeRequest {
@@ -96,7 +89,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Calculate proration: New Plan Price - Old Plan Price
+    // Calculate proration: New Plan Price - Old Plan Price (in USD cents)
     const oldPriceCents = SUBSCRIPTION_PRICES[currentPlan] || 0;
     const newPriceCents = SUBSCRIPTION_PRICES[toPlan];
 
@@ -108,7 +101,7 @@ Deno.serve(async (req) => {
     }
 
     const prorationCents = newPriceCents - oldPriceCents;
-    const prorationINR = Math.round((prorationCents / 100) * 83);
+    const prorationUSD = prorationCents / 100; // Convert to dollars for Cashfree
 
     // Get user profile
     const { data: profile } = await supabaseClient
@@ -137,7 +130,7 @@ Deno.serve(async (req) => {
         },
       });
 
-      // Create one-time order for proration
+      // Create one-time order for proration in USD
       const orderId = `upgrade_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
       
       const orderResponse = await fetch(`${cashfreeBaseUrl}/orders`, {
@@ -150,8 +143,8 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           order_id: orderId,
-          order_amount: prorationINR,
-          order_currency: "INR",
+          order_amount: prorationUSD,
+          order_currency: "USD",
           customer_details: {
             customer_id: user.id,
             customer_email: profile?.email || user.email,
@@ -177,7 +170,7 @@ Deno.serve(async (req) => {
 
       const orderData = await orderResponse.json();
 
-      // Store upgrade order
+      // Store upgrade order (in USD cents)
       await supabaseClient.rpc("create_payment_order", {
         p_user_id: user.id,
         p_order_id: orderId,
@@ -195,7 +188,7 @@ Deno.serve(async (req) => {
           flowType: "proration_order",
           orderId,
           paymentSessionId: orderData.payment_session_id,
-          prorationAmount: prorationINR,
+          prorationAmount: prorationUSD,
           prorationCents,
           fromPlan: currentPlan,
           toPlan,
@@ -216,7 +209,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const newAmountINR = SUBSCRIPTION_PRICES_INR[toPlan];
+    const newAmountUSD = SUBSCRIPTION_PRICES[toPlan] / 100; // Convert cents to dollars
 
     const subscriptionPayload = {
       subscription_id: newSubscriptionId,
@@ -230,16 +223,16 @@ Deno.serve(async (req) => {
         plan_id: cfPlanId,
         plan_name: `Solarizer ${toPlan.charAt(0).toUpperCase() + toPlan.slice(1)} Monthly`,
         plan_type: "PERIODIC",
-        plan_currency: "INR",
-        plan_recurring_amount: newAmountINR,
+        plan_currency: "USD",
+        plan_recurring_amount: newAmountUSD,
         plan_max_cycles: 120,
         plan_intervals: 1,
         plan_interval_type: "MONTH",
       },
       authorization_details: {
-        authorization_amount: prorationINR, // Charge proration immediately
+        authorization_amount: prorationUSD, // Charge proration immediately
         authorization_amount_refund: false, // This is the actual proration payment
-        payment_methods: ["card", "upi"],
+        payment_methods: ["card"],
       },
       subscription_meta: {
         return_url: `${origin}/subscription-success?sub_id=${newSubscriptionId}&plan=${toPlan}&period=monthly&upgrade=true`,
@@ -272,7 +265,7 @@ Deno.serve(async (req) => {
 
     const subscriptionData = await subscriptionResponse.json();
 
-    // Store pending upgrade
+    // Store pending upgrade (in USD cents)
     await supabaseClient.rpc("create_payment_order", {
       p_user_id: user.id,
       p_order_id: newSubscriptionId,
@@ -291,7 +284,7 @@ Deno.serve(async (req) => {
         subscriptionId: newSubscriptionId,
         cfSubscriptionId: subscriptionData.cf_subscription_id,
         authLink: subscriptionData.subscription_payment_link || subscriptionData.data?.subscription_payment_link,
-        prorationAmount: prorationINR,
+        prorationAmount: prorationUSD,
         prorationCents,
         fromPlan: currentPlan,
         toPlan,

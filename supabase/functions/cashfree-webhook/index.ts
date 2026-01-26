@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
           p_user_id: order.user_id,
           p_new_plan: order.plan,
           p_new_cf_subscription_id: null, // Will be set when new subscription activates
-          p_new_cf_plan_id: `solarizer_${order.plan}_${order.billing_period}`,
+          p_new_cf_plan_id: `solarizer_${order.plan}_monthly_usd`,
         });
 
         if (error) {
@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Extract plan from plan_id (e.g., "solarizer_pro_monthly")
+      // Extract plan from plan_id (e.g., "solarizer_pro_monthly_usd")
       let plan = "pro";
       const billingPeriod = "monthly"; // Always monthly now
       if (planId) {
@@ -209,7 +209,8 @@ Deno.serve(async (req) => {
     if (eventType === "SUBSCRIPTION_PAYMENT_SUCCESS" || eventType === "SUBSCRIPTION_CHARGED") {
       const cfSubscriptionId = data.cf_subscription_id || data.subscription?.cf_subscription_id;
       const cfPaymentId = data.cf_payment_id?.toString() || data.payment?.cf_payment_id?.toString();
-      const amountInr = data.subscription_amount || data.payment?.payment_amount;
+      // Payment amount is now in USD (or whatever currency was used)
+      const paymentAmount = data.subscription_amount || data.payment?.payment_amount;
 
       if (!cfSubscriptionId) {
         console.error("Missing cf_subscription_id for renewal");
@@ -220,10 +221,11 @@ Deno.serve(async (req) => {
       }
 
       // Process subscription renewal (handles credits, downgrade, cancellation)
+      // Note: p_amount_inr param name kept for backward compatibility, but now receives USD
       const { data: result, error } = await supabaseClient.rpc("process_subscription_renewal", {
         p_cf_subscription_id: cfSubscriptionId,
         p_cf_payment_id: cfPaymentId || `charge_${Date.now()}`,
-        p_amount_inr: amountInr || null,
+        p_amount_inr: paymentAmount || null,
       });
 
       if (error) {
