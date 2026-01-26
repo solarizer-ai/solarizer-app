@@ -339,8 +339,8 @@ const Settings = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Calendar className="w-4 h-4" />
-                            <span>
-                              {isPro ? "$199" : "$499"}/{subscription?.billing_period === 'annual' ? 'year' : 'month'}
+                          <span>
+                              {isPro ? "$199" : "$499"}/month
                               {subscription?.current_period_end && (
                                 <> • Next billing: {format(new Date(subscription.current_period_end), "MMM d, yyyy")}</>
                               )}

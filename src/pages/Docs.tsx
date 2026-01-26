@@ -41,11 +41,6 @@ const faqs = [
       "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation, the interactive code editor, and report exports, you will need to upgrade to the Pro Plan.",
   },
   {
-    question: "How does the Annual Discount work?",
-    answer:
-      "If you choose Annual billing for the Pro or Business plans, you pay for 10 months and get 2 months free. The Launch Plan does not offer an annual discount.",
-  },
-  {
     question: "What is Security Coverage and how is it different from \"Findings\"?",
     answer:
       "\"Findings\" only show you what is broken. Security Coverage shows you everything we checked to ensure it was safe. It is a complete ledger of all security hypotheses—such as \"Does this contract have reentrancy protection?\"—and their results.",

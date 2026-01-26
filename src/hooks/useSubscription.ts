@@ -180,7 +180,7 @@ export function usePurchaseSubscription() {
       billingPeriod 
     }: { 
       plan: 'starter' | 'pro' | 'business'; 
-      billingPeriod: 'monthly' | 'annual';
+      billingPeriod: 'monthly';
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
 

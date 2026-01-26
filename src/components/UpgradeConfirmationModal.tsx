@@ -14,7 +14,6 @@ interface UpgradeConfirmationModalProps {
   fromPlan: string;
   toPlan: string;
   prorationAmount: number; // in cents
-  billingPeriod: "monthly" | "annual";
   onConfirm: () => void;
   isLoading?: boolean;
 }
@@ -44,7 +43,6 @@ export function UpgradeConfirmationModal({
   fromPlan,
   toPlan,
   prorationAmount,
-  billingPeriod,
   onConfirm,
   isLoading = false,
 }: UpgradeConfirmationModalProps) {
@@ -91,7 +89,7 @@ export function UpgradeConfirmationModal({
             </div>
             <p className="text-xs text-muted-foreground">
               This is the difference between your current plan and the new plan price.
-              Your next {billingPeriod} renewal will be at the full {formatPlanName(toPlan)} rate.
+              Your next monthly renewal will be at the full {formatPlanName(toPlan)} rate.
             </p>
           </div>
 
