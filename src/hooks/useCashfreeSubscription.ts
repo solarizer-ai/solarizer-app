@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface CreateSubscriptionParams {
   plan: "launch" | "pro" | "business";
-  billingPeriod: "monthly" | "annual";
+  billingPeriod: "monthly";
 }
 
 interface UpgradeParams {

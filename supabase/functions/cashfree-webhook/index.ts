@@ -163,14 +163,13 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Extract plan and billing period from plan_id (e.g., "solarizer_pro_monthly")
+      // Extract plan from plan_id (e.g., "solarizer_pro_monthly")
       let plan = "pro";
-      let billingPeriod = "monthly";
+      const billingPeriod = "monthly"; // Always monthly now
       if (planId) {
         const parts = planId.split("_");
-        if (parts.length >= 3) {
+        if (parts.length >= 2) {
           plan = parts[1]; // "launch", "pro", or "business"
-          billingPeriod = parts[2]; // "monthly" or "annual"
         }
       }
 

@@ -6,24 +6,24 @@ const corsHeaders = {
 };
 
 // Subscription prices in USD cents
-const SUBSCRIPTION_PRICES: Record<string, Record<string, number>> = {
-  launch: { monthly: 14900 },
-  pro: { monthly: 19900, annual: 199000 },
-  business: { monthly: 49900, annual: 499000 },
+const SUBSCRIPTION_PRICES: Record<string, number> = {
+  launch: 14900,
+  pro: 19900,
+  business: 49900,
 };
 
 // Subscription prices in INR
-const SUBSCRIPTION_PRICES_INR: Record<string, Record<string, number>> = {
-  launch: { monthly: 12367 },
-  pro: { monthly: 16517, annual: 165170 },
-  business: { monthly: 41417, annual: 414170 },
+const SUBSCRIPTION_PRICES_INR: Record<string, number> = {
+  launch: 12367,
+  pro: 16517,
+  business: 41417,
 };
 
 // Cashfree plan IDs
-const CF_PLAN_IDS: Record<string, Record<string, string>> = {
-  launch: { monthly: "solarizer_launch_monthly" },
-  pro: { monthly: "solarizer_pro_monthly", annual: "solarizer_pro_annual" },
-  business: { monthly: "solarizer_business_monthly", annual: "solarizer_business_annual" },
+const CF_PLAN_IDS: Record<string, string> = {
+  launch: "solarizer_launch_monthly",
+  pro: "solarizer_pro_monthly",
+  business: "solarizer_business_monthly",
 };
 
 interface UpgradeRequest {
@@ -86,7 +86,6 @@ Deno.serve(async (req) => {
     }
 
     const currentPlan = subscription.plan as string;
-    const billingPeriod = subscription.billing_period || "monthly";
 
     // Validate upgrade path
     const planOrder: Record<string, number> = { starter: 0, launch: 1, pro: 2, business: 3 };
@@ -98,12 +97,12 @@ Deno.serve(async (req) => {
     }
 
     // Calculate proration: New Plan Price - Old Plan Price
-    const oldPriceCents = SUBSCRIPTION_PRICES[currentPlan]?.[billingPeriod] || 0;
-    const newPriceCents = SUBSCRIPTION_PRICES[toPlan]?.[billingPeriod];
+    const oldPriceCents = SUBSCRIPTION_PRICES[currentPlan] || 0;
+    const newPriceCents = SUBSCRIPTION_PRICES[toPlan];
 
     if (!newPriceCents) {
       return new Response(
-        JSON.stringify({ error: "Invalid plan/period combination" }),
+        JSON.stringify({ error: "Invalid plan configuration" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -186,7 +185,7 @@ Deno.serve(async (req) => {
         p_amount_cents: prorationCents,
         p_payment_session_id: orderData.payment_session_id,
         p_plan: toPlan,
-        p_billing_period: billingPeriod,
+        p_billing_period: "monthly",
         p_credits_amount: null,
       });
 
@@ -200,7 +199,7 @@ Deno.serve(async (req) => {
           prorationCents,
           fromPlan: currentPlan,
           toPlan,
-          billingPeriod,
+          billingPeriod: "monthly",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -208,7 +207,7 @@ Deno.serve(async (req) => {
 
     // No saved payment - create new subscription for the higher tier
     const newSubscriptionId = `sub_${user.id.replace(/-/g, "").slice(0, 12)}_${Date.now()}`;
-    const cfPlanId = CF_PLAN_IDS[toPlan]?.[billingPeriod];
+    const cfPlanId = CF_PLAN_IDS[toPlan];
 
     if (!cfPlanId) {
       return new Response(
@@ -217,7 +216,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const newAmountINR = SUBSCRIPTION_PRICES_INR[toPlan]?.[billingPeriod];
+    const newAmountINR = SUBSCRIPTION_PRICES_INR[toPlan];
 
     const subscriptionPayload = {
       subscription_id: newSubscriptionId,
@@ -229,12 +228,12 @@ Deno.serve(async (req) => {
       },
       plan_details: {
         plan_id: cfPlanId,
-        plan_name: `Solarizer ${toPlan.charAt(0).toUpperCase() + toPlan.slice(1)} ${billingPeriod === 'annual' ? 'Annual' : 'Monthly'}`,
+        plan_name: `Solarizer ${toPlan.charAt(0).toUpperCase() + toPlan.slice(1)} Monthly`,
         plan_type: "PERIODIC",
         plan_currency: "INR",
         plan_recurring_amount: newAmountINR,
-        plan_max_cycles: billingPeriod === "annual" ? 10 : 120,
-        plan_intervals: billingPeriod === "annual" ? 12 : 1,
+        plan_max_cycles: 120,
+        plan_intervals: 1,
         plan_interval_type: "MONTH",
       },
       authorization_details: {
@@ -243,7 +242,7 @@ Deno.serve(async (req) => {
         payment_methods: ["card", "upi"],
       },
       subscription_meta: {
-        return_url: `${origin}/subscription-success?sub_id=${newSubscriptionId}&plan=${toPlan}&period=${billingPeriod}&upgrade=true`,
+        return_url: `${origin}/subscription-success?sub_id=${newSubscriptionId}&plan=${toPlan}&period=monthly&upgrade=true`,
         notification_channel: ["EMAIL"],
       },
       subscription_expiry_time: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
@@ -281,7 +280,7 @@ Deno.serve(async (req) => {
       p_amount_cents: prorationCents,
       p_payment_session_id: subscriptionData.cf_subscription_id || newSubscriptionId,
       p_plan: toPlan,
-      p_billing_period: billingPeriod,
+      p_billing_period: "monthly",
       p_credits_amount: null,
     });
 
@@ -296,7 +295,7 @@ Deno.serve(async (req) => {
         prorationCents,
         fromPlan: currentPlan,
         toPlan,
-        billingPeriod,
+        billingPeriod: "monthly",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

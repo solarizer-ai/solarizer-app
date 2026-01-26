@@ -6,22 +6,22 @@ const corsHeaders = {
 };
 
 // Subscription prices in INR (converted from USD at 83 INR per USD)
-const SUBSCRIPTION_PRICES_INR: Record<string, Record<string, number>> = {
-  launch: { monthly: 12367 },        // $149 * 83
-  pro: { monthly: 16517, annual: 165170 },  // $199/$1990 * 83
-  business: { monthly: 41417, annual: 414170 },  // $499/$4990 * 83
+const SUBSCRIPTION_PRICES_INR: Record<string, number> = {
+  launch: 12367,     // $149 * 83
+  pro: 16517,        // $199 * 83
+  business: 41417,   // $499 * 83
 };
 
 // Cashfree plan IDs (must match plans created on Cashfree dashboard)
-const CF_PLAN_IDS: Record<string, Record<string, string>> = {
-  launch: { monthly: "solarizer_launch_monthly" },
-  pro: { monthly: "solarizer_pro_monthly", annual: "solarizer_pro_annual" },
-  business: { monthly: "solarizer_business_monthly", annual: "solarizer_business_annual" },
+const CF_PLAN_IDS: Record<string, string> = {
+  launch: "solarizer_launch_monthly",
+  pro: "solarizer_pro_monthly",
+  business: "solarizer_business_monthly",
 };
 
 interface CreateSubscriptionRequest {
   plan: "launch" | "pro" | "business";
-  billingPeriod: "monthly" | "annual";
+  billingPeriod: "monthly";
 }
 
 Deno.serve(async (req) => {
@@ -57,28 +57,25 @@ Deno.serve(async (req) => {
     }
 
     const body: CreateSubscriptionRequest = await req.json();
-    const { plan, billingPeriod } = body;
+    const { plan } = body;
 
     // Validate request
-    if (!plan || !billingPeriod) {
+    if (!plan) {
       return new Response(
-        JSON.stringify({ error: "Missing plan or billingPeriod" }),
+        JSON.stringify({ error: "Missing plan" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const planPrices = SUBSCRIPTION_PRICES_INR[plan];
-    const cfPlanIds = CF_PLAN_IDS[plan];
+    const amountINR = SUBSCRIPTION_PRICES_INR[plan];
+    const cfPlanId = CF_PLAN_IDS[plan];
     
-    if (!planPrices || !planPrices[billingPeriod] || !cfPlanIds || !cfPlanIds[billingPeriod]) {
+    if (!amountINR || !cfPlanId) {
       return new Response(
-        JSON.stringify({ error: "Invalid plan or billing period" }),
+        JSON.stringify({ error: "Invalid plan" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const cfPlanId = cfPlanIds[billingPeriod];
-    const amountINR = planPrices[billingPeriod];
 
     // Get user profile for customer details
     const { data: profile } = await supabaseClient
@@ -109,12 +106,12 @@ Deno.serve(async (req) => {
       },
       plan_details: {
         plan_id: cfPlanId,
-        plan_name: `Solarizer ${plan.charAt(0).toUpperCase() + plan.slice(1)} ${billingPeriod === 'annual' ? 'Annual' : 'Monthly'}`,
+        plan_name: `Solarizer ${plan.charAt(0).toUpperCase() + plan.slice(1)} Monthly`,
         plan_type: "PERIODIC",
         plan_currency: "INR",
         plan_recurring_amount: amountINR,
-        plan_max_cycles: billingPeriod === "annual" ? 10 : 120, // 10 years max
-        plan_intervals: billingPeriod === "annual" ? 12 : 1,
+        plan_max_cycles: 120, // 10 years max
+        plan_intervals: 1,
         plan_interval_type: "MONTH",
       },
       authorization_details: {
@@ -123,12 +120,12 @@ Deno.serve(async (req) => {
         payment_methods: ["card", "upi"],
       },
       subscription_meta: {
-        return_url: `${origin}/subscription-success?sub_id=${subscriptionId}&plan=${plan}&period=${billingPeriod}`,
+        return_url: `${origin}/subscription-success?sub_id=${subscriptionId}&plan=${plan}&period=monthly`,
         notification_channel: ["EMAIL"],
       },
       subscription_expiry_time: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min to complete
       subscription_first_charge_time: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // First charge in 2 min
-      subscription_note: `Solarizer ${plan} ${billingPeriod} subscription`,
+      subscription_note: `Solarizer ${plan} monthly subscription`,
     };
 
     console.log("Creating subscription:", JSON.stringify(subscriptionPayload, null, 2));
@@ -172,7 +169,7 @@ Deno.serve(async (req) => {
       p_amount_cents: Math.round(amountINR / 83 * 100), // Convert back to USD cents for records
       p_payment_session_id: subscriptionData.cf_subscription_id || subscriptionId,
       p_plan: plan,
-      p_billing_period: billingPeriod,
+      p_billing_period: "monthly",
       p_credits_amount: null,
     });
 
@@ -184,7 +181,7 @@ Deno.serve(async (req) => {
         authLink: subscriptionData.subscription_payment_link || subscriptionData.data?.subscription_payment_link,
         authAmount: 100,
         plan,
-        billingPeriod,
+        billingPeriod: "monthly",
         amountINR,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

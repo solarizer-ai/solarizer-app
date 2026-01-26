@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -26,13 +25,10 @@ interface PricingPlan {
   name: string;
   label: string;
   monthlyPrice: number;
-  annualPrice: number | null;
   monthlyCredits: number;
-  annualCredits: number;
   powerUpPrice: number;
   features: PricingFeature[];
   popular: boolean;
-  hasAnnualDiscount: boolean;
 }
 
 const pricingPlans: PricingPlan[] = [
@@ -41,11 +37,8 @@ const pricingPlans: PricingPlan[] = [
     name: 'Launch',
     label: 'Free Trial',
     monthlyPrice: 149,
-    annualPrice: null,
     monthlyCredits: 50,
-    annualCredits: 50,
     powerUpPrice: 7,
-    hasAnnualDiscount: false,
     popular: false,
     features: [
       { text: 'Critical, High, and Medium Findings', included: true },
@@ -61,11 +54,8 @@ const pricingPlans: PricingPlan[] = [
     name: 'Pro',
     label: 'Most Popular',
     monthlyPrice: 199,
-    annualPrice: 1990,
     monthlyCredits: 50,
-    annualCredits: 500,
     powerUpPrice: 6,
-    hasAnnualDiscount: true,
     popular: true,
     features: [
       { text: 'Everything in Launch, plus:', included: true, isHeader: true },
@@ -83,11 +73,8 @@ const pricingPlans: PricingPlan[] = [
     name: 'Business',
     label: 'For Teams',
     monthlyPrice: 499,
-    annualPrice: 4990,
     monthlyCredits: 50,
-    annualCredits: 500,
     powerUpPrice: 5,
-    hasAnnualDiscount: true,
     popular: false,
     features: [
       { text: 'Everything in Pro, plus:', included: true, isHeader: true },
@@ -102,7 +89,6 @@ const pricingPlans: PricingPlan[] = [
 // FAQ moved to Docs page
 
 const Pricing = () => {
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
   const [downgradeModalOpen, setDowngradeModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
@@ -126,17 +112,16 @@ const Pricing = () => {
   const planOrder = { launch: 1, starter: 1, pro: 2, business: 3 };
 
   // Price lookup
-  const getPlanPrice = (planId: string, period: 'monthly' | 'annual') => {
+  const getPlanPrice = (planId: string) => {
     const plan = pricingPlans.find(p => p.id === planId);
     if (!plan) return 0;
-    if (period === 'annual' && plan.annualPrice) return plan.annualPrice;
     return plan.monthlyPrice;
   };
 
   const handleSubscribe = async (planId: 'launch' | 'pro' | 'business') => {
     await createSubscription({
       plan: planId,
-      billingPeriod: billingPeriod,
+      billingPeriod: 'monthly',
     });
   };
 
@@ -238,8 +223,8 @@ const Pricing = () => {
   const getProrationAmount = () => {
     const currentPlan = subscription?.plan || 'starter';
     const normalizedCurrent = currentPlan === 'starter' ? 'launch' : currentPlan;
-    const currentPrice = getPlanPrice(normalizedCurrent, billingPeriod);
-    const newPrice = getPlanPrice(targetUpgradePlan, billingPeriod);
+    const currentPrice = getPlanPrice(normalizedCurrent);
+    const newPrice = getPlanPrice(targetUpgradePlan);
     return (newPrice - currentPrice) * 100; // Convert to cents
   };
 
@@ -256,10 +241,6 @@ const Pricing = () => {
   };
 
   const isLoading = authLoading || subscriptionLoading || creditsLoading || subscriptionActionLoading;
-
-  // Check for pending states to show banner
-  const hasPendingDowngrade = subscription?.pending_plan !== null && subscription?.pending_plan !== undefined;
-  const hasPendingCancellation = subscription?.cancel_at_period_end === true;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -279,35 +260,9 @@ const Pricing = () => {
           </p>
         </div>
 
-        {/* Billing Toggle */}
-        <div className="flex items-center justify-center gap-4 mb-12 animate-in fade-in duration-500" style={{ animationDelay: "200ms" }}>
-          <span className={cn(
-            "font-medium transition-colors",
-            billingPeriod === 'monthly' ? 'text-foreground' : 'text-muted-foreground'
-          )}>Monthly</span>
-          
-          <Switch
-            checked={billingPeriod === 'annual'}
-            onCheckedChange={(checked) => setBillingPeriod(checked ? 'annual' : 'monthly')}
-            className="data-[state=checked]:bg-primary"
-          />
-          
-          <span className={cn(
-            "font-medium transition-colors",
-            billingPeriod === 'annual' ? 'text-foreground' : 'text-muted-foreground'
-          )}>Annual</span>
-        </div>
-
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
           {pricingPlans.map((plan, index) => {
-            const showAnnualBadge = billingPeriod === 'annual' && plan.hasAnnualDiscount;
-            const displayPrice = billingPeriod === 'monthly' || !plan.hasAnnualDiscount
-              ? plan.monthlyPrice
-              : plan.annualPrice;
-            const priceLabel = billingPeriod === 'monthly' || !plan.hasAnnualDiscount
-              ? '/mo'
-              : '/yr';
             const buttonConfig = getButtonConfig(plan.id);
 
             return (
@@ -334,15 +289,6 @@ const Pricing = () => {
                   </span>
                 </div>
 
-                {/* 2 Months Free Badge */}
-                {showAnnualBadge && (
-                  <div className="absolute -top-3 right-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-background text-primary border border-primary/50">
-                      2 Months Free
-                    </span>
-                  </div>
-                )}
-
                 {/* Plan Name */}
                 <div className="mt-4 mb-6">
                   <h3 className="text-2xl font-bold mb-1">{plan.name}</h3>
@@ -352,16 +298,14 @@ const Pricing = () => {
                 <div className="mb-6">
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-bold">
-                      ${displayPrice?.toLocaleString()}
+                      ${plan.monthlyPrice?.toLocaleString()}
                     </span>
-                    <span className="text-muted-foreground">{priceLabel}</span>
+                    <span className="text-muted-foreground">/mo</span>
                   </div>
                   
-                  {/* Credits Allotment - Dynamic based on billing period */}
+                  {/* Credits Allotment */}
                   <p className="text-sm text-muted-foreground mt-2">
-                    {billingPeriod === 'annual' && plan.hasAnnualDiscount
-                      ? `${plan.annualCredits} Credits included`
-                      : `${plan.monthlyCredits} Credits included`}
+                    {plan.monthlyCredits} Credits included
                   </p>
                 </div>
 
@@ -473,7 +417,6 @@ const Pricing = () => {
         fromPlan={getCurrentPlanForModal()}
         toPlan={targetUpgradePlan}
         prorationAmount={getProrationAmount()}
-        billingPeriod={billingPeriod}
         onConfirm={handleUpgrade}
         isLoading={subscriptionActionLoading}
       />

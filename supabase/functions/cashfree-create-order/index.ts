@@ -6,10 +6,10 @@ const corsHeaders = {
 };
 
 // Subscription prices in USD cents
-const SUBSCRIPTION_PRICES: Record<string, Record<string, number>> = {
-  launch: { monthly: 14900 },
-  pro: { monthly: 19900, annual: 199000 },
-  business: { monthly: 49900, annual: 499000 },
+const SUBSCRIPTION_PRICES: Record<string, number> = {
+  launch: 14900,
+  pro: 19900,
+  business: 49900,
 };
 
 // Power-up rates per credit in USD cents by plan
@@ -23,7 +23,7 @@ const POWER_UP_RATES: Record<string, number> = {
 interface CreateOrderRequest {
   orderType: "subscription" | "power_up";
   plan?: "launch" | "pro" | "business";
-  billingPeriod?: "monthly" | "annual";
+  billingPeriod?: "monthly";
   creditsAmount?: number;
 }
 
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     }
 
     const body: CreateOrderRequest = await req.json();
-    const { orderType, plan, billingPeriod, creditsAmount } = body;
+    const { orderType, plan, creditsAmount } = body;
 
     // Validate request
     if (!orderType) {
@@ -74,22 +74,22 @@ Deno.serve(async (req) => {
     let orderCreditsAmount: number | null = null;
 
     if (orderType === "subscription") {
-      if (!plan || !billingPeriod) {
+      if (!plan) {
         return new Response(
-          JSON.stringify({ error: "Missing plan or billingPeriod for subscription" }),
+          JSON.stringify({ error: "Missing plan for subscription" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const planPrices = SUBSCRIPTION_PRICES[plan];
-      if (!planPrices || !planPrices[billingPeriod]) {
+      const planPrice = SUBSCRIPTION_PRICES[plan];
+      if (!planPrice) {
         return new Response(
-          JSON.stringify({ error: "Invalid plan or billing period" }),
+          JSON.stringify({ error: "Invalid plan" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      amountCents = planPrices[billingPeriod];
+      amountCents = planPrice;
     } else if (orderType === "power_up") {
       if (!creditsAmount || creditsAmount < 100) {
         return new Response(
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
           notify_url: `${supabaseUrl}/functions/v1/cashfree-webhook`,
         },
         order_note: orderType === "subscription" 
-          ? `${plan} ${billingPeriod} subscription`
+          ? `${plan} monthly subscription`
           : `${creditsAmount} credits power-up`,
       }),
     });
@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
       p_amount_cents: amountCents,
       p_payment_session_id: cashfreeOrder.payment_session_id,
       p_plan: plan || null,
-      p_billing_period: billingPeriod || null,
+      p_billing_period: "monthly",
       p_credits_amount: orderCreditsAmount,
     });
 
