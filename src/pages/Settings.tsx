@@ -21,6 +21,9 @@ import { format } from "date-fns";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { CancelSubscriptionModal } from "@/components/CancelSubscriptionModal";
 import { GitHubIntegration } from "@/components/settings/GitHubIntegration";
+import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlanSelector";
+import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
+import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 
 interface Profile {
   display_name: string | null;
@@ -41,6 +44,10 @@ const Settings = () => {
   const [displayName, setDisplayName] = useState("");
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showDowngradeModal, setShowDowngradeModal] = useState(false);
+  const [targetUpgradePlan, setTargetUpgradePlan] = useState<"pro" | "business">("pro");
+  const [targetDowngradePlan, setTargetDowngradePlan] = useState<"launch" | "pro">("launch");
 
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
@@ -49,9 +56,12 @@ const Settings = () => {
     cancelSubscription, 
     reactivateSubscription, 
     cancelPendingDowngrade,
+    upgradeSubscription,
+    scheduleDowngrade,
     isLoading: subscriptionActionLoading,
     isReactivating,
     isCancellingDowngrade,
+    isSchedulingDowngrade,
   } = useCashfreeSubscription();
 
   useEffect(() => {
@@ -145,6 +155,40 @@ const Settings = () => {
   const handleCancelSubscription = async () => {
     setShowCancelModal(false);
     await cancelSubscription();
+  };
+
+  // Plan pricing for proration calculation
+  const getPlanPrice = (planId: string) => {
+    const prices: Record<string, number> = { launch: 149, starter: 149, pro: 199, business: 499 };
+    return prices[planId] || 0;
+  };
+
+  const getProrationAmount = () => {
+    const currentPrice = getPlanPrice(plan);
+    const newPrice = getPlanPrice(targetUpgradePlan);
+    return (newPrice - currentPrice) * 100; // cents
+  };
+
+  const handleUpgradeClick = (toPlan: "pro" | "business") => {
+    setTargetUpgradePlan(toPlan);
+    setShowUpgradeModal(true);
+  };
+
+  const handleDowngradeClick = (toPlan: "launch" | "pro") => {
+    setTargetDowngradePlan(toPlan);
+    setShowDowngradeModal(true);
+  };
+
+  const handleConfirmUpgrade = async () => {
+    setShowUpgradeModal(false);
+    await upgradeSubscription({ toPlan: targetUpgradePlan });
+  };
+
+  const handleConfirmDowngrade = () => {
+    setShowDowngradeModal(false);
+    // Convert 'launch' to 'starter' for the database
+    const dbPlan = targetDowngradePlan === "launch" ? "starter" : targetDowngradePlan;
+    scheduleDowngrade(dbPlan);
   };
 
   if (loading) {
@@ -360,7 +404,23 @@ const Settings = () => {
                     </CardContent>
                   </Card>
 
-                  {/* Credits Card */}
+                  {/* Plan Selector Card */}
+                  <Card>
+                    <CardContent className="pt-6">
+                      <SubscriptionPlanSelector
+                        currentPlan={subscription?.plan || "starter"}
+                        pendingPlan={subscription?.pending_plan || null}
+                        pendingPlanDate={subscription?.pending_plan_effective_date || null}
+                        hasPendingCancellation={hasPendingCancellation}
+                        onUpgrade={handleUpgradeClick}
+                        onDowngrade={handleDowngradeClick}
+                        onCancelPendingDowngrade={() => cancelPendingDowngrade()}
+                        isLoading={subscriptionActionLoading || isSchedulingDowngrade}
+                        isCancellingDowngrade={isCancellingDowngrade}
+                      />
+                    </CardContent>
+                  </Card>
+
                   <Card>
                     <CardHeader>
                       <CardTitle>
@@ -582,6 +642,27 @@ const Settings = () => {
         currentPlan={subscription?.plan || 'starter'}
         onConfirm={handleCancelSubscription}
         isLoading={subscriptionActionLoading}
+      />
+
+      {/* Upgrade Confirmation Modal */}
+      <UpgradeConfirmationModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        fromPlan={plan}
+        toPlan={targetUpgradePlan}
+        prorationAmount={getProrationAmount()}
+        onConfirm={handleConfirmUpgrade}
+        isLoading={subscriptionActionLoading}
+      />
+
+      {/* Downgrade Warning Modal */}
+      <DowngradeWarningModal
+        open={showDowngradeModal}
+        onOpenChange={setShowDowngradeModal}
+        currentCredits={creditsRemaining}
+        fromPlan={plan as "starter" | "pro" | "business"}
+        toPlan={targetDowngradePlan === "launch" ? "starter" : targetDowngradePlan}
+        onConfirm={handleConfirmDowngrade}
       />
     </div>
   );
