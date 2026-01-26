@@ -1,330 +1,292 @@
 
+
 ## Summary
 
-Implement full USD flow for Cashfree payments, completely removing INR conversion logic. Update all edge functions to send USD directly to Cashfree and enhance the subscription management with proper upgrade/downgrade functionality.
+Update the Cashfree webhook handler to use the correct event type names from Cashfree's API documentation, handle user-dropped payments as failures, and skip refund handling as per your business requirements.
 
 ---
 
-## Prerequisites (From Your Cashfree Dashboard)
+## Events to Enable in Cashfree Dashboard
 
-Before implementation, confirm these Cashfree Plan IDs for USD billing:
+### Payment Gateway Events (Select 6)
 
-| Plan | Expected Plan ID |
-|------|------------------|
-| Launch | `solarizer_launch_monthly_usd` |
-| Pro | `solarizer_pro_monthly_usd` |
-| Business | `solarizer_business_monthly_usd` |
+| Event | Purpose |
+|-------|---------|
+| `success payment` | Process successful one-time payments (power-ups, upgrades) |
+| `failed payment` | Mark orders as failed |
+| `user dropped payment` | Treat as payment failed (user abandoned checkout) |
+| `dispute created` | Log and flag potential issues |
+| `dispute updated` | Track dispute progress |
+| `dispute closed` | Record resolution |
 
-If you're using different plan IDs, provide them and we'll update accordingly.
+### Subscription Events (Select All 8)
+
+| Event | Purpose |
+|-------|---------|
+| `subscription auth status` | Handle mandate activation (success/failure) |
+| `subscription payment success` | Process renewals, add credits |
+| `subscription payment failed` | Mark subscription as past_due |
+| `subscription payment cancelled` | Handle cancelled recurring payments |
+| `subscription status changed` | Track cancellation, expiry, pause states |
+| `subscription card expiry reminder` | Log for future notification feature |
+| `subscription refund status` | Acknowledge but no action (no refunds) |
+| `subscription payment notification initiated` | Log upcoming payment attempts |
 
 ---
 
-## Files to Modify
+## Webhook URL Configuration
 
-| File | Changes |
-|------|---------|
-| `supabase/functions/cashfree-create-order/index.ts` | Remove INR conversion, send USD directly |
-| `supabase/functions/cashfree-create-subscription/index.ts` | Change to USD pricing, update plan_currency to "USD" |
-| `supabase/functions/cashfree-upgrade-subscription/index.ts` | Remove INR conversion, use USD for proration |
-| `supabase/functions/cashfree-reactivate-subscription/index.ts` | Remove INR pricing, use USD |
-| `supabase/functions/cashfree-webhook/index.ts` | Update amount handling for USD |
-| `src/hooks/useCashfreeCheckout.ts` | Remove annual from type |
-
----
-
-## 1. cashfree-create-order/index.ts (Power-up Credits)
-
-### Current State (lines 119-125, 147-150)
-```typescript
-// Convert cents to INR (approximate conversion rate: 1 USD = 83 INR)
-const USD_TO_INR_RATE = 83;
-const amountDollars = amountCents / 100;
-const amountINR = Math.round(amountDollars * USD_TO_INR_RATE);
-
-// ...
-order_amount: amountINR,
-order_currency: "INR",
 ```
-
-### Changes
-```typescript
-// Remove INR conversion entirely
-const amountDollars = amountCents / 100;
-
-// Send USD directly to Cashfree
-order_amount: amountDollars,
-order_currency: "USD",
-```
-
-### Response Update (lines 198-205)
-```typescript
-// BEFORE
-orderAmount: amountINR,
-orderCurrency: "INR",
-
-// AFTER
-orderAmount: amountDollars,
-orderCurrency: "USD",
+https://xylfnqrtzqfduutdcxvu.supabase.co/functions/v1/cashfree-webhook
 ```
 
 ---
 
-## 2. cashfree-create-subscription/index.ts
+## File to Modify
 
-### Current State (lines 8-20)
+`supabase/functions/cashfree-webhook/index.ts`
+
+---
+
+## Event Type Mapping (Current vs Correct)
+
+| Current Handler | Correct Cashfree Event Type |
+|-----------------|----------------------------|
+| `PAYMENT_SUCCESS` / `PAYMENT_SUCCESS_WEBHOOK` | `PAYMENT_SUCCESS_WEBHOOK` |
+| `PAYMENT_FAILED` / `PAYMENT_FAILED_WEBHOOK` | `PAYMENT_FAILED_WEBHOOK` |
+| (missing) | `PAYMENT_USER_DROPPED_WEBHOOK` |
+| `SUBSCRIPTION_ACTIVATED` / `SUBSCRIPTION_NEW_ACTIVATION` | `SUBSCRIPTION_AUTH_STATUS` |
+| `SUBSCRIPTION_PAYMENT_SUCCESS` / `SUBSCRIPTION_CHARGED` | `SUBSCRIPTION_PAYMENT_SUCCESS` |
+| `SUBSCRIPTION_PAYMENT_FAILED` / `SUBSCRIPTION_PAYMENT_DECLINED` | `SUBSCRIPTION_PAYMENT_FAILED` |
+| `SUBSCRIPTION_CANCELLED` / `SUBSCRIPTION_EXPIRED` | `SUBSCRIPTION_STATUS_CHANGED` |
+| (missing) | `SUBSCRIPTION_PAYMENT_CANCELLED` |
+| (missing) | `SUBSCRIPTION_CARD_EXPIRY_REMINDER` |
+| (missing) | `SUBSCRIPTION_PAYMENT_NOTIFICATION_INITIATED` |
+| (missing) | `DISPUTE_CREATED` / `DISPUTE_UPDATED` / `DISPUTE_CLOSED` |
+
+---
+
+## Implementation Changes
+
+### 1. Add User Dropped Payment Handler (Treat as Failed)
+
 ```typescript
-// Subscription prices in INR (converted from USD at 83 INR per USD)
-const SUBSCRIPTION_PRICES_INR: Record<string, number> = {
-  launch: 12367,     // $149 * 83
-  pro: 16517,        // $199 * 83
-  business: 41417,   // $499 * 83
-};
+// User dropped = treat as payment failed
+if (eventType === "PAYMENT_USER_DROPPED_WEBHOOK") {
+  const orderId = data.order?.order_id;
 
-const CF_PLAN_IDS: Record<string, string> = {
-  launch: "solarizer_launch_monthly",
-  pro: "solarizer_pro_monthly",
-  business: "solarizer_business_monthly",
-};
+  if (orderId) {
+    await supabaseClient.rpc("mark_payment_failed", { p_order_id: orderId });
+    console.log("Payment marked as failed (user dropped):", orderId);
+  }
+
+  return new Response(
+    JSON.stringify({ success: true, status: "user_dropped_as_failed" }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
 ```
 
-### Changes
-```typescript
-// Subscription prices in USD (dollars, not cents)
-const SUBSCRIPTION_PRICES_USD: Record<string, number> = {
-  launch: 149,
-  pro: 199,
-  business: 499,
-};
+### 2. Update Subscription Activation Handler
 
-// Updated plan IDs for USD (confirm with your Cashfree dashboard)
-const CF_PLAN_IDS: Record<string, string> = {
-  launch: "solarizer_launch_monthly_usd",
-  pro: "solarizer_pro_monthly_usd",
-  business: "solarizer_business_monthly_usd",
-};
+Replace `SUBSCRIPTION_ACTIVATED` / `SUBSCRIPTION_NEW_ACTIVATION` with `SUBSCRIPTION_AUTH_STATUS`:
+
+```typescript
+if (eventType === "SUBSCRIPTION_AUTH_STATUS") {
+  const cfSubscriptionId = data.cf_subscription_id;
+  const customerId = data.customer_details?.customer_id;
+  const planId = data.plan_details?.plan_id;
+  const authStatus = data.authorization_details?.authorization_status;
+  const paymentStatus = data.payment_status;
+
+  // Only activate if authorization was successful
+  if (authStatus === "ACTIVE" || paymentStatus === "SUCCESS") {
+    // Activate subscription logic...
+  } else {
+    // Log failed authorization
+    console.log("Subscription authorization failed:", cfSubscriptionId, authStatus);
+    // Log event but don't activate
+  }
+}
 ```
 
-### Plan Details Update (lines 107-115)
-```typescript
-// BEFORE
-plan_currency: "INR",
-plan_recurring_amount: amountINR,
+### 3. Update Subscription Status Changed Handler
 
-// AFTER
-plan_currency: "USD",
-plan_recurring_amount: amountUSD,
+Replace `SUBSCRIPTION_CANCELLED` / `SUBSCRIPTION_EXPIRED` with `SUBSCRIPTION_STATUS_CHANGED`:
+
+```typescript
+if (eventType === "SUBSCRIPTION_STATUS_CHANGED") {
+  const cfSubscriptionId = data.subscription_details?.cf_subscription_id || data.cf_subscription_id;
+  const newStatus = data.subscription_details?.subscription_status;
+
+  // Map Cashfree statuses to our internal statuses
+  const statusMap: Record<string, string> = {
+    "ACTIVE": "active",
+    "CANCELLED": "canceled",
+    "CUSTOMER_CANCELLED": "canceled",
+    "EXPIRED": "canceled",
+    "COMPLETED": "canceled",
+    "ON_HOLD": "past_due",
+    "CUSTOMER_PAUSED": "paused",
+  };
+
+  const internalStatus = statusMap[newStatus] || "active";
+
+  // Update subscription status
+  await supabaseClient
+    .from("subscriptions")
+    .update({ status: internalStatus, updated_at: new Date().toISOString() })
+    .eq("cf_subscription_id", cfSubscriptionId);
+
+  // Log the event
+  await supabaseClient.from("cf_subscription_events").insert({
+    cf_subscription_id: cfSubscriptionId,
+    event_type: eventType,
+    status: newStatus,
+    raw_payload: payload,
+  });
+}
 ```
 
-### Authorization Amount (lines 117-120)
-```typescript
-// BEFORE
-authorization_amount: 100, // ₹1 for card verification
+### 4. Add Subscription Payment Cancelled Handler
 
-// AFTER
-authorization_amount: 1, // $1 for card verification
+```typescript
+if (eventType === "SUBSCRIPTION_PAYMENT_CANCELLED") {
+  const cfSubscriptionId = data.cf_subscription_id;
+  const cfPaymentId = data.cf_payment_id?.toString();
+
+  // Log the cancellation
+  await supabaseClient.from("cf_subscription_events").insert({
+    cf_subscription_id: cfSubscriptionId,
+    event_type: eventType,
+    cf_payment_id: cfPaymentId,
+    status: "payment_cancelled",
+    raw_payload: payload,
+  });
+
+  console.log("Subscription payment cancelled:", cfSubscriptionId);
+}
 ```
 
-### Order Recording (lines 164-174)
-```typescript
-// BEFORE
-p_amount_cents: Math.round(amountINR / 83 * 100), // Convert back to USD cents
+### 5. Add Card Expiry Reminder Handler (Log Only)
 
-// AFTER
-p_amount_cents: amountUSD * 100, // Store as USD cents directly
+```typescript
+if (eventType === "SUBSCRIPTION_CARD_EXPIRY_REMINDER") {
+  const cfSubscriptionId = data.subscription_details?.cf_subscription_id || data.cf_subscription_id;
+  const expiryDate = data.card_expiry_date;
+
+  // Log for future notification feature
+  await supabaseClient.from("cf_subscription_events").insert({
+    cf_subscription_id: cfSubscriptionId,
+    event_type: eventType,
+    status: "card_expiring",
+    raw_payload: payload,
+  });
+
+  console.log("Card expiry reminder for subscription:", cfSubscriptionId, "expires:", expiryDate);
+}
 ```
 
-### Response Update (lines 176-186)
-```typescript
-// BEFORE
-authAmount: 100,
-amountINR,
+### 6. Add Payment Notification Initiated Handler (Log Only)
 
-// AFTER
-authAmount: 1, // $1 authorization
-amountUSD,
+```typescript
+if (eventType === "SUBSCRIPTION_PAYMENT_NOTIFICATION_INITIATED") {
+  const cfSubscriptionId = data.cf_subscription_id;
+
+  // Log for tracking
+  await supabaseClient.from("cf_subscription_events").insert({
+    cf_subscription_id: cfSubscriptionId,
+    event_type: eventType,
+    status: "notification_sent",
+    raw_payload: payload,
+  });
+
+  console.log("Payment notification initiated for subscription:", cfSubscriptionId);
+}
+```
+
+### 7. Add Dispute Handlers (Log Only)
+
+```typescript
+if (eventType === "DISPUTE_CREATED" || eventType === "DISPUTE_UPDATED" || eventType === "DISPUTE_CLOSED") {
+  const orderId = data.order?.order_id;
+  const disputeId = data.dispute?.dispute_id;
+
+  // Log dispute event (no automatic action)
+  console.log(`Dispute ${eventType}:`, disputeId, "for order:", orderId);
+
+  // Could add to a disputes table in future
+}
+```
+
+### 8. Refund Events - Acknowledge Only (No Action)
+
+```typescript
+if (eventType === "REFUND_WEBHOOK" || eventType === "SUBSCRIPTION_REFUND_STATUS") {
+  // We don't support refunds - just acknowledge
+  console.log("Refund event received but not processed (refunds not supported):", eventType);
+  return new Response(
+    JSON.stringify({ success: true, message: "Refund events not processed" }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
 ```
 
 ---
 
-## 3. cashfree-upgrade-subscription/index.ts
+## Complete Updated Event Handler Structure
 
-### Current State (lines 8-27)
-Contains both USD cents and INR pricing with conversion logic.
-
-### Changes
-```typescript
-// Remove INR pricing entirely, keep USD cents only
-const SUBSCRIPTION_PRICES: Record<string, number> = {
-  launch: 14900,   // $149.00
-  pro: 19900,      // $199.00
-  business: 49900, // $499.00
-};
-
-// Updated plan IDs for USD
-const CF_PLAN_IDS: Record<string, string> = {
-  launch: "solarizer_launch_monthly_usd",
-  pro: "solarizer_pro_monthly_usd",
-  business: "solarizer_business_monthly_usd",
-};
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    PAYMENT GATEWAY EVENTS                        │
+├─────────────────────────────────────────────────────────────────┤
+│ PAYMENT_SUCCESS_WEBHOOK     → Process payment, add credits      │
+│ PAYMENT_FAILED_WEBHOOK      → Mark order as failed              │
+│ PAYMENT_USER_DROPPED_WEBHOOK → Mark order as failed (same as ↑) │
+│ DISPUTE_*                   → Log only (no action)              │
+│ REFUND_WEBHOOK              → Acknowledge only (not supported)  │
+├─────────────────────────────────────────────────────────────────┤
+│                    SUBSCRIPTION EVENTS                           │
+├─────────────────────────────────────────────────────────────────┤
+│ SUBSCRIPTION_AUTH_STATUS         → Activate or log failure      │
+│ SUBSCRIPTION_PAYMENT_SUCCESS     → Process renewal, add credits │
+│ SUBSCRIPTION_PAYMENT_FAILED      → Mark as past_due             │
+│ SUBSCRIPTION_PAYMENT_CANCELLED   → Log event                    │
+│ SUBSCRIPTION_STATUS_CHANGED      → Update subscription status   │
+│ SUBSCRIPTION_CARD_EXPIRY_REMINDER → Log for future notifications│
+│ SUBSCRIPTION_PAYMENT_NOTIFICATION_INITIATED → Log event         │
+│ SUBSCRIPTION_REFUND_STATUS       → Acknowledge only             │
+└─────────────────────────────────────────────────────────────────┘
 ```
-
-### Proration Order (lines 111, 151-154)
-```typescript
-// BEFORE
-const prorationINR = Math.round((prorationCents / 100) * 83);
-order_amount: prorationINR,
-order_currency: "INR",
-
-// AFTER
-const prorationUSD = prorationCents / 100;
-order_amount: prorationUSD,
-order_currency: "USD",
-```
-
-### New Subscription (lines 229-237)
-```typescript
-// BEFORE
-const newAmountINR = SUBSCRIPTION_PRICES_INR[toPlan];
-plan_currency: "INR",
-plan_recurring_amount: newAmountINR,
-authorization_amount: prorationINR,
-
-// AFTER
-const newAmountUSD = SUBSCRIPTION_PRICES[toPlan] / 100; // Convert cents to dollars
-plan_currency: "USD",
-plan_recurring_amount: newAmountUSD,
-authorization_amount: prorationUSD,
-```
-
-### Response Updates
-```typescript
-// BEFORE
-prorationAmount: prorationINR,
-
-// AFTER
-prorationAmount: prorationUSD,
-```
-
----
-
-## 4. cashfree-reactivate-subscription/index.ts
-
-### Current State (lines 8-19)
-Contains INR pricing with annual plans.
-
-### Changes
-```typescript
-// Remove all INR pricing and annual plans
-const SUBSCRIPTION_PRICES_USD: Record<string, number> = {
-  launch: 149,
-  pro: 199,
-  business: 499,
-};
-
-const CF_PLAN_IDS: Record<string, string> = {
-  launch: "solarizer_launch_monthly_usd",
-  pro: "solarizer_pro_monthly_usd",
-  business: "solarizer_business_monthly_usd",
-};
-```
-
-### Plan Details (lines 125-133)
-```typescript
-// BEFORE
-plan_currency: "INR",
-plan_recurring_amount: amountINR,
-plan_max_cycles: billingPeriod === "annual" ? 10 : 120,
-plan_intervals: billingPeriod === "annual" ? 12 : 1,
-
-// AFTER
-plan_currency: "USD",
-plan_recurring_amount: amountUSD,
-plan_max_cycles: 120,
-plan_intervals: 1,
-```
-
-### Authorization Amount (lines 135-138)
-```typescript
-// BEFORE
-authorization_amount: 100, // ₹1
-
-// AFTER
-authorization_amount: 1, // $1
-```
-
-### Order Recording (lines 171-181)
-```typescript
-// BEFORE
-p_amount_cents: Math.round(amountINR / 83 * 100),
-
-// AFTER
-p_amount_cents: amountUSD * 100,
-```
-
----
-
-## 5. cashfree-webhook/index.ts
-
-### Current State (line 212)
-```typescript
-const amountInr = data.subscription_amount || data.payment?.payment_amount;
-```
-
-### Changes
-Rename to be currency-agnostic:
-```typescript
-const paymentAmount = data.subscription_amount || data.payment?.payment_amount;
-```
-
-And update the RPC call (line 226):
-```typescript
-// BEFORE
-p_amount_inr: amountInr || null,
-
-// AFTER - keep param name for backward compatibility but pass USD now
-p_amount_inr: paymentAmount || null,
-```
-
-Note: The `process_subscription_renewal` RPC accepts `p_amount_inr` as a parameter name, but it's just stored for logging. No database schema change needed.
-
----
-
-## 6. src/hooks/useCashfreeCheckout.ts
-
-### Current State (line 16)
-```typescript
-billingPeriod?: "monthly" | "annual";
-```
-
-### Changes
-```typescript
-billingPeriod?: "monthly";
-```
-
----
-
-## Summary of USD Pricing
-
-| Item | USD Amount |
-|------|------------|
-| Launch Plan | $149/mo |
-| Pro Plan | $199/mo |
-| Business Plan | $499/mo |
-| Authorization (card verification) | $1 (refunded) |
-| Power-up Credits (Launch) | $7/credit |
-| Power-up Credits (Pro) | $6/credit |
-| Power-up Credits (Business) | $5/credit |
 
 ---
 
 ## Technical Notes
 
-1. **Cashfree USD Support**: Since you confirmed USD is approved for your merchant account, the API should accept `order_currency: "USD"` without issues.
+1. **Backward Compatibility**: Keep existing event type checks alongside new ones during transition period in case Cashfree sends both formats.
 
-2. **Plan IDs**: The plan IDs in Cashfree dashboard need to be configured for USD billing. The current plan IDs (`solarizer_pro_monthly`) may need to be recreated with USD currency, or you can use the same IDs if Cashfree allows multi-currency on the same plan.
+2. **User Dropped = Failed**: Per your requirement, `PAYMENT_USER_DROPPED_WEBHOOK` will call the same `mark_payment_failed` RPC as regular payment failures.
 
-3. **No Database Changes Needed**: All amounts are stored in USD cents in the `payment_orders.amount_cents` column already.
+3. **No Refund Processing**: Refund events will be acknowledged (HTTP 200) but no credits will be deducted or orders updated.
 
-4. **Webhook Backward Compatibility**: The webhook will continue to work for any existing INR transactions while supporting new USD transactions.
+4. **Dispute Logging**: Disputes are logged to console for now. A future enhancement could add a `disputes` table to track these.
 
-5. **Upgrade/Downgrade Flow**: Already implemented correctly - upgrades charge proration immediately, downgrades are scheduled for period end with credit conversion.
+5. **Subscription Status Mapping**: Cashfree has multiple cancelled states (`CANCELLED`, `CUSTOMER_CANCELLED`, `EXPIRED`, `COMPLETED`) which all map to our internal `canceled` status.
+
+---
+
+## Cashfree Dashboard Configuration Summary
+
+**Webhook URL:** `https://xylfnqrtzqfduutdcxvu.supabase.co/functions/v1/cashfree-webhook`
+
+**Payment Gateway Events to Enable:**
+- success payment
+- failed payment
+- user dropped payment
+- dispute created
+- dispute updated
+- dispute closed
+
+**Subscription Events to Enable:**
+- All 8 events (subscription auth status, card expiry reminder, payment cancelled, payment failed, payment notification initiated, payment success, refund status, status changed)
+
