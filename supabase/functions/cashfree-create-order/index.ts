@@ -47,6 +47,12 @@ Deno.serve(async (req) => {
     const cashfreeSecretKey = Deno.env.get("CASHFREE_SECRET_KEY")!;
     const cashfreeEnv = Deno.env.get("CASHFREE_ENVIRONMENT") || "sandbox";
 
+    // Log environment for debugging
+    console.log("=== CASHFREE CONFIG ===");
+    console.log("Environment:", cashfreeEnv);
+    console.log("App ID (prefix):", cashfreeAppId.substring(0, 8) + "...");
+    console.log("API Version: 2025-01-01");
+
     // Get user from auth token
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace("Bearer ", "");
@@ -138,7 +144,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-version": "2023-08-01",
+        "x-api-version": "2025-01-01",
         "x-client-id": cashfreeAppId,
         "x-client-secret": cashfreeSecretKey,
       },
@@ -173,13 +179,35 @@ Deno.serve(async (req) => {
 
     const cashfreeOrder = await cashfreeResponse.json();
 
+    // Debug logging
+    console.log("=== CASHFREE ORDER RESPONSE ===");
+    console.log("Full response:", JSON.stringify(cashfreeOrder, null, 2));
+    console.log("payment_session_id:", cashfreeOrder.payment_session_id);
+
+    // Robust extraction
+    let paymentSessionId = cashfreeOrder.payment_session_id;
+    if (!paymentSessionId && cashfreeOrder.data?.payment_session_id) {
+      paymentSessionId = cashfreeOrder.data.payment_session_id;
+    }
+
+    if (!paymentSessionId) {
+      console.error("CRITICAL: payment_session_id missing from response");
+      return new Response(
+        JSON.stringify({ 
+          error: "Payment session not received from gateway",
+          details: cashfreeOrder 
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Store order in database using RPC (store in USD cents)
     const { error: insertError } = await supabaseClient.rpc("create_payment_order", {
       p_user_id: user.id,
       p_order_id: orderId,
       p_order_type: orderType,
       p_amount_cents: amountCents,
-      p_payment_session_id: cashfreeOrder.payment_session_id,
+      p_payment_session_id: paymentSessionId,
       p_plan: plan || null,
       p_billing_period: "monthly",
       p_credits_amount: orderCreditsAmount,
@@ -197,7 +225,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         orderId,
-        paymentSessionId: cashfreeOrder.payment_session_id,
+        paymentSessionId: paymentSessionId,
         orderAmount: amountUSD,
         orderCurrency: "USD",
       }),

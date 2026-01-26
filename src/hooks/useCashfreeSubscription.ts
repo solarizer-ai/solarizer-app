@@ -146,16 +146,50 @@ export function useCashfreeSubscription() {
       }
 
       // If flowType is proration_order, use the regular checkout flow
-      if (flowType === "proration_order" && response.data.paymentSessionId) {
-        // Use Cashfree SDK for checkout
-        const cashfreeMode = import.meta.env.VITE_CASHFREE_MODE || "sandbox";
-        if (typeof window.Cashfree !== "undefined") {
-          const cashfree = new window.Cashfree({ mode: cashfreeMode });
-          await cashfree.checkout({
-            paymentSessionId: response.data.paymentSessionId as unknown as string,
-            redirectTarget: "_self",
+      if (flowType === "proration_order") {
+        console.log("=== CASHFREE CHECKOUT DEBUG ===");
+        console.log("Payment Session ID:", response.data.paymentSessionId);
+        console.log("Full response:", response.data);
+        
+        if (!response.data.paymentSessionId) {
+          console.error("Payment session ID missing from response:", response.data);
+          toast({
+            title: "Upgrade Error",
+            description: "Payment session not initialized. Please contact support.",
+            variant: "destructive",
           });
-          return true;
+          return false;
+        }
+
+        const cashfreeMode = import.meta.env.VITE_CASHFREE_MODE || "sandbox";
+        console.log("SDK Mode:", cashfreeMode);
+        
+        if (typeof window.Cashfree !== "undefined") {
+          try {
+            const cashfree = new window.Cashfree({ mode: cashfreeMode });
+            console.log("Calling Cashfree checkout with session ID:", response.data.paymentSessionId);
+            await cashfree.checkout({
+              paymentSessionId: response.data.paymentSessionId as unknown as string,
+              redirectTarget: "_self",
+            });
+            return true;
+          } catch (checkoutError) {
+            console.error("Cashfree SDK checkout error:", checkoutError);
+            toast({
+              title: "Checkout Failed",
+              description: "Unable to initialize payment. Please try again.",
+              variant: "destructive",
+            });
+            return false;
+          }
+        } else {
+          console.error("Cashfree SDK not loaded on window");
+          toast({
+            title: "Payment Error",
+            description: "Payment system not loaded. Please refresh and try again.",
+            variant: "destructive",
+          });
+          return false;
         }
       }
 
