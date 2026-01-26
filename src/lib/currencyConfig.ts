@@ -6,14 +6,14 @@ export interface Currency {
 }
 
 export const currencies: Currency[] = [
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee', rateFromUSD: 83 },
   { code: 'USD', symbol: '$', name: 'US Dollar', rateFromUSD: 1 },
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee', rateFromUSD: 83 },
   { code: 'EUR', symbol: '€', name: 'Euro', rateFromUSD: 0.92 },
   { code: 'GBP', symbol: '£', name: 'British Pound', rateFromUSD: 0.79 },
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', rateFromUSD: 1.53 },
 ];
 
-export const defaultCurrency = currencies[0]; // INR
+export const defaultCurrency = currencies[0]; // USD
 
 export const convertPrice = (usdPrice: number, toCurrency: Currency): number => {
   return Math.round(usdPrice * toCurrency.rateFromUSD);

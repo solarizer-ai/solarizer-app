@@ -5,18 +5,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Subscription prices in INR (converted from USD at 83 INR per USD)
-const SUBSCRIPTION_PRICES_INR: Record<string, number> = {
-  launch: 12367,     // $149 * 83
-  pro: 16517,        // $199 * 83
-  business: 41417,   // $499 * 83
+// Subscription prices in USD (dollars, not cents)
+const SUBSCRIPTION_PRICES_USD: Record<string, number> = {
+  launch: 149,
+  pro: 199,
+  business: 499,
 };
 
-// Cashfree plan IDs (must match plans created on Cashfree dashboard)
+// Cashfree plan IDs for USD billing
 const CF_PLAN_IDS: Record<string, string> = {
-  launch: "solarizer_launch_monthly",
-  pro: "solarizer_pro_monthly",
-  business: "solarizer_business_monthly",
+  launch: "solarizer_launch_monthly_usd",
+  pro: "solarizer_pro_monthly_usd",
+  business: "solarizer_business_monthly_usd",
 };
 
 interface CreateSubscriptionRequest {
@@ -67,10 +67,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const amountINR = SUBSCRIPTION_PRICES_INR[plan];
+    const amountUSD = SUBSCRIPTION_PRICES_USD[plan];
     const cfPlanId = CF_PLAN_IDS[plan];
     
-    if (!amountINR || !cfPlanId) {
+    if (!amountUSD || !cfPlanId) {
       return new Response(
         JSON.stringify({ error: "Invalid plan" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -108,16 +108,16 @@ Deno.serve(async (req) => {
         plan_id: cfPlanId,
         plan_name: `Solarizer ${plan.charAt(0).toUpperCase() + plan.slice(1)} Monthly`,
         plan_type: "PERIODIC",
-        plan_currency: "INR",
-        plan_recurring_amount: amountINR,
+        plan_currency: "USD",
+        plan_recurring_amount: amountUSD,
         plan_max_cycles: 120, // 10 years max
         plan_intervals: 1,
         plan_interval_type: "MONTH",
       },
       authorization_details: {
-        authorization_amount: 100, // ₹1 for card verification (refunded)
+        authorization_amount: 1, // $1 for card verification (refunded)
         authorization_amount_refund: true,
-        payment_methods: ["card", "upi"],
+        payment_methods: ["card"],
       },
       subscription_meta: {
         return_url: `${origin}/subscription-success?sub_id=${subscriptionId}&plan=${plan}&period=monthly`,
@@ -161,12 +161,12 @@ Deno.serve(async (req) => {
 
     const subscriptionData = JSON.parse(responseText);
 
-    // Store pending subscription info in payment_orders for tracking
+    // Store pending subscription info in payment_orders for tracking (store as USD cents)
     await supabaseClient.rpc("create_payment_order", {
       p_user_id: user.id,
       p_order_id: subscriptionId,
       p_order_type: "subscription",
-      p_amount_cents: Math.round(amountINR / 83 * 100), // Convert back to USD cents for records
+      p_amount_cents: amountUSD * 100, // Store as USD cents
       p_payment_session_id: subscriptionData.cf_subscription_id || subscriptionId,
       p_plan: plan,
       p_billing_period: "monthly",
@@ -179,10 +179,10 @@ Deno.serve(async (req) => {
         subscriptionId,
         cfSubscriptionId: subscriptionData.cf_subscription_id,
         authLink: subscriptionData.subscription_payment_link || subscriptionData.data?.subscription_payment_link,
-        authAmount: 100,
+        authAmount: 1, // $1 authorization
         plan,
         billingPeriod: "monthly",
-        amountINR,
+        amountUSD,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

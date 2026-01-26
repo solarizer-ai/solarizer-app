@@ -5,17 +5,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Subscription prices in INR
-const SUBSCRIPTION_PRICES_INR: Record<string, Record<string, number>> = {
-  launch: { monthly: 12367 },
-  pro: { monthly: 16517, annual: 165170 },
-  business: { monthly: 41417, annual: 414170 },
+// Subscription prices in USD (dollars, not cents)
+const SUBSCRIPTION_PRICES_USD: Record<string, number> = {
+  launch: 149,
+  pro: 199,
+  business: 499,
 };
 
-const CF_PLAN_IDS: Record<string, Record<string, string>> = {
-  launch: { monthly: "solarizer_launch_monthly" },
-  pro: { monthly: "solarizer_pro_monthly", annual: "solarizer_pro_annual" },
-  business: { monthly: "solarizer_business_monthly", annual: "solarizer_business_annual" },
+// Cashfree plan IDs for USD billing
+const CF_PLAN_IDS: Record<string, string> = {
+  launch: "solarizer_launch_monthly_usd",
+  pro: "solarizer_pro_monthly_usd",
+  business: "solarizer_business_monthly_usd",
 };
 
 Deno.serve(async (req) => {
@@ -88,12 +89,11 @@ Deno.serve(async (req) => {
     // If subscription is actually cancelled/expired, need to create a new one
     if (subscription.status === "canceled" || subscription.status === "past_due") {
       const plan = subscription.plan;
-      const billingPeriod = subscription.billing_period || "monthly";
       
-      const cfPlanId = CF_PLAN_IDS[plan]?.[billingPeriod];
-      const amountINR = SUBSCRIPTION_PRICES_INR[plan]?.[billingPeriod];
+      const cfPlanId = CF_PLAN_IDS[plan];
+      const amountUSD = SUBSCRIPTION_PRICES_USD[plan];
 
-      if (!cfPlanId || !amountINR) {
+      if (!cfPlanId || !amountUSD) {
         return new Response(
           JSON.stringify({ error: "Invalid plan configuration for reactivation" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -124,26 +124,26 @@ Deno.serve(async (req) => {
         },
         plan_details: {
           plan_id: cfPlanId,
-          plan_name: `Solarizer ${plan.charAt(0).toUpperCase() + plan.slice(1)} ${billingPeriod === 'annual' ? 'Annual' : 'Monthly'}`,
+          plan_name: `Solarizer ${plan.charAt(0).toUpperCase() + plan.slice(1)} Monthly`,
           plan_type: "PERIODIC",
-          plan_currency: "INR",
-          plan_recurring_amount: amountINR,
-          plan_max_cycles: billingPeriod === "annual" ? 10 : 120,
-          plan_intervals: billingPeriod === "annual" ? 12 : 1,
+          plan_currency: "USD",
+          plan_recurring_amount: amountUSD,
+          plan_max_cycles: 120,
+          plan_intervals: 1,
           plan_interval_type: "MONTH",
         },
         authorization_details: {
-          authorization_amount: 100,
+          authorization_amount: 1, // $1 for card verification (refunded)
           authorization_amount_refund: true,
-          payment_methods: ["card", "upi"],
+          payment_methods: ["card"],
         },
         subscription_meta: {
-          return_url: `${origin}/subscription-success?sub_id=${newSubscriptionId}&plan=${plan}&period=${billingPeriod}&reactivate=true`,
+          return_url: `${origin}/subscription-success?sub_id=${newSubscriptionId}&plan=${plan}&period=monthly&reactivate=true`,
           notification_channel: ["EMAIL"],
         },
         subscription_expiry_time: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
         subscription_first_charge_time: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
-        subscription_note: `Solarizer ${plan} ${billingPeriod} subscription (reactivation)`,
+        subscription_note: `Solarizer ${plan} monthly subscription (reactivation)`,
       };
 
       const cashfreeResponse = await fetch(`${cashfreeBaseUrl}/subscriptions`, {
@@ -168,15 +168,15 @@ Deno.serve(async (req) => {
 
       const subscriptionData = await cashfreeResponse.json();
 
-      // Store reactivation order
+      // Store reactivation order (in USD cents)
       await supabaseClient.rpc("create_payment_order", {
         p_user_id: user.id,
         p_order_id: newSubscriptionId,
         p_order_type: "subscription",
-        p_amount_cents: Math.round(amountINR / 83 * 100),
+        p_amount_cents: amountUSD * 100, // Store as USD cents
         p_payment_session_id: subscriptionData.cf_subscription_id || newSubscriptionId,
         p_plan: plan,
-        p_billing_period: billingPeriod,
+        p_billing_period: "monthly",
         p_credits_amount: null,
       });
 
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
           cfSubscriptionId: subscriptionData.cf_subscription_id,
           authLink: subscriptionData.subscription_payment_link || subscriptionData.data?.subscription_payment_link,
           plan,
-          billingPeriod,
+          billingPeriod: "monthly",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
