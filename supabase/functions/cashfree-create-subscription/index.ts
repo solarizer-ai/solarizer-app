@@ -44,6 +44,12 @@ Deno.serve(async (req) => {
     const cashfreeSecretKey = Deno.env.get("CASHFREE_SECRET_KEY")!;
     const cashfreeEnv = Deno.env.get("CASHFREE_ENVIRONMENT") || "sandbox";
 
+    // Log environment for debugging
+    console.log("=== CASHFREE CONFIG ===");
+    console.log("Environment:", cashfreeEnv);
+    console.log("App ID (prefix):", cashfreeAppId.substring(0, 8) + "...");
+    console.log("API Version: 2025-01-01");
+
     // Get user from auth token
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace("Bearer ", "");
@@ -134,7 +140,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-version": "2023-08-01",
+        "x-api-version": "2025-01-01",
         "x-client-id": cashfreeAppId,
         "x-client-secret": cashfreeSecretKey,
       },

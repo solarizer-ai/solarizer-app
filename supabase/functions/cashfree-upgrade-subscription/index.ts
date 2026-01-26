@@ -43,6 +43,12 @@ Deno.serve(async (req) => {
     const cashfreeSecretKey = Deno.env.get("CASHFREE_SECRET_KEY")!;
     const cashfreeEnv = Deno.env.get("CASHFREE_ENVIRONMENT") || "sandbox";
 
+    // Log environment for debugging
+    console.log("=== CASHFREE CONFIG ===");
+    console.log("Environment:", cashfreeEnv);
+    console.log("App ID (prefix):", cashfreeAppId.substring(0, 8) + "...");
+    console.log("API Version: 2025-01-01");
+
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
@@ -123,7 +129,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-version": "2023-08-01",
+        "x-api-version": "2025-01-01",
         "x-client-id": cashfreeAppId,
         "x-client-secret": cashfreeSecretKey,
       },
@@ -156,13 +162,37 @@ Deno.serve(async (req) => {
 
     const orderData = await orderResponse.json();
 
+    // Debug logging
+    console.log("=== CASHFREE ORDER RESPONSE ===");
+    console.log("Full response:", JSON.stringify(orderData, null, 2));
+    console.log("payment_session_id:", orderData.payment_session_id);
+    console.log("Type:", typeof orderData.payment_session_id);
+
+    // Robust extraction (handle potential nested structures)
+    let paymentSessionId = orderData.payment_session_id;
+    if (!paymentSessionId && orderData.data?.payment_session_id) {
+      paymentSessionId = orderData.data.payment_session_id;
+    }
+
+    // Validate before proceeding
+    if (!paymentSessionId) {
+      console.error("CRITICAL: payment_session_id missing from response");
+      return new Response(
+        JSON.stringify({ 
+          error: "Payment session not received from gateway",
+          details: orderData 
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Store upgrade order (in USD cents)
     await supabaseClient.rpc("create_payment_order", {
       p_user_id: user.id,
       p_order_id: orderId,
       p_order_type: "upgrade",
       p_amount_cents: prorationCents,
-      p_payment_session_id: orderData.payment_session_id,
+      p_payment_session_id: paymentSessionId,
       p_plan: toPlan,
       p_billing_period: "monthly",
       p_credits_amount: null,
@@ -173,7 +203,7 @@ Deno.serve(async (req) => {
         success: true,
         flowType: "proration_order",
         orderId,
-        paymentSessionId: orderData.payment_session_id,
+        paymentSessionId: paymentSessionId,
         prorationAmount: prorationUSD,
         prorationCents,
         fromPlan: currentPlan,
