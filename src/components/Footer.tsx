@@ -18,6 +18,24 @@ const footerLinks = {
   ],
 };
 
+interface ScrollLinkProps {
+  to: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+const ScrollLink = ({ to, children, className }: ScrollLinkProps) => {
+  const handleClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  return (
+    <Link to={to} onClick={handleClick} className={className}>
+      {children}
+    </Link>
+  );
+};
+
 const Footer = () => {
   return (
     <footer className="border-t border-border bg-card/30">
@@ -25,9 +43,9 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="inline-block mb-4">
+            <ScrollLink to="/" className="inline-block mb-4">
               <img src={solarizerLogo} alt="Solarizer" className="w-10 h-10 rounded-lg" />
-            </Link>
+            </ScrollLink>
             <p className="text-sm text-muted-foreground">
               Proprietary smart contract security intelligence.
             </p>
@@ -39,12 +57,12 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
-                  <Link
+                  <ScrollLink
                     to={link.href}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
-                  </Link>
+                  </ScrollLink>
                 </li>
               ))}
             </ul>
@@ -56,12 +74,12 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.intelligence.map((link) => (
                 <li key={link.label}>
-                  <Link
+                  <ScrollLink
                     to={link.href}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
-                  </Link>
+                  </ScrollLink>
                 </li>
               ))}
             </ul>
@@ -73,12 +91,12 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
-                  <Link
+                  <ScrollLink
                     to={link.href}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
-                  </Link>
+                  </ScrollLink>
                 </li>
               ))}
             </ul>

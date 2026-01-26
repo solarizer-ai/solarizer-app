@@ -17,7 +17,7 @@ const features = [
   },
   {
     icon: FileCode2,
-    title: "AI-Generated Remediation",
+    title: "AI-Powered Remediation",
     description: "Receive precise, syntax-perfect Solidity fixes. Our analysis provides remediation code tailored to your specific variable naming and project architecture.",
   },
   {
@@ -61,12 +61,12 @@ const comparisonData = [
   {
     feature: "Scanning Depth",
     manual: "Manual Line-by-Line",
-    solarizer: "Multi-Stage AI Scanning",
+    solarizer: "Multi-Stage Scanning",
   },
   {
     feature: "Logic Verification",
     manual: "Subjective Human Review",
-    solarizer: "Semantic AI Analysis",
+    solarizer: "Semantic Analysis",
   },
   {
     feature: "Availability",
