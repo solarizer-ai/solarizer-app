@@ -159,7 +159,7 @@ export function SubscriptionPlanSelector({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-foreground">Change Your Plan</h4>
+        <h4 className="text-sm font-medium text-foreground">Plans</h4>
         {pendingPlan && pendingPlanDate && (
           <div className="flex items-center gap-1.5 text-xs text-amber-600">
             <Clock className="w-3 h-3" />
@@ -192,11 +192,6 @@ export function SubscriptionPlanSelector({
                     ${plan.price}<span className="text-xs">/mo</span>
                   </p>
                 </div>
-                
-                {/* Key feature - hidden on mobile */}
-                <span className="hidden sm:block text-sm text-muted-foreground truncate">
-                  {plan.keyFeature}
-                </span>
                 
                 {/* Pending indicator inline */}
                 {isPending && (
