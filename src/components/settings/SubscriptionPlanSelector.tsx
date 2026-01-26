@@ -7,7 +7,7 @@ interface Plan {
   id: "launch" | "pro" | "business";
   name: string;
   price: number;
-  features: string[];
+  keyFeature: string;
 }
 
 const PLANS: Plan[] = [
@@ -15,19 +15,19 @@ const PLANS: Plan[] = [
     id: "launch",
     name: "Launch",
     price: 149,
-    features: ["150 nLOC per scan", "1 file per scan", "Critical/High/Medium findings"],
+    keyFeature: "150 nLOC per scan",
   },
   {
     id: "pro",
     name: "Pro",
     price: 199,
-    features: ["Unlimited nLOC", "GitHub Import", "Export Reports", "Remediation"],
+    keyFeature: "Unlimited nLOC + GitHub",
   },
   {
     id: "business",
     name: "Business",
     price: 499,
-    features: ["Everything in Pro", "Share Reports", "Team Collaboration"],
+    keyFeature: "Everything in Pro + Teams",
   },
 ];
 
@@ -168,7 +168,7 @@ export function SubscriptionPlanSelector({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="flex flex-col space-y-2">
         {PLANS.map((plan) => {
           const action = getPlanAction(plan.id);
           const isCurrent = action === "current";
@@ -178,41 +178,37 @@ export function SubscriptionPlanSelector({
             <div
               key={plan.id}
               className={cn(
-                "relative p-4 rounded-lg border transition-all",
-                isCurrent && "border-primary bg-primary/5",
-                isPending && "border-amber-300 bg-amber-50/50 dark:bg-amber-900/10",
-                !isCurrent && !isPending && "border-border hover:border-muted-foreground/50"
+                "flex items-center justify-between p-4 rounded-lg border transition-all",
+                isCurrent && "border-l-4 border-l-primary border-t border-r border-b border-border bg-primary/5",
+                isPending && "border-l-4 border-l-amber-400 border-t border-r border-b border-amber-300 bg-amber-50/50 dark:bg-amber-900/10",
+                !isCurrent && !isPending && "border-l-4 border-l-transparent hover:border-l-muted-foreground/30"
               )}
             >
-              {isPending && (
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-                  <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 text-xs dark:bg-amber-900/30 dark:text-amber-400">
-                    Scheduled
-                  </Badge>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <div>
+              {/* Left: Plan name, price, and feature */}
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <div className="min-w-[80px]">
                   <h5 className="font-semibold text-foreground">{plan.name}</h5>
-                  <p className="text-lg font-bold text-foreground">
-                    ${plan.price}
-                    <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                  <p className="text-sm text-muted-foreground">
+                    ${plan.price}<span className="text-xs">/mo</span>
                   </p>
                 </div>
+                
+                {/* Key feature - hidden on mobile */}
+                <span className="hidden sm:block text-sm text-muted-foreground truncate">
+                  {plan.keyFeature}
+                </span>
+                
+                {/* Pending indicator inline */}
+                {isPending && (
+                  <Badge variant="outline" className="hidden sm:flex bg-amber-100 text-amber-700 border-amber-300 text-xs dark:bg-amber-900/30 dark:text-amber-400">
+                    Scheduled
+                  </Badge>
+                )}
+              </div>
 
-                <ul className="space-y-1 text-xs text-muted-foreground">
-                  {plan.features.slice(0, 3).map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-1.5">
-                      <Check className="w-3 h-3 text-primary flex-shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="pt-1">
-                  {renderActionButton(plan)}
-                </div>
+              {/* Right: Action button - fixed width for alignment */}
+              <div className="w-32 flex-shrink-0 ml-4">
+                {renderActionButton(plan)}
               </div>
             </div>
           );
