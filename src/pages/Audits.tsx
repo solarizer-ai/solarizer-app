@@ -114,8 +114,8 @@ const Audits = () => {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-row gap-3 sm:gap-4 overflow-x-auto pb-2 -mx-6 px-6 sm:mx-0 sm:px-0 sm:overflow-visible">
-            <div className="relative flex-1 min-w-[180px] sm:max-w-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative w-full sm:flex-1 sm:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search..."
@@ -124,41 +124,43 @@ const Audits = () => {
                 className="pl-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[120px] sm:w-[150px] shrink-0">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="secured">Secured</SelectItem>
-                <SelectItem value="issues">Issues</SelectItem>
-                <SelectItem value="analyzing">Analyzing</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
-            {hasSharedAudits && (
-              <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
-                <SelectTrigger className="w-[120px] sm:w-[160px] shrink-0">
-                  <SelectValue placeholder="Ownership" />
+            <div className="flex flex-wrap gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[110px] sm:w-[130px]">
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Audits</SelectItem>
-                  <SelectItem value="owned">My Audits</SelectItem>
-                  <SelectItem value="shared">Shared with me</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="secured">Secured</SelectItem>
+                  <SelectItem value="issues">Issues</SelectItem>
+                  <SelectItem value="analyzing">Analyzing</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
-            )}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[120px] sm:w-[150px] shrink-0">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="name">Name A-Z</SelectItem>
-                <SelectItem value="grade">Best Grade</SelectItem>
-              </SelectContent>
-            </Select>
+              {hasSharedAudits && (
+                <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
+                  <SelectTrigger className="w-[110px] sm:w-[140px]">
+                    <SelectValue placeholder="Ownership" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Audits</SelectItem>
+                    <SelectItem value="owned">My Audits</SelectItem>
+                    <SelectItem value="shared">Shared</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[110px] sm:w-[130px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="oldest">Oldest</SelectItem>
+                  <SelectItem value="name">Name A-Z</SelectItem>
+                  <SelectItem value="grade">Best Grade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Audit Grid */}

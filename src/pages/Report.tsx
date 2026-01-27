@@ -192,63 +192,71 @@ const Report = () => {
             >
               ← Back to Dashboard
             </button>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Analysis Results</h2>
-              {isLive && (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/10 border border-success/20 text-xs text-success font-medium animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                  Live
-                </span>
-              )}
-              {!isOwner && currentAudit && (
-                <Badge variant="secondary" className="gap-1.5">
-                  <Users className="w-3 h-3" />
-                  {ownerInfo 
-                    ? `Shared by ${ownerInfo.display_name || ownerInfo.email}`
-                    : "Shared"
-                  }
-                </Badge>
-              )}
-              {isOwner && shareCount > 0 && (
-                <Badge variant="outline" className="gap-1.5 border-primary/30 text-primary">
-                  <Share2 className="w-3 h-3" />
-                  Sharing with {shareCount}
-                </Badge>
-              )}
-              {isOwner && canShareReports && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleShareClick}
-                  className="gap-2"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </Button>
-              )}
-              {currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleExportMarkdown}
-                        className={`gap-2 ${!canExportReport ? 'opacity-75' : ''}`}
-                      >
-                        {!canExportReport && <Lock className="w-3 h-3" />}
-                        <Download className="w-4 h-4" />
-                        Export
-                      </Button>
-                    </TooltipTrigger>
-                    {!canExportReport && (
-                      <TooltipContent>
-                        <p>Upgrade to Pro to export reports</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Analysis Results</h2>
+                {isLive && (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/10 border border-success/20 text-xs text-success font-medium animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                    Live
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {!isOwner && currentAudit && (
+                  <Badge variant="secondary" className="gap-1.5">
+                    <Users className="w-3 h-3" />
+                    <span className="hidden sm:inline">
+                      {ownerInfo 
+                        ? `Shared by ${ownerInfo.display_name || ownerInfo.email}`
+                        : "Shared"
+                      }
+                    </span>
+                    <span className="sm:hidden">Shared</span>
+                  </Badge>
+                )}
+                {isOwner && shareCount > 0 && (
+                  <Badge variant="outline" className="gap-1.5 border-primary/30 text-primary">
+                    <Share2 className="w-3 h-3" />
+                    <span className="hidden sm:inline">Sharing with {shareCount}</span>
+                    <span className="sm:hidden">{shareCount}</span>
+                  </Badge>
+                )}
+                {isOwner && canShareReports && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleShareClick}
+                    className="gap-1.5 h-8"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Share</span>
+                  </Button>
+                )}
+                {currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleExportMarkdown}
+                          className={`gap-1.5 h-8 ${!canExportReport ? 'opacity-75' : ''}`}
+                        >
+                          {!canExportReport && <Lock className="w-3 h-3" />}
+                          <Download className="w-4 h-4" />
+                          <span className="hidden sm:inline">Export</span>
+                        </Button>
+                      </TooltipTrigger>
+                      {!canExportReport && (
+                        <TooltipContent>
+                          <p>Upgrade to Pro to export reports</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">
               {currentAudit?.project_name || "Contract"} • Analyzed {currentAudit ? formatTimestamp(currentAudit.created_at) : ""}

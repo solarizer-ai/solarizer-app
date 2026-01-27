@@ -200,19 +200,20 @@ const SecurityScoreCard = ({
             </div>
 
             {/* Category Pills */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:justify-center lg:justify-start">
               {categories.map((cat) => (
                 <div
                   key={cat.label}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border",
+                    "flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border",
                     cat.bgColor,
                     cat.borderColor
                   )}
                 >
-                  <cat.icon className={cn("w-3.5 h-3.5", cat.textColor)} />
-                  <span className={cn("text-sm font-medium", cat.textColor)}>{cat.count}</span>
-                  <span className="text-xs text-muted-foreground">{cat.label}</span>
+                  <cat.icon className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5", cat.textColor)} />
+                  <span className={cn("text-xs sm:text-sm font-medium", cat.textColor)}>{cat.count}</span>
+                  <span className="text-xs text-muted-foreground hidden sm:inline">{cat.label}</span>
+                  <span className="text-[10px] text-muted-foreground sm:hidden">{cat.label.slice(0, 4)}</span>
                 </div>
               ))}
             </div>

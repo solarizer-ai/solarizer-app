@@ -217,35 +217,29 @@ const Settings = () => {
           </div>
 
           <Tabs defaultValue={initialTab} className="space-y-6">
-            <div className="overflow-x-auto -mx-6 px-6 pb-2">
-              <TabsList className="w-max min-w-full sm:w-auto">
-                <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm sm:gap-2">
-                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline">Profile</span>
-                  <span className="xs:hidden">Profile</span>
-                </TabsTrigger>
-                <TabsTrigger value="subscription" className="gap-1.5 text-xs sm:text-sm sm:gap-2">
-                  <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Subscription</span>
-                  <span className="sm:hidden">Plan</span>
-                </TabsTrigger>
-                <TabsTrigger value="security" className="gap-1.5 text-xs sm:text-sm sm:gap-2">
-                  <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Security
-                </TabsTrigger>
-                <TabsTrigger value="sharing" className="gap-1.5 text-xs sm:text-sm sm:gap-2">
-                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Sharing</span>
-                  <span className="sm:hidden">Share</span>
-                  {!canShareReports && <Lock className="w-3 h-3 text-muted-foreground" />}
-                </TabsTrigger>
-                <TabsTrigger value="integrations" className="gap-1.5 text-xs sm:text-sm sm:gap-2">
-                  <Link2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Integrations</span>
-                  <span className="sm:hidden">Apps</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
+            <TabsList className="flex flex-wrap justify-start gap-1.5 h-auto p-1.5 bg-muted/50">
+              <TabsTrigger value="profile" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Profile</span>
+              </TabsTrigger>
+              <TabsTrigger value="subscription" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+                <CreditCard className="w-4 h-4" />
+                <span className="hidden sm:inline">Subscription</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+                <Shield className="w-4 h-4" />
+                <span className="hidden sm:inline">Security</span>
+              </TabsTrigger>
+              <TabsTrigger value="sharing" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+                <Users className="w-4 h-4" />
+                <span className="hidden sm:inline">Sharing</span>
+                {!canShareReports && <Lock className="w-3 h-3 text-muted-foreground" />}
+              </TabsTrigger>
+              <TabsTrigger value="integrations" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+                <Link2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Integrations</span>
+              </TabsTrigger>
+            </TabsList>
 
             <TabsContent value="profile">
               <Card>

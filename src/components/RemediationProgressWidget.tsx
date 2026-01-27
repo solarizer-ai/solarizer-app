@@ -78,7 +78,7 @@ export function RemediationProgressWidget({ auditId, className }: RemediationPro
         </div>
 
         {/* Breakdown by Severity */}
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 sm:gap-2">
           {(['critical', 'high', 'medium', 'low', 'info'] as const).map((severity) => {
             const severityStats = stats.bySeverity[severity];
             if (severityStats.total === 0) return null;
@@ -86,7 +86,7 @@ export function RemediationProgressWidget({ auditId, className }: RemediationPro
             const pct = Math.round((severityStats.resolved / severityStats.total) * 100);
             
             return (
-              <div key={severity} className="text-center">
+              <div key={severity} className="text-center p-2 rounded-md bg-muted/30">
                 <div className={cn(
                   "text-xs font-medium capitalize mb-1",
                   severityColors[severity]
