@@ -121,8 +121,8 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
   return (
     <div className="space-y-3">
       {/* Search and Filter Row */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search findings..."
@@ -141,8 +141,8 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
         </div>
 
         {/* Severity Filters */}
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
           {allSeverities.map((severity) => {
             const isHidden = hiddenSeverities.includes(severity);
             
@@ -153,10 +153,11 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
                     <TooltipTrigger asChild>
                       <button
                         disabled
-                        className="px-2.5 py-1 text-xs font-medium rounded-md border transition-colors capitalize bg-muted/50 text-muted-foreground/50 border-border/50 cursor-not-allowed flex items-center gap-1"
+                        className="px-2 py-1 text-xs font-medium rounded-md border transition-colors capitalize bg-muted/50 text-muted-foreground/50 border-border/50 cursor-not-allowed flex items-center gap-1"
                       >
                         <Lock className="w-3 h-3" />
-                        {severity}
+                        <span className="hidden sm:inline">{severity}</span>
+                        <span className="sm:hidden">{severity.slice(0, 4)}</span>
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -172,29 +173,30 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
                 key={severity}
                 onClick={() => toggleSeverity(severity)}
                 className={cn(
-                  "px-2.5 py-1 text-xs font-medium rounded-md border transition-colors capitalize",
+                  "px-2 py-1 text-xs font-medium rounded-md border transition-colors capitalize",
                   selectedSeverities.includes(severity)
                     ? getSeverityColor(severity)
                     : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
                 )}
               >
-                {severity}
+                <span className="hidden sm:inline">{severity}</span>
+                <span className="sm:hidden">{severity.slice(0, 4)}</span>
               </button>
             );
           })}
-        </div>
 
-        {/* Clear Filters */}
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            className="text-muted-foreground hover:text-foreground h-8"
-          >
-            Clear filters
-          </Button>
-        )}
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="text-muted-foreground hover:text-foreground h-7 px-2 text-xs"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Results Count */}
