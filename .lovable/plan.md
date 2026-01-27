@@ -1,90 +1,213 @@
 
+# Eliminate Horizontal Scrolling - Minimal and Aesthetic Approach
 
-# Redesign Subscription Plan Selector as Full-Width Stacked Tabs
+## Design Philosophy
 
-## Current Issue
+All changes will follow these principles to maintain the Obsidian & Solar Orange theme:
+- **Generous spacing**: Use proper padding and gaps between wrapped elements
+- **Visual hierarchy**: Clear separation between stacked rows
+- **No crowding**: Elements on new rows get their own breathing room
+- **Consistent alignment**: Items align properly even when wrapped
 
-The current layout uses a 3-column grid on desktop where each plan is a separate card. This causes alignment issues because:
-- Each card has variable content height (different number of features)
-- Action buttons appear at different vertical positions within each card
+---
 
-## Solution
+## Components to Update
 
-Convert to a **full-width stacked horizontal tab design** where each plan is a single row spanning the full width, with all elements (plan name, price, key feature, and action button) aligned horizontally.
+### 1. Settings Page Tabs
 
-## New Layout Design
+**File:** `src/pages/Settings.tsx`
+
+**Current Issue:** Uses horizontal scroll with cramped tabs
+
+**Solution:** Wrap tabs with generous spacing, icon-only on mobile with tooltip
 
 ```text
-+------------------------------------------------------------------+
-| Launch    $149/mo   150 nLOC per scan            [Current Plan]  |
-+------------------------------------------------------------------+
-| Pro       $199/mo   Unlimited nLOC + GitHub      [Upgrade →]     |
-+------------------------------------------------------------------+
-| Business  $499/mo   Everything in Pro + Teams    [Upgrade →]     |
-+------------------------------------------------------------------+
+Mobile Layout (wrapped, 2 rows):
++------------------------------------------+
+|  [Profile]  [Plan]  [Security]           |
+|  [Share]    [Apps]                       |
++------------------------------------------+
+
+Desktop Layout (single row):
++------------------------------------------+
+|  [Profile] [Subscription] [Security] [Sharing] [Integrations]  |
++------------------------------------------+
 ```
 
-Each row will be:
-- Full width of the container
-- Horizontally laid out with consistent alignment
-- Plan name and price on the left
-- Key feature summary in the middle
-- Action button on the right (all buttons perfectly aligned)
+**Key Changes:**
+- Remove `overflow-x-auto` wrapper
+- Add `flex-wrap` with `gap-2` for clean row spacing
+- Use `h-auto` on TabsList to allow multi-row
+- Add subtle top margin for wrapped items via `gap-y-2`
 
-## File Changes
+---
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/components/settings/SubscriptionPlanSelector.tsx` | Modify | Restructure from grid cards to stacked horizontal rows |
+### 2. Audits Page Filters
 
-## Implementation Details
+**File:** `src/pages/Audits.tsx`
 
-### Layout Structure
+**Current Issue:** Filters overflow horizontally with `overflow-x-auto`
 
-```tsx
-<div className="space-y-2">
-  {PLANS.map((plan) => (
-    <div className="flex items-center justify-between p-4 rounded-lg border w-full">
-      {/* Left: Plan name and price */}
-      <div className="flex items-center gap-4 min-w-0">
-        <div>
-          <h5>{plan.name}</h5>
-          <p>${plan.price}/mo</p>
-        </div>
-        {/* Middle: Key feature (hidden on mobile) */}
-        <span className="hidden sm:block text-muted-foreground">
-          {plan.features[0]}
-        </span>
-      </div>
-      
-      {/* Right: Action button - fixed width for alignment */}
-      <div className="w-32 flex-shrink-0">
-        {renderActionButton(plan)}
-      </div>
-    </div>
-  ))}
-</div>
+**Solution:** Stack search on its own row, filters below with wrap
+
+```text
+Mobile Layout (stacked):
++------------------------------------------+
+|  [Search input - full width]             |
++------------------------------------------+
+|  [Status ▼]  [Sort ▼]  [Ownership ▼]     |
++------------------------------------------+
+
+Desktop Layout (inline):
++------------------------------------------+
+|  [Search input]  [Status ▼]  [Sort ▼]  [Ownership ▼]  |
++------------------------------------------+
 ```
 
-### Key Changes
+**Key Changes:**
+- `flex flex-col gap-3 sm:flex-row sm:flex-wrap`
+- Search input: `w-full sm:flex-1 sm:max-w-md`
+- Selects in a separate row on mobile: `flex gap-2 flex-wrap`
 
-1. **Horizontal Row Layout**: Replace `grid grid-cols-3` with `flex flex-col space-y-2`
-2. **Consistent Button Alignment**: All action buttons have fixed width (`w-32`) and right-aligned
-3. **Responsive Feature Display**: Show key feature text on desktop, hide on mobile
-4. **Pending Badge**: Move from floating to inline indicator
-5. **Current Plan Highlight**: Left border accent instead of full background
+---
 
-### Visual States
+### 3. Findings Filter - Severity Buttons
 
-| State | Left Border | Background | Button Style |
-|-------|-------------|------------|--------------|
-| Current Plan | `border-l-4 border-primary` | `bg-primary/5` | Badge: "Current Plan" |
-| Upgrade Available | `border-l-4 border-transparent` | `bg-background` | Primary button: "Upgrade" |
-| Downgrade Available | `border-l-4 border-transparent` | `bg-background` | Outline button: "Downgrade" |
-| Pending Downgrade | `border-l-4 border-amber-400` | `bg-amber-50/50` | Amber button: "Cancel" |
+**File:** `src/components/FindingsFilter.tsx`
 
-### Mobile Responsiveness
+**Current Issue:** 5 severity buttons in a row can overflow
 
-- On mobile: Stack plan name/price vertically, hide feature text, keep button right-aligned
-- On desktop: Full horizontal layout with all elements visible
+**Solution:** Allow natural wrapping with clean gap
 
+```text
+Mobile Layout (wrapped to 2 rows):
++------------------------------------------+
+|  [Search input - full width]             |
++------------------------------------------+
+|  [filter icon]  [Critical]  [High]  [Medium]  |
+|                 [Low]  [Info]  [Clear]        |
++------------------------------------------+
+
+Desktop Layout (single row):
++------------------------------------------+
+|  [Search]  [filter] [Critical] [High] [Medium] [Low] [Info] [Clear]  |
++------------------------------------------+
+```
+
+**Key Changes:**
+- Outer container: `flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center`
+- Search input: `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-md`
+- Severity buttons container: `flex flex-wrap gap-2 items-center`
+
+---
+
+### 4. SecurityScoreCard - Vulnerability Pills
+
+**File:** `src/components/SecurityScoreCard.tsx`
+
+**Current Issue:** 5 pills wrap but can feel cramped
+
+**Solution:** Compact pills with abbreviated labels on mobile
+
+```text
+Mobile Layout (already wraps, but cleaner):
++------------------------------------------+
+|  [Crit 2]  [High 5]  [Med 3]             |
+|  [Low 1]   [Info 0]                      |
++------------------------------------------+
+
+Desktop Layout (single row with full labels):
++------------------------------------------+
+|  [2 Critical]  [5 High]  [3 Medium]  [1 Low]  [0 Info]  |
++------------------------------------------+
+```
+
+**Key Changes:**
+- Pills: `flex flex-wrap gap-2`
+- Each pill: smaller padding on mobile `px-2 py-1 sm:px-2.5 sm:py-1.5`
+- Labels: `hidden sm:inline` for full text, show abbreviated on mobile
+
+---
+
+### 5. RemediationProgressWidget - Severity Grid
+
+**File:** `src/components/RemediationProgressWidget.tsx`
+
+**Current Issue:** `grid-cols-5` is cramped on mobile
+
+**Solution:** Responsive grid with proper gaps
+
+```text
+Mobile Layout (3 columns with gap):
++------------------------------------------+
+|   Crit      High      Med                |
+|   0/2       1/5       2/3                |
++------------------------------------------+
+|   Low       Info                         |
+|   1/1       0/0                          |
++------------------------------------------+
+
+Desktop Layout (5 columns):
++------------------------------------------+
+|  Crit   High   Med   Low   Info          |
+|  0/2    1/5    2/3   1/1   0/0           |
++------------------------------------------+
+```
+
+**Key Changes:**
+- Grid: `grid grid-cols-3 gap-3 sm:grid-cols-5 sm:gap-2`
+- Ensures wrapped items get equal spacing
+
+---
+
+### 6. Report Page Header
+
+**File:** `src/pages/Report.tsx`
+
+**Current Issue:** Badges and buttons can overflow when stacked
+
+**Solution:** Proper wrap with gap for clean rows
+
+```text
+Mobile Layout (stacked cleanly):
++------------------------------------------+
+|  Analysis Results  [Live]                |
++------------------------------------------+
+|  [Shared by user@...]                    |
+|  [Share]  [Export]                       |
++------------------------------------------+
+
+Desktop Layout (inline):
++------------------------------------------+
+|  Analysis Results [Live] [Shared by...] [Share] [Export]  |
++------------------------------------------+
+```
+
+**Key Changes:**
+- Badge/button container: `flex flex-wrap items-center gap-2`
+- Sufficient `gap-2` ensures wrapped items don't crowd
+
+---
+
+## Summary of Changes
+
+| File | Change | Result |
+|------|--------|--------|
+| `src/pages/Settings.tsx` | Wrap tabs with gap, icon-only mobile | Clean 2-row tabs on mobile |
+| `src/pages/Audits.tsx` | Stack search above filters on mobile | No horizontal scroll |
+| `src/components/FindingsFilter.tsx` | `flex-wrap` on filter buttons | Natural multi-row |
+| `src/components/SecurityScoreCard.tsx` | Compact pills with short labels | Fits without cramping |
+| `src/components/RemediationProgressWidget.tsx` | `grid-cols-3 sm:grid-cols-5` | Proper mobile grid |
+| `src/pages/Report.tsx` | `flex-wrap gap-2` on header | Clean badge/button rows |
+
+---
+
+## Visual Spacing Standards
+
+All wrapped elements will use:
+- **Gap between items:** `gap-2` (8px) minimum
+- **Gap between rows:** `gap-y-2` or `gap-3` for visual separation
+- **No items touching:** Padding maintained on all sides
+- **Consistent borders:** Theme colors maintained
+
+This ensures a minimal, uncluttered aesthetic even when elements wrap to new lines.
