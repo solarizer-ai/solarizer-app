@@ -164,7 +164,7 @@ const Index = () => {
       
       // Convert FileNode[] to simple file objects for API
       const fileList = getAllFiles(files).map(f => ({
-        name: f.name,
+        name: f.path,  // Use full path for n8n backend
         content: f.content || '',
       }));
       setPendingFiles(fileList);
