@@ -59,20 +59,30 @@ const SandpackEditorInner = ({
   // Track previous files to prevent infinite loops
   const previousFilesRef = useRef<string>("");
 
+  // Files that Sandpack needs internally but should never be exposed
+  const SANDPACK_INTERNAL_FILES = ["/package.json", "/index.html", "/styles.css", "/index.js"];
+
   // Sync files back to parent when they change (with stable comparison)
   useEffect(() => {
     if (onFilesChange && sandpack.files) {
+      // Filter out Sandpack internal files before syncing to parent
+      const userFiles = Object.fromEntries(
+        Object.entries(sandpack.files).filter(
+          ([path]) => !SANDPACK_INTERNAL_FILES.includes(path)
+        )
+      );
+
       // Create a stable string representation of files
       const filesSnapshot = JSON.stringify(
         Object.fromEntries(
-          Object.entries(sandpack.files).map(([path, file]) => [path, file.code])
+          Object.entries(userFiles).map(([path, file]) => [path, file.code])
         )
       );
       
       // Only call onFilesChange if content actually changed
       if (filesSnapshot !== previousFilesRef.current) {
         previousFilesRef.current = filesSnapshot;
-        const fileNodes = sandpackFilesToFileNodes(sandpack.files);
+        const fileNodes = sandpackFilesToFileNodes(userFiles);
         onFilesChange(fileNodes);
       }
     }
@@ -143,10 +153,12 @@ const SandpackEditorInner = ({
   // Download project as ZIP
   const handleDownload = useCallback(async () => {
     const zip = new JSZip();
-    Object.entries(sandpack.files).forEach(([path, file]) => {
-      const filePath = path.startsWith("/") ? path.slice(1) : path;
-      zip.file(filePath, file.code);
-    });
+    Object.entries(sandpack.files)
+      .filter(([path]) => !SANDPACK_INTERNAL_FILES.includes(path))
+      .forEach(([path, file]) => {
+        const filePath = path.startsWith("/") ? path.slice(1) : path;
+        zip.file(filePath, file.code);
+      });
     const content = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(content);
     const a = document.createElement("a");
@@ -408,6 +420,12 @@ contract MyContract {
   const activeFile = firstFilePath || fileKeys[0] || "/Contract.sol";
   const normalizedActiveFile = activeFile.startsWith("/") ? activeFile : `/${activeFile}`;
 
+  // Filter visible files to exclude internal Sandpack files
+  const SANDPACK_INTERNAL_FILES = ["/package.json", "/index.html", "/styles.css", "/index.js"];
+  const visibleFileKeys = fileKeys.filter(
+    (path) => !SANDPACK_INTERNAL_FILES.includes(path)
+  );
+
   return (
     <SandpackProvider
       files={initialFiles}
@@ -417,7 +435,7 @@ contract MyContract {
       }}
       options={{
         activeFile: normalizedActiveFile,
-        visibleFiles: fileKeys,
+        visibleFiles: visibleFileKeys,
       }}
     >
       <SandpackEditorInner
