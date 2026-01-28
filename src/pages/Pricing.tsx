@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PublicHeader from "@/components/PublicHeader";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -244,7 +244,7 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <PublicHeader />
+      <Header />
 
       <main className="container mx-auto px-4 py-16 md:py-24">
         {/* Header Section */}

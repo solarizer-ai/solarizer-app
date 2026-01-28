@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import Header from "@/components/Header";
-import MinimalFooter from "@/components/MinimalFooter";
+import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Zap, ArrowUpRight, CreditCard, Loader2, Receipt, ArrowLeft } from "lucide-react";
@@ -204,7 +204,7 @@ const BillingHistory = () => {
         </div>
       </main>
 
-      <MinimalFooter />
+      <Footer />
     </div>
   );
 };

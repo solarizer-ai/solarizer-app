@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PublicHeader from "@/components/PublicHeader";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const ComingSoon = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <PublicHeader />
+      <Header />
 
       <main className="flex-grow flex items-center justify-center px-6 py-24">
         <div className="text-center max-w-md">
