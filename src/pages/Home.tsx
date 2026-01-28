@@ -89,6 +89,12 @@ const Home = () => {
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
         
+        {/* Subtle grid overlay for depth */}
+        <div className="absolute inset-0 bg-grid-subtle opacity-[0.04]" />
+        
+        {/* Radial spotlight effect */}
+        <div className="absolute inset-0 bg-radial-glow" />
+        
         {/* Solar Ring Visual */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="relative w-[500px] h-[500px] opacity-30">
@@ -120,7 +126,7 @@ const Home = () => {
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
               Surface-level scanners catch syntax errors; Solarizer deconstructs your protocol's entire logic model. It performs deep analysis to identify complex Solidity vulnerabilities and economic risks in minutes.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
                 <Link to="/dashboard">
                   Start AI Analysis
@@ -136,12 +142,29 @@ const Home = () => {
                 See How It Works
               </Button>
             </div>
+            
+            {/* Social Proof Strip */}
+            <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-primary" />
+                <span className="font-medium text-foreground">1,200+</span> Contracts Analysed
+              </span>
+              <span className="text-border">•</span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-medium text-foreground">$50M+</span> TVL Secured
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="relative h-24">
+        <div className="absolute inset-0 section-fade-bottom" />
+      </div>
+
       {/* Intelligence Loop Section */}
-      <section id="how-it-works" className="py-24 md:py-32 bg-card/30 border-y border-border">
+      <section id="how-it-works" className="py-24 md:py-32 bg-card/30 relative">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Protocol Intelligence</h2>
@@ -152,9 +175,9 @@ const Home = () => {
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {intelligenceLoop.map((step, index) => (
               <div key={step.title} className="relative group">
-                <div className="bg-card border border-border rounded-xl p-6 h-full border-l-2 border-l-primary transition-all duration-300 group-hover:border-primary/60 group-hover:shadow-lg group-hover:shadow-primary/10 group-hover:-translate-y-1">
-                  <div className="w-12 h-12 rounded-full border-2 border-primary/40 flex items-center justify-center bg-primary/5 mb-4">
-                    <step.icon className="w-6 h-6 text-primary" />
+                <div className="bg-card border border-border rounded-xl p-6 h-full border-l-2 border-l-primary transition-all duration-300 group-hover:border-primary/60 group-hover:shadow-lg group-hover:shadow-primary/10 group-hover:glow-orange-sm group-hover:-translate-y-1">
+                  <div className="w-12 h-12 rounded-full border-2 border-primary/40 flex items-center justify-center bg-primary/5 mb-4 transition-all duration-300 group-hover:bg-primary/10 group-hover:border-primary/60">
+                    <step.icon className="w-6 h-6 text-primary transition-transform duration-300 group-hover:scale-110" />
                   </div>
                   <h3 className="text-xs uppercase tracking-wider text-primary mb-3">{step.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
@@ -167,6 +190,11 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Section Divider */}
+      <div className="relative h-16">
+        <div className="absolute inset-0 section-fade-top" />
+      </div>
 
       {/* Comparison Table Section */}
       <section className="py-24 md:py-32">
@@ -184,14 +212,14 @@ const Home = () => {
                       <span className="hidden sm:inline">Traditional Manual Review</span>
                       <span className="sm:hidden">Manual</span>
                     </th>
-                    <th className="text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-primary text-xs md:text-base">Solarizer</th>
+                    <th className="text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-primary text-xs md:text-base border-l-2 border-l-primary/40 bg-primary/5">Solarizer</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisonData.map((row, index) => (
                     <tr 
                       key={row.feature} 
-                      className={`border-b border-border/50 ${index % 2 === 0 ? 'bg-card/30' : ''}`}
+                      className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${index % 2 === 0 ? 'bg-card/30' : ''}`}
                     >
                       <td className="sticky left-0 z-10 bg-background py-3 px-3 md:py-4 md:px-6 font-medium text-foreground text-xs md:text-sm after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50">{row.feature}</td>
                       <td className="py-3 px-3 md:py-4 md:px-6 text-muted-foreground text-xs md:text-sm">
@@ -201,7 +229,7 @@ const Home = () => {
                           <span className="sm:hidden">{row.manual.split(' ').slice(0, 2).join(' ')}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-3 md:py-4 md:px-6 text-foreground text-xs md:text-sm">
+                      <td className="py-3 px-3 md:py-4 md:px-6 text-foreground text-xs md:text-sm border-l-2 border-l-primary/40 bg-primary/5">
                         <div className="flex items-center gap-1 md:gap-2">
                           <Check className="w-3 h-3 md:w-4 md:h-4 text-primary flex-shrink-0" />
                           <span className="hidden sm:inline">{row.solarizer}</span>
@@ -217,8 +245,13 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="relative h-16">
+        <div className="absolute inset-0 section-fade-bottom" />
+      </div>
+
       {/* Features Section */}
-      <section className="py-24 md:py-32 bg-card/30 border-y border-border">
+      <section className="py-24 md:py-32 bg-card/30 relative">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -232,10 +265,10 @@ const Home = () => {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="p-6 rounded-xl bg-card border border-border hover:border-primary/40 transition-all duration-300 group"
+                className="p-6 rounded-xl bg-card border border-border hover:border-primary/40 transition-all duration-300 group hover:shadow-lg hover:shadow-primary/5"
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:glow-orange-sm transition-all duration-300">
-                  <feature.icon className="w-6 h-6 text-primary" />
+                <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:glow-orange-sm group-hover:bg-primary/15 transition-all duration-300">
+                  <feature.icon className="w-6 h-6 text-primary transition-transform duration-300 group-hover:scale-110" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
@@ -245,9 +278,25 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="relative h-16">
+        <div className="absolute inset-0 section-fade-top" />
+      </div>
+
       {/* CTA Section */}
-      <section className="py-24 md:py-32">
-        <div className="container mx-auto px-6">
+      <section className="py-24 md:py-32 relative overflow-hidden">
+        {/* Radial glow background */}
+        <div className="absolute inset-0 bg-radial-glow" />
+        
+        {/* Mini solar ring decoration */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="relative w-[400px] h-[400px] opacity-10">
+            <div className="absolute inset-0 rounded-full border border-primary/40 animate-orbit" style={{ animationDuration: '30s' }} />
+            <div className="absolute inset-12 rounded-full border border-primary/30 animate-orbit-reverse" style={{ animationDuration: '25s' }} />
+          </div>
+        </div>
+        
+        <div className="container mx-auto px-6 relative">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Defend Against the Unforeseen.
