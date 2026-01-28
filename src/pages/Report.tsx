@@ -194,7 +194,9 @@ const Report = () => {
             </button>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Analysis Results</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
+                  {currentAudit?.project_name || "Contract"}
+                </h2>
                 {isLive && (
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/10 border border-success/20 text-xs text-success font-medium animate-pulse">
                     <span className="w-1.5 h-1.5 rounded-full bg-success" />
@@ -258,9 +260,15 @@ const Report = () => {
                 )}
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {currentAudit?.project_name || "Contract"} • Analyzed {currentAudit ? formatTimestamp(currentAudit.created_at) : ""}
-            </p>
+            {isLive ? (
+              <p className="text-sm text-muted-foreground animate-pulse">
+                Analysing...
+              </p>
+            ) : currentAudit ? (
+              <p className="text-sm text-muted-foreground">
+                Analysed {formatTimestamp(currentAudit.created_at)}
+              </p>
+            ) : null}
           </div>
 
           {auditLoading ? (
@@ -309,6 +317,8 @@ const Report = () => {
                     contractCount={currentAudit?.contract_count || 0}
                     nlocCount={currentAudit?.nloc_count || null}
                     readOnly={!canEditCode}
+                    auditStatus={currentAudit?.status}
+                    systemHologram={currentAudit?.system_hologram as { scope?: string[]; all_files?: string[] } | null}
                   />
                 </TabsContent>
 

@@ -7,7 +7,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ScanProvider } from "@/contexts/ScanContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import GlobalScanWidget from "@/components/GlobalScanWidget";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Index from "./pages/Index";
@@ -92,7 +91,6 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <GlobalScanWidget />
           </BrowserRouter>
         </ScanProvider>
       </AuthProvider>

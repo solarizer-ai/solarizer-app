@@ -22,7 +22,7 @@ const features = [
   },
   {
     icon: Lock,
-    title: "Private Scanning Environment",
+    title: "Private Analysis Environment",
     description: "Your IP remains protected. Analysis occurs in a stateless, isolated environment with 100% zero data retention. Your code is wiped the moment your report is finalized.",
   },
 ];
@@ -38,9 +38,9 @@ const intelligenceLoop = [
   {
     icon: Dna,
     step: "02",
-    title: "Heuristic Scanning",
-    headline: "Heuristic Scanning",
-    description: "Your code is put through an intensive scanning phase against our proprietary Vulnerability DNA Matrix—an evolving index of complex smart contract security risks and exploit patterns.",
+    title: "Heuristic Analysis",
+    headline: "Heuristic Analysis",
+    description: "Your code is put through an intensive analysis phase against our proprietary Vulnerability DNA Matrix—an evolving index of complex smart contract security risks and exploit patterns.",
   },
   {
     icon: ShieldCheck,
@@ -59,9 +59,9 @@ const comparisonData = [
     solarizer: "Minutes (On-Demand)",
   },
   {
-    feature: "Scanning Depth",
+    feature: "Analysis Depth",
     manual: "Manual Line-by-Line",
-    solarizer: "Multi-Stage Scanning",
+    solarizer: "Multi-Stage Analysis",
   },
   {
     feature: "Logic Verification",
@@ -225,7 +225,7 @@ const Home = () => {
               Core Analysis Pillars
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Purpose-built detection capabilities that go beyond standard vulnerability scanning.
+              Purpose-built detection capabilities that go beyond standard vulnerability analysis.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">

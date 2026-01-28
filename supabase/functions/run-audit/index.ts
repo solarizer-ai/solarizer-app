@@ -217,6 +217,26 @@ Deno.serve(async (req) => {
     console.log(`run-audit: Processing audit ${audit_id} for project "${project_name}" with ${validation.sanitizedFiles!.length} files`);
     console.log(`run-audit: Metadata - NLOC: ${metadata.nloc_count}, Contracts: ${metadata.contract_count}, Plan: ${metadata.plan}`);
 
+    // Store scope metadata in system_hologram for UI display
+    const scopeArray = scope || validation.sanitizedFiles!.map(f => f.name);
+    const allFilesArray = validation.sanitizedFiles!.map(f => f.name);
+    
+    const { error: updateError } = await supabase
+      .from('audits')
+      .update({
+        system_hologram: {
+          scope: scopeArray,
+          all_files: allFilesArray,
+        }
+      })
+      .eq('id', audit_id);
+    
+    if (updateError) {
+      console.error('run-audit: Failed to update system_hologram:', updateError);
+    } else {
+      console.log(`run-audit: Stored scope metadata - ${scopeArray.length} in-scope, ${allFilesArray.length} total files`);
+    }
+
     // Construct callback URLs for n8n
     const saveFindingUrl = `${supabaseUrl}/functions/v1/save-finding`;
     const completeAuditUrl = `${supabaseUrl}/functions/v1/complete-audit`;
