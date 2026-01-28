@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import MinimalFooter from "@/components/MinimalFooter";
+import Footer from "@/components/Footer";
 import AuditCard from "@/components/AuditCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -221,7 +221,7 @@ const Audits = () => {
         </div>
       </main>
 
-      <MinimalFooter />
+      <Footer />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteAuditId} onOpenChange={() => setDeleteAuditId(null)}>

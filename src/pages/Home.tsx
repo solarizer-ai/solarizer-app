@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Brain, Dna, ShieldCheck, ArrowRight, CheckCircle2, FileCode2, Shield, Lock, Cpu, Check, X, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PublicHeader from "@/components/PublicHeader";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const features = [
@@ -82,7 +82,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PublicHeader />
+      <Header />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">

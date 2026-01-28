@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import PublicHeader from "@/components/PublicHeader";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const TermsOfService = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <PublicHeader />
+      <Header />
 
       <main className="flex-1 container max-w-4xl mx-auto px-4 py-12">
         <div className="mb-8">

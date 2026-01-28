@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import MinimalFooter from "@/components/MinimalFooter";
+import Footer from "@/components/Footer";
 import FindingItem from "@/components/FindingItem";
 import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
@@ -395,7 +395,7 @@ const Report = () => {
         </div>
       </main>
 
-      <MinimalFooter />
+      <Footer />
 
       {/* Share Modal */}
       {currentAudit && (

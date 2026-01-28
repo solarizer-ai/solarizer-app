@@ -1,115 +1,84 @@
 import { Link } from "react-router-dom";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 
-const footerLinks = {
-  product: [
-    { label: "Features", href: "/#features" },
-    { label: "Pricing", href: "/pricing" },
-    { label: "Dashboard", href: "/audits" },
-  ],
-  intelligence: [
-    { label: "Documentation", href: "/docs" },
-    { label: "Security Index", href: "/docs" },
-    { label: "Exploit Database", href: "/docs" },
-  ],
-  legal: [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms", href: "/terms" },
-  ],
-};
-
-interface ScrollLinkProps {
-  to: string;
-  children: React.ReactNode;
-  className?: string;
-}
-
-const ScrollLink = ({ to, children, className }: ScrollLinkProps) => {
-  const handleClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  return (
-    <Link to={to} onClick={handleClick} className={className}>
-      {children}
-    </Link>
-  );
-};
+const footerLinks = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+  { label: "Docs", href: "/docs" },
+];
 
 const Footer = () => {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <footer className="border-t border-border bg-card/30">
-      <div className="container mx-auto px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <ScrollLink to="/" className="inline-block mb-4">
-              <img src={solarizerLogo} alt="Solarizer" className="w-10 h-10 rounded-lg" />
-            </ScrollLink>
-            <p className="text-sm text-muted-foreground">
-              Proprietary smart contract security intelligence.
-            </p>
+    <footer className="border-t border-border bg-background mt-auto">
+      <div className="container mx-auto px-6 py-6">
+        {/* Desktop Layout */}
+        <div className="hidden sm:flex items-center justify-between">
+          {/* Left: Logo + Brand */}
+          <div className="flex items-center gap-3">
+            <Link to="/" onClick={scrollToTop}>
+              <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg" />
+            </Link>
+            <span className="text-sm font-medium text-foreground">Solarizer</span>
           </div>
 
-          {/* Product Links */}
-          <div>
-            <h4 className="font-medium mb-3 text-sm">Product</h4>
-            <ul className="space-y-2">
-              {footerLinks.product.map((link) => (
-                <li key={link.label}>
-                  <ScrollLink
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </ScrollLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Intelligence Links */}
-          <div>
-            <h4 className="font-medium mb-3 text-sm">Intelligence</h4>
-            <ul className="space-y-2">
-              {footerLinks.intelligence.map((link) => (
-                <li key={link.label}>
-                  <ScrollLink
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </ScrollLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal Links */}
-          <div>
-            <h4 className="font-medium mb-3 text-sm">Legal</h4>
-            <ul className="space-y-2">
-              {footerLinks.legal.map((link) => (
-                <li key={link.label}>
-                  <ScrollLink
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </ScrollLink>
-                </li>
-              ))}
-            </ul>
+          {/* Right: Links */}
+          <div className="flex items-center gap-6">
+            {footerLinks.map((link, index) => (
+              <div key={link.label} className="flex items-center gap-6">
+                <Link
+                  to={link.href}
+                  onClick={scrollToTop}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {link.label}
+                </Link>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ERYONIX TECHLABS PRIVATE LIMITED. All rights reserved.
+        {/* Desktop Bottom Row */}
+        <div className="hidden sm:flex items-center justify-between mt-4 pt-4 border-t border-border/50">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} ERYONIX TECHLABS PRIVATE LIMITED
           </p>
-          <div className="text-sm text-muted-foreground text-center md:text-right">
-            <p>Powering secure deployments worldwide</p>
+          <p className="text-xs text-muted-foreground">
+            Powering secure deployments worldwide
+          </p>
+        </div>
+
+        {/* Mobile Layout */}
+        <div className="sm:hidden space-y-4">
+          {/* Logo + Brand */}
+          <div className="flex items-center gap-3">
+            <Link to="/" onClick={scrollToTop}>
+              <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg" />
+            </Link>
+            <span className="text-sm font-medium text-foreground">Solarizer</span>
           </div>
+
+          {/* Links Row */}
+          <div className="flex items-center gap-4">
+            {footerLinks.map((link) => (
+              <Link
+                key={link.label}
+                to={link.href}
+                onClick={scrollToTop}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Copyright */}
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} ERYONIX TECHLABS
+          </p>
         </div>
       </div>
     </footer>

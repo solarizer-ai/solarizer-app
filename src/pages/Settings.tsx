@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
-import MinimalFooter from "@/components/MinimalFooter";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -626,7 +626,7 @@ const Settings = () => {
         </div>
       </main>
 
-      <MinimalFooter />
+      <Footer />
 
       {/* Power-Up Modal */}
       <PurchasePowerUpModal

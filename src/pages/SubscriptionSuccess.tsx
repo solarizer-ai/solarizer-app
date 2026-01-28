@@ -4,7 +4,7 @@ import { CheckCircle, Loader2, AlertCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Header from "@/components/Header";
-import MinimalFooter from "@/components/MinimalFooter";
+import Footer from "@/components/Footer";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 
 const SubscriptionSuccess = () => {
@@ -194,7 +194,7 @@ const SubscriptionSuccess = () => {
         </Card>
       </main>
       
-      <MinimalFooter />
+      <Footer />
     </div>
   );
 };

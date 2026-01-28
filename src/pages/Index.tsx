@@ -12,7 +12,7 @@ import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
-import MinimalFooter from "@/components/MinimalFooter";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight, FileCode, Loader2, Trash2, ChevronRight } from "lucide-react";
 import { useAudits, useAudit, useCreateAudit, useUpdateAudit, useDeleteAudit } from "@/hooks/useAudits";
@@ -500,7 +500,7 @@ const Index = () => {
         currentCredits={credits?.credits_remaining || 0}
       />
 
-      <MinimalFooter />
+      <Footer />
     </div>
   );
 };
