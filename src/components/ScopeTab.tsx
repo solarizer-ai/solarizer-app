@@ -172,7 +172,7 @@ const ScopeTab = ({
     
     return (filePath: string): 'context' | 'pending' | 'analysed' => {
       const isInScope = scopeFiles.some(s => 
-        s === filePath || filePath.endsWith(s) || s.endsWith(filePath)
+        s && filePath && (s === filePath || filePath.endsWith(s) || s.endsWith(filePath))
       );
       
       if (!isInScope) {
@@ -186,12 +186,12 @@ const ScopeTab = ({
       
       // Check if we have coverage results for this file
       const hasResults = coverageData?.details?.some(d => 
-        d.file === filePath || filePath.includes(d.file) || d.file.includes(filePath)
+        d?.file && filePath && (d.file === filePath || filePath.includes(d.file) || d.file.includes(filePath))
       );
       
       // Check if any findings reference this file
       const hasFindings = findings.some(f => 
-        f.location && (f.location.includes(filePath) || filePath.includes(f.location))
+        f?.location && filePath && (f.location.includes(filePath) || filePath.includes(f.location))
       );
       
       if (hasResults || hasFindings) {
