@@ -10,12 +10,37 @@ interface RemediationProgressWidgetProps {
   className?: string;
 }
 
-const severityColors = {
-  critical: "text-critical",
-  high: "text-destructive",
-  medium: "text-warning",
-  low: "text-primary",
-  info: "text-slate-400",
+const severityConfig = {
+  critical: {
+    dot: "bg-critical",
+    bg: "bg-critical/10",
+    border: "border-critical/30",
+    text: "text-critical",
+  },
+  high: {
+    dot: "bg-destructive",
+    bg: "bg-destructive/10",
+    border: "border-destructive/30",
+    text: "text-destructive",
+  },
+  medium: {
+    dot: "bg-warning",
+    bg: "bg-warning/10",
+    border: "border-warning/30",
+    text: "text-warning",
+  },
+  low: {
+    dot: "bg-primary",
+    bg: "bg-primary/10",
+    border: "border-primary/30",
+    text: "text-primary",
+  },
+  info: {
+    dot: "bg-slate-400",
+    bg: "bg-slate-400/10",
+    border: "border-slate-400/30",
+    text: "text-slate-400",
+  },
 };
 
 export function RemediationProgressWidget({ auditId, className }: RemediationProgressWidgetProps) {
@@ -78,27 +103,26 @@ export function RemediationProgressWidget({ auditId, className }: RemediationPro
         </div>
 
         {/* Breakdown by Severity */}
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 sm:gap-2">
+        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
           {(['critical', 'high', 'medium', 'low', 'info'] as const).map((severity) => {
             const severityStats = stats.bySeverity[severity];
             if (severityStats.total === 0) return null;
             
-            const pct = Math.round((severityStats.resolved / severityStats.total) * 100);
+            const config = severityConfig[severity];
             
             return (
-              <div key={severity} className="text-center p-2 rounded-md bg-muted/30">
-                <div className={cn(
-                  "text-xs font-medium capitalize mb-1",
-                  severityColors[severity]
-                )}>
-                  {severity.slice(0, 4)}
-                </div>
-                <div className="text-sm font-mono">
+              <div
+                key={severity}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border",
+                  config.bg,
+                  config.border
+                )}
+              >
+                <span className={cn("w-2 h-2 rounded-full", config.dot)} />
+                <span className={cn("text-sm font-medium", config.text)}>
                   {severityStats.resolved}/{severityStats.total}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {pct}%
-                </div>
+                </span>
               </div>
             );
           })}
