@@ -1,15 +1,15 @@
-import { FileCode, FileText, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { useMemo } from "react";
+import { FileCode, FileText, FolderOpen, Info, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CoverageData, CoverageTestDetail } from "@/components/SecurityCoverageTab";
-import type { Finding } from "@/hooks/useAudits";
+import type { CoverageData } from "@/components/SecurityCoverageTab";
+import type { Finding, AuditStatus } from "@/hooks/useAudits";
 
-interface ContractSummary {
+interface TreeNode {
   name: string;
-  testsCount: number;
-  passedCount: number;
-  failedCount: number;
-  issuesCount: number;
-  highestSeverity: string | null;
+  path: string;
+  isFile: boolean;
+  children: TreeNode[];
+  status: 'context' | 'pending' | 'analysed';
 }
 
 interface ScopeTabProps {
@@ -18,81 +18,185 @@ interface ScopeTabProps {
   contractCount: number;
   nlocCount: number | null;
   readOnly?: boolean;
+  auditStatus?: AuditStatus;
+  systemHologram?: {
+    scope?: string[];
+    all_files?: string[];
+  } | null;
 }
 
-const ScopeTab = ({ coverageData, findings, contractCount, nlocCount, readOnly = false }: ScopeTabProps) => {
-  // Extract unique contracts from coverage data
-  const contractSummaries: ContractSummary[] = (() => {
-    if (!coverageData?.details?.length) return [];
-
-    const contractMap = new Map<string, ContractSummary>();
-
-    coverageData.details.forEach((test) => {
-      const contractName = test.file || "Unknown";
+// Build a hierarchical tree from flat file paths
+function buildFileTree(
+  allFiles: string[], 
+  scopeFiles: string[], 
+  getFileStatus: (path: string) => 'context' | 'pending' | 'analysed'
+): TreeNode[] {
+  const root: TreeNode[] = [];
+  
+  for (const filePath of allFiles) {
+    const parts = filePath.split('/');
+    let currentLevel = root;
+    let currentPath = '';
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      currentPath = currentPath ? `${currentPath}/${part}` : part;
+      const isFile = i === parts.length - 1;
       
-      if (!contractMap.has(contractName)) {
-        contractMap.set(contractName, {
-          name: contractName,
-          testsCount: 0,
-          passedCount: 0,
-          failedCount: 0,
-          issuesCount: 0,
-          highestSeverity: null,
-        });
+      let existing = currentLevel.find(node => node.name === part && node.isFile === isFile);
+      
+      if (!existing) {
+        existing = {
+          name: part,
+          path: currentPath,
+          isFile,
+          children: [],
+          status: isFile ? getFileStatus(filePath) : 'context',
+        };
+        currentLevel.push(existing);
       }
-
-      const summary = contractMap.get(contractName)!;
-      summary.testsCount++;
-      if (test.status === "PASSED") {
-        summary.passedCount++;
-      } else {
-        summary.failedCount++;
+      
+      if (!isFile) {
+        currentLevel = existing.children;
       }
-    });
-
-    // Count issues per contract from findings
-    findings.forEach((finding) => {
-      const location = finding.location;
-      if (location) {
-        // Try to match finding location to contract
-        contractMap.forEach((summary, contractName) => {
-          if (location.includes(contractName) || contractName.includes(location)) {
-            summary.issuesCount++;
-            // Track highest severity
-            const severityOrder = ["critical", "high", "medium", "low", "info"];
-            const currentIdx = severityOrder.indexOf(summary.highestSeverity || "");
-            const newIdx = severityOrder.indexOf(finding.severity);
-            if (newIdx !== -1 && (currentIdx === -1 || newIdx < currentIdx)) {
-              summary.highestSeverity = finding.severity;
-            }
-          }
-        });
-      }
-    });
-
-    return Array.from(contractMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  })();
-
-  const getSeverityBadge = (severity: string | null) => {
-    if (!severity) return null;
-    
-    const config: Record<string, { bg: string; text: string; label: string }> = {
-      critical: { bg: "bg-destructive/10", text: "text-destructive", label: "Critical" },
-      high: { bg: "bg-orange-500/10", text: "text-orange-500", label: "High" },
-      medium: { bg: "bg-warning/10", text: "text-warning", label: "Medium" },
-      low: { bg: "bg-primary/10", text: "text-primary", label: "Low" },
-      info: { bg: "bg-slate-400/10", text: "text-slate-400", label: "Info" },
-    };
-    
-    const style = config[severity];
-    if (!style) return null;
-    
-    return (
-      <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", style.bg, style.text)}>
-        {style.label}
-      </span>
-    );
+    }
+  }
+  
+  // Sort: folders first, then files, alphabetically
+  const sortNodes = (nodes: TreeNode[]): TreeNode[] => {
+    return nodes.sort((a, b) => {
+      if (a.isFile !== b.isFile) return a.isFile ? 1 : -1;
+      return a.name.localeCompare(b.name);
+    }).map(node => ({
+      ...node,
+      children: sortNodes(node.children),
+    }));
   };
+  
+  return sortNodes(root);
+}
+
+const FileTreeNode = ({ node, depth = 0 }: { node: TreeNode; depth?: number }) => {
+  const paddingLeft = depth * 16;
+  
+  if (!node.isFile) {
+    // Folder node
+    return (
+      <div>
+        <div 
+          className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors"
+          style={{ paddingLeft: `${paddingLeft}px` }}
+        >
+          <FolderOpen className="w-4 h-4 text-primary/70 shrink-0" />
+          <span className="text-sm font-medium text-foreground">{node.name}</span>
+        </div>
+        {node.children.map((child) => (
+          <FileTreeNode key={child.path} node={child} depth={depth + 1} />
+        ))}
+      </div>
+    );
+  }
+  
+  // File node
+  return (
+    <div 
+      className="flex items-center justify-between gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors"
+      style={{ paddingLeft: `${paddingLeft}px` }}
+    >
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <FileCode className="w-4 h-4 text-muted-foreground shrink-0" />
+        <span className="text-sm font-mono text-foreground truncate">{node.name}</span>
+      </div>
+      <div className="shrink-0">
+        {node.status === 'context' && (
+          <Info className="w-4 h-4 text-muted-foreground" />
+        )}
+        {node.status === 'pending' && (
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
+          </span>
+        )}
+        {node.status === 'analysed' && (
+          <CheckCircle2 className="w-4 h-4 text-success" />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ScopeTab = ({ 
+  coverageData, 
+  findings, 
+  contractCount, 
+  nlocCount, 
+  readOnly = false,
+  auditStatus,
+  systemHologram,
+}: ScopeTabProps) => {
+  // Determine file status based on scope and analysis progress
+  const getFileStatus = useMemo(() => {
+    const scopeFiles = systemHologram?.scope || [];
+    const isComplete = auditStatus === 'secured' || auditStatus === 'issues';
+    
+    return (filePath: string): 'context' | 'pending' | 'analysed' => {
+      const isInScope = scopeFiles.some(s => 
+        s === filePath || filePath.endsWith(s) || s.endsWith(filePath)
+      );
+      
+      if (!isInScope) {
+        return 'context';
+      }
+      
+      // If audit is complete, all in-scope files are analysed
+      if (isComplete) {
+        return 'analysed';
+      }
+      
+      // Check if we have coverage results for this file
+      const hasResults = coverageData?.details?.some(d => 
+        d.file === filePath || filePath.includes(d.file) || d.file.includes(filePath)
+      );
+      
+      // Check if any findings reference this file
+      const hasFindings = findings.some(f => 
+        f.location && (f.location.includes(filePath) || filePath.includes(f.location))
+      );
+      
+      if (hasResults || hasFindings) {
+        return 'analysed';
+      }
+      
+      return 'pending';
+    };
+  }, [systemHologram?.scope, coverageData?.details, findings, auditStatus]);
+
+  // Build the file tree from system_hologram data
+  const fileTree = useMemo(() => {
+    const allFiles = systemHologram?.all_files || [];
+    const scopeFiles = systemHologram?.scope || [];
+    
+    if (allFiles.length === 0) {
+      return [];
+    }
+    
+    return buildFileTree(allFiles, scopeFiles, getFileStatus);
+  }, [systemHologram?.all_files, systemHologram?.scope, getFileStatus]);
+
+  // Count files by status
+  const statusCounts = useMemo(() => {
+    const allFiles = systemHologram?.all_files || [];
+    const counts = { context: 0, pending: 0, analysed: 0 };
+    
+    allFiles.forEach(f => {
+      const status = getFileStatus(f);
+      counts[status]++;
+    });
+    
+    return counts;
+  }, [systemHologram?.all_files, getFileStatus]);
+
+  const hasTreeData = fileTree.length > 0;
 
   return (
     <div className="space-y-6">
@@ -124,50 +228,36 @@ const ScopeTab = ({ coverageData, findings, contractCount, nlocCount, readOnly =
         </div>
       </div>
 
-      {/* Contract List */}
+      {/* File Tree */}
       <div className="space-y-3">
-        <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          Contracts in Scope
-        </h4>
-        
-        {contractSummaries.length > 0 ? (
-          <div className="space-y-2">
-            {contractSummaries.map((contract) => (
-              <div 
-                key={contract.name}
-                className="p-4 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 min-w-0 flex-1">
-                    <FileCode className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <p className="font-medium text-foreground font-mono text-sm truncate">
-                        {contract.name}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                          {contract.passedCount} passed
-                        </span>
-                        {contract.failedCount > 0 && (
-                          <span className="flex items-center gap-1">
-                            <XCircle className="w-3.5 h-3.5 text-destructive" />
-                            {contract.failedCount} failed
-                          </span>
-                        )}
-                        {contract.issuesCount > 0 && (
-                          <span className="flex items-center gap-1">
-                            <AlertTriangle className="w-3.5 h-3.5 text-warning" />
-                            {contract.issuesCount} {contract.issuesCount === 1 ? "issue" : "issues"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {contract.highestSeverity && getSeverityBadge(contract.highestSeverity)}
-                </div>
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            Files in Scope
+          </h4>
+          {hasTreeData && (
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                <span>{statusCounts.analysed} analysed</span>
               </div>
+              {statusCounts.pending > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  <span>{statusCounts.pending} analysing</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                <span>{statusCounts.context} context</span>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {hasTreeData ? (
+          <div className="p-4 rounded-lg border border-border bg-card">
+            {fileTree.map((node) => (
+              <FileTreeNode key={node.path} node={node} />
             ))}
           </div>
         ) : (
