@@ -1,188 +1,98 @@
 
 
-# Enhance Solarizer Home Page - Inspired by Cyfrin, True to Our DNA
+# Fix Scope Tab Data Loss on Analysis Completion
 
-## Philosophy
+## Problem
 
-Keep the **Obsidian & Solar Orange** theme, the **solar ring animation**, and **security intelligence messaging**. Add polish and depth inspired by Cyfrin without copying their aesthetic.
+When an analysis completes, the Scope tab shows "No contract scope data available" because the `system_hologram` data is being **overwritten** instead of **merged**.
 
----
+### Root Cause
 
-## 1. Hero Section - Add Visual Depth
-
-### Current Strengths to Keep
-- Solar ring orbital animation (unique to Solarizer)
-- Two-line headline structure
-- "AI-Powered Security" badge
-- Clean centered layout
-
-### Enhancements
-
-**A. Subtle Grid Overlay (Background Texture)**
-- Add a very faint grid pattern behind the solar rings
-- Creates depth without competing with the animation
-- Opacity at ~3-5% to keep it subtle
-
-**B. Gradient Enhancement**
-- Extend the `from-primary/5` gradient with a radial fade from center
-- Creates a "spotlight" effect on the hero content
-
-### Files to Modify
-- `src/index.css` - Add `.bg-grid-subtle` utility class
-- `src/pages/Home.tsx` - Apply to hero background layer
+1. **When analysis starts** (`run-audit` function): The `scope` and `all_files` arrays are correctly saved to `system_hologram`
+2. **When analysis completes** (`complete-audit` function): The n8n backend sends a different `system_hologram` structure containing analysis metadata
+3. The current code **replaces** the entire `system_hologram`, losing the `scope` and `all_files` arrays
 
 ---
 
-## 2. Social Proof Strip (New - Below Hero)
+## Solution
 
-### Concept
-Add a single-line trust indicator below the hero CTAs - not logos, but a simple text-based credibility statement.
-
-**Option A - Metric Strip**
-```
-┌────────────────────────────────────────────────────────┐
-│   1,200+ Contracts Analysed  •  $50M+ TVL Secured     │
-└────────────────────────────────────────────────────────┘
-```
-
-**Option B - Simple Tag Line**
-```
-Trusted by DeFi protocols, NFT projects, and DAOs
-```
-
-This is minimal, on-brand, and adds credibility without needing external logos.
-
-### Files to Modify
-- `src/pages/Home.tsx` - Add trust strip below hero buttons
+Merge the incoming `system_hologram` with the existing one, preserving the `scope` and `all_files` arrays while adding new analysis metadata. Skip the update entirely if the incoming data is an exact duplicate.
 
 ---
 
-## 3. Section Transitions - Visual Breathing Room
+## Technical Changes
 
-### Current Issue
-Sections transition abruptly with just `border-y border-border`
+### File: `supabase/functions/complete-audit/index.ts`
 
-### Enhancement
-Add subtle gradient fades between sections to create visual separation.
+Modify the `system_hologram` handling to:
+1. Fetch existing `system_hologram` from the database
+2. Check if incoming data is an exact duplicate of existing - if so, skip update
+3. Merge incoming data with existing, preserving `scope` and `all_files`
 
 **Implementation:**
-- Before "Protocol Intelligence" section: subtle top fade
-- Before "Core Analysis Pillars": subtle divider element
-
-### Files to Modify
-- `src/pages/Home.tsx` - Add decorative divider components
-- `src/index.css` - Add transition gradient utilities
-
----
-
-## 4. Protocol Intelligence Cards - Enhanced Hover States
-
-### Current State
-Cards have hover states but could feel more dynamic
-
-### Enhancement
-- Add a subtle glow effect on hover (using existing `glow-orange-sm`)
-- Animate the step number or icon on hover
-- Keep the dashed connector lines between steps
-
-### Files to Modify
-- `src/pages/Home.tsx` - Enhance card hover classes
-
----
-
-## 5. Comparison Table - Visual Polish
-
-### Current State
-Clean table with check/x icons - functional
-
-### Enhancement
-- Add subtle row hover highlight
-- Make the "Solarizer" column slightly more prominent (left border accent)
-- Add a subtle gradient behind the Solarizer column cells
-
-### Files to Modify
-- `src/pages/Home.tsx` - Enhance table styling
-
----
-
-## 6. CTA Section - Stronger Visual Anchor
-
-### Current State
-Simple centered text + button
-
-### Enhancement
-- Add the solar ring animation (smaller, subtle) behind the CTA
-- Or add a subtle radial gradient emanating from the button
-- Creates a visual "pull" toward the action
-
-### Files to Modify
-- `src/pages/Home.tsx` - Add background element to CTA section
-
----
-
-## Technical Implementation
-
-### New CSS Utilities (src/index.css)
-
-```css
-/* Subtle grid pattern for hero depth */
-.bg-grid-subtle {
-  background-image: 
-    linear-gradient(to right, hsl(var(--border) / 0.3) 1px, transparent 1px),
-    linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
-/* Section fade transition */
-.section-fade-top {
-  background: linear-gradient(to bottom, 
-    hsl(var(--background)) 0%, 
-    transparent 100%
-  );
+```typescript
+// Merge system_hologram to preserve scope/all_files from run-audit
+if (system_hologram !== undefined) {
+  // Fetch existing system_hologram to preserve scope metadata
+  const { data: existingAudit, error: hologramFetchError } = await supabase
+    .from('audits')
+    .select('system_hologram')
+    .eq('id', audit_id)
+    .single();
+  
+  if (hologramFetchError) {
+    console.error('complete-audit: Failed to fetch existing system_hologram:', hologramFetchError);
+  }
+  
+  const existingHologram = existingAudit?.system_hologram || {};
+  
+  // Check for exact duplicate - skip if incoming matches what we already have
+  const incomingKeys = Object.keys(system_hologram);
+  const isExactDuplicate = incomingKeys.every(key => {
+    return JSON.stringify(existingHologram[key]) === JSON.stringify(system_hologram[key]);
+  });
+  
+  if (isExactDuplicate && incomingKeys.length > 0) {
+    console.log('complete-audit: Skipping system_hologram update - exact duplicate detected');
+  } else {
+    // Merge: preserve existing scope/all_files, add new analysis data
+    updateData.system_hologram = {
+      ...existingHologram,    // Keeps scope, all_files
+      ...system_hologram,     // Adds/updates contracts, entry_points, etc.
+    };
+    console.log('complete-audit: Merged system_hologram - preserved scope/all_files');
+  }
 }
 ```
 
-### Home.tsx Changes
+---
 
-1. **Hero**: Add grid overlay layer with low opacity
-2. **Below Hero**: Add trust metric strip
-3. **Section Gaps**: Add decorative dividers
-4. **Table**: Enhanced hover and column styling
-5. **CTA**: Add subtle background radial glow
+## Result
+
+After the fix:
+- **First completion**: Merges analysis data with existing scope data
+- **Duplicate callbacks**: Skipped entirely, no unnecessary updates
+- **Final `system_hologram`** contains both scope metadata AND analysis data:
+  ```json
+  {
+    "scope": ["file1.sol", "file2.sol"],
+    "all_files": ["file1.sol", "file2.sol", "lib.sol"],
+    "contracts": [...],
+    "entry_points": [...],
+    "external_calls": 0,
+    "state_variables": 0
+  }
+  ```
 
 ---
 
-## What We're NOT Doing
+## Summary
 
-- No floating blockchain logos (not our style)
-- No external company logos (keep it clean)
-- No dramatic layout changes
-- No new color palette
-- No copying Cyfrin's specific components
-
----
-
-## Visual Summary
-
-| Element | Current | Enhanced |
-|---------|---------|----------|
-| Hero Background | Gradient + Solar rings | + Subtle grid texture |
-| Trust Signals | None | Simple metric strip |
-| Section Gaps | Hard borders | Gradient fades |
-| Card Hovers | Basic | + Glow effects |
-| Table | Functional | + Column highlight |
-| CTA | Plain | + Radial background |
-
----
-
-## Implementation Order
-
-1. Add CSS utilities for grid and gradients
-2. Apply grid overlay to hero
-3. Add trust strip below hero
-4. Enhance section transitions
-5. Polish table styling
-6. Add CTA background effect
-
-All changes maintain Solarizer's existing brand identity while adding the visual depth and polish seen on premium security sites.
+| Aspect | Before | After |
+|--------|--------|-------|
+| `system_hologram` update | Full replacement | Merge with existing |
+| Duplicate handling | Overwrites anyway | Skipped entirely |
+| `scope` array | Lost on completion | Preserved |
+| `all_files` array | Lost on completion | Preserved |
+| Scope tab after completion | Empty | Shows file tree |
 
