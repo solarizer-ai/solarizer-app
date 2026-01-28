@@ -387,9 +387,19 @@ contract MyContract {
 }`,
           active: true,
         },
+        // Hide default files that Sandpack may inject
+        "/package.json": { code: "{}", hidden: true },
+        "/index.html": { code: "", hidden: true },
+        "/styles.css": { code: "", hidden: true },
       };
     }
-    return sandpackFiles;
+    // Also hide default files for user-provided files
+    return {
+      ...sandpackFiles,
+      "/package.json": { code: "{}", hidden: true },
+      "/index.html": { code: "", hidden: true },
+      "/styles.css": { code: "", hidden: true },
+    };
   });
 
   // Ensure we always have a valid entry file path
