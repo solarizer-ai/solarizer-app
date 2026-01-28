@@ -193,17 +193,9 @@ const Report = () => {
               ← Back to Dashboard
             </button>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
-                  {currentAudit?.project_name || "Contract"}
-                </h2>
-                {isLive && (
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/10 border border-success/20 text-xs text-success font-medium animate-pulse">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                    Live
-                  </span>
-                )}
-              </div>
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
+                {currentAudit?.project_name || "Contract"}
+              </h2>
               <div className="flex items-center gap-2 flex-wrap">
                 {!isOwner && currentAudit && (
                   <Badge variant="secondary" className="gap-1.5">
