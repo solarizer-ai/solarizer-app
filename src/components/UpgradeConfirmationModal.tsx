@@ -21,7 +21,6 @@ interface UpgradeConfirmationModalProps {
 const PLAN_FEATURES: Record<string, string[]> = {
   pro: [
     "GitHub Import",
-    "Interactive Code Editor",
     "Finding Recommendations",
     "Export Reports",
     "QA Findings (Low, Info)",

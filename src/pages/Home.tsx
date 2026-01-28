@@ -129,7 +129,7 @@ const Home = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
               <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
                 <Link to="/dashboard">
-                  Start AI Analysis
+                  Start Solarizer
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -143,17 +143,6 @@ const Home = () => {
               </Button>
             </div>
             
-            {/* Social Proof Strip */}
-            <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-primary" />
-                <span className="font-medium text-foreground">1,200+</span> Contracts Analysed
-              </span>
-              <span className="text-border">•</span>
-              <span className="flex items-center gap-1.5">
-                <span className="font-medium text-foreground">$50M+</span> TVL Secured
-              </span>
-            </div>
           </div>
         </div>
       </section>
@@ -315,7 +304,7 @@ const Home = () => {
             <div className="flex items-center justify-center gap-6 mt-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-primary" />
-                No credit card required
+                Start Analysing Instantly
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-primary" />

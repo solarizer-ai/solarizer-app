@@ -60,7 +60,6 @@ const pricingPlans: PricingPlan[] = [
     features: [
       { text: 'Everything in Launch, plus:', included: true, isHeader: true },
       { text: 'GitHub Import', included: true },
-      { text: 'Interactive Code Editor', included: true },
       { text: 'Finding Recommendations (Remediation)', included: true },
       { text: 'Export Report', included: true },
       { text: 'QA Findings (Low, Info)', included: true },
