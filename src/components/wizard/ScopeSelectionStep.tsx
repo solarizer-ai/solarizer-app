@@ -43,14 +43,14 @@ const ScopeTreeItem = ({
   if (isFile) {
     if (!isSolidity) return null; // Only show Solidity files
     
-    const isSelected = selectedScope.includes(node.name);
+    const isSelected = selectedScope.includes(node.path);
     const lineCount = node.content?.split('\n').length || 0;
     const bytes = new Blob([node.content || '']).size;
     const fileSize = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 
     return (
       <div
-        onClick={() => onToggleFile(node.name)}
+        onClick={() => onToggleFile(node.path)}
         className={cn(
           "flex items-center gap-3 py-2 px-3 cursor-pointer transition-colors rounded-md mx-1",
           isSelected 
@@ -61,7 +61,7 @@ const ScopeTreeItem = ({
       >
         <Checkbox
           checked={isSelected}
-          onCheckedChange={() => onToggleFile(node.name)}
+          onCheckedChange={() => onToggleFile(node.path)}
           className="data-[state=checked]:bg-primary"
         />
         <FileCode className="w-4 h-4 text-primary shrink-0" />
@@ -168,8 +168,8 @@ const ScopeSelectionStep = ({
     [fileTree]
   );
 
-  const allSolidityFileNames = useMemo(() => 
-    allSolidityFiles.map(f => f.name),
+  const allSolidityFilePaths = useMemo(() => 
+    allSolidityFiles.map(f => f.path),
     [allSolidityFiles]
   );
 
@@ -180,14 +180,14 @@ const ScopeSelectionStep = ({
     return new Set(rootFolders);
   });
 
-  const allSelected = allSolidityFileNames.length > 0 && selectedScope.length === allSolidityFileNames.length;
-  const someSelected = selectedScope.length > 0 && selectedScope.length < allSolidityFileNames.length;
+  const allSelected = allSolidityFilePaths.length > 0 && selectedScope.length === allSolidityFilePaths.length;
+  const someSelected = selectedScope.length > 0 && selectedScope.length < allSolidityFilePaths.length;
 
   const handleToggleAll = () => {
     if (allSelected) {
       onScopeChange([]);
     } else {
-      onScopeChange(allSolidityFileNames);
+      onScopeChange(allSolidityFilePaths);
     }
   };
 
@@ -223,10 +223,10 @@ const ScopeSelectionStep = ({
     });
   }, []);
 
-  // Get all Solidity file names within a folder (recursively)
+  // Get all Solidity file paths within a folder (recursively)
   const getSolidityFilesInFolder = useCallback((node: FileNode): string[] => {
     if (node.type === 'file') {
-      return node.name.endsWith('.sol') ? [node.name] : [];
+      return node.name.endsWith('.sol') ? [node.path] : [];
     }
     if (!node.children) return [];
     return node.children.flatMap(child => getSolidityFilesInFolder(child));
@@ -277,7 +277,7 @@ const ScopeSelectionStep = ({
             </span>
           </div>
           <div className="text-sm text-muted-foreground">
-            {selectedScope.length} of {allSolidityFileNames.length} in scope
+            {selectedScope.length} of {allSolidityFilePaths.length} in scope
           </div>
         </div>
 
@@ -310,7 +310,7 @@ const ScopeSelectionStep = ({
             // Flat list fallback for files without folder structure
             <div className="py-2">
               {allSolidityFiles.map((file) => {
-                const isSelected = selectedScope.includes(file.name);
+                const isSelected = selectedScope.includes(file.path);
                 const lineCount = file.content?.split('\n').length || 0;
                 const bytes = new Blob([file.content || '']).size;
                 const fileSize = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
@@ -318,7 +318,7 @@ const ScopeSelectionStep = ({
                 return (
                   <div
                     key={file.id}
-                    onClick={() => handleToggleFile(file.name)}
+                    onClick={() => handleToggleFile(file.path)}
                     className={cn(
                       "flex items-center gap-3 py-2 px-4 cursor-pointer transition-colors",
                       isSelected 
@@ -328,7 +328,7 @@ const ScopeSelectionStep = ({
                   >
                     <Checkbox
                       checked={isSelected}
-                      onCheckedChange={() => handleToggleFile(file.name)}
+                      onCheckedChange={() => handleToggleFile(file.path)}
                       className="data-[state=checked]:bg-primary"
                     />
                     <FileCode className="w-4 h-4 text-primary shrink-0" />
