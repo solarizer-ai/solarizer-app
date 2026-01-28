@@ -86,8 +86,8 @@ const Report = () => {
         title: f.title,
         severity: f.severity,
         description: f.description,
-        location: f.location ? {
-          file: f.location,
+        location: (f.location || f.line_start) ? {
+          file: f.location || null,
           lines: f.line_start && f.line_end 
             ? (f.line_start === f.line_end ? `${f.line_start}` : `${f.line_start}-${f.line_end}`)
             : undefined,

@@ -14,7 +14,7 @@ interface Finding {
   severity: Severity;
   description: string;
   location?: {
-    file: string;
+    file: string | null;
     lines?: string;
   };
   code?: string;
@@ -473,25 +473,32 @@ const FindingItem = ({
             </div>
           </div>
 
-          {/* Location */}
-          {finding.location && (
+          {/* File */}
+          {finding.location?.file && (
             <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Location
-            </h4>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-mono text-primary truncate max-w-[200px] sm:max-w-[300px]" title={finding.location.file}>
-                {finding.location.file}
-              </span>
-              {finding.location.lines && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground whitespace-nowrap">Lines {finding.location.lines}</span>
-                </>
-              )}
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                File
+              </h4>
+              <div className="flex items-center gap-2 text-sm">
+                <FileCode className="w-4 h-4 text-muted-foreground" />
+                <span className="font-mono text-primary truncate max-w-[200px] sm:max-w-[400px]" title={finding.location.file}>
+                  {finding.location.file}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Lines */}
+          {finding.location?.lines && (
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                Lines
+              </h4>
+              <span className="font-mono text-sm text-muted-foreground">
+                {finding.location.lines}
+              </span>
+            </div>
+          )}
 
         {/* Affected Code */}
         {finding.code && (
