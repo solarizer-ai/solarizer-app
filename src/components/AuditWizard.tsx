@@ -164,7 +164,7 @@ const AuditWizard = ({
     return allFiles
       .filter(f => selectedScope.includes(f.path))
       .map(f => ({
-        name: f.name,
+        name: f.path,  // Use full path instead of just filename
         content: f.content || '',
       }));
   };
@@ -175,7 +175,7 @@ const AuditWizard = ({
     return allFiles
       .filter(f => !selectedScope.includes(f.path) && f.name.endsWith('.sol'))
       .map(f => ({
-        name: f.name,
+        name: f.path,  // Use full path instead of just filename
         content: f.content || '',
       }));
   };
