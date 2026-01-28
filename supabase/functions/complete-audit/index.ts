@@ -179,9 +179,39 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Only update system_hologram if explicitly provided
+    // Merge system_hologram to preserve scope/all_files from run-audit
     if (system_hologram !== undefined) {
-      updateData.system_hologram = system_hologram;
+      console.log(`complete-audit: Processing system_hologram for audit ${audit_id}`);
+      
+      // Fetch existing system_hologram to preserve scope metadata
+      const { data: hologramAudit, error: hologramFetchError } = await supabase
+        .from('audits')
+        .select('system_hologram')
+        .eq('id', audit_id)
+        .single();
+      
+      if (hologramFetchError) {
+        console.error('complete-audit: Failed to fetch existing system_hologram:', hologramFetchError);
+      }
+      
+      const existingHologram = (hologramAudit?.system_hologram as Record<string, unknown>) || {};
+      
+      // Check for exact duplicate - skip if incoming matches what we already have
+      const incomingKeys = Object.keys(system_hologram);
+      const isExactDuplicate = incomingKeys.length > 0 && incomingKeys.every(key => {
+        return JSON.stringify(existingHologram[key]) === JSON.stringify(system_hologram[key]);
+      });
+      
+      if (isExactDuplicate) {
+        console.log('complete-audit: Skipping system_hologram update - exact duplicate detected');
+      } else {
+        // Merge: preserve existing scope/all_files, add new analysis data
+        updateData.system_hologram = {
+          ...existingHologram,    // Keeps scope, all_files
+          ...system_hologram,     // Adds/updates contracts, entry_points, etc.
+        };
+        console.log(`complete-audit: Merged system_hologram - preserved ${Object.keys(existingHologram).length} existing keys, added ${incomingKeys.length} incoming keys`);
+      }
     }
 
     console.log(`complete-audit: Updating with fields: ${Object.keys(updateData).join(', ')}`);
