@@ -400,9 +400,11 @@ contract MyContract {
 
   return (
     <SandpackProvider
-      template="static"
       files={initialFiles}
       theme={theme === "dark" ? solarizerDarkTheme : solarizerLightTheme}
+      customSetup={{
+        entry: normalizedActiveFile,
+      }}
       options={{
         activeFile: normalizedActiveFile,
         visibleFiles: fileKeys,
