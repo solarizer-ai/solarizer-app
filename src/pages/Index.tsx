@@ -162,9 +162,9 @@ const Index = () => {
     try {
       const contractCount = getAllFiles(files).length || 1;
       
-      // Convert FileNode[] to simple file objects for API
+      // Convert FileNode[] to simple file objects for API - use full path for n8n backend
       const fileList = getAllFiles(files).map(f => ({
-        name: f.path,  // Use full path for n8n backend
+        name: f.path || f.name,  // Full path e.g. "src/Constants.sol", fallback to name
         content: f.content || '',
       }));
       setPendingFiles(fileList);
