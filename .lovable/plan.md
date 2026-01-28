@@ -1,54 +1,121 @@
 
-# Remove Default Files from Sandpack Code Editor
 
-## Problem
+# Permanent Solution: Remove Default Files from Code Editor
 
-Despite using `template="static"`, Sandpack still shows default files like `index.html`, `package.json`, and `styles.css` in the file explorer. These files are irrelevant for a Solidity smart contract editor.
+## The Problem
 
-## Root Cause
+You're right - there are **two issues**:
+1. The boilerplate files (`package.json`, `index.html`, `styles.css`) are **visible** in the file explorer
+2. Even if hidden, they would be **sent for estimation** because `sandpackFilesToFileNodes` converts ALL files back to FileNodes
 
-The `static` template still includes some boilerplate files. Sandpack requires an entry point file, and if you don't specify one explicitly, it injects default files to serve as that entry point.
+## Root Cause Analysis
 
-## Solution
+### Issue 1: Visibility
+Line 420: `visibleFiles: fileKeys` includes ALL keys from `initialFiles`, including the hidden boilerplate files.
 
-Remove the `template` prop entirely and instead use `customSetup` with an explicit `entry` pointing to our Solidity file. This tells Sandpack exactly which file is the entry point without needing any template files.
+### Issue 2: Data Leak
+Lines 62-79 in `SandpackEditorInner`: The `onFilesChange` callback uses `sandpackFilesToFileNodes(sandpack.files)` which converts **every file** in Sandpack back to FileNodes - including the boilerplate files we injected.
+
+## The Permanent Fix
+
+Fix both issues in **two places**:
 
 ---
 
 ## Technical Changes
 
-### File: `src/components/SandpackEditor.tsx`
+### 1. Filter `visibleFiles` (hides from UI)
 
-**Changes required:**
-
-1. Remove `template="static"` from SandpackProvider
-2. Add `customSetup={{ entry: normalizedActiveFile }}` to explicitly set the entry point to our Solidity file
-3. This combination prevents Sandpack from injecting any default template files
-
-**Code change at lines 401-410:**
+**File: `src/components/SandpackEditor.tsx` (lines 405-420)**
 
 ```typescript
-return (
-  <SandpackProvider
-    files={initialFiles}
-    theme={theme === "dark" ? solarizerDarkTheme : solarizerLightTheme}
-    customSetup={{
-      entry: normalizedActiveFile,
-    }}
-    options={{
-      activeFile: normalizedActiveFile,
-      visibleFiles: fileKeys,
-    }}
-  >
+// Define files to exclude
+const SANDPACK_INTERNAL_FILES = [
+  "/package.json",
+  "/index.html", 
+  "/styles.css",
+  "/index.js"
+];
+
+// Filter visible files to exclude internal Sandpack files
+const visibleFileKeys = fileKeys.filter(
+  (path) => !SANDPACK_INTERNAL_FILES.includes(path)
+);
+
+// Use filtered list in options
+options={{
+  activeFile: normalizedActiveFile,
+  visibleFiles: visibleFileKeys,  // Only user's files
+}}
+```
+
+### 2. Filter `onFilesChange` output (prevents data leak)
+
+**File: `src/components/SandpackEditor.tsx` (lines 62-79)**
+
+Filter out internal files before syncing back to parent:
+
+```typescript
+useEffect(() => {
+  if (onFilesChange && sandpack.files) {
+    // Filter out Sandpack internal files before syncing
+    const INTERNAL_FILES = ["/package.json", "/index.html", "/styles.css", "/index.js"];
+    const userFiles = Object.fromEntries(
+      Object.entries(sandpack.files).filter(
+        ([path]) => !INTERNAL_FILES.includes(path)
+      )
+    );
+    
+    const filesSnapshot = JSON.stringify(
+      Object.fromEntries(
+        Object.entries(userFiles).map(([path, file]) => [path, file.code])
+      )
+    );
+    
+    if (filesSnapshot !== previousFilesRef.current) {
+      previousFilesRef.current = filesSnapshot;
+      const fileNodes = sandpackFilesToFileNodes(userFiles);
+      onFilesChange(fileNodes);
+    }
+  }
+}, [sandpack.files, onFilesChange]);
+```
+
+### 3. Filter ZIP download (bonus fix)
+
+**File: `src/components/SandpackEditor.tsx` (lines 143-157)**
+
+Don't include internal files in the downloaded ZIP:
+
+```typescript
+const handleDownload = useCallback(async () => {
+  const INTERNAL_FILES = ["/package.json", "/index.html", "/styles.css", "/index.js"];
+  const zip = new JSZip();
+  
+  Object.entries(sandpack.files)
+    .filter(([path]) => !INTERNAL_FILES.includes(path))
+    .forEach(([path, file]) => {
+      const filePath = path.startsWith("/") ? path.slice(1) : path;
+      zip.file(filePath, file.code);
+    });
+    
+  // ... rest unchanged
+}, [sandpack.files]);
 ```
 
 ---
 
-## Result
+## Summary
 
-| Before | After |
-|--------|-------|
-| Shows `index.html`, `package.json`, `styles.css` | Shows only user's Solidity files |
-| Confusing file explorer | Clean, focused on contract files |
+| Location | Before | After |
+|----------|--------|-------|
+| `visibleFiles` | All files including boilerplate | Only user's files |
+| `onFilesChange` | Syncs all files to parent | Filters out internal files |
+| ZIP download | Includes all files | Only user's files |
 
-The entry point is explicitly set to the first Solidity file (e.g., `/Contract.sol` or `/Custom.sol`), so Sandpack doesn't need to inject any default files.
+This ensures internal Sandpack files are:
+- Not visible in the file explorer
+- Not synced back to the parent component  
+- Not sent for nLOC estimation
+- Not included in downloads
+
