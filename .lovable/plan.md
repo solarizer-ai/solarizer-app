@@ -1,213 +1,174 @@
 
-# Eliminate Horizontal Scrolling - Minimal and Aesthetic Approach
 
-## Design Philosophy
+# Combined Fix: nLOC Estimation & Scope Selection Bug
 
-All changes will follow these principles to maintain the Obsidian & Solar Orange theme:
-- **Generous spacing**: Use proper padding and gaps between wrapped elements
-- **Visual hierarchy**: Clear separation between stacked rows
-- **No crowding**: Elements on new rows get their own breathing room
-- **Consistent alignment**: Items align properly even when wrapped
+This plan addresses two related issues in the audit wizard flow.
 
 ---
 
-## Components to Update
+## Issue 1: nLOC Estimation Failure for Empty Files
 
-### 1. Settings Page Tabs
+### Problem
+The `cloc-estimate` edge function rejects files with empty content (`''`) because the validation check `!file.content` treats empty strings as invalid.
 
-**File:** `src/pages/Settings.tsx`
+### Root Cause
+In `supabase/functions/cloc-estimate/index.ts`:
+```typescript
+if (!file.content || typeof file.content !== 'string') {
+  return { valid: false, error: `Invalid file content at index ${i}` };
+}
+```
+Empty strings are falsy in JavaScript, causing legitimate empty files to fail validation.
 
-**Current Issue:** Uses horizontal scroll with cramped tabs
-
-**Solution:** Wrap tabs with generous spacing, icon-only on mobile with tooltip
-
-```text
-Mobile Layout (wrapped, 2 rows):
-+------------------------------------------+
-|  [Profile]  [Plan]  [Security]           |
-|  [Share]    [Apps]                       |
-+------------------------------------------+
-
-Desktop Layout (single row):
-+------------------------------------------+
-|  [Profile] [Subscription] [Security] [Sharing] [Integrations]  |
-+------------------------------------------+
+### Solution
+Change the validation to only check the type, allowing empty strings:
+```typescript
+if (typeof file.content !== 'string') {
+  return { valid: false, error: `Invalid file content at index ${i} (expected string, got ${typeof file.content})` };
+}
 ```
 
-**Key Changes:**
-- Remove `overflow-x-auto` wrapper
-- Add `flex-wrap` with `gap-2` for clean row spacing
-- Use `h-auto` on TabsList to allow multi-row
-- Add subtle top margin for wrapped items via `gap-y-2`
-
 ---
 
-### 2. Audits Page Filters
+## Issue 2: Global File Deselection in Scope Selection
 
-**File:** `src/pages/Audits.tsx`
+### Problem
+When deselecting a file in one folder, all files with the same name across all folders are deselected.
 
-**Current Issue:** Filters overflow horizontally with `overflow-x-auto`
+### Root Cause
+The `ScopeSelectionStep` component tracks selected files by **file name only** instead of **full file path**:
 
-**Solution:** Stack search on its own row, filters below with wrap
+```typescript
+// Current (broken): Uses file.name
+const isSelected = selectedScope.includes(node.name);
+onToggleFile(node.name)  // Passes just "Token.sol"
 
-```text
-Mobile Layout (stacked):
-+------------------------------------------+
-|  [Search input - full width]             |
-+------------------------------------------+
-|  [Status ▼]  [Sort ▼]  [Ownership ▼]     |
-+------------------------------------------+
-
-Desktop Layout (inline):
-+------------------------------------------+
-|  [Search input]  [Status ▼]  [Sort ▼]  [Ownership ▼]  |
-+------------------------------------------+
+// Multiple files with same name collide:
+// "contracts/Token.sol" → stored as "Token.sol"
+// "test/Token.sol"      → stored as "Token.sol" (same key!)
 ```
 
-**Key Changes:**
-- `flex flex-col gap-3 sm:flex-row sm:flex-wrap`
-- Search input: `w-full sm:flex-1 sm:max-w-md`
-- Selects in a separate row on mobile: `flex gap-2 flex-wrap`
+### Solution
+Use the full file path (`node.path`) as the unique identifier instead of just the name:
 
----
+```typescript
+// Fixed: Uses file.path
+const isSelected = selectedScope.includes(node.path);
+onToggleFile(node.path)  // Passes "contracts/Token.sol"
 
-### 3. Findings Filter - Severity Buttons
-
-**File:** `src/components/FindingsFilter.tsx`
-
-**Current Issue:** 5 severity buttons in a row can overflow
-
-**Solution:** Allow natural wrapping with clean gap
-
-```text
-Mobile Layout (wrapped to 2 rows):
-+------------------------------------------+
-|  [Search input - full width]             |
-+------------------------------------------+
-|  [filter icon]  [Critical]  [High]  [Medium]  |
-|                 [Low]  [Info]  [Clear]        |
-+------------------------------------------+
-
-Desktop Layout (single row):
-+------------------------------------------+
-|  [Search]  [filter] [Critical] [High] [Medium] [Low] [Info] [Clear]  |
-+------------------------------------------+
+// Now properly distinguished:
+// "contracts/Token.sol" → stored as "contracts/Token.sol"
+// "test/Token.sol"      → stored as "test/Token.sol"
 ```
 
-**Key Changes:**
-- Outer container: `flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center`
-- Search input: `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-md`
-- Severity buttons container: `flex flex-wrap gap-2 items-center`
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `supabase/functions/cloc-estimate/index.ts` | Fix empty string validation |
+| `src/components/wizard/ScopeSelectionStep.tsx` | Use `path` instead of `name` for selection tracking |
 
 ---
 
-### 4. SecurityScoreCard - Vulnerability Pills
+## Technical Details
 
-**File:** `src/components/SecurityScoreCard.tsx`
+### ScopeSelectionStep.tsx Changes
 
-**Current Issue:** 5 pills wrap but can feel cramped
+**1. ScopeTreeItem - File rendering (line 46, 53, 64):**
+```typescript
+// Before
+const isSelected = selectedScope.includes(node.name);
+onClick={() => onToggleFile(node.name)}
 
-**Solution:** Compact pills with abbreviated labels on mobile
-
-```text
-Mobile Layout (already wraps, but cleaner):
-+------------------------------------------+
-|  [Crit 2]  [High 5]  [Med 3]             |
-|  [Low 1]   [Info 0]                      |
-+------------------------------------------+
-
-Desktop Layout (single row with full labels):
-+------------------------------------------+
-|  [2 Critical]  [5 High]  [3 Medium]  [1 Low]  [0 Info]  |
-+------------------------------------------+
+// After  
+const isSelected = selectedScope.includes(node.path);
+onClick={() => onToggleFile(node.path)}
 ```
 
-**Key Changes:**
-- Pills: `flex flex-wrap gap-2`
-- Each pill: smaller padding on mobile `px-2 py-1 sm:px-2.5 sm:py-1.5`
-- Labels: `hidden sm:inline` for full text, show abbreviated on mobile
+**2. ScopeTreeItem - Folder selection count (line 87):**
+```typescript
+// Before
+const selectedCount = solidityFilesInFolder.filter(f => selectedScope.includes(f)).length;
 
----
-
-### 5. RemediationProgressWidget - Severity Grid
-
-**File:** `src/components/RemediationProgressWidget.tsx`
-
-**Current Issue:** `grid-cols-5` is cramped on mobile
-
-**Solution:** Responsive grid with proper gaps
-
-```text
-Mobile Layout (3 columns with gap):
-+------------------------------------------+
-|   Crit      High      Med                |
-|   0/2       1/5       2/3                |
-+------------------------------------------+
-|   Low       Info                         |
-|   1/1       0/0                          |
-+------------------------------------------+
-
-Desktop Layout (5 columns):
-+------------------------------------------+
-|  Crit   High   Med   Low   Info          |
-|  0/2    1/5    2/3   1/1   0/0           |
-+------------------------------------------+
+// After (receives paths now)
+const selectedCount = solidityFilesInFolder.filter(f => selectedScope.includes(f)).length;
+// (No change needed - just receives paths instead of names)
 ```
 
-**Key Changes:**
-- Grid: `grid grid-cols-3 gap-3 sm:grid-cols-5 sm:gap-2`
-- Ensures wrapped items get equal spacing
+**3. getSolidityFilesInFolder helper (line 227-233):**
+```typescript
+// Before: Returns file names
+return node.name.endsWith('.sol') ? [node.name] : [];
 
----
-
-### 6. Report Page Header
-
-**File:** `src/pages/Report.tsx`
-
-**Current Issue:** Badges and buttons can overflow when stacked
-
-**Solution:** Proper wrap with gap for clean rows
-
-```text
-Mobile Layout (stacked cleanly):
-+------------------------------------------+
-|  Analysis Results  [Live]                |
-+------------------------------------------+
-|  [Shared by user@...]                    |
-|  [Share]  [Export]                       |
-+------------------------------------------+
-
-Desktop Layout (inline):
-+------------------------------------------+
-|  Analysis Results [Live] [Shared by...] [Share] [Export]  |
-+------------------------------------------+
+// After: Returns file paths
+return node.name.endsWith('.sol') ? [node.path] : [];
 ```
 
-**Key Changes:**
-- Badge/button container: `flex flex-wrap items-center gap-2`
-- Sufficient `gap-2` ensures wrapped items don't crowd
+**4. allSolidityFileNames computed value (line 171-174):**
+```typescript
+// Before
+const allSolidityFileNames = useMemo(() => 
+  allSolidityFiles.map(f => f.name),
+  [allSolidityFiles]
+);
+
+// After (rename to allSolidityFilePaths for clarity)
+const allSolidityFilePaths = useMemo(() => 
+  allSolidityFiles.map(f => f.path),
+  [allSolidityFiles]
+);
+```
+
+**5. Flat list fallback (lines 313, 321, 332):**
+```typescript
+// Before
+const isSelected = selectedScope.includes(file.name);
+onClick={() => handleToggleFile(file.name)}
+
+// After
+const isSelected = selectedScope.includes(file.path);
+onClick={() => handleToggleFile(file.path)}
+```
+
+### cloc-estimate/index.ts Changes
+
+**Line 74-77:**
+```typescript
+// Before
+if (!file.content || typeof file.content !== 'string') {
+  return { valid: false, error: `Invalid file content at index ${i}` };
+}
+
+// After
+if (typeof file.content !== 'string') {
+  return { valid: false, error: `Invalid file content at index ${i} (expected string, got ${typeof file.content})` };
+}
+```
 
 ---
 
-## Summary of Changes
+## Impact on Backend
 
-| File | Change | Result |
-|------|--------|--------|
-| `src/pages/Settings.tsx` | Wrap tabs with gap, icon-only mobile | Clean 2-row tabs on mobile |
-| `src/pages/Audits.tsx` | Stack search above filters on mobile | No horizontal scroll |
-| `src/components/FindingsFilter.tsx` | `flex-wrap` on filter buttons | Natural multi-row |
-| `src/components/SecurityScoreCard.tsx` | Compact pills with short labels | Fits without cramping |
-| `src/components/RemediationProgressWidget.tsx` | `grid-cols-3 sm:grid-cols-5` | Proper mobile grid |
-| `src/pages/Report.tsx` | `flex-wrap gap-2` on header | Clean badge/button rows |
+The `run-audit` edge function receives the `scope` array containing file paths. Since we're changing from names to paths:
+
+- **Before:** `scope: ["Token.sol", "Vault.sol"]`
+- **After:** `scope: ["contracts/Token.sol", "contracts/Vault.sol"]`
+
+The backend (n8n) uses this to identify which files are in-scope. Using paths is actually more correct and prevents ambiguity when the same filename exists in multiple folders.
 
 ---
 
-## Visual Spacing Standards
+## Testing Verification
 
-All wrapped elements will use:
-- **Gap between items:** `gap-2` (8px) minimum
-- **Gap between rows:** `gap-y-2` or `gap-3` for visual separation
-- **No items touching:** Padding maintained on all sides
-- **Consistent borders:** Theme colors maintained
+After implementation:
 
-This ensures a minimal, uncluttered aesthetic even when elements wrap to new lines.
+1. **Empty file fix:** Import a repo with empty `.sol` files → estimation should complete without "Invalid file content" error
+
+2. **Scope selection fix:**
+   - Upload a project with duplicate file names in different folders (e.g., `src/Token.sol` and `test/Token.sol`)
+   - Select both files
+   - Deselect one file
+   - Verify only that specific file is deselected, not both
+
