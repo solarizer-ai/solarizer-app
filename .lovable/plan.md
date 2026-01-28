@@ -1,125 +1,34 @@
 
 
-# Update Solarizer: Remove Code Editor References & Revise Grading System
+# Implement Severity-Based Grading Logic & Revert Docs
 
 ## Overview
 
-This plan makes four key changes:
-1. Remove "Interactive Code Editor" from Pro plan features everywhere
-2. Update the Home page CTA section text and remove social proof stats
-3. Change button text from "Start AI Analysis" to "Start Solarizer"
-4. Update the security grading documentation to reflect severity-based grading
+This plan will:
+1. **Revert the Docs.tsx changes** back to the original percentage-based descriptions
+2. **Implement the actual grading logic** in the `complete-audit` edge function to calculate grades based on finding severities
 
 ---
 
-## Changes Required
+## Part 1: Revert Docs.tsx Security Grades Section
 
-### 1. Remove "Interactive Code Editor" from Features
+**File: `src/pages/Docs.tsx` (lines 148-165)**
 
-**File: `src/pages/Pricing.tsx` (line 63)**
+Restore the original grade definitions with percentage ranges:
 
-Remove the feature line from Pro plan:
-```typescript
-features: [
-  { text: 'Everything in Launch, plus:', included: true, isHeader: true },
-  { text: 'GitHub Import', included: true },
-  // REMOVE: { text: 'Interactive Code Editor', included: true },
-  { text: 'Finding Recommendations (Remediation)', included: true },
-  ...
-]
-```
-
-**File: `src/components/UpgradeConfirmationModal.tsx` (lines 22-30)**
-
-Remove from Pro features list:
-```typescript
-const PLAN_FEATURES: Record<string, string[]> = {
-  pro: [
-    "GitHub Import",
-    // REMOVE: "Interactive Code Editor",
-    "Finding Recommendations",
-    ...
-  ],
-```
-
-**File: `src/pages/Docs.tsx` (line 42)**
-
-Update FAQ answer to remove code editor mention:
-```typescript
-answer: "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation and report exports, you will need to upgrade to the Pro Plan."
-```
-
----
-
-### 2. Update Home Page CTA Section (lines 315-324)
-
-Replace "No credit card required" with "Start Analysing Instantly":
-```typescript
-<div className="flex items-center justify-center gap-6 mt-6 text-sm text-muted-foreground">
-  <div className="flex items-center gap-2">
-    <CheckCircle2 className="w-4 h-4 text-primary" />
-    Start Analysing Instantly
-  </div>
-  <div className="flex items-center gap-2">
-    <CheckCircle2 className="w-4 h-4 text-primary" />
-    100% private
-  </div>
-</div>
-```
-
----
-
-### 3. Remove Social Proof Stats (lines 147-156)
-
-Remove the "1,200+ Contracts Analysed" and "$50M+ TVL Secured" section entirely:
-```typescript
-{/* REMOVE this entire block */}
-<div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
-  <span className="flex items-center gap-1.5">
-    <Shield className="w-4 h-4 text-primary" />
-    <span className="font-medium text-foreground">1,200+</span> Contracts Analysed
-  </span>
-  <span className="text-border">•</span>
-  <span className="flex items-center gap-1.5">
-    <span className="font-medium text-foreground">$50M+</span> TVL Secured
-  </span>
-</div>
-```
-
----
-
-### 4. Update Button Text (lines 130-135)
-
-Change "Start AI Analysis" to "Start Solarizer":
-```typescript
-<Button asChild variant="solarGlow" size="lg" className="text-base px-8">
-  <Link to="/dashboard">
-    Start Solarizer
-    <ArrowRight className="w-4 h-4 ml-2" />
-  </Link>
-</Button>
-```
-
----
-
-### 5. Update Security Grades Documentation (lines 149-155)
-
-Update the grading system to be severity-based:
 ```typescript
 {[
-  { grade: 'F', desc: 'At least 1 Critical finding' },
-  { grade: 'D', desc: 'At least 1 High finding' },
-  { grade: 'C', desc: 'At least 1 Medium finding' },
-  { grade: 'B', desc: 'At least 1 Low finding' },
-  { grade: 'A', desc: 'Only Info findings (or none)' },
+  { grade: 'A', range: '85-100%', desc: 'Excellent security posture' },
+  { grade: 'B', range: '70-84%', desc: 'Good with minor issues' },
+  { grade: 'C', range: '60-69%', desc: 'Moderate vulnerabilities' },
+  { grade: 'D', range: '50-59%', desc: 'Significant concerns' },
+  { grade: 'F', range: '0-49%', desc: 'Critical issues found' },
 ].map((item) => (
   <div key={item.grade} className="text-center p-4 rounded-lg bg-muted/50">
-    <div className={`text-2xl font-bold ${
-      item.grade === 'A' || item.grade === 'B' ? 'text-success' :
-      item.grade === 'C' ? 'text-warning' : 'text-destructive'
-    }`}>
+    <div className={`text-2xl font-bold ${...}`}>
       {item.grade}
     </div>
+    <div className="text-xs text-muted-foreground mt-1">{item.range}</div>
     <div className="text-xs mt-2">{item.desc}</div>
   </div>
 ))}
@@ -127,18 +36,86 @@ Update the grading system to be severity-based:
 
 ---
 
-## Summary of File Changes
+## Part 2: Implement Grading Logic in complete-audit
 
-| File | Change |
-|------|--------|
-| `src/pages/Pricing.tsx` | Remove "Interactive Code Editor" feature from Pro plan |
-| `src/components/UpgradeConfirmationModal.tsx` | Remove "Interactive Code Editor" from Pro features list |
-| `src/pages/Docs.tsx` | Update FAQ and revise grading documentation |
-| `src/pages/Home.tsx` | Remove social proof stats, update CTA text, change button text |
+**File: `supabase/functions/complete-audit/index.ts`**
+
+The `complete-audit` function currently receives the grade from n8n. We'll modify it to:
+
+1. **Before updating the audit**, query all findings for this audit
+2. **Calculate the grade** based on the highest severity finding:
+   - If any `critical` finding → Grade **F**
+   - Else if any `high` finding → Grade **D**
+   - Else if any `medium` finding → Grade **C**
+   - Else if any `low` finding → Grade **B**
+   - Else (only `info` or no findings) → Grade **A**
+3. **Override the incoming grade** with the calculated one
+
+### New Helper Function
+
+```typescript
+type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+type Grade = 'A' | 'B' | 'C' | 'D' | 'F';
+
+function calculateGradeFromFindings(findingsSeverities: Severity[]): Grade {
+  // Priority order: critical > high > medium > low > info
+  if (findingsSeverities.includes('critical')) return 'F';
+  if (findingsSeverities.includes('high')) return 'D';
+  if (findingsSeverities.includes('medium')) return 'C';
+  if (findingsSeverities.includes('low')) return 'B';
+  return 'A'; // Only info or no findings
+}
+```
+
+### Modified complete-audit Logic
+
+After validation, before the update:
+
+```typescript
+// Query all findings for this audit to calculate grade
+const { data: findings, error: findingsError } = await supabase
+  .from('findings')
+  .select('severity')
+  .eq('audit_id', audit_id);
+
+if (findingsError) {
+  console.error('complete-audit: Failed to fetch findings:', findingsError);
+  return new Response(
+    JSON.stringify({ error: 'Failed to calculate grade' }),
+    { status: 500, headers: corsHeaders }
+  );
+}
+
+// Calculate grade from findings (overrides incoming grade)
+const severities = findings.map(f => f.severity as Severity);
+const calculatedGrade = calculateGradeFromFindings(severities);
+
+console.log(`complete-audit: Calculated grade ${calculatedGrade} from ${findings.length} findings`);
+
+// Use calculated grade instead of incoming grade
+const updateData: Record<string, unknown> = {
+  security_score,
+  grade: calculatedGrade,  // ← Use calculated, not incoming
+  status,
+  updated_at: new Date().toISOString(),
+};
+```
 
 ---
 
-## Note: Backend Grading Logic
+## Summary of Changes
 
-The grade calculation happens in an external n8n workflow, not in the Supabase edge functions. The `complete-audit` function receives the grade from n8n. To fully implement the new grading system (F for Critical, D for High, etc.), the n8n workflow would need to be updated separately. This plan covers all frontend/documentation changes to reflect the new grading system.
+| File | Change |
+|------|--------|
+| `src/pages/Docs.tsx` | Revert grading section to original percentage-based descriptions |
+| `supabase/functions/complete-audit/index.ts` | Add `calculateGradeFromFindings` function and use it to override incoming grade |
+
+---
+
+## How It Works
+
+After this change:
+1. n8n can still send a grade (for backwards compatibility), but it will be **ignored**
+2. The `complete-audit` function will **always calculate** the grade from actual findings
+3. The grading is deterministic: highest severity finding determines the grade
 
