@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FileNode, createFileNode, getAllFiles, mergeFileTrees } from "@/types/files";
+import { FileNode, getAllFiles } from "@/types/files";
 import ProjectNameStep from "./wizard/ProjectNameStep";
 import UploadMethodStep, { UploadMethod } from "./wizard/UploadMethodStep";
 import ScopeSelectionStep from "./wizard/ScopeSelectionStep";
@@ -10,7 +10,6 @@ import EstimatorStep from "./wizard/EstimatorStep";
 import ContextStep from "./wizard/ContextStep";
 import GitHubImportStep from "./wizard/GitHubImportStep";
 import FolderUploader from "./FolderUploader";
-import SandpackEditor from "./SandpackEditor";
 import { ClocResult } from "@/hooks/useClocEstimate";
 
 interface CombinedClocResult {
@@ -41,13 +40,6 @@ interface AuditWizardProps {
 
 type WizardStep = 'name' | 'method' | 'input' | 'scope' | 'estimate' | 'context';
 
-const SAMPLE_CODE = `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
-
-contract MyContract {
-    // Your smart contract code here
-}`;
-
 const AuditWizard = ({ 
   onComplete, 
   onCancel, 
@@ -62,7 +54,6 @@ const AuditWizard = ({
   const [projectName, setProjectName] = useState("");
   const [uploadMethod, setUploadMethod] = useState<UploadMethod | null>(null);
   const [files, setFiles] = useState<FileNode[]>([]);
-  const [editorCode, setEditorCode] = useState(SAMPLE_CODE);
   const [additionalContext, setAdditionalContext] = useState("");
   const [combinedClocResult, setCombinedClocResult] = useState<CombinedClocResult | null>(null);
   const [selectedScope, setSelectedScope] = useState<string[]>([]);
@@ -71,12 +62,9 @@ const AuditWizard = ({
     setProjectName(name);
     onProjectNameChange?.(name);
   };
+
   const handleMethodSelect = (method: UploadMethod) => {
     setUploadMethod(method);
-    if (method === 'editor') {
-      // Initialize with a default file
-      setFiles([createFileNode(`${projectName || 'Contract'}.sol`, `${projectName || 'Contract'}.sol`, SAMPLE_CODE)]);
-    }
     setStep('input');
   };
 
@@ -126,7 +114,7 @@ const AuditWizard = ({
     onComplete({
       projectName,
       files,
-      code: combinedCode || editorCode,
+      code: combinedCode,
       clocResult,
       additionalContext: additionalContext || undefined,
       scope: selectedScope,
@@ -152,10 +140,7 @@ const AuditWizard = ({
   };
 
   const canProceedToScope = () => {
-    if (uploadMethod === 'folder') {
-      return files.length > 0 && getAllFiles(files).length > 0;
-    }
-    return files.length > 0 && getAllFiles(files).some(f => f.content?.trim());
+    return files.length > 0 && getAllFiles(files).length > 0;
   };
 
   // Get in-scope files for nLOC estimation (100% credits)
@@ -268,32 +253,6 @@ const AuditWizard = ({
                 Continue
               </Button>
             </div>
-          </div>
-        )}
-
-        {step === 'input' && uploadMethod === 'editor' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Button variant="ghost" onClick={handleBack} className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Button>
-              <Button
-                onClick={handleProceedToScope}
-                disabled={!canProceedToScope()}
-                className="gap-2"
-              >
-                <Play className="w-4 h-4" />
-                Continue
-              </Button>
-            </div>
-
-            <SandpackEditor
-              files={files}
-              onFilesChange={setFiles}
-              showExplorer={true}
-              readOnly={false}
-            />
           </div>
         )}
 
