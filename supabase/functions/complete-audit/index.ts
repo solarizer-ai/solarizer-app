@@ -5,6 +5,19 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
+// Types for grading logic
+type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+type Grade = 'A' | 'B' | 'C' | 'D' | 'F';
+
+// Calculate grade based on highest severity finding
+function calculateGradeFromFindings(severities: Severity[]): Grade {
+  if (severities.includes('critical')) return 'F';
+  if (severities.includes('high')) return 'D';
+  if (severities.includes('medium')) return 'C';
+  if (severities.includes('low')) return 'B';
+  return 'A'; // Only info or no findings
+}
+
 interface CoverageTestDetail {
   test_name: string;
   status: "PASSED" | "FAILED";
@@ -121,12 +134,32 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`complete-audit: Completing audit ${audit_id} with score ${security_score}, grade ${grade}, status ${status}, coverage_tests: ${coverage_data?.total_tests ?? 0}`);
+    console.log(`complete-audit: Completing audit ${audit_id} with score ${security_score}, incoming grade ${grade}, status ${status}, coverage_tests: ${coverage_data?.total_tests ?? 0}`);
+
+    // Query all findings for this audit to calculate grade
+    const { data: findings, error: findingsError } = await supabase
+      .from('findings')
+      .select('severity')
+      .eq('audit_id', audit_id);
+
+    if (findingsError) {
+      console.error('complete-audit: Failed to fetch findings:', findingsError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to calculate grade' }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // Calculate grade from findings (overrides incoming grade)
+    const severities = (findings || []).map(f => f.severity as Severity);
+    const calculatedGrade = calculateGradeFromFindings(severities);
+
+    console.log(`complete-audit: Calculated grade ${calculatedGrade} from ${findings?.length ?? 0} findings (severities: ${severities.join(', ') || 'none'})`);
 
     // Build update object - only include optional fields if explicitly provided
     const updateData: Record<string, unknown> = {
       security_score,
-      grade,
+      grade: calculatedGrade,  // Use calculated grade, not incoming
       status,
       updated_at: new Date().toISOString(),
     };
