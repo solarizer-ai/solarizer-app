@@ -97,9 +97,9 @@ const AuditWizard = ({
   };
 
   const handleProceedToScope = () => {
-    // Auto-select all Solidity files when entering scope step
+    // Auto-select all Solidity files when entering scope step (using paths)
     const allFiles = getAllFiles(files);
-    const solFiles = allFiles.filter(f => f.name.endsWith('.sol')).map(f => f.name);
+    const solFiles = allFiles.filter(f => f.name.endsWith('.sol')).map(f => f.path);
     setSelectedScope(solFiles);
     setStep('scope');
   };
@@ -134,15 +134,11 @@ const AuditWizard = ({
   };
 
   const handleGitHubFilesImported = (importedFiles: FileNode[]) => {
-    // Merge with existing files if any
-    if (files.length > 0) {
-      setFiles(mergeFileTrees(files, importedFiles));
-    } else {
-      setFiles(importedFiles);
-    }
-    // Auto-select all Solidity files when entering scope step
+    // Replace files entirely (don't merge with previous imports)
+    setFiles(importedFiles);
+    // Auto-select all Solidity files when entering scope step (using paths)
     const allFiles = getAllFiles(importedFiles);
-    const solFiles = allFiles.filter(f => f.name.endsWith('.sol')).map(f => f.name);
+    const solFiles = allFiles.filter(f => f.name.endsWith('.sol')).map(f => f.path);
     setSelectedScope(solFiles);
     setStep('scope');
   };
@@ -166,7 +162,7 @@ const AuditWizard = ({
   const getScopeFilesForEstimation = () => {
     const allFiles = getAllFiles(files);
     return allFiles
-      .filter(f => selectedScope.includes(f.name))
+      .filter(f => selectedScope.includes(f.path))
       .map(f => ({
         name: f.name,
         content: f.content || '',
@@ -177,7 +173,7 @@ const AuditWizard = ({
   const getContextFilesForEstimation = () => {
     const allFiles = getAllFiles(files);
     return allFiles
-      .filter(f => !selectedScope.includes(f.name) && f.name.endsWith('.sol'))
+      .filter(f => !selectedScope.includes(f.path) && f.name.endsWith('.sol'))
       .map(f => ({
         name: f.name,
         content: f.content || '',
