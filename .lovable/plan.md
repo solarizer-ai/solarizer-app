@@ -1,121 +1,74 @@
 
+# Remove Code Editor from Solarizer
 
-# Permanent Solution: Remove Default Files from Code Editor
+## Overview
 
-## The Problem
+Completely remove the code editor feature from Solarizer, including all related components, utilities, and the "Code Editor" upload method option.
 
-You're right - there are **two issues**:
-1. The boilerplate files (`package.json`, `index.html`, `styles.css`) are **visible** in the file explorer
-2. Even if hidden, they would be **sent for estimation** because `sandpackFilesToFileNodes` converts ALL files back to FileNodes
+## Files to Delete
 
-## Root Cause Analysis
+| File/Folder | Purpose |
+|-------------|---------|
+| `src/components/SandpackEditor.tsx` | Main Sandpack-based code editor component |
+| `src/components/CodeEditor.tsx` | Monaco-based code editor (unused but present) |
+| `src/lib/sandpackUtils.ts` | File conversion utilities for Sandpack |
+| `src/lib/sandpackTheme.ts` | Theme definitions for Sandpack |
+| `src/components/editor/NewFileDialog.tsx` | Dialog for creating new files |
+| `src/components/editor/NewFolderDialog.tsx` | Dialog for creating new folders |
+| `src/components/editor/DeleteConfirmDialog.tsx` | Confirmation dialog for deletion |
+| `src/components/editor/RenameDialog.tsx` | Dialog for renaming files |
 
-### Issue 1: Visibility
-Line 420: `visibleFiles: fileKeys` includes ALL keys from `initialFiles`, including the hidden boilerplate files.
+## Files to Modify
 
-### Issue 2: Data Leak
-Lines 62-79 in `SandpackEditorInner`: The `onFilesChange` callback uses `sandpackFilesToFileNodes(sandpack.files)` which converts **every file** in Sandpack back to FileNodes - including the boilerplate files we injected.
+### 1. `src/components/AuditWizard.tsx`
 
-## The Permanent Fix
+**Remove:**
+- Import of `SandpackEditor` (line 13)
+- The `editorCode` state (line 65)
+- The `SAMPLE_CODE` constant (lines 44-49)
+- Logic in `handleMethodSelect` for 'editor' method (lines 76-79)
+- The entire `{step === 'input' && uploadMethod === 'editor' && (...)}` block (lines 274-298)
 
-Fix both issues in **two places**:
+**Update:**
+- The `canProceedToScope` function no longer needs to handle the editor case
 
----
+### 2. `src/components/wizard/UploadMethodStep.tsx`
 
-## Technical Changes
+**Remove:**
+- The `Code` icon import from lucide-react (line 1)
+- The 'editor' option from the `UploadMethod` type (line 12)
+- The entire "Code Editor" button block (lines 152-182)
 
-### 1. Filter `visibleFiles` (hides from UI)
-
-**File: `src/components/SandpackEditor.tsx` (lines 405-420)**
-
-```typescript
-// Define files to exclude
-const SANDPACK_INTERNAL_FILES = [
-  "/package.json",
-  "/index.html", 
-  "/styles.css",
-  "/index.js"
-];
-
-// Filter visible files to exclude internal Sandpack files
-const visibleFileKeys = fileKeys.filter(
-  (path) => !SANDPACK_INTERNAL_FILES.includes(path)
-);
-
-// Use filtered list in options
-options={{
-  activeFile: normalizedActiveFile,
-  visibleFiles: visibleFileKeys,  // Only user's files
-}}
-```
-
-### 2. Filter `onFilesChange` output (prevents data leak)
-
-**File: `src/components/SandpackEditor.tsx` (lines 62-79)**
-
-Filter out internal files before syncing back to parent:
-
-```typescript
-useEffect(() => {
-  if (onFilesChange && sandpack.files) {
-    // Filter out Sandpack internal files before syncing
-    const INTERNAL_FILES = ["/package.json", "/index.html", "/styles.css", "/index.js"];
-    const userFiles = Object.fromEntries(
-      Object.entries(sandpack.files).filter(
-        ([path]) => !INTERNAL_FILES.includes(path)
-      )
-    );
-    
-    const filesSnapshot = JSON.stringify(
-      Object.fromEntries(
-        Object.entries(userFiles).map(([path, file]) => [path, file.code])
-      )
-    );
-    
-    if (filesSnapshot !== previousFilesRef.current) {
-      previousFilesRef.current = filesSnapshot;
-      const fileNodes = sandpackFilesToFileNodes(userFiles);
-      onFilesChange(fileNodes);
-    }
-  }
-}, [sandpack.files, onFilesChange]);
-```
-
-### 3. Filter ZIP download (bonus fix)
-
-**File: `src/components/SandpackEditor.tsx` (lines 143-157)**
-
-Don't include internal files in the downloaded ZIP:
-
-```typescript
-const handleDownload = useCallback(async () => {
-  const INTERNAL_FILES = ["/package.json", "/index.html", "/styles.css", "/index.js"];
-  const zip = new JSZip();
-  
-  Object.entries(sandpack.files)
-    .filter(([path]) => !INTERNAL_FILES.includes(path))
-    .forEach(([path, file]) => {
-      const filePath = path.startsWith("/") ? path.slice(1) : path;
-      zip.file(filePath, file.code);
-    });
-    
-  // ... rest unchanged
-}, [sandpack.files]);
-```
+**Update:**
+- Change grid from 3 columns to 2 columns: `grid-cols-1 md:grid-cols-2` (line 34)
 
 ---
 
-## Summary
+## Technical Details
 
-| Location | Before | After |
-|----------|--------|-------|
-| `visibleFiles` | All files including boilerplate | Only user's files |
-| `onFilesChange` | Syncs all files to parent | Filters out internal files |
-| ZIP download | Includes all files | Only user's files |
+### Dependencies That Can Be Removed
 
-This ensures internal Sandpack files are:
-- Not visible in the file explorer
-- Not synced back to the parent component  
-- Not sent for nLOC estimation
-- Not included in downloads
+After these changes, the following npm packages will no longer be used:
+- `@codesandbox/sandpack-react` - Only used by SandpackEditor
+- `jszip` - Only used by SandpackEditor for ZIP downloads
 
+These can be removed from `package.json` to reduce bundle size.
+
+### Type Changes
+
+The `UploadMethod` type in `UploadMethodStep.tsx` changes from:
+```typescript
+export type UploadMethod = 'folder' | 'editor' | 'github';
+```
+to:
+```typescript
+export type UploadMethod = 'folder' | 'github';
+```
+
+### Result
+
+After implementation:
+- The wizard will only show 2 upload options: "Upload Folder" and "Import from GitHub"
+- No code editor components will exist in the codebase
+- Bundle size will be reduced (Sandpack and JSZip removed)
+- The audit flow remains intact for folder uploads and GitHub imports
