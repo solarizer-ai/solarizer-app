@@ -39,7 +39,7 @@ const faqs = [
   {
     question: "Why can't I see remediation recommendations on the Launch Plan?",
     answer:
-      "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation, the interactive code editor, and report exports, you will need to upgrade to the Pro Plan.",
+      "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation and report exports, you will need to upgrade to the Pro Plan.",
   },
   {
     question: "What is Security Coverage and how is it different from \"Findings\"?",
@@ -147,11 +147,11 @@ const Docs = () => {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     {[
-                      { grade: 'A', range: '85-100%', desc: 'Excellent security posture' },
-                      { grade: 'B', range: '70-84%', desc: 'Good with minor issues' },
-                      { grade: 'C', range: '60-69%', desc: 'Moderate vulnerabilities' },
-                      { grade: 'D', range: '50-59%', desc: 'Significant concerns' },
-                      { grade: 'F', range: '0-49%', desc: 'Critical issues found' },
+                      { grade: 'A', desc: 'Only Info findings (or none)' },
+                      { grade: 'B', desc: 'At least 1 Low finding' },
+                      { grade: 'C', desc: 'At least 1 Medium finding' },
+                      { grade: 'D', desc: 'At least 1 High finding' },
+                      { grade: 'F', desc: 'At least 1 Critical finding' },
                     ].map((item) => (
                       <div key={item.grade} className="text-center p-4 rounded-lg bg-muted/50">
                         <div className={`text-2xl font-bold ${
@@ -160,7 +160,6 @@ const Docs = () => {
                         }`}>
                           {item.grade}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">{item.range}</div>
                         <div className="text-xs mt-2">{item.desc}</div>
                       </div>
                     ))}
