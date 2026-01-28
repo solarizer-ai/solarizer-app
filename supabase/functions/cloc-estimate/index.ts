@@ -71,9 +71,9 @@ function validateFiles(files: FileInput[]): { valid: boolean; error?: string; sa
       return { valid: false, error: `Invalid file name at index ${i} after sanitization` };
     }
     
-    // Validate content exists and is a string
-    if (!file.content || typeof file.content !== 'string') {
-      return { valid: false, error: `Invalid file content at index ${i}` };
+    // Validate content is a string (empty strings are valid - they have 0 nLOC)
+    if (typeof file.content !== 'string') {
+      return { valid: false, error: `Invalid file content at index ${i} (expected string, got ${typeof file.content})` };
     }
     
     // Check individual file size
