@@ -1,98 +1,67 @@
 
 
-# Fix Scope Tab Data Loss on Analysis Completion
+# Remove Default CSS/JSON Files from Code Editor
 
 ## Problem
 
-When an analysis completes, the Scope tab shows "No contract scope data available" because the `system_hologram` data is being **overwritten** instead of **merged**.
+When opening the code editor to add code, Sandpack displays unwanted default files like:
+- `index.html`
+- `styles.css`
+- `index.js`
+- `package.json`
 
-### Root Cause
+These are standard web project files that are irrelevant for Solidity smart contract auditing.
 
-1. **When analysis starts** (`run-audit` function): The `scope` and `all_files` arrays are correctly saved to `system_hologram`
-2. **When analysis completes** (`complete-audit` function): The n8n backend sends a different `system_hologram` structure containing analysis metadata
-3. The current code **replaces** the entire `system_hologram`, losing the `scope` and `all_files` arrays
+## Root Cause
 
----
+In `src/components/SandpackEditor.tsx`, the `SandpackProvider` component is initialized **without a `template` prop**. When no template is specified, Sandpack defaults to the `vanilla` template which automatically injects standard web project files alongside the user's custom files.
+
+**Current Code (line 402-408):**
+```typescript
+<SandpackProvider
+  files={initialFiles}
+  theme={theme === "dark" ? solarizerDarkTheme : solarizerLightTheme}
+  options={{
+    activeFile: normalizedActiveFile,
+    visibleFiles: fileKeys,
+  }}
+>
+```
 
 ## Solution
 
-Merge the incoming `system_hologram` with the existing one, preserving the `scope` and `all_files` arrays while adding new analysis metadata. Skip the update entirely if the incoming data is an exact duplicate.
+Add `template="static"` to the `SandpackProvider`. The `static` template is the most minimal template available - it does not inject any default JavaScript, CSS, or configuration files. This is perfect for a code-only editor where we want to display exactly what the user provides.
 
 ---
 
 ## Technical Changes
 
-### File: `supabase/functions/complete-audit/index.ts`
+### File: `src/components/SandpackEditor.tsx`
 
-Modify the `system_hologram` handling to:
-1. Fetch existing `system_hologram` from the database
-2. Check if incoming data is an exact duplicate of existing - if so, skip update
-3. Merge incoming data with existing, preserving `scope` and `all_files`
+**Modification at lines 402-408:**
 
-**Implementation:**
+Add `template="static"` to prevent Sandpack from injecting default files:
+
 ```typescript
-// Merge system_hologram to preserve scope/all_files from run-audit
-if (system_hologram !== undefined) {
-  // Fetch existing system_hologram to preserve scope metadata
-  const { data: existingAudit, error: hologramFetchError } = await supabase
-    .from('audits')
-    .select('system_hologram')
-    .eq('id', audit_id)
-    .single();
-  
-  if (hologramFetchError) {
-    console.error('complete-audit: Failed to fetch existing system_hologram:', hologramFetchError);
-  }
-  
-  const existingHologram = existingAudit?.system_hologram || {};
-  
-  // Check for exact duplicate - skip if incoming matches what we already have
-  const incomingKeys = Object.keys(system_hologram);
-  const isExactDuplicate = incomingKeys.every(key => {
-    return JSON.stringify(existingHologram[key]) === JSON.stringify(system_hologram[key]);
-  });
-  
-  if (isExactDuplicate && incomingKeys.length > 0) {
-    console.log('complete-audit: Skipping system_hologram update - exact duplicate detected');
-  } else {
-    // Merge: preserve existing scope/all_files, add new analysis data
-    updateData.system_hologram = {
-      ...existingHologram,    // Keeps scope, all_files
-      ...system_hologram,     // Adds/updates contracts, entry_points, etc.
-    };
-    console.log('complete-audit: Merged system_hologram - preserved scope/all_files');
-  }
-}
+<SandpackProvider
+  template="static"  // ← ADD THIS LINE
+  files={initialFiles}
+  theme={theme === "dark" ? solarizerDarkTheme : solarizerLightTheme}
+  options={{
+    activeFile: normalizedActiveFile,
+    visibleFiles: fileKeys,
+  }}
+>
 ```
 
 ---
 
 ## Result
 
-After the fix:
-- **First completion**: Merges analysis data with existing scope data
-- **Duplicate callbacks**: Skipped entirely, no unnecessary updates
-- **Final `system_hologram`** contains both scope metadata AND analysis data:
-  ```json
-  {
-    "scope": ["file1.sol", "file2.sol"],
-    "all_files": ["file1.sol", "file2.sol", "lib.sol"],
-    "contracts": [...],
-    "entry_points": [...],
-    "external_calls": 0,
-    "state_variables": 0
-  }
-  ```
+| Before | After |
+|--------|-------|
+| File explorer shows `index.html`, `styles.css`, `package.json`, etc. | File explorer shows only user's uploaded/created files |
+| Confusing for users | Clean, focused on Solidity contracts |
 
----
-
-## Summary
-
-| Aspect | Before | After |
-|--------|--------|-------|
-| `system_hologram` update | Full replacement | Merge with existing |
-| Duplicate handling | Overwrites anyway | Skipped entirely |
-| `scope` array | Lost on completion | Preserved |
-| `all_files` array | Lost on completion | Preserved |
-| Scope tab after completion | Empty | Shows file tree |
+This is a single-line change that will remove all the unwanted default files from the code editor.
 
