@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { FileCode, FileText, FolderOpen, Info, CheckCircle2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { FileCode, FileText, FolderOpen, Folder, Info, CheckCircle2, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CoverageData } from "@/components/SecurityCoverageTab";
 import type { Finding, AuditStatus } from "@/hooks/useAudits";
@@ -76,22 +76,50 @@ function buildFileTree(
   return sortNodes(root);
 }
 
-const FileTreeNode = ({ node, depth = 0 }: { node: TreeNode; depth?: number }) => {
+interface FileTreeNodeProps {
+  node: TreeNode;
+  depth?: number;
+  expandedFolders: Set<string>;
+  onToggleExpand: (path: string) => void;
+}
+
+const FileTreeNode = ({ node, depth = 0, expandedFolders, onToggleExpand }: FileTreeNodeProps) => {
   const paddingLeft = depth * 16;
   
   if (!node.isFile) {
     // Folder node
+    const isExpanded = expandedFolders.has(node.path);
+    
     return (
       <div>
         <div 
-          className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors"
+          className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors cursor-pointer select-none"
           style={{ paddingLeft: `${paddingLeft}px` }}
+          onClick={() => onToggleExpand(node.path)}
         >
-          <FolderOpen className="w-4 h-4 text-primary/70 shrink-0" />
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          )}
+          {isExpanded ? (
+            <FolderOpen className="w-4 h-4 text-primary/70 shrink-0" />
+          ) : (
+            <Folder className="w-4 h-4 text-primary/70 shrink-0" />
+          )}
           <span className="text-sm font-medium text-foreground">{node.name}</span>
+          <span className="text-xs text-muted-foreground">
+            ({node.children.length})
+          </span>
         </div>
-        {node.children.map((child) => (
-          <FileTreeNode key={child.path} node={child} depth={depth + 1} />
+        {isExpanded && node.children.map((child) => (
+          <FileTreeNode 
+            key={child.path} 
+            node={child} 
+            depth={depth + 1}
+            expandedFolders={expandedFolders}
+            onToggleExpand={onToggleExpand}
+          />
         ))}
       </div>
     );
@@ -101,7 +129,7 @@ const FileTreeNode = ({ node, depth = 0 }: { node: TreeNode; depth?: number }) =
   return (
     <div 
       className="flex items-center justify-between gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors"
-      style={{ paddingLeft: `${paddingLeft}px` }}
+      style={{ paddingLeft: `${paddingLeft + 20}px` }}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <FileCode className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -134,6 +162,9 @@ const ScopeTab = ({
   auditStatus,
   systemHologram,
 }: ScopeTabProps) => {
+  // Track expanded folders - auto-expand root folders initially
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
+
   // Determine file status based on scope and analysis progress
   const getFileStatus = useMemo(() => {
     const scopeFiles = systemHologram?.scope || [];
@@ -183,6 +214,16 @@ const ScopeTab = ({
     return buildFileTree(allFiles, scopeFiles, getFileStatus);
   }, [systemHologram?.all_files, systemHologram?.scope, getFileStatus]);
 
+  // Auto-expand root folders on first render
+  useMemo(() => {
+    if (fileTree.length > 0 && expandedFolders.size === 0) {
+      const rootFolders = fileTree.filter(n => !n.isFile).map(n => n.path);
+      if (rootFolders.length > 0) {
+        setExpandedFolders(new Set(rootFolders));
+      }
+    }
+  }, [fileTree]);
+
   // Count files by status
   const statusCounts = useMemo(() => {
     const allFiles = systemHologram?.all_files || [];
@@ -197,6 +238,18 @@ const ScopeTab = ({
   }, [systemHologram?.all_files, getFileStatus]);
 
   const hasTreeData = fileTree.length > 0;
+
+  const handleToggleExpand = (path: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -230,7 +283,7 @@ const ScopeTab = ({
 
       {/* File Tree */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             Files in Scope
           </h4>
@@ -257,7 +310,12 @@ const ScopeTab = ({
         {hasTreeData ? (
           <div className="p-4 rounded-lg border border-border bg-card">
             {fileTree.map((node) => (
-              <FileTreeNode key={node.path} node={node} />
+              <FileTreeNode 
+                key={node.path} 
+                node={node}
+                expandedFolders={expandedFolders}
+                onToggleExpand={handleToggleExpand}
+              />
             ))}
           </div>
         ) : (
