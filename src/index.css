@@ -179,6 +179,28 @@
     @apply bg-gradient-to-r from-primary via-orange-400 to-amber-400 bg-clip-text text-transparent;
   }
 
+  /* Subtle grid pattern for hero depth */
+  .bg-grid-subtle {
+    background-image: 
+      linear-gradient(to right, hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* Section fade transitions */
+  .section-fade-top {
+    background: linear-gradient(to bottom, hsl(var(--background)) 0%, transparent 100%);
+  }
+
+  .section-fade-bottom {
+    background: linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%);
+  }
+
+  /* Radial glow for CTA sections */
+  .bg-radial-glow {
+    background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.08) 0%, transparent 60%);
+  }
+
   .surface-elevated {
     background-color: hsl(var(--surface-elevated));
   }
