@@ -1,161 +1,98 @@
 
-# Unified Header and Footer - Professional, Minimal, Clean Design
 
-## Current Issues
+# Fix: Ensure Full File Paths Are Sent to n8n Backend
 
-| Problem | Details |
-|---------|---------|
-| Two separate headers | `PublicHeader.tsx` and `Header.tsx` with different layouts and behaviors |
-| Two separate footers | `Footer.tsx` (full) and `MinimalFooter.tsx` (minimal) |
-| Redundant footer links | "Security Index" and "Exploit Database" just link to /docs |
-| Missing footers | Docs page and PaymentSuccess page have no footer |
-| Inconsistent navigation | Different nav links shown based on login state |
+## Problem Confirmed
+
+From your n8n execution screenshot, the `files` array being received shows:
+- `files[0].name`: `Constants.sol` (missing folder path)
+- `files[1].name`: `CoveredMetavault.sol` (missing folder path)
+
+But the scope array correctly contains full paths like `src/Constants.sol`.
+
+## Root Cause
+
+The code at `src/pages/Index.tsx` line 167 currently reads:
+
+```typescript
+const fileList = getAllFiles(files).map(f => ({
+  name: f.path,  // Use full path for n8n backend
+  content: f.content || '',
+}));
+```
+
+**The code shows `f.path` but the deployed version appears to still have `f.name`.** This is a deployment synchronization issue where the previous change hasn't taken effect.
 
 ## Solution
 
-Create a single unified header and footer that adapts based on authentication state while maintaining a consistent, minimal, professional appearance.
+Re-apply the fix to ensure the change is properly deployed. The line must use `f.path` (full path like `src/Constants.sol`) instead of `f.name` (just filename like `Constants.sol`).
 
----
+## File to Modify
 
-## 1. Unified Header Design
+| File | Line | Change |
+|------|------|--------|
+| `src/pages/Index.tsx` | 167 | Ensure `name: f.path` is used (re-deploy) |
 
-### Desktop Layout
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│  [Logo]          Home   Pricing   Docs          [Theme] [Auth Actions]  │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+## Technical Change
 
-### Behavior by Auth State
-- **Logged Out**: Show "Sign In" and "Get Started" buttons
-- **Logged In**: Show "Dashboard" link in nav + user avatar (links to Settings)
-
-### Navigation Links
-- Home
-- Pricing
-- Docs
-- Dashboard (only when logged in)
-
-### Changes to `Header.tsx`
-- Merge functionality from `PublicHeader.tsx` into `Header.tsx`
-- Add auth state detection to show/hide dashboard link and auth buttons
-- Center navigation links
-- Keep user avatar on right side for logged-in users
-
----
-
-## 2. Unified Footer Design
-
-### Desktop Layout
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│  [Logo]   Solarizer                    Privacy  •  Terms  •  Docs       │
-│  © 2025 ERYONIX TECHLABS               Powering secure deployments      │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Mobile Layout
-```text
-┌────────────────────────────────────┐
-│  [Logo]  Solarizer                 │
-│  Privacy  •  Terms  •  Docs        │
-│  © 2025 ERYONIX                    │
-└────────────────────────────────────┘
-```
-
-### Links to Keep (Essential Only)
-- **Privacy** - Legal requirement
-- **Terms** - Legal requirement
-- **Docs** - User utility
-
-### Links to Remove
-- Features (/#features) - Only works from home page
-- Pricing - Already in header
-- Dashboard (/audits) - Confusing and in header
-- Security Index - Redundant (same as Docs)
-- Exploit Database - Redundant (same as Docs)
-
----
-
-## 3. Files to Modify
-
-| File | Action |
-|------|--------|
-| `src/components/Header.tsx` | Merge PublicHeader logic, add auth-aware navigation |
-| `src/components/Footer.tsx` | Simplify to minimal design, remove redundant links |
-| `src/components/PublicHeader.tsx` | Delete (merged into Header) |
-| `src/components/MinimalFooter.tsx` | Delete (merged into Footer) |
-
-### Pages to Update (use unified components)
-
-| Page | Header | Footer |
-|------|--------|--------|
-| Home.tsx | Header | Footer |
-| Pricing.tsx | Header | Footer |
-| Docs.tsx | Header | Footer (add) |
-| ComingSoon.tsx | Header | Footer |
-| PrivacyPolicy.tsx | Header | Footer |
-| TermsOfService.tsx | Header | Footer |
-| Index.tsx (Dashboard) | Header | Footer |
-| Audits.tsx | Header | Footer |
-| Settings.tsx | Header | Footer |
-| BillingHistory.tsx | Header | Footer |
-| Report.tsx | Header | Footer |
-| PaymentSuccess.tsx | Header | Footer (add) |
-| SubscriptionSuccess.tsx | Header | Footer |
-
----
-
-## 4. Technical Details
-
-### Unified Header (`Header.tsx`)
-
+**Current deployed (broken):**
 ```typescript
-const Header = () => {
-  const { user, loading } = useAuth();
-  
-  // Navigation links - Dashboard only shown when logged in
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/docs", label: "Docs" },
-    ...(user ? [{ href: "/dashboard", label: "Dashboard" }] : []),
-  ];
+const fileList = getAllFiles(files).map(f => ({
+  name: f.name,           // Only filename: "Constants.sol"
+  content: f.content || '',
+}));
+```
 
-  // Right side actions based on auth state
-  // - Logged out: Sign In + Get Started buttons
-  // - Logged in: User avatar (links to /settings)
+**Required fix:**
+```typescript
+const fileList = getAllFiles(files).map(f => ({
+  name: f.path,           // Full path: "src/Constants.sol"
+  content: f.content || '',
+}));
+```
+
+## Expected Result After Fix
+
+n8n should receive:
+```json
+{
+  "files": [
+    { "name": "src/Constants.sol", "content": "..." },
+    { "name": "src/CoveredMetavault.sol", "content": "..." },
+    { "name": "libraries/PercentageLib.sol", "content": "..." },
+    { "name": "interfaces/ICoveredMetavault.sol", "content": "..." }
+  ],
+  "scope": [
+    "src/Constants.sol",
+    "src/CoveredMetavault.sol"
+  ]
 }
 ```
 
-### Unified Footer (`Footer.tsx`)
+## Data Flow Reference
 
-```typescript
-const Footer = () => {
-  const footerLinks = [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Terms", href: "/terms" },
-    { label: "Docs", href: "/docs" },
-  ];
-
-  return (
-    <footer className="border-t border-border bg-background mt-auto">
-      <div className="container mx-auto px-6 py-6">
-        {/* Row: Logo + Brand | Links */}
-        {/* Row: Copyright | Tagline */}
-      </div>
-    </footer>
-  );
-}
+```text
+FolderUploader / GitHubImport
+        │
+        ▼ FileNode[] with { name: "Constants.sol", path: "src/Constants.sol" }
+        │
+AuditWizard.onComplete()
+        │
+        ▼ passes: { files: FileNode[], scope: string[] }
+        │
+Index.tsx → handleStartScan()
+        │
+        ▼ fileList = getAllFiles(files).map(f => ({ name: f.path, ... }))
+        │
+run-audit edge function
+        │
+        ▼ n8n webhook receives { files: [{ name: "src/Constants.sol", ... }] }
 ```
 
----
+## Verification Steps
 
-## 5. Visual Design Principles
+After deployment:
+1. Upload a project with nested folders (e.g., `src/`, `interfaces/`, `libraries/`)
+2. Run an audit
+3. Check n8n execution input to verify `files[].name` contains full paths
 
-- **Minimal**: Only essential links and elements
-- **Professional**: Clean typography, consistent spacing
-- **Clean**: Ample whitespace, no clutter
-- **Aesthetic**: Subtle borders, smooth transitions
-- **Consistent**: Same appearance on all pages
-- **Responsive**: Optimized for mobile and desktop
