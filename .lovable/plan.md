@@ -1,174 +1,94 @@
 
+# Fix: Send Full File Paths to n8n Backend
 
-# Combined Fix: nLOC Estimation & Scope Selection Bug
+## Problem Identified
 
-This plan addresses two related issues in the audit wizard flow.
+The files sent to the n8n `run-audit` backend only contain filenames (`Constants.sol`) instead of full paths (`src/Constants.sol`). This happens because the file list is prepared in `src/pages/Index.tsx` using `f.name` instead of `f.path`.
 
----
+## Root Cause
 
-## Issue 1: nLOC Estimation Failure for Empty Files
-
-### Problem
-The `cloc-estimate` edge function rejects files with empty content (`''`) because the validation check `!file.content` treats empty strings as invalid.
-
-### Root Cause
-In `supabase/functions/cloc-estimate/index.ts`:
-```typescript
-if (!file.content || typeof file.content !== 'string') {
-  return { valid: false, error: `Invalid file content at index ${i}` };
-}
-```
-Empty strings are falsy in JavaScript, causing legitimate empty files to fail validation.
-
-### Solution
-Change the validation to only check the type, allowing empty strings:
-```typescript
-if (typeof file.content !== 'string') {
-  return { valid: false, error: `Invalid file content at index ${i} (expected string, got ${typeof file.content})` };
-}
-```
-
----
-
-## Issue 2: Global File Deselection in Scope Selection
-
-### Problem
-When deselecting a file in one folder, all files with the same name across all folders are deselected.
-
-### Root Cause
-The `ScopeSelectionStep` component tracks selected files by **file name only** instead of **full file path**:
+In `src/pages/Index.tsx` at lines 166-169:
 
 ```typescript
-// Current (broken): Uses file.name
-const isSelected = selectedScope.includes(node.name);
-onToggleFile(node.name)  // Passes just "Token.sol"
-
-// Multiple files with same name collide:
-// "contracts/Token.sol" → stored as "Token.sol"
-// "test/Token.sol"      → stored as "Token.sol" (same key!)
+// Current (broken): Uses f.name
+const fileList = getAllFiles(files).map(f => ({
+  name: f.name,          // Only "Constants.sol"
+  content: f.content || '',
+}));
 ```
 
-### Solution
-Use the full file path (`node.path`) as the unique identifier instead of just the name:
+This code converts the `FileNode[]` structure to simple file objects for the API, but loses the directory information by using just the filename.
+
+## Solution
+
+Update the file mapping to use `f.path` instead of `f.name`:
 
 ```typescript
-// Fixed: Uses file.path
-const isSelected = selectedScope.includes(node.path);
-onToggleFile(node.path)  // Passes "contracts/Token.sol"
-
-// Now properly distinguished:
-// "contracts/Token.sol" → stored as "contracts/Token.sol"
-// "test/Token.sol"      → stored as "test/Token.sol"
+// Fixed: Uses f.path
+const fileList = getAllFiles(files).map(f => ({
+  name: f.path,          // Full path: "src/Constants.sol"
+  content: f.content || '',
+}));
 ```
 
----
+## File to Modify
 
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `supabase/functions/cloc-estimate/index.ts` | Fix empty string validation |
-| `src/components/wizard/ScopeSelectionStep.tsx` | Use `path` instead of `name` for selection tracking |
-
----
+| File | Change |
+|------|--------|
+| `src/pages/Index.tsx` | Line 167: Change `f.name` to `f.path` |
 
 ## Technical Details
 
-### ScopeSelectionStep.tsx Changes
+### Change in Index.tsx (line 166-169)
 
-**1. ScopeTreeItem - File rendering (line 46, 53, 64):**
+**Before:**
 ```typescript
-// Before
-const isSelected = selectedScope.includes(node.name);
-onClick={() => onToggleFile(node.name)}
-
-// After  
-const isSelected = selectedScope.includes(node.path);
-onClick={() => onToggleFile(node.path)}
+const fileList = getAllFiles(files).map(f => ({
+  name: f.name,
+  content: f.content || '',
+}));
 ```
 
-**2. ScopeTreeItem - Folder selection count (line 87):**
+**After:**
 ```typescript
-// Before
-const selectedCount = solidityFilesInFolder.filter(f => selectedScope.includes(f)).length;
-
-// After (receives paths now)
-const selectedCount = solidityFilesInFolder.filter(f => selectedScope.includes(f)).length;
-// (No change needed - just receives paths instead of names)
+const fileList = getAllFiles(files).map(f => ({
+  name: f.path,  // Use full path for n8n backend
+  content: f.content || '',
+}));
 ```
 
-**3. getSolidityFilesInFolder helper (line 227-233):**
-```typescript
-// Before: Returns file names
-return node.name.endsWith('.sol') ? [node.name] : [];
+## Why Previous Fix Didn't Work
 
-// After: Returns file paths
-return node.name.endsWith('.sol') ? [node.path] : [];
+My previous change in `AuditWizard.tsx` only affected:
+- `getScopeFilesForEstimation()` - used for the **cloc-estimate** edge function (estimation step)
+- `getContextFilesForEstimation()` - also for estimation
+
+The actual audit submission happens in `Index.tsx`, which calls `runAudit.mutateAsync()` with a separately constructed `fileList`. This is the code path that sends data to n8n.
+
+## Data Flow
+
+```text
+AuditWizard.tsx                    Index.tsx
+      │                                 │
+      │ onComplete() ───────────────────▶ handleStartScan()
+      │   - passes files: FileNode[]          │
+      │   - passes scope: string[]            ▼
+      │                              fileList = getAllFiles(files).map(f => ({
+      │                                name: f.name,  // ← FIX THIS
+      │                                content: ...
+      │                              }))
+      │                                       │
+      │                                       ▼
+      │                              runAudit.mutateAsync({
+      │                                files: fileList,  // sent to n8n
+      │                                scope: scope,
+      │                                ...
+      │                              })
 ```
 
-**4. allSolidityFileNames computed value (line 171-174):**
-```typescript
-// Before
-const allSolidityFileNames = useMemo(() => 
-  allSolidityFiles.map(f => f.name),
-  [allSolidityFiles]
-);
+## Verification
 
-// After (rename to allSolidityFilePaths for clarity)
-const allSolidityFilePaths = useMemo(() => 
-  allSolidityFiles.map(f => f.path),
-  [allSolidityFiles]
-);
-```
-
-**5. Flat list fallback (lines 313, 321, 332):**
-```typescript
-// Before
-const isSelected = selectedScope.includes(file.name);
-onClick={() => handleToggleFile(file.name)}
-
-// After
-const isSelected = selectedScope.includes(file.path);
-onClick={() => handleToggleFile(file.path)}
-```
-
-### cloc-estimate/index.ts Changes
-
-**Line 74-77:**
-```typescript
-// Before
-if (!file.content || typeof file.content !== 'string') {
-  return { valid: false, error: `Invalid file content at index ${i}` };
-}
-
-// After
-if (typeof file.content !== 'string') {
-  return { valid: false, error: `Invalid file content at index ${i} (expected string, got ${typeof file.content})` };
-}
-```
-
----
-
-## Impact on Backend
-
-The `run-audit` edge function receives the `scope` array containing file paths. Since we're changing from names to paths:
-
-- **Before:** `scope: ["Token.sol", "Vault.sol"]`
-- **After:** `scope: ["contracts/Token.sol", "contracts/Vault.sol"]`
-
-The backend (n8n) uses this to identify which files are in-scope. Using paths is actually more correct and prevents ambiguity when the same filename exists in multiple folders.
-
----
-
-## Testing Verification
-
-After implementation:
-
-1. **Empty file fix:** Import a repo with empty `.sol` files → estimation should complete without "Invalid file content" error
-
-2. **Scope selection fix:**
-   - Upload a project with duplicate file names in different folders (e.g., `src/Token.sol` and `test/Token.sol`)
-   - Select both files
-   - Deselect one file
-   - Verify only that specific file is deselected, not both
-
+After this fix, the n8n webhook should receive:
+- `files[0].name`: `"src/Constants.sol"` (not `"Constants.sol"`)
+- `files[1].name`: `"src/CoveredMetavault.sol"` (not `"CoveredMetavault.sol"`)
+- etc.
