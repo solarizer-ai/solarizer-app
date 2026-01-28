@@ -51,8 +51,8 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* Mobile Layout */}
-        <div className="sm:hidden space-y-4">
+        {/* Mobile Layout - Centered */}
+        <div className="sm:hidden flex flex-col items-center text-center space-y-4">
           {/* Logo + Brand */}
           <div className="flex items-center gap-3">
             <Link to="/" onClick={scrollToTop}>
@@ -62,7 +62,7 @@ const Footer = () => {
           </div>
 
           {/* Links Row */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center gap-4">
             {footerLinks.map((link) => (
               <Link
                 key={link.label}
