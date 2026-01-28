@@ -351,6 +351,13 @@ const ScopeSelectionStep = ({
         </ScrollArea>
       </div>
 
+      {/* Validation Message */}
+      {selectedScope.length === 0 && allSolidityFiles.length > 0 && (
+        <p className="text-sm text-destructive text-center">
+          Please select at least 1 contract to include in scope
+        </p>
+      )}
+
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} className="gap-2">
