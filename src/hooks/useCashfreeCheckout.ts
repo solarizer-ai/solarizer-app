@@ -47,7 +47,10 @@ export function useCashfreeCheckout() {
 
       // Create order via edge function
       const response = await supabase.functions.invoke<CreateOrderResponse>("cashfree-create-order", {
-        body: params,
+        body: {
+          ...params,
+          returnUrl: window.location.origin,
+        },
       });
 
       if (response.error || !response.data?.success) {

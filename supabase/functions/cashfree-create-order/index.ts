@@ -45,6 +45,7 @@ interface CreateOrderRequest {
   billingPeriod?: "monthly";
   creditsAmount?: number;
   billingData?: BillingData;
+  returnUrl?: string;
 }
 
 Deno.serve(async (req) => {
@@ -172,6 +173,35 @@ Deno.serve(async (req) => {
     // Determine customer phone (use billing data or fallback)
     const customerPhone = effectiveBillingData?.phone || "9999999999";
 
+    // Get origin with fallbacks for return_url
+    const getOriginUrl = (): string => {
+      // 1. Explicit returnUrl from request body (most reliable)
+      if (body.returnUrl) {
+        return body.returnUrl.replace(/\/$/, ''); // Remove trailing slash
+      }
+      
+      // 2. Origin header
+      const origin = req.headers.get("origin");
+      if (origin && origin !== "null") {
+        return origin;
+      }
+      
+      // 3. Referer header (extract origin)
+      const referer = req.headers.get("referer");
+      if (referer) {
+        try {
+          const url = new URL(referer);
+          return url.origin;
+        } catch {}
+      }
+      
+      // 4. Fallback to production URL
+      return "https://solarizer-app.lovable.app";
+    };
+
+    const originUrl = getOriginUrl();
+    console.log("Using origin URL:", originUrl);
+
     // Build order_tags for address metadata (Cashfree supports up to 10 key-value pairs)
     const orderTags: Record<string, string> = {};
     if (effectiveBillingData) {
@@ -222,7 +252,7 @@ Deno.serve(async (req) => {
         customer_phone: customerPhone,
       },
       order_meta: {
-        return_url: `${req.headers.get("origin")}/payment-success?order_id=${orderId}`,
+        return_url: `${originUrl}/payment-success?order_id=${orderId}`,
         notify_url: `${supabaseUrl}/functions/v1/cashfree-webhook`,
       },
       order_note: orderType === "subscription" 
