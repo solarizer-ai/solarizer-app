@@ -180,12 +180,13 @@ export const ScanProvider = ({ children }: ScanProviderProps) => {
     // Clean up channels
     cleanupChannels();
 
-    // Update audit status to cancelled
+    // Update audit status to cancelled and lock it
     if (currentAuditId) {
       try {
         await updateAudit.mutateAsync({
           id: currentAuditId,
           status: "cancelled" as AuditStatus,
+          is_locked: true,
         });
       } catch (e) {
         // Ignore errors when updating cancelled audit
