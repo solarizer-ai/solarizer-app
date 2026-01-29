@@ -1,77 +1,162 @@
 
 
-# Improve UX: Show "Analysis in Progress" Message with Credit Warning
+# Analysis in Progress Modal with Live Findings
 
-## Problem
-When an analysis is already running, the audit wizard is completely hidden, leaving users confused about why they can't start a new analysis.
+## Overview
+Replace the current inline "Analysis in Progress" message with a modal (popup) that appears when users click "New Analysis" while an analysis is already running. The modal will display the current analysis details, real-time findings as they stream in, and a cancel button with credit warning.
 
-## Solution
-Replace the hidden wizard with a friendly informational message that explains the situation and provides options to either wait or cancel the current scan. Include a clear warning that cancellation does not refund credits.
+---
+
+## User Experience Flow
+
+1. User has an analysis running
+2. User clicks "Run Analysis" button
+3. Instead of navigating to the wizard, a modal pops up showing:
+   - Current project name being analyzed
+   - Animated spinner with status
+   - Live list of findings discovered (streaming in real-time)
+   - Cancel button with credit warning
+4. User can close the modal to return to dashboard
+5. When analysis completes, modal can be dismissed
 
 ---
 
 ## Implementation
 
-### Modify `src/pages/Index.tsx`
+### 1. Create New Modal Component
 
-Update the conditional rendering to show an informative message when a scan is in progress:
+**File:** `src/components/AnalysisInProgressModal.tsx`
 
-**Add new UI block:**
+A new modal component that displays:
+
 ```tsx
-{isScanning && !showResults && (
-  <div className="text-center py-16 border border-dashed border-border rounded-lg space-y-4">
-    <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin" />
-    <div>
-      <h3 className="text-lg font-medium text-foreground mb-2">Analysis in Progress</h3>
-      <p className="text-sm text-muted-foreground">
-        Please wait for the current analysis to complete before starting a new one.
-      </p>
-    </div>
-    <div className="pt-2">
-      <Button variant="outline" onClick={cancelScan} className="gap-2">
-        <X className="w-4 h-4" />
-        Cancel Current Analysis
-      </Button>
-      <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
-        Note: Cancelling will not refund credits already used for this analysis.
-      </p>
-    </div>
-  </div>
-)}
-
-{!isScanning && !showResults && (
-  <AuditWizard ... />
-)}
+interface AnalysisInProgressModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectName: string;
+  findings: Finding[];
+  isScanning: boolean;
+  onCancel: () => void;
+}
 ```
 
-### Changes Required
+**UI Structure:**
+- Dialog with max-width of ~lg (larger to accommodate findings list)
+- Header: "Analysis in Progress" title
+- Project name display with spinner icon
+- Scrollable findings list (max-height with scroll)
+  - Each finding shows severity badge + title (compact display)
+  - "No findings discovered yet" placeholder when empty
+  - Counter showing "X findings discovered"
+- Footer:
+  - Cancel button with amber warning text
+  - Close button (just closes modal, doesn't cancel)
 
-1. **Update `useScan()` destructuring** - Add `cancelScan` to the destructured values
-2. **Add the "in progress" UI block** - Centered card with:
-   - Spinning loader icon
-   - "Analysis in Progress" heading
-   - Helpful subtext explaining the wait requirement
-   - Cancel button with X icon
-   - Amber-colored warning about non-refundable credits
+### 2. Modify Index.tsx
+
+**Changes:**
+
+1. Add state for the modal:
+   ```tsx
+   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+   ```
+
+2. Update `handleNewAudit` function:
+   ```tsx
+   const handleNewAudit = () => {
+     // If analysis is in progress, show modal instead of wizard
+     if (analysisInProgress) {
+       setShowAnalysisModal(true);
+       return;
+     }
+     // Existing logic...
+   };
+   ```
+
+3. Get additional context from `useScan()`:
+   ```tsx
+   const { 
+     startScan, 
+     isScanning, 
+     cancelScan,
+     projectName: scanningProjectName,
+     realtimeFindings 
+   } = useScan();
+   ```
+
+4. Add the modal component at the bottom with other modals
+
+5. Remove the inline "Analysis in Progress" block from the editor view (no longer needed since it's now a modal)
 
 ---
 
 ## Visual Design
 
-The message will appear as a centered card with:
-- Spinning loader icon (matches brand style)
-- "Analysis in Progress" heading
-- Helpful subtext explaining the situation
-- Cancel button to abort the current scan
-- Warning text in amber color below the button: "Note: Cancelling will not refund credits already used for this analysis."
+### Modal Layout
 
-This follows the same visual pattern as the "No assessments yet" empty state and aligns with the existing amber warning style used for low credit prompts.
+```text
++--------------------------------------------------+
+|  Analysis in Progress                         [X] |
++--------------------------------------------------+
+|                                                  |
+|  [Spinner]  Analysing "MyProject"                |
+|                                                  |
+|  ─────────────────────────────────────────────   |
+|                                                  |
+|  Findings Discovered (3)                         |
+|  +----------------------------------------------+|
+|  | [Critical] Reentrancy vulnerability in with..|
+|  | [High] Unchecked external call in transfer() |
+|  | [Medium] Missing access control on admin fn  |
+|  +----------------------------------------------+|
+|                                                  |
+|  (or "Scanning for vulnerabilities..." if empty) |
+|                                                  |
++--------------------------------------------------+
+|  [ Cancel Analysis ]                    [ Close ] |
+|  ⚠️ Cancelling will not refund credits           |
++--------------------------------------------------+
+```
+
+### Severity Badge Colors (reuse existing)
+- Critical: red/critical
+- High: destructive/red
+- Medium: warning/yellow  
+- Low: primary/blue
+- Info: slate/gray
 
 ---
 
-## File to Modify
+## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/pages/Index.tsx` | Add in-progress message block with credit warning, update useScan destructuring |
+| File | Action | Details |
+|------|--------|---------|
+| `src/components/AnalysisInProgressModal.tsx` | Create | New modal component with live findings display |
+| `src/pages/Index.tsx` | Modify | Add modal state, update handleNewAudit, add modal to render |
+
+---
+
+## Technical Details
+
+### Severity Badge Component (inline in modal)
+```tsx
+const severityColors = {
+  critical: "text-critical bg-critical/10",
+  high: "text-destructive bg-destructive/10",
+  medium: "text-warning bg-warning/10",
+  low: "text-primary bg-primary/10",
+  info: "text-slate-400 bg-slate-400/10",
+};
+```
+
+### Findings Display
+- Use ScrollArea for the findings list (max-height: 300px)
+- Each finding is a compact row with severity badge + truncated title
+- Real-time updates via `realtimeFindings` from ScanContext
+- Show count in section header
+
+### Cancel Handling
+- Cancel button calls `cancelScan` from context
+- Close the modal after cancel
+- Show toast notification (already handled by context)
 
