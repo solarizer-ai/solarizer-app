@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles } from "lucide-react";
+import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle } from "lucide-react";
 import { generateMarkdownReport, downloadMarkdown } from "@/lib/exportMarkdown";
 import { toast } from "sonner";
 import { useAudit, useFindings } from "@/hooks/useAudits";
@@ -160,6 +160,18 @@ const Report = () => {
     toast.success("Report exported successfully");
   };
 
+  // Show toast notification when viewing a failed audit
+  const [hasShownFailedToast, setHasShownFailedToast] = useState(false);
+  useEffect(() => {
+    if (currentAudit?.status === 'failed' && !hasShownFailedToast) {
+      toast.error("Analysis Failed", {
+        description: "This analysis encountered an error. Your credits have been automatically refunded.",
+        duration: 8000,
+      });
+      setHasShownFailedToast(true);
+    }
+  }, [currentAudit?.status, currentAudit?.id, hasShownFailedToast]);
+
   const handleShareClick = () => {
     if (!canShareReports) {
       toast.info("Sharing reports requires a Business plan");
@@ -269,6 +281,19 @@ const Report = () => {
             </div>
           ) : currentAudit ? (
             <>
+              {/* Failed Audit Banner */}
+              {currentAudit.status === 'failed' && (
+                <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+                  <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-destructive">Analysis Failed</p>
+                    <p className="text-xs text-muted-foreground">
+                      This analysis encountered an error. Your credits have been automatically refunded.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Security Score Card with Vulnerability Matrix */}
               <SecurityScoreCard
                 grade={currentAudit.grade || null}

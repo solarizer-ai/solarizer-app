@@ -17,7 +17,7 @@ interface ScanState {
   currentAuditId: string | null;
   projectName: string;
   realtimeFindings: Finding[];
-  realtimeAuditStatus: 'pending' | 'analyzing' | 'secured' | 'issues' | null;
+  realtimeAuditStatus: 'pending' | 'analyzing' | 'secured' | 'issues' | 'failed' | null;
 }
 
 interface ScanContextValue extends ScanState {
@@ -46,7 +46,7 @@ export const ScanProvider = ({ children }: ScanProviderProps) => {
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
   const [realtimeFindings, setRealtimeFindings] = useState<Finding[]>([]);
-  const [realtimeAuditStatus, setRealtimeAuditStatus] = useState<'pending' | 'analyzing' | 'secured' | 'issues' | null>(null);
+  const [realtimeAuditStatus, setRealtimeAuditStatus] = useState<'pending' | 'analyzing' | 'secured' | 'issues' | 'failed' | null>(null);
   
   const abortControllerRef = useRef<AbortController | null>(null);
   const findingsChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -116,17 +116,25 @@ export const ScanProvider = ({ children }: ScanProviderProps) => {
         },
         (payload) => {
           console.log('Realtime audit update received:', payload.new);
-          const updatedAudit = payload.new as { status: 'pending' | 'analyzing' | 'secured' | 'issues' };
+          const updatedAudit = payload.new as { status: 'pending' | 'analyzing' | 'secured' | 'issues' | 'failed' };
           setRealtimeAuditStatus(updatedAudit.status);
           
           // Invalidate audit query to update score/grade in report view
           queryClient.invalidateQueries({ queryKey: ['audit', currentAuditId] });
           
-          // If audit is complete, clean up but keep widget visible
-          if (updatedAudit.status === 'secured' || updatedAudit.status === 'issues') {
+          // If audit is complete or failed, clean up but keep widget visible
+          if (updatedAudit.status === 'secured' || updatedAudit.status === 'issues' || updatedAudit.status === 'failed') {
             cleanupChannels();
             setIsScanning(false);
             abortControllerRef.current = null;
+            
+            // Show failure notification if analysis failed
+            if (updatedAudit.status === 'failed') {
+              toast.error("Analysis Failed", {
+                description: "Something went wrong. Your credits have been refunded.",
+                duration: 8000,
+              });
+            }
           }
         }
       )

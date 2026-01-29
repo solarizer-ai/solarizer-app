@@ -15,6 +15,9 @@ verify_jwt = false
 [functions.complete-audit]
 verify_jwt = false
 
+[functions.fail-audit]
+verify_jwt = false
+
 [functions.check-stale-audits]
 verify_jwt = false
 
