@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 interface CreateSubscriptionParams {
   plan: "launch" | "pro" | "business";
@@ -65,22 +66,22 @@ export function useCashfreeSubscription() {
         return false;
       }
 
-      const response = await supabase.functions.invoke<SubscriptionResponse>(
+      const { data, error } = await invokeWithRefresh<SubscriptionResponse>(
         "cashfree-create-subscription",
         { body: params }
       );
 
-      if (response.error || !response.data?.success) {
-        console.error("Create subscription error:", response.error || response.data?.error);
+      if (error || !data?.success) {
+        console.error("Create subscription error:", error || data?.error);
         toast({
           title: "Subscription Failed",
-          description: response.data?.error || "Please try again later.",
+          description: data?.error || "Please try again later.",
           variant: "destructive",
         });
         return false;
       }
 
-      const { authLink } = response.data;
+      const { authLink } = data;
       
       if (authLink) {
         // Redirect to Cashfree for card authorization
@@ -122,22 +123,22 @@ export function useCashfreeSubscription() {
         return false;
       }
 
-      const response = await supabase.functions.invoke<SubscriptionResponse>(
+      const { data, error } = await invokeWithRefresh<SubscriptionResponse>(
         "cashfree-upgrade-subscription",
         { body: params }
       );
 
-      if (response.error || !response.data?.success) {
-        console.error("Upgrade error:", response.error || response.data?.error);
+      if (error || !data?.success) {
+        console.error("Upgrade error:", error || data?.error);
         toast({
           title: "Upgrade Failed",
-          description: response.data?.error || "Please try again later.",
+          description: data?.error || "Please try again later.",
           variant: "destructive",
         });
         return false;
       }
 
-      const { authLink, flowType } = response.data;
+      const { authLink, flowType } = data;
       
       if (authLink) {
         // Redirect to Cashfree for payment
@@ -148,11 +149,11 @@ export function useCashfreeSubscription() {
       // If flowType is proration_order, use the regular checkout flow
       if (flowType === "proration_order") {
         console.log("=== CASHFREE CHECKOUT DEBUG ===");
-        console.log("Payment Session ID:", response.data.paymentSessionId);
-        console.log("Full response:", response.data);
+        console.log("Payment Session ID:", data.paymentSessionId);
+        console.log("Full response:", data);
         
-        if (!response.data.paymentSessionId) {
-          console.error("Payment session ID missing from response:", response.data);
+        if (!data.paymentSessionId) {
+          console.error("Payment session ID missing from response:", data);
           toast({
             title: "Upgrade Error",
             description: "Payment session not initialized. Please contact support.",
@@ -167,9 +168,9 @@ export function useCashfreeSubscription() {
         if (typeof window.Cashfree !== "undefined") {
           try {
             const cashfree = new window.Cashfree({ mode: cashfreeMode });
-            console.log("Calling Cashfree checkout with session ID:", response.data.paymentSessionId);
+            console.log("Calling Cashfree checkout with session ID:", data.paymentSessionId);
             await cashfree.checkout({
-              paymentSessionId: response.data.paymentSessionId as unknown as string,
+              paymentSessionId: data.paymentSessionId as unknown as string,
               redirectTarget: "_self",
             });
             return true;
@@ -273,15 +274,15 @@ export function useCashfreeSubscription() {
   const cancelSubscription = async (): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await supabase.functions.invoke<CancelResponse>(
+      const { data, error } = await invokeWithRefresh<CancelResponse>(
         "cashfree-cancel-subscription",
         { body: {} }
       );
 
-      if (response.error || !response.data?.success) {
+      if (error || !data?.success) {
         toast({
           title: "Cancellation Failed",
-          description: response.data?.error || "Please try again later.",
+          description: data?.error || "Please try again later.",
           variant: "destructive",
         });
         return false;
@@ -289,7 +290,7 @@ export function useCashfreeSubscription() {
 
       toast({
         title: "Subscription Cancelled",
-        description: `Your access will continue until ${new Date(response.data.accessUntil!).toLocaleDateString()}.`,
+        description: `Your access will continue until ${new Date(data.accessUntil!).toLocaleDateString()}.`,
       });
       
       queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });

@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 interface RunAuditParams {
   audit_id: string;
@@ -43,15 +43,15 @@ interface AuditResult {
 export const useRunAudit = () => {
   return useMutation({
     mutationFn: async (params: RunAuditParams): Promise<AuditStartedResult> => {
-      const response = await supabase.functions.invoke('run-audit', {
+      const { data, error } = await invokeWithRefresh<AuditStartedResult>('run-audit', {
         body: params,
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to start audit');
+      if (error) {
+        throw error;
       }
 
-      return response.data as AuditStartedResult;
+      return data as AuditStartedResult;
     },
   });
 };
