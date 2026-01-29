@@ -130,38 +130,38 @@ export function BillingInfoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[90vh] overflow-hidden p-0">
+        <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
             {hasExistingProfile ? "Confirm Billing Details" : "Enter Billing Details"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             {hasExistingProfile 
-              ? "Please confirm or update your billing information before proceeding."
-              : "Please provide your billing information to continue with the payment."
+              ? "Confirm or update your billing information."
+              : "Provide your billing information to continue."
             }
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-180px)] pr-4">
+        <ScrollArea className="max-h-[calc(90vh-140px)] px-4 sm:px-6">
           {profileLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pb-4">
               {/* Account Information (read-only) */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium text-muted-foreground">Account Information</h4>
-                <div className="grid gap-2 p-3 rounded-lg bg-muted/50">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Name</span>
-                    <span className="text-sm font-medium">{user?.user_metadata?.display_name || user?.email?.split('@')[0] || "—"}</span>
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Account</h4>
+                <div className="grid gap-1.5 p-3 rounded-lg bg-muted/50">
+                  <div className="flex justify-between items-center gap-2 min-w-0">
+                    <span className="text-xs text-muted-foreground shrink-0">Name</span>
+                    <span className="text-xs font-medium truncate">{user?.user_metadata?.display_name || user?.email?.split('@')[0] || "—"}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Email</span>
-                    <span className="text-sm font-medium">{user?.email || "—"}</span>
+                  <div className="flex justify-between items-center gap-2 min-w-0">
+                    <span className="text-xs text-muted-foreground shrink-0">Email</span>
+                    <span className="text-xs font-medium truncate">{user?.email || "—"}</span>
                   </div>
                 </div>
               </div>
@@ -169,15 +169,15 @@ export function BillingInfoModal({
               <Separator />
 
               {/* Contact */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium text-muted-foreground">Contact</h4>
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Contact</h4>
                 <div>
-                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Label htmlFor="phone" className="text-sm">Phone *</Label>
                   <Input
                     id="phone"
                     placeholder="+1 555-123-4567"
                     {...register("phone")}
-                    className={errors.phone ? "border-destructive" : ""}
+                    className={`w-full ${errors.phone ? "border-destructive" : ""}`}
                   />
                   {errors.phone && (
                     <p className="text-xs text-destructive mt-1">{errors.phone.message}</p>
@@ -188,76 +188,77 @@ export function BillingInfoModal({
               <Separator />
 
               {/* Primary Address */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium text-muted-foreground">Address</h4>
-                <div className="grid gap-3">
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Address</h4>
+                <div className="grid gap-2">
                   <div>
-                    <Label htmlFor="address_line1">Address Line 1 *</Label>
+                    <Label htmlFor="address_line1" className="text-sm">Address Line 1 *</Label>
                     <Input
                       id="address_line1"
                       placeholder="123 Main Street"
                       {...register("address_line1")}
-                      className={errors.address_line1 ? "border-destructive" : ""}
+                      className={`w-full ${errors.address_line1 ? "border-destructive" : ""}`}
                     />
                     {errors.address_line1 && (
                       <p className="text-xs text-destructive mt-1">{errors.address_line1.message}</p>
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="address_line2">Address Line 2</Label>
+                    <Label htmlFor="address_line2" className="text-sm">Address Line 2</Label>
                     <Input
                       id="address_line2"
                       placeholder="Suite 100 (optional)"
                       {...register("address_line2")}
+                      className="w-full"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="city">City *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="min-w-0">
+                      <Label htmlFor="city" className="text-sm">City *</Label>
                       <Input
                         id="city"
                         placeholder="New York"
                         {...register("city")}
-                        className={errors.city ? "border-destructive" : ""}
+                        className={`w-full ${errors.city ? "border-destructive" : ""}`}
                       />
                       {errors.city && (
                         <p className="text-xs text-destructive mt-1">{errors.city.message}</p>
                       )}
                     </div>
-                    <div>
-                      <Label htmlFor="state">State *</Label>
+                    <div className="min-w-0">
+                      <Label htmlFor="state" className="text-sm">State *</Label>
                       <Input
                         id="state"
                         placeholder="NY"
                         {...register("state")}
-                        className={errors.state ? "border-destructive" : ""}
+                        className={`w-full ${errors.state ? "border-destructive" : ""}`}
                       />
                       {errors.state && (
                         <p className="text-xs text-destructive mt-1">{errors.state.message}</p>
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="postal_code">Postal Code *</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="min-w-0">
+                      <Label htmlFor="postal_code" className="text-sm">Postal Code *</Label>
                       <Input
                         id="postal_code"
                         placeholder="10001"
                         {...register("postal_code")}
-                        className={errors.postal_code ? "border-destructive" : ""}
+                        className={`w-full ${errors.postal_code ? "border-destructive" : ""}`}
                       />
                       {errors.postal_code && (
                         <p className="text-xs text-destructive mt-1">{errors.postal_code.message}</p>
                       )}
                     </div>
-                    <div>
-                      <Label htmlFor="country">Country *</Label>
+                    <div className="min-w-0">
+                      <Label htmlFor="country" className="text-sm">Country *</Label>
                       <Input
                         id="country"
                         placeholder="US"
                         maxLength={2}
                         {...register("country")}
-                        className={errors.country ? "border-destructive" : ""}
+                        className={`w-full ${errors.country ? "border-destructive" : ""}`}
                       />
                       {errors.country && (
                         <p className="text-xs text-destructive mt-1">{errors.country.message}</p>
@@ -279,70 +280,75 @@ export function BillingInfoModal({
                     setValue("use_different_billing_address", !!checked);
                   }}
                 />
-                <Label htmlFor="use_different_billing_address" className="cursor-pointer">
+                <Label htmlFor="use_different_billing_address" className="cursor-pointer text-sm">
                   Use different billing address
                 </Label>
               </div>
 
               {/* Billing Address (conditional) */}
               {showBillingAddress && (
-                <div className="space-y-3 pl-6 border-l-2 border-primary/20">
-                  <h4 className="text-sm font-medium text-muted-foreground">Billing Address</h4>
-                  <div className="grid gap-3">
+                <div className="space-y-2 pl-4 border-l-2 border-primary/20">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Billing Address</h4>
+                  <div className="grid gap-2">
                     <div>
-                      <Label htmlFor="billing_address_line1">Address Line 1 *</Label>
+                      <Label htmlFor="billing_address_line1" className="text-sm">Address Line 1 *</Label>
                       <Input
                         id="billing_address_line1"
                         placeholder="456 Corporate Blvd"
                         {...register("billing_address_line1")}
-                        className={errors.billing_address_line1 ? "border-destructive" : ""}
+                        className={`w-full ${errors.billing_address_line1 ? "border-destructive" : ""}`}
                       />
                       {errors.billing_address_line1 && (
                         <p className="text-xs text-destructive mt-1">{errors.billing_address_line1.message}</p>
                       )}
                     </div>
                     <div>
-                      <Label htmlFor="billing_address_line2">Address Line 2</Label>
+                      <Label htmlFor="billing_address_line2" className="text-sm">Address Line 2</Label>
                       <Input
                         id="billing_address_line2"
                         placeholder="Floor 10 (optional)"
                         {...register("billing_address_line2")}
+                        className="w-full"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label htmlFor="billing_city">City *</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="min-w-0">
+                        <Label htmlFor="billing_city" className="text-sm">City *</Label>
                         <Input
                           id="billing_city"
                           placeholder="Chicago"
                           {...register("billing_city")}
+                          className="w-full"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="billing_state">State *</Label>
+                      <div className="min-w-0">
+                        <Label htmlFor="billing_state" className="text-sm">State *</Label>
                         <Input
                           id="billing_state"
                           placeholder="IL"
                           {...register("billing_state")}
+                          className="w-full"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label htmlFor="billing_postal_code">Postal Code *</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="min-w-0">
+                        <Label htmlFor="billing_postal_code" className="text-sm">Postal Code *</Label>
                         <Input
                           id="billing_postal_code"
                           placeholder="60601"
                           {...register("billing_postal_code")}
+                          className="w-full"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="billing_country">Country *</Label>
+                      <div className="min-w-0">
+                        <Label htmlFor="billing_country" className="text-sm">Country *</Label>
                         <Input
                           id="billing_country"
                           placeholder="US"
                           maxLength={2}
                           {...register("billing_country")}
+                          className="w-full"
                         />
                       </div>
                     </div>
@@ -353,60 +359,64 @@ export function BillingInfoModal({
               <Separator />
 
               {/* Business Details (Optional) */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="text-sm font-medium text-muted-foreground">Business Details (Optional)</h4>
+                  <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Business (Optional)</h4>
                 </div>
-                <div className="grid gap-3">
+                <div className="grid gap-2">
                   <div>
-                    <Label htmlFor="company_name">Company Name</Label>
+                    <Label htmlFor="company_name" className="text-sm">Company Name</Label>
                     <Input
                       id="company_name"
                       placeholder="Acme Corporation"
                       {...register("company_name")}
+                      className="w-full"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="tax_id">Tax ID (GST/VAT)</Label>
+                    <Label htmlFor="tax_id" className="text-sm">Tax ID (GST/VAT)</Label>
                     <Input
                       id="tax_id"
                       placeholder="12-3456789"
                       {...register("tax_id")}
+                      className="w-full"
                     />
                   </div>
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => onOpenChange(false)}
-                  disabled={isFormLoading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1"
-                  disabled={isFormLoading}
-                >
-                  {isFormLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Confirm & Pay"
-                  )}
-                </Button>
-              </div>
             </form>
           )}
         </ScrollArea>
+
+        {/* Actions - Fixed at bottom */}
+        <div className="flex gap-3 p-4 sm:p-6 pt-0 border-t border-border mt-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={() => onOpenChange(false)}
+            disabled={isFormLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="billing-form"
+            className="flex-1"
+            disabled={isFormLoading}
+            onClick={handleSubmit(onSubmit)}
+          >
+            {isFormLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Confirm & Pay"
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
