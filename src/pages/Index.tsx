@@ -88,7 +88,7 @@ const Index = () => {
   const [pendingFiles, setPendingFiles] = useState<{ name: string; content: string }[]>([]);
   
   // Global scan context
-  const { startScan, isScanning, cancelScan, projectName: scanningProjectName, realtimeFindings } = useScan();
+  const { startScan, isScanning, cancelScan, currentAuditId: scanningAuditId } = useScan();
   
   // Modal state for in-progress analysis
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
@@ -522,9 +522,7 @@ const Index = () => {
       <AnalysisInProgressModal
         open={showAnalysisModal}
         onOpenChange={setShowAnalysisModal}
-        projectName={scanningProjectName}
-        findings={realtimeFindings}
-        isScanning={isScanning}
+        currentSessionAuditId={isScanning ? scanningAuditId : null}
         onCancel={cancelScan}
       />
 
