@@ -20,10 +20,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const signOut = useCallback(async () => {
+    // Clear local state immediately
+    setUser(null);
+    setSession(null);
+    
+    // Clear custom session tracking
     localStorage.removeItem('solarizer_last_activity');
     localStorage.removeItem('solarizer_remember_me');
+    
     // Sign out with global scope to invalidate on server too
     await supabase.auth.signOut({ scope: 'global' });
+    
+    // Force hard navigation to clear all state
+    window.location.href = '/';
   }, []);
 
   // Use inactivity logout hook

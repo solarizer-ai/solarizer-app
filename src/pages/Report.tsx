@@ -160,17 +160,23 @@ const Report = () => {
     toast.success("Report exported successfully");
   };
 
-  // Show toast notification when viewing a failed audit
+  // Show toast notification when viewing a failed or cancelled audit
   const [hasShownFailedToast, setHasShownFailedToast] = useState(false);
   useEffect(() => {
-    if (currentAudit?.status === 'failed' && !hasShownFailedToast) {
-      toast.error("Analysis Failed", {
-        description: "This analysis encountered an error. Your credits have been automatically refunded.",
+    if ((currentAudit?.status === 'failed' || currentAudit?.status === 'cancelled') && !hasShownFailedToast) {
+      const isCancelled = currentAudit.status === 'cancelled';
+      toast.error(isCancelled ? "Analysis Cancelled" : "Analysis Failed", {
+        description: isCancelled 
+          ? "This analysis was cancelled. Your credits have been automatically refunded."
+          : "This analysis encountered an error. Your credits have been automatically refunded.",
         duration: 8000,
       });
       setHasShownFailedToast(true);
     }
   }, [currentAudit?.status, currentAudit?.id, hasShownFailedToast]);
+
+  // Helper to check if audit is failed or cancelled (for hiding buttons)
+  const isFailedOrCancelled = currentAudit?.status === 'failed' || currentAudit?.status === 'cancelled';
 
   const handleShareClick = () => {
     if (!canShareReports) {
@@ -228,7 +234,7 @@ const Report = () => {
                     <span className="sm:hidden">{shareCount}</span>
                   </Badge>
                 )}
-                {isOwner && canShareReports && (
+                {isOwner && canShareReports && !isFailedOrCancelled && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -239,7 +245,7 @@ const Report = () => {
                     <span className="hidden sm:inline">Share</span>
                   </Button>
                 )}
-                {currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
+                {currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && !isFailedOrCancelled && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -281,25 +287,32 @@ const Report = () => {
             </div>
           ) : currentAudit ? (
             <>
-              {currentAudit.status === 'failed' ? (
-                /* Failed audit: Show only failure message */
+              {(currentAudit.status === 'failed' || currentAudit.status === 'cancelled') ? (
+                /* Failed/Cancelled audit: Show only warning message */
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-6">
                     <XCircle className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-medium text-foreground mb-2">Analysis Failed</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    {currentAudit.status === 'cancelled' ? 'Analysis Cancelled' : 'Analysis Failed'}
+                  </h3>
                   <p className="text-sm text-muted-foreground max-w-md mb-4">
-                    This analysis encountered an error and could not be completed. 
-                    Your credits have been automatically refunded.
+                    {currentAudit.status === 'cancelled' 
+                      ? 'This analysis was cancelled by you. Your credits have been automatically refunded.'
+                      : 'This analysis encountered an error and could not be completed. Your credits have been automatically refunded.'
+                    }
                   </p>
                   <p className="text-xs text-muted-foreground mb-6">
-                    Please try again after some time. If the issue persists, contact support.
+                    {currentAudit.status === 'cancelled'
+                      ? "You can start a new analysis whenever you're ready."
+                      : 'Please try again after some time. If the issue persists, contact support.'
+                    }
                   </p>
                   <Button 
                     onClick={() => navigate("/dashboard?new=true")} 
                     className="gap-2"
                   >
-                    Try Again
+                    Start New Analysis
                   </Button>
                 </div>
               ) : (
