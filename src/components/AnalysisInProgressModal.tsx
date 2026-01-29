@@ -137,8 +137,8 @@ export const AnalysisInProgressModal = ({
               <Loader2 className="w-6 h-6 text-primary animate-spin" />
             </div>
           ) : activeAnalyses && activeAnalyses.length > 0 ? (
-            <ScrollArea className="max-h-[300px]">
-              <div className="space-y-3 pr-2">
+            <ScrollArea className="max-h-[350px] overflow-auto">
+              <div className="space-y-3 pr-4">
                 {activeAnalyses.map((analysis) => {
                   const isCurrentSession = analysis.id === currentSessionAuditId;
                   const enhancedCounts = getEnhancedCounts(analysis.id, analysis.findingCounts);
