@@ -281,138 +281,151 @@ const Report = () => {
             </div>
           ) : currentAudit ? (
             <>
-              {/* Failed Audit Banner */}
-              {currentAudit.status === 'failed' && (
-                <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
-                  <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-destructive">Analysis Failed</p>
-                    <p className="text-xs text-muted-foreground">
-                      This analysis encountered an error. Your credits have been automatically refunded.
-                    </p>
+              {currentAudit.status === 'failed' ? (
+                /* Failed audit: Show only failure message */
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-6">
+                    <XCircle className="w-8 h-8 text-muted-foreground" />
                   </div>
+                  <h3 className="text-lg font-medium text-foreground mb-2">Analysis Failed</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mb-4">
+                    This analysis encountered an error and could not be completed. 
+                    Your credits have been automatically refunded.
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-6">
+                    Please try again after some time. If the issue persists, contact support.
+                  </p>
+                  <Button 
+                    onClick={() => navigate("/dashboard?new=true")} 
+                    className="gap-2"
+                  >
+                    Try Again
+                  </Button>
                 </div>
-              )}
-
-              {/* Security Score Card with Vulnerability Matrix */}
-              <SecurityScoreCard
-                grade={currentAudit.grade || null}
-                score={currentAudit.security_score || 0}
-                projectName={currentAudit.project_name}
-                timestamp={formatTimestamp(currentAudit.created_at)}
-                auditId={currentAudit.id}
-                counts={getVulnerabilityCounts()}
-              />
-              
-              {/* Remediation Progress - Business only */}
-              {canCommentOnFindings && (
-                <RemediationProgressWidget auditId={currentAudit.id} />
-              )}
-
-              {/* Tabbed Interface: Scope, Coverage & Findings */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="scope" className="flex items-center gap-2">
-                    <FileCode className="w-4 h-4" />
-                    Scope
-                  </TabsTrigger>
-                  <TabsTrigger value="coverage" className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    Coverage
-                    {!canViewSecurityCoverage && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
-                  </TabsTrigger>
-                  <TabsTrigger value="findings" className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    Findings ({visibleFindings.length})
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="scope" className="mt-4">
-                  <ScopeTab
-                    coverageData={currentAudit?.coverage_data as CoverageData | null}
-                    findings={(findings ?? []) as Finding[]}
-                    contractCount={currentAudit?.contract_count || 0}
-                    nlocCount={currentAudit?.nloc_count || null}
-                    readOnly={!canEditCode}
-                    auditStatus={currentAudit?.status}
-                    systemHologram={currentAudit?.system_hologram as { scope?: string[]; all_files?: string[] } | null}
+              ) : (
+                /* Normal audit: Show all content */
+                <>
+                  {/* Security Score Card with Vulnerability Matrix */}
+                  <SecurityScoreCard
+                    grade={currentAudit.grade || null}
+                    score={currentAudit.security_score || 0}
+                    projectName={currentAudit.project_name}
+                    timestamp={formatTimestamp(currentAudit.created_at)}
+                    auditId={currentAudit.id}
+                    counts={getVulnerabilityCounts()}
                   />
-                </TabsContent>
-
-                <TabsContent value="coverage" className="mt-4">
-                  {canViewSecurityCoverage ? (
-                    <SecurityCoverageTab
-                      coverageData={currentAudit?.coverage_data as CoverageData | null}
-                      onViewIssue={handleViewIssue}
-                    />
-                  ) : (
-                    <FeatureLockedOverlay
-                      featureName="Security Coverage"
-                      requiredPlan="pro"
-                      description="See a complete ledger of all security tests run on your contracts."
-                      onUpgrade={() => setUpgradeModalOpen(true)}
-                    />
+                  
+                  {/* Remediation Progress - Business only */}
+                  {canCommentOnFindings && (
+                    <RemediationProgressWidget auditId={currentAudit.id} />
                   )}
-                </TabsContent>
 
-                <TabsContent value="findings" className="mt-4">
-                  <div className="space-y-4">
-                    {/* QA Findings Upgrade Banner */}
-                    {hiddenQAFindingsCount > 0 && (
-                      <div className="flex items-center justify-between gap-4 p-4 rounded-lg border bg-primary/5 border-primary/20">
-                        <div className="flex items-center gap-3">
-                          <Sparkles className="w-5 h-5 text-primary" />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {hiddenQAFindingsCount} additional QA finding{hiddenQAFindingsCount !== 1 ? 's' : ''} available
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Upgrade to Pro to view Low and Informational findings
-                            </p>
-                          </div>
-                        </div>
-                        <Button size="sm" onClick={() => setUpgradeModalOpen(true)}>
-                          Upgrade to Pro
-                        </Button>
-                      </div>
-                    )}
+                  {/* Tabbed Interface: Scope, Coverage & Findings */}
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="scope" className="flex items-center gap-2">
+                        <FileCode className="w-4 h-4" />
+                        Scope
+                      </TabsTrigger>
+                      <TabsTrigger value="coverage" className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Coverage
+                        {!canViewSecurityCoverage && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
+                      </TabsTrigger>
+                      <TabsTrigger value="findings" className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" />
+                        Findings ({visibleFindings.length})
+                      </TabsTrigger>
+                    </TabsList>
 
-                    {visibleFindings.length > 0 ? (
-                      <>
-                        <FindingsFilter
-                          findings={visibleFindings}
-                          onFilteredChange={handleFilteredChange}
-                          hiddenSeverities={!canViewQAFindings ? ['low', 'info'] : []}
+                    <TabsContent value="scope" className="mt-4">
+                      <ScopeTab
+                        coverageData={currentAudit?.coverage_data as CoverageData | null}
+                        findings={(findings ?? []) as Finding[]}
+                        contractCount={currentAudit?.contract_count || 0}
+                        nlocCount={currentAudit?.nloc_count || null}
+                        readOnly={!canEditCode}
+                        auditStatus={currentAudit?.status}
+                        systemHologram={currentAudit?.system_hologram as { scope?: string[]; all_files?: string[] } | null}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="coverage" className="mt-4">
+                      {canViewSecurityCoverage ? (
+                        <SecurityCoverageTab
+                          coverageData={currentAudit?.coverage_data as CoverageData | null}
+                          onViewIssue={handleViewIssue}
                         />
-                        <div className="space-y-3">
-                          {filteredFindings.map((finding) => (
-                            <FindingItem 
-                              key={finding.id} 
-                              finding={finding}
-                              isHighlighted={highlightedFindingId === finding.id}
-                              forceExpanded={highlightedFindingId === finding.id}
-                              canViewRemediation={canViewRemediation}
-                              canCommentOnFindings={canCommentOnFindings}
-                              currentUserId={user?.id}
-                              onUpgradeClick={() => setUpgradeModalOpen(true)}
-                              onRefReady={(el) => {
-                                if (el) {
-                                  findingRefs.current.set(finding.id, el);
-                                }
-                              }}
+                      ) : (
+                        <FeatureLockedOverlay
+                          featureName="Security Coverage"
+                          requiredPlan="pro"
+                          description="See a complete ledger of all security tests run on your contracts."
+                          onUpgrade={() => setUpgradeModalOpen(true)}
+                        />
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="findings" className="mt-4">
+                      <div className="space-y-4">
+                        {/* QA Findings Upgrade Banner */}
+                        {hiddenQAFindingsCount > 0 && (
+                          <div className="flex items-center justify-between gap-4 p-4 rounded-lg border bg-primary/5 border-primary/20">
+                            <div className="flex items-center gap-3">
+                              <Sparkles className="w-5 h-5 text-primary" />
+                              <div>
+                                <p className="text-sm font-medium text-foreground">
+                                  {hiddenQAFindingsCount} additional QA finding{hiddenQAFindingsCount !== 1 ? 's' : ''} available
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Upgrade to Pro to view Low and Informational findings
+                                </p>
+                              </div>
+                            </div>
+                            <Button size="sm" onClick={() => setUpgradeModalOpen(true)}>
+                              Upgrade to Pro
+                            </Button>
+                          </div>
+                        )}
+
+                        {visibleFindings.length > 0 ? (
+                          <>
+                            <FindingsFilter
+                              findings={visibleFindings}
+                              onFilteredChange={handleFilteredChange}
+                              hiddenSeverities={!canViewQAFindings ? ['low', 'info'] : []}
                             />
-                          ))}
-                          {filteredFindings.length === 0 && (
-                            <p className="text-muted-foreground text-center py-8">No findings match your filters.</p>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-muted-foreground text-center py-8">No findings for this audit.</p>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
+                            <div className="space-y-3">
+                              {filteredFindings.map((finding) => (
+                                <FindingItem 
+                                  key={finding.id} 
+                                  finding={finding}
+                                  isHighlighted={highlightedFindingId === finding.id}
+                                  forceExpanded={highlightedFindingId === finding.id}
+                                  canViewRemediation={canViewRemediation}
+                                  canCommentOnFindings={canCommentOnFindings}
+                                  currentUserId={user?.id}
+                                  onUpgradeClick={() => setUpgradeModalOpen(true)}
+                                  onRefReady={(el) => {
+                                    if (el) {
+                                      findingRefs.current.set(finding.id, el);
+                                    }
+                                  }}
+                                />
+                              ))}
+                              {filteredFindings.length === 0 && (
+                                <p className="text-muted-foreground text-center py-8">No findings match your filters.</p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-muted-foreground text-center py-8">No findings for this audit.</p>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </>
+              )}
             </>
           ) : (
             <div className="text-center py-20">

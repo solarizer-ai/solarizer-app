@@ -52,7 +52,7 @@ const statusConfig: Record<AuditStatus, { label: string; icon: React.ReactNode; 
   failed: {
     label: "Failed",
     icon: <AlertOctagon className="w-3 h-3" />,
-    className: "text-critical bg-critical/10 border-critical/20",
+    className: "text-muted-foreground bg-muted border-border",
   },
 };
 
