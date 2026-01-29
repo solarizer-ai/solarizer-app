@@ -1,121 +1,243 @@
 
-
-# Implement Severity-Based Grading Logic & Revert Docs
+# Enhanced Cashfree Checkout with Billing Information
 
 ## Overview
 
+Based on Cashfree API research, for standard Payment Gateway orders (not One Click Checkout/ecommerce), the checkout page primarily displays `customer_name` and collects payment details. Address information is primarily used for:
+- Invoice generation on our side
+- GST/tax compliance
+- Customer records
+
 This plan will:
-1. **Revert the Docs.tsx changes** back to the original percentage-based descriptions
-2. **Implement the actual grading logic** in the `complete-audit` edge function to calculate grades based on finding severities
+1. **Collect billing information** before checkout (phone required, address for invoicing)
+2. **Store billing profile locally** for future purchases and invoice generation
+3. **Send complete customer_details to Cashfree** including real phone number
+4. **Use order_tags** to pass billing/address metadata to Cashfree for record-keeping
 
 ---
 
-## Part 1: Revert Docs.tsx Security Grades Section
+## Cashfree API Support Confirmed
 
-**File: `src/pages/Docs.tsx` (lines 148-165)**
+**customer_details** (sent in request):
+- `customer_id` (required)
+- `customer_phone` (required) - **currently using dummy value**
+- `customer_email` (optional)
+- `customer_name` (optional) - **displayed on checkout page**
 
-Restore the original grade definitions with percentage ranges:
+**order_tags** (optional, for metadata):
+- Can store up to 10 key-value pairs
+- Good for passing address info for records/invoicing
 
-```typescript
-{[
-  { grade: 'A', range: '85-100%', desc: 'Excellent security posture' },
-  { grade: 'B', range: '70-84%', desc: 'Good with minor issues' },
-  { grade: 'C', range: '60-69%', desc: 'Moderate vulnerabilities' },
-  { grade: 'D', range: '50-59%', desc: 'Significant concerns' },
-  { grade: 'F', range: '0-49%', desc: 'Critical issues found' },
-].map((item) => (
-  <div key={item.grade} className="text-center p-4 rounded-lg bg-muted/50">
-    <div className={`text-2xl font-bold ${...}`}>
-      {item.grade}
-    </div>
-    <div className="text-xs text-muted-foreground mt-1">{item.range}</div>
-    <div className="text-xs mt-2">{item.desc}</div>
-  </div>
-))}
+---
+
+## Database Schema
+
+Create `billing_profiles` table:
+
+```sql
+CREATE TABLE billing_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE,
+  
+  -- Contact (required for Cashfree)
+  phone VARCHAR(20) NOT NULL,
+  
+  -- Primary Address (required for invoicing)
+  address_line1 TEXT NOT NULL,
+  address_line2 TEXT,
+  city VARCHAR(100) NOT NULL,
+  state VARCHAR(100) NOT NULL,
+  postal_code VARCHAR(20) NOT NULL,
+  country VARCHAR(2) DEFAULT 'US' NOT NULL,
+  
+  -- Separate Billing Address (optional)
+  use_different_billing_address BOOLEAN DEFAULT FALSE,
+  billing_address_line1 TEXT,
+  billing_address_line2 TEXT,
+  billing_city VARCHAR(100),
+  billing_state VARCHAR(100),
+  billing_postal_code VARCHAR(20),
+  billing_country VARCHAR(2) DEFAULT 'US',
+  
+  -- Business/Tax Info (optional)
+  tax_id VARCHAR(50),
+  company_name TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS policies
+ALTER TABLE billing_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own billing profile"
+  ON billing_profiles FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 ```
 
 ---
 
-## Part 2: Implement Grading Logic in complete-audit
+## UI Component: BillingInfoModal
 
-**File: `supabase/functions/complete-audit/index.ts`**
+**Location:** `src/components/BillingInfoModal.tsx`
 
-The `complete-audit` function currently receives the grade from n8n. We'll modify it to:
+**Behavior:**
+- Always shown before payment
+- Pre-fills existing data if profile exists
+- Shows "Confirm Details" header if data exists, "Enter Billing Details" if new
+- User must confirm or update before proceeding
 
-1. **Before updating the audit**, query all findings for this audit
-2. **Calculate the grade** based on the highest severity finding:
-   - If any `critical` finding → Grade **F**
-   - Else if any `high` finding → Grade **D**
-   - Else if any `medium` finding → Grade **C**
-   - Else if any `low` finding → Grade **B**
-   - Else (only `info` or no findings) → Grade **A**
-3. **Override the incoming grade** with the calculated one
+**Form Layout:**
 
-### New Helper Function
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Confirm Billing Details                    [X]             │
+├─────────────────────────────────────────────────────────────┤
+│  ACCOUNT INFORMATION (read-only)                            │
+│  Name:  John Doe                                            │
+│  Email: john@example.com                                    │
+├─────────────────────────────────────────────────────────────┤
+│  CONTACT                                                    │
+│  Phone Number*: [+1 555-123-4567          ]                 │
+├─────────────────────────────────────────────────────────────┤
+│  ADDRESS                                                    │
+│  Address Line 1*: [123 Main Street              ]           │
+│  Address Line 2:  [Suite 100                    ]           │
+│  City*:           [New York    ]  State*: [NY         ]     │
+│  Postal Code*:    [10001       ]  Country*: [US       ]     │
+├─────────────────────────────────────────────────────────────┤
+│  ☐ Use different billing address                            │
+│                                                             │
+│  (When checked - additional fields appear)                  │
+│  BILLING ADDRESS                                            │
+│  Address Line 1*: [456 Corporate Blvd           ]           │
+│  Address Line 2:  [Floor 10                     ]           │
+│  City*:           [Chicago     ]  State*: [IL         ]     │
+│  Postal Code*:    [60601       ]  Country*: [US       ]     │
+├─────────────────────────────────────────────────────────────┤
+│  BUSINESS DETAILS (Optional)                                │
+│  Company Name:    [Acme Corporation             ]           │
+│  Tax ID (GST):    [12-3456789                   ]           │
+├─────────────────────────────────────────────────────────────┤
+│  [Cancel]                          [Confirm & Pay]          │
+└─────────────────────────────────────────────────────────────┘
+```
 
+**Fields Summary:**
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| Name | Display only | From profile |
+| Email | Display only | From profile |
+| Phone | **Yes** | Required by Cashfree |
+| Address Line 1 | **Yes** | For invoicing |
+| Address Line 2 | No | |
+| City | **Yes** | For invoicing |
+| State | **Yes** | For invoicing |
+| Postal Code | **Yes** | For invoicing |
+| Country | **Yes** | Default: US |
+| Use Different Billing | No | Toggle |
+| Billing Address* | **Yes if toggle on** | Separate billing address |
+| Company Name | No | For business invoices |
+| Tax ID | No | GST/VAT for invoices |
+
+---
+
+## Implementation Files
+
+### 1. Database Migration
+Create `billing_profiles` table with RLS
+
+### 2. New Hook: `src/hooks/useBillingProfile.ts`
 ```typescript
-type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
-type Grade = 'A' | 'B' | 'C' | 'D' | 'F';
-
-function calculateGradeFromFindings(findingsSeverities: Severity[]): Grade {
-  // Priority order: critical > high > medium > low > info
-  if (findingsSeverities.includes('critical')) return 'F';
-  if (findingsSeverities.includes('high')) return 'D';
-  if (findingsSeverities.includes('medium')) return 'C';
-  if (findingsSeverities.includes('low')) return 'B';
-  return 'A'; // Only info or no findings
+// Fetch, create, update billing profile
+// Uses React Query for caching
+export function useBillingProfile() {
+  // ... query and mutation logic
 }
 ```
 
-### Modified complete-audit Logic
+### 3. New Component: `src/components/BillingInfoModal.tsx`
+- Form with validation (react-hook-form + zod)
+- Pre-fills existing data
+- Saves to database on submit
+- Returns billing data on confirm
 
-After validation, before the update:
-
+### 4. Update: `src/hooks/useCashfreeCheckout.ts`
 ```typescript
-// Query all findings for this audit to calculate grade
-const { data: findings, error: findingsError } = await supabase
-  .from('findings')
-  .select('severity')
-  .eq('audit_id', audit_id);
-
-if (findingsError) {
-  console.error('complete-audit: Failed to fetch findings:', findingsError);
-  return new Response(
-    JSON.stringify({ error: 'Failed to calculate grade' }),
-    { status: 500, headers: corsHeaders }
-  );
+interface CreateOrderParams {
+  orderType: "subscription" | "power_up";
+  plan?: "launch" | "pro" | "business";
+  creditsAmount?: number;
+  billingData?: BillingData;  // NEW: Pass billing info
 }
+```
 
-// Calculate grade from findings (overrides incoming grade)
-const severities = findings.map(f => f.severity as Severity);
-const calculatedGrade = calculateGradeFromFindings(severities);
+### 5. Update: `src/components/PurchasePowerUpModal.tsx`
+- Integrate BillingInfoModal before checkout
+- Pass billing data to checkout
 
-console.log(`complete-audit: Calculated grade ${calculatedGrade} from ${findings.length} findings`);
+### 6. Update: `src/pages/Pricing.tsx`
+- Show BillingInfoModal before subscription purchase
+- Pass billing data to checkout
 
-// Use calculated grade instead of incoming grade
-const updateData: Record<string, unknown> = {
-  security_score,
-  grade: calculatedGrade,  // ← Use calculated, not incoming
-  status,
-  updated_at: new Date().toISOString(),
-};
+### 7. Update: `supabase/functions/cashfree-create-order/index.ts`
+```typescript
+// Accept billing data in request
+const { orderType, plan, creditsAmount, billingData } = body;
+
+// Send complete customer_details
+customer_details: {
+  customer_id: user.id,
+  customer_email: profile?.email || user.email,
+  customer_name: profile?.display_name || "Customer",
+  customer_phone: billingData?.phone || "9999999999",
+},
+// Store address in order_tags for reference
+order_tags: {
+  billing_city: billingData?.city,
+  billing_state: billingData?.state,
+  billing_country: billingData?.country,
+  company_name: billingData?.company_name || "",
+  tax_id: billingData?.tax_id || "",
+}
 ```
 
 ---
 
-## Summary of Changes
+## File Changes Summary
 
-| File | Change |
-|------|--------|
-| `src/pages/Docs.tsx` | Revert grading section to original percentage-based descriptions |
-| `supabase/functions/complete-audit/index.ts` | Add `calculateGradeFromFindings` function and use it to override incoming grade |
+| File | Action | Description |
+|------|--------|-------------|
+| Migration | Create | `billing_profiles` table with RLS |
+| `src/hooks/useBillingProfile.ts` | Create | Hook for billing profile CRUD |
+| `src/components/BillingInfoModal.tsx` | Create | Billing confirmation/edit modal |
+| `src/hooks/useCashfreeCheckout.ts` | Modify | Accept billing data parameter |
+| `src/components/PurchasePowerUpModal.tsx` | Modify | Show billing modal first |
+| `src/pages/Pricing.tsx` | Modify | Show billing modal before subscription |
+| `supabase/functions/cashfree-create-order/index.ts` | Modify | Send real phone, use order_tags |
 
 ---
 
-## How It Works
+## User Flow
 
-After this change:
-1. n8n can still send a grade (for backwards compatibility), but it will be **ignored**
-2. The `complete-audit` function will **always calculate** the grade from actual findings
-3. The grading is deterministic: highest severity finding determines the grade
+1. User clicks "Subscribe" or "Purchase Credits"
+2. **BillingInfoModal appears**
+   - If existing profile: "Confirm Your Details" with pre-filled data
+   - If new: "Enter Billing Details" with empty form
+3. User confirms/updates information
+4. Data saved to `billing_profiles`
+5. Checkout initiated with real customer data
+6. Cashfree shows customer's actual name
+7. Payment processed with proper billing records
 
+---
+
+## Benefits
+
+- **Customer name displayed** on Cashfree checkout (not just phone)
+- **Real phone number** sent for payment verification
+- **Billing data saved** for future purchases (one-click confirm)
+- **Invoice-ready** with address and tax ID
+- **Professional checkout** with complete information
