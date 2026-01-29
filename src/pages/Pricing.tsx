@@ -10,8 +10,10 @@ import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
+import { BillingInfoModal } from "@/components/BillingInfoModal";
 import { useToast } from "@/hooks/use-toast";
 import { useCashfreeSubscription } from "@/hooks/useCashfreeSubscription";
+import type { BillingData } from "@/types/billing";
 
 interface PricingFeature {
   text: string;
@@ -91,8 +93,10 @@ const Pricing = () => {
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
   const [downgradeModalOpen, setDowngradeModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [billingModalOpen, setBillingModalOpen] = useState(false);
   const [targetDowngradePlan, setTargetDowngradePlan] = useState<'launch' | 'pro' | 'business'>('launch');
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'business'>('pro');
+  const [pendingSubscribePlan, setPendingSubscribePlan] = useState<'launch' | 'pro' | 'business' | null>(null);
   
   const { user, loading: authLoading } = useAuth();
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
@@ -117,11 +121,22 @@ const Pricing = () => {
     return plan.monthlyPrice;
   };
 
-  const handleSubscribe = async (planId: 'launch' | 'pro' | 'business') => {
+  const handleSubscribeClick = (planId: 'launch' | 'pro' | 'business') => {
+    // Store the plan and show billing modal
+    setPendingSubscribePlan(planId);
+    setBillingModalOpen(true);
+  };
+
+  const handleBillingConfirmForSubscription = async (billingData: BillingData) => {
+    setBillingModalOpen(false);
+    if (!pendingSubscribePlan) return;
+    
+    // TODO: Pass billingData to subscription creation when edge function is updated
     await createSubscription({
-      plan: planId,
+      plan: pendingSubscribePlan,
       billingPeriod: 'monthly',
     });
+    setPendingSubscribePlan(null);
   };
 
   const handleUpgrade = async () => {
@@ -146,7 +161,7 @@ const Pricing = () => {
       return {
         text: "Subscribe",
         variant: (planId === 'pro' ? "default" : "outline") as "default" | "outline",
-        action: () => handleSubscribe(planId),
+        action: () => handleSubscribeClick(planId),
         disabled: subscriptionActionLoading,
       };
     }
@@ -417,6 +432,14 @@ const Pricing = () => {
         toPlan={targetUpgradePlan}
         prorationAmount={getProrationAmount()}
         onConfirm={handleUpgrade}
+        isLoading={subscriptionActionLoading}
+      />
+
+      {/* Billing Info Modal for new subscriptions */}
+      <BillingInfoModal
+        open={billingModalOpen}
+        onOpenChange={setBillingModalOpen}
+        onConfirm={handleBillingConfirmForSubscription}
         isLoading={subscriptionActionLoading}
       />
     </div>

@@ -109,6 +109,75 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_profiles: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          billing_address_line1: string | null
+          billing_address_line2: string | null
+          billing_city: string | null
+          billing_country: string | null
+          billing_postal_code: string | null
+          billing_state: string | null
+          city: string
+          company_name: string | null
+          country: string
+          created_at: string | null
+          id: string
+          phone: string
+          postal_code: string
+          state: string
+          tax_id: string | null
+          updated_at: string | null
+          use_different_billing_address: boolean | null
+          user_id: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          billing_state?: string | null
+          city: string
+          company_name?: string | null
+          country?: string
+          created_at?: string | null
+          id?: string
+          phone: string
+          postal_code: string
+          state: string
+          tax_id?: string | null
+          updated_at?: string | null
+          use_different_billing_address?: boolean | null
+          user_id: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          billing_state?: string | null
+          city?: string
+          company_name?: string | null
+          country?: string
+          created_at?: string | null
+          id?: string
+          phone?: string
+          postal_code?: string
+          state?: string
+          tax_id?: string | null
+          updated_at?: string | null
+          use_different_billing_address?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cf_subscription_events: {
         Row: {
           amount_inr: number | null
