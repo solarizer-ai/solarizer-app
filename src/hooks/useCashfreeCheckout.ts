@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import type { BillingData } from "@/types/billing";
 
 declare global {
   interface Window {
@@ -15,6 +16,7 @@ interface CreateOrderParams {
   plan?: "launch" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
+  billingData?: BillingData;
 }
 
 interface CreateOrderResponse {

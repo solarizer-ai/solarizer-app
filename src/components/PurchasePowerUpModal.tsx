@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useCashfreeCheckout } from "@/hooks/useCashfreeCheckout";
 import { toast } from "@/hooks/use-toast";
+import { BillingInfoModal } from "@/components/BillingInfoModal";
+import type { BillingData } from "@/types/billing";
 
 interface PurchasePowerUpModalProps {
   open: boolean;
@@ -32,6 +34,7 @@ export function PurchasePowerUpModal({
 }: PurchasePowerUpModalProps) {
   const [customCredits, setCustomCredits] = useState<number>(1000);
   const [inputValue, setInputValue] = useState<string>("1000");
+  const [showBillingModal, setShowBillingModal] = useState(false);
   const { data: subscription } = useSubscription();
   const { initiateCheckout, isLoading: checkoutLoading } = useCashfreeCheckout();
 
@@ -82,7 +85,7 @@ export function PurchasePowerUpModal({
     setInputValue(amount.toString());
   };
 
-  const handlePurchase = async () => {
+  const handlePurchaseClick = () => {
     if (customCredits < MIN_CREDITS) {
       toast({
         title: "Minimum Purchase",
@@ -91,14 +94,18 @@ export function PurchasePowerUpModal({
       });
       return;
     }
+    // Show billing modal instead of directly initiating checkout
+    setShowBillingModal(true);
+  };
 
-    const success = await initiateCheckout({
+  const handleBillingConfirm = async (billingData: BillingData) => {
+    setShowBillingModal(false);
+    
+    await initiateCheckout({
       orderType: "power_up",
       creditsAmount: customCredits,
+      billingData,
     });
-
-    // If checkout initiated successfully, modal will close when user redirects
-    // If it failed, toast is already shown by the hook
   };
 
   const getPlanLabel = () => {
@@ -108,113 +115,123 @@ export function PurchasePowerUpModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Purchase Power up Credits
-          </DialogTitle>
-          <DialogDescription>
-            {deficit > 0 
-              ? `You need ${deficit.toLocaleString()} more credits to run this scan.`
-              : "Add more credits to fuel your security scans."
-            }
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Purchase Power up Credits
+            </DialogTitle>
+            <DialogDescription>
+              {deficit > 0 
+                ? `You need ${deficit.toLocaleString()} more credits to run this scan.`
+                : "Add more credits to fuel your security scans."
+              }
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Discount Banner */}
-          {discountPercent > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium">
-              <Percent className="h-4 w-4" />
-              {getPlanLabel()} member: ${pricePerCreditDollars}/credit applied!
-            </div>
-          )}
-
-          {/* Custom Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Enter Credits Amount</label>
-            <Input
-              type="number"
-              min={MIN_CREDITS}
-              max={MAX_CREDITS}
-              value={inputValue}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onBlur={handleInputBlur}
-              className="text-lg font-semibold text-center"
-              placeholder="Enter amount"
-            />
-            <p className="text-xs text-muted-foreground">
-              Minimum: {MIN_CREDITS.toLocaleString()} credits
-            </p>
-          </div>
-
-          {/* Quick Select Buttons */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Quick Select</label>
-            <div className="grid grid-cols-4 gap-2">
-              {QUICK_OPTIONS.map((amount) => (
-                <Button
-                  key={amount}
-                  variant={customCredits === amount ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleQuickSelect(amount)}
-                  className="text-xs"
-                >
-                  {amount.toLocaleString()}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Pricing Summary */}
-          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Credits</span>
-              <span className="font-semibold">{customCredits.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Your Price</span>
-              <span className="font-semibold">${pricePerCreditDollars.toFixed(2)}/credit</span>
-            </div>
+          <div className="space-y-4 py-4">
+            {/* Discount Banner */}
             {discountPercent > 0 && (
-              <div className="flex items-center justify-between text-primary text-sm">
-                <span className="flex items-center gap-1">
-                  <Percent className="h-3.5 w-3.5" />
-                  {getPlanLabel()} Discount
-                </span>
-                <span className="font-medium">~{discountPercent}% off</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium">
+                <Percent className="h-4 w-4" />
+                {getPlanLabel()} member: ${pricePerCreditDollars}/credit applied!
               </div>
             )}
-            <div className="border-t border-border pt-3 flex items-center justify-between">
-              <span className="text-sm font-medium">Total</span>
-              <span className="text-lg font-bold text-primary">
-                ${totalPriceDollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+
+            {/* Custom Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Enter Credits Amount</label>
+              <Input
+                type="number"
+                min={MIN_CREDITS}
+                max={MAX_CREDITS}
+                value={inputValue}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onBlur={handleInputBlur}
+                className="text-lg font-semibold text-center"
+                placeholder="Enter amount"
+              />
+              <p className="text-xs text-muted-foreground">
+                Minimum: {MIN_CREDITS.toLocaleString()} credits
+              </p>
+            </div>
+
+            {/* Quick Select Buttons */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Quick Select</label>
+              <div className="grid grid-cols-4 gap-2">
+                {QUICK_OPTIONS.map((amount) => (
+                  <Button
+                    key={amount}
+                    variant={customCredits === amount ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleQuickSelect(amount)}
+                    className="text-xs"
+                  >
+                    {amount.toLocaleString()}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Pricing Summary */}
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Credits</span>
+                <span className="font-semibold">{customCredits.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Your Price</span>
+                <span className="font-semibold">${pricePerCreditDollars.toFixed(2)}/credit</span>
+              </div>
+              {discountPercent > 0 && (
+                <div className="flex items-center justify-between text-primary text-sm">
+                  <span className="flex items-center gap-1">
+                    <Percent className="h-3.5 w-3.5" />
+                    {getPlanLabel()} Discount
+                  </span>
+                  <span className="font-medium">~{discountPercent}% off</span>
+                </div>
+              )}
+              <div className="border-t border-border pt-3 flex items-center justify-between">
+                <span className="text-sm font-medium">Total</span>
+                <span className="text-lg font-bold text-primary">
+                  ${totalPriceDollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 space-y-2">
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={handlePurchaseClick}
+                disabled={checkoutLoading || customCredits < MIN_CREDITS}
+              >
+                {checkoutLoading ? "Processing..." : "Purchase Power up Credits"}
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* Action Buttons */}
-          <div className="pt-2 space-y-2">
-            <Button 
-              className="w-full" 
-              size="lg"
-              onClick={handlePurchase}
-              disabled={checkoutLoading || customCredits < MIN_CREDITS}
-            >
-              {checkoutLoading ? "Processing..." : "Purchase Power up Credits"}
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Billing Info Modal */}
+      <BillingInfoModal
+        open={showBillingModal}
+        onOpenChange={setShowBillingModal}
+        onConfirm={handleBillingConfirm}
+        isLoading={checkoutLoading}
+      />
+    </>
   );
 }
