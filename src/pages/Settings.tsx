@@ -283,10 +283,7 @@ const Settings = () => {
                     </Button>
                     <Button 
                       variant="outline" 
-                      onClick={async () => {
-                        await signOut();
-                        navigate('/login');
-                      }}
+                      onClick={() => signOut()}
                       className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <LogOut className="w-4 h-4" />
