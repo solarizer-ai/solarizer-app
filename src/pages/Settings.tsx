@@ -32,7 +32,7 @@ interface Profile {
 }
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -284,7 +284,7 @@ const Settings = () => {
                     <Button 
                       variant="outline" 
                       onClick={async () => {
-                        await supabase.auth.signOut();
+                        await signOut();
                         navigate('/login');
                       }}
                       className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"

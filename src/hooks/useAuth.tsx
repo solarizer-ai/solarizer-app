@@ -22,7 +22,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = useCallback(async () => {
     localStorage.removeItem('solarizer_last_activity');
     localStorage.removeItem('solarizer_remember_me');
-    await supabase.auth.signOut();
+    // Sign out with global scope to invalidate on server too
+    await supabase.auth.signOut({ scope: 'global' });
   }, []);
 
   // Use inactivity logout hook
