@@ -33,6 +33,7 @@ export interface Audit {
   security_score: number | null;
   coverage_data: CoverageData | null;
   system_hologram: Record<string, unknown> | null;
+  is_locked: boolean;
   created_at: string;
   updated_at: string;
   share_count?: number;

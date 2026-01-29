@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useActiveAnalyses, type FindingCounts } from "@/hooks/useActiveAnalyses";
 import { useScan } from "@/contexts/ScanContext";
+import { useUpdateAudit, type AuditStatus } from "@/hooks/useAudits";
+import { toast } from "sonner";
 
 interface AnalysisInProgressModalProps {
   open: boolean;
@@ -66,10 +68,28 @@ export const AnalysisInProgressModal = ({
 }: AnalysisInProgressModalProps) => {
   const { data: activeAnalyses, isLoading } = useActiveAnalyses();
   const { realtimeFindings } = useScan();
+  const updateAudit = useUpdateAudit();
 
-  const handleCancel = () => {
+  // Handle cancel for current session's audit (with cleanup)
+  const handleCancelCurrentSession = () => {
     onCancel();
     onOpenChange(false);
+  };
+
+  // Handle cancel for any other audit (just update DB)
+  const handleCancelOtherAudit = async (auditId: string) => {
+    try {
+      await updateAudit.mutateAsync({
+        id: auditId,
+        status: "cancelled" as AuditStatus,
+        is_locked: true,
+      });
+      toast.info("Analysis cancelled", {
+        description: "Note: Credits used for this analysis have already been consumed.",
+      });
+    } catch (e) {
+      toast.error("Failed to cancel analysis");
+    }
   };
 
   // Merge realtime findings with DB counts for current session's audit
@@ -139,24 +159,26 @@ export const AnalysisInProgressModal = ({
                       {/* Severity Counts */}
                       <SeverityBadges counts={enhancedCounts} />
 
-                      {/* Cancel Button - Only for current session */}
-                      {isCurrentSession && (
-                        <div className="pt-1 space-y-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCancel}
-                            className="gap-1.5 h-8"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                            Cancel Analysis
-                          </Button>
-                          <div className="flex items-center gap-1 text-xs text-warning">
-                            <AlertTriangle className="w-3 h-3" />
-                            <span>Cancelling will not refund credits</span>
-                          </div>
+                      {/* Cancel Button - Available for all active analyses */}
+                      <div className="pt-1 space-y-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => 
+                            isCurrentSession 
+                              ? handleCancelCurrentSession() 
+                              : handleCancelOtherAudit(analysis.id)
+                          }
+                          className="gap-1.5 h-8"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Cancel Analysis
+                        </Button>
+                        <div className="flex items-center gap-1 text-xs text-warning">
+                          <AlertTriangle className="w-3 h-3" />
+                          <span>Cancelling will not refund credits</span>
                         </div>
-                      )}
+                      </div>
                     </div>
                   );
                 })}
