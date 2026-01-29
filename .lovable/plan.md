@@ -1,53 +1,54 @@
 
-# Fix: Modal Showing After All Analyses Cancelled
+# Remove Cancel Analysis Feature
 
-## Problem
-When all analyses are cancelled, clicking "Run Analysis" still shows the "Analyses in Progress" modal (displaying "No analyses in progress") instead of navigating to the wizard. This blocks users from starting new analyses.
+## Overview
+Simplify the "Analysis in Progress" modal to only display a passive message that contracts are being analyzed. Remove all cancellation functionality from the modal and related components.
 
-## Root Cause
-There are two separate data sources checking for active analyses:
-1. `Index.tsx` uses `useAudits()` to compute `hasActiveAnalysis`
-2. `AnalysisInProgressModal` uses `useActiveAnalyses()` to display the list
+---
 
-When an audit is cancelled via the modal, only the `active-analyses` query gets invalidated. The main `audits` query remains stale, causing `hasActiveAnalysis` to incorrectly remain `true`.
+## Changes Summary
 
-## Solution
-Ensure proper query invalidation when cancelling audits, so both queries are synchronized:
+### 1. Simplify `AnalysisInProgressModal.tsx`
 
-### Changes
+**Remove:**
+- Cancel button and its handler (`handleCancelOtherAudit`)
+- Cancel warning message with `AlertTriangle` icon
+- `handleCancelCurrentSession` function
+- Dependencies: `useUpdateAudit`, `useQueryClient`, `useScan`, `toast`
+- Unused imports: `X`, `AlertTriangle`
+- Props: `currentSessionAuditId` and `onCancel` (no longer needed)
 
-**File: `src/components/AnalysisInProgressModal.tsx`**
-1. Import `useQueryClient` from `@tanstack/react-query`
-2. After successfully cancelling an audit, invalidate both queries:
-   - `['active-analyses']` - for the modal's data
-   - `['audits']` - for the `Index.tsx` gate check
+**Keep:**
+- List of active analyses with project names and severity badges
+- Loading state
+- Empty state when no analyses running
+- Close button
 
-```typescript
-const queryClient = useQueryClient();
-
-const handleCancelOtherAudit = async (auditId: string) => {
-  try {
-    await updateAudit.mutateAsync({
-      id: auditId,
-      status: "cancelled" as AuditStatus,
-      is_locked: true,
-    });
-    
-    // Invalidate both queries to ensure consistent state
-    queryClient.invalidateQueries({ queryKey: ['audits'] });
-    queryClient.invalidateQueries({ queryKey: ['active-analyses'] });
-    
-    toast.info("Analysis cancelled", {
-      description: "Note: Credits used for this analysis have already been consumed.",
-    });
-  } catch (e) {
-    toast.error("Failed to cancel analysis");
-  }
-};
+**New UI per project card:**
+```
++----------------------------------------------+
+| [Spinner] "Project Alpha"                    |
+| Critical: 2  High: 5  Medium: 8  Low: 3      |
++----------------------------------------------+
 ```
 
-**File: `src/contexts/ScanContext.tsx`**
-3. Similarly, ensure the `cancelScan` function invalidates the `audits` query after cancelling
+### 2. Update `Index.tsx`
+
+**Remove from modal props:**
+- `currentSessionAuditId` prop
+- `onCancel` prop
+
+**After:**
+```tsx
+<AnalysisInProgressModal
+  open={showAnalysisModal}
+  onOpenChange={setShowAnalysisModal}
+/>
+```
+
+### 3. Keep `cancelScan` in ScanContext (Optional cleanup)
+
+The `cancelScan` function in `ScanContext.tsx` can remain for now in case it's used elsewhere, but it will no longer be called from the modal.
 
 ---
 
@@ -55,13 +56,33 @@ const handleCancelOtherAudit = async (auditId: string) => {
 
 | File | Changes |
 |------|---------|
-| `src/components/AnalysisInProgressModal.tsx` | Add query invalidation after cancel |
-| `src/contexts/ScanContext.tsx` | Ensure `audits` query invalidation in `cancelScan` |
+| `src/components/AnalysisInProgressModal.tsx` | Remove cancel button, handlers, and related imports. Simplify props interface. |
+| `src/pages/Index.tsx` | Remove `currentSessionAuditId` and `onCancel` props from modal |
 
 ---
 
-## Expected Behavior After Fix
-1. User cancels all active analyses
-2. Both `audits` and `active-analyses` queries are invalidated
-3. `hasActiveAnalysis` returns `false` since no audits have `pending`/`analyzing` status
-4. Clicking "Run Analysis" correctly navigates to the wizard
+## Final Modal Structure
+
+```text
++--------------------------------------------------+
+|  Analyses in Progress                         [X] |
++--------------------------------------------------+
+|  Please wait for current analyses to complete.   |
++--------------------------------------------------+
+|                                                  |
+|  +----------------------------------------------+|
+|  | [Spinner] "Project Alpha"                    ||
+|  | Critical: 2  High: 5  Medium: 8  Low: 3      ||
+|  +----------------------------------------------+|
+|                                                  |
+|  +----------------------------------------------+|
+|  | [Spinner] "Project Beta"                     ||
+|  | Scanning for vulnerabilities...              ||
+|  +----------------------------------------------+|
+|                                                  |
++--------------------------------------------------+
+|                                        [ Close ] |
++--------------------------------------------------+
+```
+
+No cancel buttons, no credit warnings - just a clean display of what's currently being analyzed.
