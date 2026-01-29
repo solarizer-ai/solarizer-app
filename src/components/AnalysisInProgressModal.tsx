@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useActiveAnalyses, type FindingCounts } from "@/hooks/useActiveAnalyses";
 import { useScan } from "@/contexts/ScanContext";
 import { useUpdateAudit, type AuditStatus } from "@/hooks/useAudits";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface AnalysisInProgressModalProps {
@@ -69,6 +70,7 @@ export const AnalysisInProgressModal = ({
   const { data: activeAnalyses, isLoading } = useActiveAnalyses();
   const { realtimeFindings } = useScan();
   const updateAudit = useUpdateAudit();
+  const queryClient = useQueryClient();
 
   // Handle cancel for current session's audit (with cleanup)
   const handleCancelCurrentSession = () => {
@@ -84,6 +86,11 @@ export const AnalysisInProgressModal = ({
         status: "cancelled" as AuditStatus,
         is_locked: true,
       });
+      
+      // Invalidate both queries to ensure consistent state
+      queryClient.invalidateQueries({ queryKey: ['audits'] });
+      queryClient.invalidateQueries({ queryKey: ['active-analyses'] });
+      
       toast.info("Analysis cancelled", {
         description: "Note: Credits used for this analysis have already been consumed.",
       });
