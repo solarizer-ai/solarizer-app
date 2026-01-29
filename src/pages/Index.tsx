@@ -14,7 +14,7 @@ import { SecurityTrend } from "@/components/SecurityTrend";
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowRight, FileCode, Loader2, Trash2, ChevronRight } from "lucide-react";
+import { Plus, ArrowRight, FileCode, Loader2, Trash2, ChevronRight, X } from "lucide-react";
 import { useAudits, useAudit, useCreateAudit, useUpdateAudit, useDeleteAudit } from "@/hooks/useAudits";
 import type { AuditStatus } from "@/hooks/useAudits";
 import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
@@ -87,7 +87,7 @@ const Index = () => {
   const [pendingFiles, setPendingFiles] = useState<{ name: string; content: string }[]>([]);
   
   // Global scan context
-  const { startScan, isScanning } = useScan();
+  const { startScan, isScanning, cancelScan } = useScan();
   
   // Subscription & credits state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -416,6 +416,27 @@ const Index = () => {
                 Run a new smart contract security analysis
               </p>
             </div>
+
+            {isScanning && !showResults && (
+              <div className="text-center py-16 border border-dashed border-border rounded-lg space-y-4">
+                <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin" />
+                <div>
+                  <h3 className="text-lg font-medium text-foreground mb-2">Analysis in Progress</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Please wait for the current analysis to complete before starting a new one.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <Button variant="outline" onClick={cancelScan} className="gap-2">
+                    <X className="w-4 h-4" />
+                    Cancel Current Analysis
+                  </Button>
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                    Note: Cancelling will not refund credits already used for this analysis.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {!isScanning && !showResults && (
               <AuditWizard
