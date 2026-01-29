@@ -188,6 +188,9 @@ export const ScanProvider = ({ children }: ScanProviderProps) => {
           status: "cancelled" as AuditStatus,
           is_locked: true,
         });
+        
+        // Invalidate audits query to sync with Index.tsx hasActiveAnalysis check
+        queryClient.invalidateQueries({ queryKey: ['audits'] });
       } catch (e) {
         // Ignore errors when updating cancelled audit
       }
@@ -204,7 +207,7 @@ export const ScanProvider = ({ children }: ScanProviderProps) => {
     toast.info("Analysis cancelled", {
       description: "Note: Credits used for this analysis have already been consumed.",
     });
-  }, [currentAuditId, updateAudit, cleanupChannels]);
+  }, [currentAuditId, updateAudit, cleanupChannels, queryClient]);
 
   const closeWidget = useCallback(() => {
     setShowWidget(false);
