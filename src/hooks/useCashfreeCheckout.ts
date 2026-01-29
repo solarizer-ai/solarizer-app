@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { BillingData } from "@/types/billing";
+import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 declare global {
   interface Window {
@@ -45,25 +46,25 @@ export function useCashfreeCheckout() {
         return false;
       }
 
-      // Create order via edge function
-      const response = await supabase.functions.invoke<CreateOrderResponse>("cashfree-create-order", {
+      // Create order via edge function with auto-refresh
+      const { data, error } = await invokeWithRefresh<CreateOrderResponse>("cashfree-create-order", {
         body: {
           ...params,
           returnUrl: window.location.origin,
         },
       });
 
-      if (response.error || !response.data?.success) {
-        console.error("Create order error:", response.error || response.data?.error);
+      if (error || !data?.success) {
+        console.error("Create order error:", error || data?.error);
         toast({
           title: "Order Creation Failed",
-          description: response.data?.error || "Please try again later.",
+          description: data?.error || "Please try again later.",
           variant: "destructive",
         });
         return false;
       }
 
-      const { paymentSessionId } = response.data;
+      const { paymentSessionId } = data;
 
       // Check if Cashfree SDK is loaded
       if (typeof window.Cashfree === "undefined") {

@@ -6,8 +6,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Github, Link2, ExternalLink, Loader2, Check, AlertCircle } from "lucide-react";
 import { useGitHubConnection } from "@/hooks/useGitHubConnection";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRefresh } from "@/lib/sessionRefresh";
 import { format } from "date-fns";
+
+interface GitHubConfigResponse {
+  configured: boolean;
+  client_id?: string;
+}
 
 export function GitHubIntegration() {
   const { toast } = useToast();
@@ -29,10 +34,10 @@ export function GitHubIntegration() {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('github-config');
+        const { data, error } = await invokeWithRefresh<GitHubConfigResponse>('github-config', {});
         if (error) throw error;
         
-        if (data.configured && data.client_id) {
+        if (data?.configured && data.client_id) {
           setClientId(data.client_id);
         } else {
           setConfigError("GitHub OAuth is not configured yet.");

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 export interface GitHubConnection {
   id: string;
@@ -41,13 +42,13 @@ export function useGitHubConnection() {
     }) => {
       if (!user?.id) throw new Error('Not authenticated');
 
-      // Call edge function to securely exchange code for token and store encrypted
-      const { data, error } = await supabase.functions.invoke('github-connect', {
+      // Call edge function with auto-refresh wrapper
+      const { data, error } = await invokeWithRefresh<{ success: boolean; error?: string }>('github-connect', {
         body: { code, redirect_uri: redirectUri },
       });
 
-      if (error) throw new Error(error.message || 'Failed to connect GitHub');
-      if (!data.success) throw new Error(data.error || 'Failed to connect GitHub');
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Failed to connect GitHub');
 
       // Refetch connection to get updated data
       const { data: connection, error: fetchError } = await supabase

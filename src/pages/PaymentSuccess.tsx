@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 interface PaymentStatus {
   success: boolean;
@@ -51,33 +51,29 @@ export default function PaymentSuccess() {
 
     const verifyPayment = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("cashfree-verify-payment", {
-          body: null,
-          headers: {},
-        });
-
-        // Use query params approach instead
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cashfree-verify-payment?order_id=${orderId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            },
-          }
+        // Use invokeWithRefresh with order_id in body
+        const { data: result, error } = await invokeWithRefresh<PaymentStatus>(
+          "cashfree-verify-payment",
+          { body: { order_id: orderId } }
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to verify payment");
+        if (error) {
+          console.error("Verification error:", error);
+          setIsLoading(false);
+          return;
         }
 
-        const result = await response.json();
-        setPaymentStatus(result);
+        if (result) {
+          setPaymentStatus(result);
 
-        // If still pending and we haven't polled too many times, poll again
-        if (result.status === "pending" && pollCount < 10) {
-          setTimeout(() => {
-            setPollCount((c) => c + 1);
-          }, 2000);
+          // If still pending and we haven't polled too many times, poll again
+          if (result.status === "pending" && pollCount < 10) {
+            setTimeout(() => {
+              setPollCount((c) => c + 1);
+            }, 2000);
+          } else {
+            setIsLoading(false);
+          }
         } else {
           setIsLoading(false);
         }

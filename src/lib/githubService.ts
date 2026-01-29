@@ -1,5 +1,5 @@
 import { FileNode, generateId } from "@/types/files";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 export interface ParsedGitHubUrl {
   owner: string;
@@ -65,6 +65,13 @@ export function isValidGitHubUrl(url: string): boolean {
   return parseGitHubUrl(url) !== null;
 }
 
+interface FetchRepoResponse {
+  success: boolean;
+  files?: Array<{ name: string; path: string; content: string }>;
+  branches?: string[];
+  error?: string;
+}
+
 /**
  * Fetch repository contents via edge function
  */
@@ -73,19 +80,19 @@ export async function fetchRepoContents(
   branch?: string,
   path?: string
 ): Promise<FileNode[]> {
-  const { data, error } = await supabase.functions.invoke('github-fetch-repo', {
+  const { data, error } = await invokeWithRefresh<FetchRepoResponse>('github-fetch-repo', {
     body: { repo_url: repoUrl, branch, path },
   });
 
   if (error) {
-    throw new Error(error.message || 'Failed to fetch repository');
+    throw error;
   }
 
-  if (!data.success) {
-    throw new Error(data.error || 'Failed to fetch repository');
+  if (!data?.success) {
+    throw new Error(data?.error || 'Failed to fetch repository');
   }
 
-  return buildFileNodesFromFiles(data.files);
+  return buildFileNodesFromFiles(data.files || []);
 }
 
 /**
@@ -140,7 +147,7 @@ function buildFileNodesFromFiles(files: Array<{ name: string; path: string; cont
  * Fetch available branches for a repository
  */
 export async function fetchRepoBranches(owner: string, repo: string): Promise<string[]> {
-  const { data, error } = await supabase.functions.invoke('github-fetch-repo', {
+  const { data, error } = await invokeWithRefresh<FetchRepoResponse>('github-fetch-repo', {
     body: { 
       repo_url: `https://github.com/${owner}/${repo}`,
       list_branches: true 
@@ -152,5 +159,5 @@ export async function fetchRepoBranches(owner: string, repo: string): Promise<st
     return ['main', 'master']; // Fallback
   }
 
-  return data.branches || ['main', 'master'];
+  return data?.branches || ['main', 'master'];
 }

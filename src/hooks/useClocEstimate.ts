@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 export interface FileInput {
   name: string;
@@ -23,15 +23,15 @@ export interface ClocResult {
 export function useClocEstimate() {
   return useMutation({
     mutationFn: async (files: FileInput[]): Promise<ClocResult> => {
-      const response = await supabase.functions.invoke('cloc-estimate', {
+      const { data, error } = await invokeWithRefresh<ClocResult>('cloc-estimate', {
         body: { files },
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to estimate CLOC');
+      if (error) {
+        throw error;
       }
 
-      return response.data as ClocResult;
+      return data as ClocResult;
     },
   });
 }
