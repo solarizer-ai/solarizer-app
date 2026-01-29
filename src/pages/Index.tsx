@@ -141,6 +141,14 @@ const Index = () => {
   const runAudit = useRunAudit();
   const queryClient = useQueryClient();
 
+  // Check if any audit is actively analyzing (robust check from DB)
+  const hasActiveAnalysis = audits?.some(
+    audit => audit.status === 'analyzing' || audit.status === 'pending'
+  ) ?? false;
+  
+  // Combined check: client-side scanning state OR any DB audit in progress
+  const analysisInProgress = isScanning || hasActiveAnalysis;
+
   const handleStartScan = async (wizardData: { 
     projectName: string; 
     files: FileNode[]; 
@@ -417,7 +425,7 @@ const Index = () => {
               </p>
             </div>
 
-            {isScanning && !showResults && (
+            {analysisInProgress && !showResults && (
               <div className="text-center py-16 border border-dashed border-border rounded-lg space-y-4">
                 <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin" />
                 <div>
@@ -426,19 +434,21 @@ const Index = () => {
                     Please wait for the current analysis to complete before starting a new one.
                   </p>
                 </div>
-                <div className="pt-2">
-                  <Button variant="outline" onClick={cancelScan} className="gap-2">
-                    <X className="w-4 h-4" />
-                    Cancel Current Analysis
-                  </Button>
-                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
-                    Note: Cancelling will not refund credits already used for this analysis.
-                  </p>
-                </div>
+                {isScanning && (
+                  <div className="pt-2">
+                    <Button variant="outline" onClick={cancelScan} className="gap-2">
+                      <X className="w-4 h-4" />
+                      Cancel Current Analysis
+                    </Button>
+                    <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                      Note: Cancelling will not refund credits already used for this analysis.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
-            {!isScanning && !showResults && (
+            {!analysisInProgress && !showResults && (
               <AuditWizard
                 onComplete={handleStartScan}
                 onCancel={handleBackToDashboard}
