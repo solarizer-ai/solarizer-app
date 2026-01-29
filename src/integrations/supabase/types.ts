@@ -69,6 +69,7 @@ export type Database = {
           created_at: string
           grade: Database["public"]["Enums"]["security_grade"] | null
           id: string
+          is_locked: boolean
           nloc_count: number | null
           project_name: string
           security_score: number | null
@@ -84,6 +85,7 @@ export type Database = {
           created_at?: string
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
+          is_locked?: boolean
           nloc_count?: number | null
           project_name: string
           security_score?: number | null
@@ -99,6 +101,7 @@ export type Database = {
           created_at?: string
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
+          is_locked?: boolean
           nloc_count?: number | null
           project_name?: string
           security_score?: number | null

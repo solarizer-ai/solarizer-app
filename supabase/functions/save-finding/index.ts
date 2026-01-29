@@ -148,6 +148,25 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if audit is locked before saving
+    const { data: auditLockCheck, error: lockCheckError } = await supabase
+      .from('audits')
+      .select('is_locked')
+      .eq('id', finding.audit_id)
+      .single();
+
+    if (lockCheckError) {
+      console.error('save-finding: Failed to check audit lock status:', lockCheckError);
+    }
+
+    if (auditLockCheck?.is_locked) {
+      console.log(`save-finding: Audit ${finding.audit_id} is locked, rejecting finding save`);
+      return new Response(
+        JSON.stringify({ error: 'Audit is locked', already_complete: true }),
+        { status: 409, headers: corsHeaders }
+      );
+    }
+
     console.log(`save-finding: Checking for duplicate finding "${finding.title}" for audit ${finding.audit_id}`);
 
     // Check for duplicate finding - match by title, severity, description, and location

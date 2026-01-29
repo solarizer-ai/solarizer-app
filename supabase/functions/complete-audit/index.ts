@@ -136,6 +136,25 @@ Deno.serve(async (req) => {
 
     console.log(`complete-audit: Completing audit ${audit_id} with score ${security_score}, incoming grade ${grade}, status ${status}, coverage_tests: ${coverage_data?.total_tests ?? 0}`);
 
+    // Check if audit is already locked (idempotency)
+    const { data: auditCheck, error: checkError } = await supabase
+      .from('audits')
+      .select('is_locked')
+      .eq('id', audit_id)
+      .single();
+
+    if (checkError) {
+      console.error('complete-audit: Failed to check audit lock status:', checkError);
+    }
+
+    if (auditCheck?.is_locked) {
+      console.log(`complete-audit: Audit ${audit_id} is already locked, rejecting update`);
+      return new Response(
+        JSON.stringify({ error: 'Audit is locked', already_complete: true }),
+        { status: 409, headers: corsHeaders }
+      );
+    }
+
     // Query all findings for this audit to calculate grade
     const { data: findings, error: findingsError } = await supabase
       .from('findings')
@@ -161,6 +180,7 @@ Deno.serve(async (req) => {
       security_score,
       grade: calculatedGrade,  // Use calculated grade, not incoming
       status,
+      is_locked: true,  // Lock the audit on completion
       updated_at: new Date().toISOString(),
     };
 
