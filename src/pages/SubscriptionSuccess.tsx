@@ -49,8 +49,10 @@ const SubscriptionSuccess = () => {
       await refetchSubscription();
       await refetchCredits();
       
-      // Check if subscription is now active with cf_subscription_id
-      if (subscription?.status === "active" && subscription?.cf_subscription_id) {
+      // Check if subscription is now active with subscription ID (Razorpay or Cashfree)
+      const hasActiveSubscription = subscription?.status === "active" && 
+        (subscription?.cf_subscription_id || (subscription as unknown as { rz_subscription_id?: string })?.rz_subscription_id);
+      if (hasActiveSubscription) {
         setStatus("success");
         return;
       }
