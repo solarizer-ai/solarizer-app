@@ -53,7 +53,7 @@ export default function PaymentSuccess() {
       try {
         // Use invokeWithRefresh with order_id in body
         const { data: result, error } = await invokeWithRefresh<PaymentStatus>(
-          "cashfree-verify-payment",
+          "razorpay-verify-payment",
           { body: { order_id: orderId } }
         );
 

@@ -12,7 +12,7 @@ import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { BillingInfoModal } from "@/components/BillingInfoModal";
 import { useToast } from "@/hooks/use-toast";
-import { useCashfreeSubscription } from "@/hooks/useCashfreeSubscription";
+import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import type { BillingData } from "@/types/billing";
 
 interface PricingFeature {
@@ -110,7 +110,7 @@ const Pricing = () => {
     cancelPendingDowngrade,
     isLoading: subscriptionActionLoading,
     isSchedulingDowngrade 
-  } = useCashfreeSubscription();
+  } = useRazorpaySubscription();
 
   const planOrder = { launch: 1, starter: 1, pro: 2, business: 3 };
 

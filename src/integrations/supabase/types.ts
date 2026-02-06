@@ -430,6 +430,9 @@ export type Database = {
           payment_session_id: string | null
           plan: string | null
           processed_at: string | null
+          rz_order_id: string | null
+          rz_payment_id: string | null
+          rz_signature: string | null
           status: string | null
           updated_at: string | null
           user_id: string
@@ -448,6 +451,9 @@ export type Database = {
           payment_session_id?: string | null
           plan?: string | null
           processed_at?: string | null
+          rz_order_id?: string | null
+          rz_payment_id?: string | null
+          rz_signature?: string | null
           status?: string | null
           updated_at?: string | null
           user_id: string
@@ -466,6 +472,9 @@ export type Database = {
           payment_session_id?: string | null
           plan?: string | null
           processed_at?: string | null
+          rz_order_id?: string | null
+          rz_payment_id?: string | null
+          rz_signature?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string
@@ -526,6 +535,45 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_events: {
+        Row: {
+          amount_cents: number | null
+          created_at: string | null
+          event_id: string | null
+          event_type: string
+          id: string
+          payment_id: string | null
+          processed_at: string | null
+          raw_payload: Json | null
+          status: string | null
+          subscription_id: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          created_at?: string | null
+          event_id?: string | null
+          event_type: string
+          id?: string
+          payment_id?: string | null
+          processed_at?: string | null
+          raw_payload?: Json | null
+          status?: string | null
+          subscription_id: string
+        }
+        Update: {
+          amount_cents?: number | null
+          created_at?: string | null
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          payment_id?: string | null
+          processed_at?: string | null
+          raw_payload?: Json | null
+          status?: string | null
+          subscription_id?: string
+        }
+        Relationships: []
+      }
       subscription_history: {
         Row: {
           changed_at: string
@@ -568,6 +616,8 @@ export type Database = {
           pending_plan: Database["public"]["Enums"]["subscription_plan"] | null
           pending_plan_effective_date: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
+          rz_plan_id: string | null
+          rz_subscription_id: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string
           user_id: string
@@ -585,6 +635,8 @@ export type Database = {
           pending_plan?: Database["public"]["Enums"]["subscription_plan"] | null
           pending_plan_effective_date?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          rz_plan_id?: string | null
+          rz_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           user_id: string
@@ -602,6 +654,8 @@ export type Database = {
           pending_plan?: Database["public"]["Enums"]["subscription_plan"] | null
           pending_plan_effective_date?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          rz_plan_id?: string | null
+          rz_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           user_id?: string
