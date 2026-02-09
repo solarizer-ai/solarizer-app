@@ -166,12 +166,19 @@ Deno.serve(async (req) => {
       })
       .eq("order_id", orderId);
 
+    // Get order details to check type
+    const { data: orderInfo } = await adminSupabase
+      .from("payment_orders")
+      .select("order_type, plan, metadata")
+      .eq("order_id", orderId)
+      .single();
+
     // Process the payment success
     const { data: result, error: processError } = await adminSupabase.rpc(
       "process_payment_success",
       {
         p_order_id: orderId,
-        p_cf_payment_id: razorpay_payment_id, // Using existing column name for compatibility
+        p_cf_payment_id: razorpay_payment_id,
       }
     );
 
@@ -181,6 +188,32 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Failed to process payment" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // For upgrade orders, update the subscription plan
+    if (orderInfo?.order_type === "upgrade" && orderInfo?.plan) {
+      const metadata = orderInfo.metadata as Record<string, string> | null;
+      const fromPlan = metadata?.from_plan || "starter";
+
+      await adminSupabase
+        .from("subscriptions")
+        .update({
+          plan: orderInfo.plan,
+          pending_plan: null,
+          pending_plan_effective_date: null,
+          cancel_at_period_end: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+
+      // Log to subscription history
+      await adminSupabase
+        .from("subscription_history")
+        .insert({
+          user_id: user.id,
+          previous_plan: fromPlan,
+          new_plan: orderInfo.plan,
+        });
     }
 
     // Get updated credits

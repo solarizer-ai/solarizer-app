@@ -5,31 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
-interface RazorpayOptions {
-  key: string;
-  order_id: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description?: string;
-  handler: (response: RazorpayResponse) => void;
-  prefill?: { email?: string; contact?: string };
-  theme?: { color?: string };
-  modal?: { ondismiss?: () => void };
-}
-
-interface RazorpayResponse {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-}
-
-interface RazorpayInstance {
-  open: () => void;
-  on: (event: string, handler: () => void) => void;
-  close: () => void;
-}
-
 interface CreateSubscriptionParams {
   plan: "launch" | "pro" | "business";
   billingPeriod: "monthly";
@@ -44,14 +19,12 @@ interface SubscriptionResponse {
   subscriptionId?: string;
   shortUrl?: string;
   status?: string;
-  // For proration upgrades
   flowType?: string;
+  paymentUrl?: string;
   orderId?: string;
-  rzOrderId?: string;
   prorationAmount?: number;
   fromPlan?: string;
   toPlan?: string;
-  keyId?: string;
   error?: string;
 }
 
@@ -163,10 +136,8 @@ export function useRazorpaySubscription() {
         return false;
       }
 
-      const { flowType, rzOrderId, keyId, orderId, prorationAmount } = data;
-      
       // If direct upgrade (no payment needed)
-      if (flowType === "direct_upgrade") {
+      if (data.flowType === "direct_upgrade") {
         toast({
           title: "Upgrade Successful",
           description: "Your plan has been upgraded!",
@@ -175,77 +146,10 @@ export function useRazorpaySubscription() {
         return true;
       }
 
-      // If proration order required, open Razorpay checkout
-      if (flowType === "proration_order" && rzOrderId && keyId) {
-        if (typeof window.Razorpay === "undefined") {
-          toast({
-            title: "Payment Error",
-            description: "Payment system not loaded. Please refresh and try again.",
-            variant: "destructive",
-          });
-          return false;
-        }
-
-        return new Promise<boolean>((resolve) => {
-          const options: RazorpayOptions = {
-            key: keyId,
-            order_id: rzOrderId,
-            amount: prorationAmount || 0,
-            currency: "USD",
-            name: "Solarizer",
-            description: `Upgrade to ${data.toPlan?.charAt(0).toUpperCase()}${data.toPlan?.slice(1)} Plan`,
-            handler: async (response: RazorpayResponse) => {
-              try {
-                const { data: verifyResult } = await invokeWithRefresh<{ success: boolean }>(
-                  "razorpay-verify-payment",
-                  {
-                    body: {
-                      order_id: orderId,
-                      razorpay_order_id: response.razorpay_order_id,
-                      razorpay_payment_id: response.razorpay_payment_id,
-                      razorpay_signature: response.razorpay_signature,
-                    },
-                  }
-                );
-
-                if (verifyResult?.success) {
-                  toast({
-                    title: "Upgrade Successful",
-                    description: "Your plan has been upgraded!",
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
-                  resolve(true);
-                } else {
-                  toast({
-                    title: "Upgrade Failed",
-                    description: "Payment verification failed.",
-                    variant: "destructive",
-                  });
-                  resolve(false);
-                }
-              } catch (err) {
-                console.error("Upgrade verification error:", err);
-                resolve(false);
-              }
-              setIsLoading(false);
-            },
-            prefill: {
-              email: user?.email || session.user.email || "",
-            },
-            theme: {
-              color: "#3B82F6",
-            },
-            modal: {
-              ondismiss: () => {
-                setIsLoading(false);
-                resolve(false);
-              },
-            },
-          };
-
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-        });
+      // If proration order required, redirect to Payment Link
+      if (data.flowType === "proration_order" && data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+        return true;
       }
 
       toast({

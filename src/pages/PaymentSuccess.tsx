@@ -212,20 +212,21 @@ export default function PaymentSuccess() {
             {paymentStatus && isSuccess && (
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  {paymentStatus.orderType === "subscription" ? (
+                  {paymentStatus.orderType === "subscription" || paymentStatus.orderType === "upgrade" ? (
                     <CreditCard className="h-4 w-4" />
                   ) : (
                     <Zap className="h-4 w-4" />
                   )}
-                  {paymentStatus.orderType === "subscription" ? "Subscription" : "Power-up Credits"}
+                  {paymentStatus.orderType === "subscription" ? "Subscription" : 
+                   paymentStatus.orderType === "upgrade" ? "Plan Upgrade" : "Power-up Credits"}
                 </div>
 
-                {paymentStatus.orderType === "subscription" && (
+                {(paymentStatus.orderType === "subscription" || paymentStatus.orderType === "upgrade") && (
                   <>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Plan</span>
                       <span className="font-medium">
-                        {getPlanDisplayName(paymentStatus.plan)} ({paymentStatus.billingPeriod})
+                        {getPlanDisplayName(paymentStatus.plan)} ({paymentStatus.billingPeriod || "monthly"})
                       </span>
                     </div>
                   </>
