@@ -81,6 +81,28 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Use service role to check order status and process
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Check if already processed (idempotency)
+    const { data: existingOrder } = await adminSupabase
+      .from("payment_orders")
+      .select("status, rz_payment_id")
+      .eq("order_id", order_id)
+      .single();
+
+    if (existingOrder?.status === 'paid') {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          already_processed: true,
+          message: "Payment already verified",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Verify the signature
     const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
     if (!keySecret) {
@@ -104,10 +126,6 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Use service role to update payment and process credits
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Update order with Razorpay payment details
     await adminSupabase
