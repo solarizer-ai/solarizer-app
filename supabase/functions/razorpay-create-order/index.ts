@@ -13,14 +13,14 @@ interface CreateOrderRequest {
   creditsAmount?: number;
   billingData?: {
     phone: string;
-    addressLine1: string;
-    addressLine2?: string;
+    address_line1: string;
+    address_line2?: string;
     city: string;
     state: string;
-    postalCode: string;
+    postal_code: string;
     country: string;
-    companyName?: string;
-    taxId?: string;
+    company_name?: string;
+    tax_id?: string;
   };
   // For upgrades
   fromPlan?: string;
@@ -151,14 +151,14 @@ Deno.serve(async (req) => {
       await supabase.from("billing_profiles").upsert({
         user_id: user.id,
         phone: billingData.phone,
-        address_line1: billingData.addressLine1,
-        address_line2: billingData.addressLine2 || null,
+        address_line1: billingData.address_line1,
+        address_line2: billingData.address_line2 || null,
         city: billingData.city,
         state: billingData.state,
-        postal_code: billingData.postalCode,
+        postal_code: billingData.postal_code,
         country: billingData.country,
-        company_name: billingData.companyName || null,
-        tax_id: billingData.taxId || null,
+        company_name: billingData.company_name || null,
+        tax_id: billingData.tax_id || null,
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
     }

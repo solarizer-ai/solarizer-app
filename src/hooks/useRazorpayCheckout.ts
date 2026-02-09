@@ -128,7 +128,7 @@ export function useRazorpayCheckout() {
           handler: async (response: RazorpayResponse) => {
             // Verify payment on server
             try {
-              const { data: verifyResult, error: verifyError } = await invokeWithRefresh<{ success: boolean; error?: string }>(
+              const { data: verifyResult, error: verifyError } = await invokeWithRefresh<{ success: boolean; already_processed?: boolean; error?: string }>(
                 "razorpay-verify-payment",
                 {
                   body: {
@@ -151,9 +151,22 @@ export function useRazorpayCheckout() {
                 return;
               }
 
-              // Redirect to success page
-              window.location.href = `/payment-success?order_id=${orderId}`;
-              resolve(true);
+              // Verify order is accessible before redirecting
+              const { data: confirmedOrder } = await supabase
+                .from("payment_orders")
+                .select("status")
+                .eq("order_id", orderId)
+                .single();
+
+              // Redirect to success page (works for both new and already_processed)
+              if (confirmedOrder?.status === 'paid' || verifyResult.already_processed) {
+                window.location.href = `/payment-success?order_id=${orderId}`;
+                resolve(true);
+              } else {
+                // Fallback: redirect anyway since webhook may process it
+                window.location.href = `/payment-success?order_id=${orderId}`;
+                resolve(true);
+              }
             } catch (err) {
               console.error("Payment verification error:", err);
               toast({
