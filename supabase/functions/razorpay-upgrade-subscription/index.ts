@@ -7,15 +7,14 @@ const corsHeaders = {
 };
 
 interface UpgradeSubscriptionRequest {
-  toPlan: "pro" | "business";
+  toPlan: "starter" | "pro" | "business";
 }
 
 // Plan prices in cents (USD)
 const PLAN_PRICES: Record<string, number> = {
-  launch: 14900, // $149
+  starter: 14900, // $149 (Launch plan)
   pro: 19900, // $199
   business: 49900, // $499
-  starter: 0,
 };
 
 // Plan order for validation

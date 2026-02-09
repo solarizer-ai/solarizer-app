@@ -23,7 +23,7 @@ interface PricingFeature {
 }
 
 interface PricingPlan {
-  id: 'launch' | 'pro' | 'business';
+  id: 'starter' | 'pro' | 'business';
   name: string;
   label: string;
   monthlyPrice: number;
@@ -35,7 +35,7 @@ interface PricingPlan {
 
 const pricingPlans: PricingPlan[] = [
   {
-    id: 'launch',
+    id: 'starter',
     name: 'Launch',
     label: 'Starter',
     monthlyPrice: 149,
@@ -94,9 +94,9 @@ const Pricing = () => {
   const [downgradeModalOpen, setDowngradeModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [billingModalOpen, setBillingModalOpen] = useState(false);
-  const [targetDowngradePlan, setTargetDowngradePlan] = useState<'launch' | 'pro' | 'business'>('launch');
+  const [targetDowngradePlan, setTargetDowngradePlan] = useState<'starter' | 'pro' | 'business'>('starter');
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'business'>('pro');
-  const [pendingSubscribePlan, setPendingSubscribePlan] = useState<'launch' | 'pro' | 'business' | null>(null);
+  const [pendingSubscribePlan, setPendingSubscribePlan] = useState<'starter' | 'pro' | 'business' | null>(null);
   
   const { user, loading: authLoading } = useAuth();
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
@@ -112,7 +112,7 @@ const Pricing = () => {
     isSchedulingDowngrade 
   } = useRazorpaySubscription();
 
-  const planOrder = { launch: 1, starter: 1, pro: 2, business: 3 };
+  const planOrder = { starter: 1, pro: 2, business: 3 };
 
   // Price lookup
   const getPlanPrice = (planId: string) => {
@@ -121,7 +121,7 @@ const Pricing = () => {
     return plan.monthlyPrice;
   };
 
-  const handleSubscribeClick = (planId: 'launch' | 'pro' | 'business') => {
+  const handleSubscribeClick = (planId: 'starter' | 'pro' | 'business') => {
     // Store the plan and show billing modal
     setPendingSubscribePlan(planId);
     setBillingModalOpen(true);
@@ -144,7 +144,7 @@ const Pricing = () => {
     await upgradeSubscription({ toPlan: targetUpgradePlan });
   };
 
-  const getButtonConfig = (planId: 'launch' | 'pro' | 'business') => {
+  const getButtonConfig = (planId: 'starter' | 'pro' | 'business') => {
     // Not logged in
     if (!user) {
       return {
@@ -166,9 +166,7 @@ const Pricing = () => {
       };
     }
 
-    // Normalize plan names (starter = launch)
-    const normalizedCurrent = currentPlan === 'starter' ? 'launch' : currentPlan;
-    const currentOrder = planOrder[normalizedCurrent] || 0;
+    const currentOrder = planOrder[currentPlan] || 0;
     const targetOrder = planOrder[planId] || 0;
 
     // Check for pending downgrade to this plan
@@ -184,7 +182,7 @@ const Pricing = () => {
     }
 
     // Same plan
-    if (normalizedCurrent === planId || (currentPlan === 'starter' && planId === 'launch')) {
+    if (currentPlan === planId) {
       // Check if cancellation is pending
       if (subscription?.cancel_at_period_end) {
         return {
@@ -231,28 +229,24 @@ const Pricing = () => {
 
   const handleConfirmDowngrade = () => {
     setDowngradeModalOpen(false);
-    const dbPlan = targetDowngradePlan === "launch" ? "starter" : targetDowngradePlan;
-    scheduleDowngrade(dbPlan);
+    scheduleDowngrade(targetDowngradePlan);
   };
 
   const getProrationAmount = () => {
     const currentPlan = subscription?.plan || 'starter';
-    const normalizedCurrent = currentPlan === 'starter' ? 'launch' : currentPlan;
-    const currentPrice = getPlanPrice(normalizedCurrent);
+    const currentPrice = getPlanPrice(currentPlan);
     const newPrice = getPlanPrice(targetUpgradePlan);
     return (newPrice - currentPrice) * 100; // Convert to cents
   };
 
   const getDiscountedPrice = () => {
-    const currentPlan = subscription?.plan || 'launch';
-    const normalizedPlan = currentPlan === 'starter' ? 'launch' : currentPlan;
-    const plan = pricingPlans.find(p => p.id === normalizedPlan);
+    const currentPlan = subscription?.plan || 'starter';
+    const plan = pricingPlans.find(p => p.id === currentPlan);
     return plan?.powerUpPrice || 7;
   };
 
-  const getCurrentPlanForModal = (): 'launch' | 'pro' | 'business' => {
-    const plan = subscription?.plan || 'starter';
-    return plan === 'starter' ? 'launch' : plan as 'launch' | 'pro' | 'business';
+  const getCurrentPlanForModal = (): 'starter' | 'pro' | 'business' => {
+    return subscription?.plan || 'starter';
   };
 
   const isLoading = authLoading || subscriptionLoading || creditsLoading || subscriptionActionLoading;

@@ -8,7 +8,7 @@ const corsHeaders = {
 
 interface CreateOrderRequest {
   orderType: "subscription" | "power_up" | "upgrade";
-  plan?: "launch" | "pro" | "business";
+  plan?: "starter" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
   billingData?: {

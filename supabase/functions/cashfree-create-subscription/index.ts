@@ -20,7 +20,7 @@ const CF_PLAN_IDS: Record<string, string> = {
 };
 
 interface CreateSubscriptionRequest {
-  plan: "launch" | "pro" | "business";
+  plan: "starter" | "pro" | "business";
   billingPeriod: "monthly";
 }
 

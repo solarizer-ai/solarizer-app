@@ -6,7 +6,7 @@ import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 interface CreateOrderParams {
   orderType: "subscription" | "power_up" | "upgrade";
-  plan?: "launch" | "pro" | "business";
+  plan?: "starter" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
   billingData?: BillingData;

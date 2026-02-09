@@ -57,7 +57,6 @@ export const PLAN_LIMITS = {
  */
 export const SUBSCRIPTION_CREDITS = {
   starter: 50,
-  launch: 50,
   pro: 50,
   business: 50,
 } as const;
@@ -66,8 +65,7 @@ export const SUBSCRIPTION_CREDITS = {
  * Credit rates per plan (in cents)
  */
 export const PLAN_CREDIT_RATES = {
-  starter: 700,  // $7.00 per credit
-  launch: 700,   // $7.00 per credit  
+  starter: 700,  // $7.00 per credit (Launch plan)
   pro: 600,      // $6.00 per credit
   business: 500, // $5.00 per credit
 } as const;

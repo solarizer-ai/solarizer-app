@@ -7,14 +7,14 @@ const corsHeaders = {
 };
 
 interface CreateSubscriptionRequest {
-  plan: "launch" | "pro" | "business";
+  plan: "starter" | "pro" | "business";
   billingPeriod: "monthly";
 }
 
 // These should be set as environment variables after creating plans in Razorpay
 // Create plans via Razorpay API or Dashboard first
 const RAZORPAY_PLAN_IDS: Record<string, string> = {
-  launch: Deno.env.get("RAZORPAY_PLAN_LAUNCH") || "plan_launch_monthly",
+  starter: Deno.env.get("RAZORPAY_PLAN_LAUNCH") || "plan_launch_monthly",
   pro: Deno.env.get("RAZORPAY_PLAN_PRO") || "plan_pro_monthly",
   business: Deno.env.get("RAZORPAY_PLAN_BUSINESS") || "plan_business_monthly",
 };
