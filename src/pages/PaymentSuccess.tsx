@@ -144,8 +144,25 @@ export default function PaymentSuccess() {
     pollCount
   ]);
 
-  const formatAmount = (cents: number) => {
+  const formatAmount = (cents?: number | null) => {
+    if (cents == null || isNaN(cents)) return null;
     return `$${(cents / 100).toFixed(2)}`;
+  };
+
+  const getTitle = () => {
+    if (paymentStatus?.orderType === "upgrade") return "Upgrade Successful!";
+    if (paymentStatus?.orderType === "subscription") return "Subscription Activated!";
+    return "Payment Successful!";
+  };
+
+  const getDescription = () => {
+    if (paymentStatus?.orderType === "upgrade") {
+      return `You've been upgraded to the ${getPlanDisplayName(paymentStatus.plan)} plan.`;
+    }
+    if (paymentStatus?.orderType === "subscription") {
+      return `Your ${getPlanDisplayName(paymentStatus.plan)} plan is now active.`;
+    }
+    return "Thank you for your purchase. Your account has been updated.";
   };
 
   const getPlanDisplayName = (plan?: string) => {
@@ -192,9 +209,9 @@ export default function PaymentSuccess() {
             ) : isSuccess ? (
               <>
                 <CheckCircle className="h-16 w-16 text-primary mx-auto mb-4" />
-                <CardTitle className="text-2xl">Payment Successful!</CardTitle>
+                <CardTitle className="text-2xl">{getTitle()}</CardTitle>
                 <CardDescription>
-                  Thank you for your purchase. Your account has been updated.
+                  {getDescription()}
                 </CardDescription>
               </>
             ) : (
@@ -221,15 +238,14 @@ export default function PaymentSuccess() {
                    paymentStatus.orderType === "upgrade" ? "Plan Upgrade" : "Power-up Credits"}
                 </div>
 
-                {(paymentStatus.orderType === "subscription" || paymentStatus.orderType === "upgrade") && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Plan</span>
-                      <span className="font-medium">
-                        {getPlanDisplayName(paymentStatus.plan)} ({paymentStatus.billingPeriod || "monthly"})
-                      </span>
-                    </div>
-                  </>
+                {(paymentStatus.orderType === "subscription" || paymentStatus.orderType === "upgrade") && paymentStatus.plan && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Plan</span>
+                    <span className="font-medium">
+                      {getPlanDisplayName(paymentStatus.plan)}
+                      {paymentStatus.billingPeriod ? ` (${paymentStatus.billingPeriod})` : ""}
+                    </span>
+                  </div>
                 )}
 
                 {paymentStatus.orderType === "power_up" && paymentStatus.creditsAmount && (
@@ -239,10 +255,15 @@ export default function PaymentSuccess() {
                   </div>
                 )}
 
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Amount Paid</span>
-                  <span className="font-medium">{formatAmount(paymentStatus.amountCents)}</span>
-                </div>
+                {(() => {
+                  const formatted = formatAmount(paymentStatus.amountCents);
+                  return formatted ? (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Amount Paid</span>
+                      <span className="font-medium">{formatted}</span>
+                    </div>
+                  ) : null;
+                })()}
 
                 <div className="border-t border-border pt-3 flex justify-between">
                   <span className="text-muted-foreground">Current Credit Balance</span>

@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
         plan: orderDetails?.plan,
         billingPeriod: orderDetails?.billing_period,
         creditsAmount: orderDetails?.credits_amount,
-        amountCents: orderDetails?.amount_cents,
+        amountCents: orderDetails?.amount_cents ?? 0,
         creditsRemaining: credits?.credits_remaining || 0,
         ...result,
       }),
