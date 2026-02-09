@@ -231,7 +231,8 @@ const Pricing = () => {
 
   const handleConfirmDowngrade = () => {
     setDowngradeModalOpen(false);
-    scheduleDowngrade(targetDowngradePlan);
+    const dbPlan = targetDowngradePlan === "launch" ? "starter" : targetDowngradePlan;
+    scheduleDowngrade(dbPlan);
   };
 
   const getProrationAmount = () => {
