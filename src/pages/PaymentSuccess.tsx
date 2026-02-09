@@ -167,7 +167,12 @@ export default function PaymentSuccess() {
 
   const getPlanDisplayName = (plan?: string) => {
     if (!plan) return "";
-    return plan.charAt(0).toUpperCase() + plan.slice(1);
+    const displayNames: Record<string, string> = {
+      starter: "Launch",
+      pro: "Pro",
+      business: "Business",
+    };
+    return displayNames[plan] || plan.charAt(0).toUpperCase() + plan.slice(1);
   };
 
   if (isLoading && !paymentStatus) {
