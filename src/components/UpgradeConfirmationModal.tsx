@@ -48,7 +48,7 @@ export function UpgradeConfirmationModal({
   const formatPlanName = (plan: string) => {
     if (plan === "business") return "Business";
     if (plan === "pro") return "Pro";
-    if (plan === "starter" || plan === "launch") return "Launch";
+    if (plan === "starter") return "Launch";
     return plan;
   };
 

@@ -14,7 +14,7 @@ declare global {
 
 interface CreateOrderParams {
   orderType: "subscription" | "power_up";
-  plan?: "launch" | "pro" | "business";
+  plan?: "starter" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
   billingData?: BillingData;

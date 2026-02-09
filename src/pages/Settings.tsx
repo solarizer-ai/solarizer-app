@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { useCashfreeSubscription } from "@/hooks/useCashfreeSubscription";
+import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { format } from "date-fns";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
@@ -47,7 +47,7 @@ const Settings = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<"pro" | "business">("pro");
-  const [targetDowngradePlan, setTargetDowngradePlan] = useState<"launch" | "pro">("launch");
+  const [targetDowngradePlan, setTargetDowngradePlan] = useState<"starter" | "pro">("starter");
 
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
@@ -62,7 +62,7 @@ const Settings = () => {
     isReactivating,
     isCancellingDowngrade,
     isSchedulingDowngrade,
-  } = useCashfreeSubscription();
+  } = useRazorpaySubscription();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -159,7 +159,7 @@ const Settings = () => {
 
   // Plan pricing for proration calculation
   const getPlanPrice = (planId: string) => {
-    const prices: Record<string, number> = { launch: 149, starter: 149, pro: 199, business: 499 };
+    const prices: Record<string, number> = { starter: 149, pro: 199, business: 499 };
     return prices[planId] || 0;
   };
 
@@ -174,7 +174,7 @@ const Settings = () => {
     setShowUpgradeModal(true);
   };
 
-  const handleDowngradeClick = (toPlan: "launch" | "pro") => {
+  const handleDowngradeClick = (toPlan: "starter" | "pro") => {
     setTargetDowngradePlan(toPlan);
     setShowDowngradeModal(true);
   };
@@ -186,9 +186,7 @@ const Settings = () => {
 
   const handleConfirmDowngrade = () => {
     setShowDowngradeModal(false);
-    // Convert 'launch' to 'starter' for the database
-    const dbPlan = targetDowngradePlan === "launch" ? "starter" : targetDowngradePlan;
-    scheduleDowngrade(dbPlan);
+    scheduleDowngrade(targetDowngradePlan);
   };
 
   if (loading) {
@@ -658,7 +656,7 @@ const Settings = () => {
         onOpenChange={setShowDowngradeModal}
         currentCredits={creditsRemaining}
         fromPlan={plan as "starter" | "pro" | "business"}
-        toPlan={targetDowngradePlan === "launch" ? "starter" : targetDowngradePlan}
+        toPlan={targetDowngradePlan}
         onConfirm={handleConfirmDowngrade}
       />
     </div>

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface Plan {
-  id: "launch" | "pro" | "business";
+  id: "starter" | "pro" | "business";
   name: string;
   price: number;
   keyFeature: string;
@@ -12,7 +12,7 @@ interface Plan {
 
 const PLANS: Plan[] = [
   {
-    id: "launch",
+    id: "starter",
     name: "Launch",
     price: 149,
     keyFeature: "150 nLOC per scan",
@@ -37,13 +37,13 @@ interface SubscriptionPlanSelectorProps {
   pendingPlanDate: string | null;
   hasPendingCancellation: boolean;
   onUpgrade: (plan: "pro" | "business") => void;
-  onDowngrade: (plan: "launch" | "pro") => void;
+  onDowngrade: (plan: "starter" | "pro") => void;
   onCancelPendingDowngrade: () => void;
   isLoading: boolean;
   isCancellingDowngrade: boolean;
 }
 
-const PLAN_ORDER = { starter: 0, launch: 0, pro: 1, business: 2 };
+const PLAN_ORDER = { starter: 0, pro: 1, business: 2 };
 
 export function SubscriptionPlanSelector({
   currentPlan,
@@ -56,22 +56,18 @@ export function SubscriptionPlanSelector({
   isLoading,
   isCancellingDowngrade,
 }: SubscriptionPlanSelectorProps) {
-  const normalizedCurrentPlan = currentPlan === "starter" ? "launch" : currentPlan;
-  const currentPlanOrder = PLAN_ORDER[normalizedCurrentPlan];
+  const currentPlanOrder = PLAN_ORDER[currentPlan];
 
   const getPlanAction = (planId: Plan["id"]) => {
     const planOrder = PLAN_ORDER[planId];
     
-    if (planId === normalizedCurrentPlan) {
+    if (planId === currentPlan) {
       return "current";
     }
     
     // Check if this plan is the pending downgrade target
-    if (pendingPlan) {
-      const normalizedPending = pendingPlan === "starter" ? "launch" : pendingPlan;
-      if (planId === normalizedPending) {
-        return "pending";
-      }
+    if (pendingPlan && planId === pendingPlan) {
+      return "pending";
     }
     
     if (planOrder > currentPlanOrder) {
@@ -144,7 +140,7 @@ export function SubscriptionPlanSelector({
             variant="outline"
             size="sm"
             className="w-full gap-1"
-            onClick={() => onDowngrade(plan.id as "launch" | "pro")}
+            onClick={() => onDowngrade(plan.id as "starter" | "pro")}
             disabled={isLoading || pendingPlan !== null}
           >
             <ArrowDown className="w-3 h-3" />

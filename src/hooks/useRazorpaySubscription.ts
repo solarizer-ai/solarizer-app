@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 interface CreateSubscriptionParams {
-  plan: "launch" | "pro" | "business";
+  plan: "starter" | "pro" | "business";
   billingPeriod: "monthly";
 }
 

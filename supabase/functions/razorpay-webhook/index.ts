@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
             .eq("rz_subscription_id", subscriptionId);
 
           // Determine plan from notes or plan_id
-          const planName = notes.plan || "launch";
+          const planName = notes.plan || "starter";
           if (notes.user_id) {
             await supabase
               .from("subscriptions")
