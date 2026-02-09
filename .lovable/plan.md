@@ -1,69 +1,57 @@
 
 
-# Fix: Unify Plan Naming + Settings Hook + Proration Bug
+# Fix: Charge Full Price Difference on Upgrade (Not Time-Prorated)
 
-## Overview
+## Problem
 
-Three fixes in one pass:
-1. **Settings page** still uses the old Cashfree hook -- swap to Razorpay
-2. **Proration amount bug** -- `starter` mapped to `$0` instead of `$149`
-3. **Unify plan naming** -- eliminate the dual `"starter"` / `"launch"` terminology
+The upgrade function calculates a time-based proration: `(priceDifference * daysRemaining) / totalDays`. So if you're 12 days into a 30-day cycle, it charges only ~42% of the $350 difference = $146.78.
 
-## Plan Naming Decision
+Per the business model, upgrades should charge the **full price difference** immediately, not a partial amount based on remaining days.
 
-The database enum is `('starter', 'pro', 'business')` -- changing it would require a migration and risk breaking existing data. So **`starter` becomes the single canonical identifier everywhere in code**. The word "Launch" only appears in **display labels** (UI text shown to users).
+## Fix
 
-This eliminates all the messy `launch`-to-`starter` conversions scattered across the codebase.
+### File: `supabase/functions/razorpay-upgrade-subscription/index.ts`
 
-## Changes by File
+1. **Remove the `calculateProration` function** -- it's no longer needed.
+2. **Replace with simple subtraction**: `prorationAmount = PLAN_PRICES[toPlan] - PLAN_PRICES[fromPlan]`
+3. **Remove `PLAN_ORDER.launch`** -- stale entry from before the naming unification.
+4. **Clean up unused variables**: `periodStart`, `periodEnd`, `totalDays`, `daysRemaining` are no longer needed for the amount calculation (keep period dates only if needed for metadata).
 
-### Backend (Edge Functions)
+### Before
+```typescript
+const prorationAmount = calculateProration(fromPlan, toPlan, daysRemaining, totalDays);
+// Result: (35000 * 12) / 30 = 14000 ($140) -- WRONG
+```
 
-| File | Change |
-|------|--------|
-| `supabase/functions/razorpay-upgrade-subscription/index.ts` | Fix `PLAN_PRICES`: set `starter: 14900`. Remove `launch` key. Fix interface type from `"pro" \| "business"` to include `"starter"`. |
-| `supabase/functions/razorpay-create-subscription/index.ts` | Change interface from `"launch"` to `"starter"`. Change `RAZORPAY_PLAN_IDS` key from `launch` to `starter`. |
-| `supabase/functions/razorpay-create-order/index.ts` | Change interface plan type from `"launch"` to `"starter"`. |
-| `supabase/functions/razorpay-webhook/index.ts` | Change default plan fallback from `"launch"` to `"starter"`. |
-| `supabase/functions/cashfree-create-subscription/index.ts` | Change interface from `"launch"` to `"starter"`. |
-| `supabase/functions/cashfree-create-order/index.ts` | Change interface from `"launch"` to `"starter"`. |
+### After
+```typescript
+const priceDifference = PLAN_PRICES[toPlan] - (PLAN_PRICES[fromPlan] || 0);
+// Result: 49900 - 14900 = 35000 ($350) -- CORRECT
+```
 
-### Frontend (Hooks)
+### Also clean up `PLAN_ORDER`
+```typescript
+// Before
+const PLAN_ORDER: Record<string, number> = {
+  starter: 0,
+  launch: 1,  // stale
+  pro: 2,
+  business: 3,
+};
 
-| File | Change |
-|------|--------|
-| `src/pages/Settings.tsx` | (1) Swap `useCashfreeSubscription` to `useRazorpaySubscription`. (2) Change all `"launch"` type annotations to `"starter"`. Remove all `launch`-to-`starter` conversion logic. |
-| `src/hooks/useRazorpaySubscription.ts` | Change `CreateSubscriptionParams.plan` from `"launch"` to `"starter"`. |
-| `src/hooks/useRazorpayCheckout.ts` | Change `CreateOrderParams.plan` from `"launch"` to `"starter"`. |
-| `src/hooks/useCashfreeSubscription.ts` | Change interface from `"launch"` to `"starter"`. |
-| `src/hooks/useCashfreeCheckout.ts` | Change interface from `"launch"` to `"starter"`. |
+// After
+const PLAN_ORDER: Record<string, number> = {
+  starter: 0,
+  pro: 1,
+  business: 2,
+};
+```
 
-### Frontend (Components)
+## Summary
 
-| File | Change |
-|------|--------|
-| `src/components/settings/SubscriptionPlanSelector.tsx` | Change `Plan.id` type and PLANS array to use `"starter"` instead of `"launch"`. Remove `normalizedCurrentPlan` / `normalizedPending` mappings. Keep display name as "Launch". |
-| `src/components/UpgradeConfirmationModal.tsx` | Remove `"launch"` check -- just `"starter"` maps to "Launch" display. |
-| `src/components/CancelSubscriptionModal.tsx` | Already uses `"starter"` -> "Launch" display. No change needed. |
-| `src/components/DowngradeWarningModal.tsx` | Already uses `"starter"` -> "Launch" display. No change needed. |
+| What | Before | After |
+|------|--------|-------|
+| Launch -> Business amount | ~$146.78 (time-prorated) | $350.00 (full difference) |
+| Launch -> Pro amount | ~$20-50 (varies by day) | $50.00 (full difference) |
+| `PLAN_ORDER` | Has stale `launch` key | Clean, `starter`/`pro`/`business` only |
 
-### Frontend (Pages)
-
-| File | Change |
-|------|--------|
-| `src/pages/Pricing.tsx` | Remove `launch`-to-`starter` conversion in `handleConfirmDowngrade`. Use `"starter"` directly. |
-| `src/pages/SubscriptionSuccess.tsx` | Already handles `"starter"` display. No change needed. |
-
-### Lib
-
-| File | Change |
-|------|--------|
-| `src/lib/nlocCalculator.ts` | Remove duplicate `launch` entries from `SUBSCRIPTION_CREDITS` and `PLAN_CREDIT_RATES`. Keep only `starter`. |
-
-## Summary of What Gets Eliminated
-
-- All `"launch" | "pro" | "business"` type unions become `"starter" | "pro" | "business"`
-- All `targetDowngradePlan === "launch" ? "starter" : targetDowngradePlan` conversions are removed
-- All `currentPlan === "starter" ? "launch" : currentPlan` normalizations are removed
-- The `PLAN_PRICES` / `PLAN_ORDER` mappings no longer need both `starter` and `launch` keys
-- Display name mapping stays: `starter` -> "Launch" in UI labels only
