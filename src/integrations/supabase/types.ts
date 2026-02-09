@@ -432,6 +432,7 @@ export type Database = {
           processed_at: string | null
           rz_order_id: string | null
           rz_payment_id: string | null
+          rz_payment_link_id: string | null
           rz_signature: string | null
           status: string | null
           updated_at: string | null
@@ -453,6 +454,7 @@ export type Database = {
           processed_at?: string | null
           rz_order_id?: string | null
           rz_payment_id?: string | null
+          rz_payment_link_id?: string | null
           rz_signature?: string | null
           status?: string | null
           updated_at?: string | null
@@ -474,6 +476,7 @@ export type Database = {
           processed_at?: string | null
           rz_order_id?: string | null
           rz_payment_id?: string | null
+          rz_payment_link_id?: string | null
           rz_signature?: string | null
           status?: string | null
           updated_at?: string | null

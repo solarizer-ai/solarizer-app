@@ -6,21 +6,26 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface VerifyPaymentRequest {
-  order_id: string; // Our internal order ID
-  razorpay_order_id: string;
+interface VerifyPaymentLinkRequest {
   razorpay_payment_id: string;
+  razorpay_payment_link_id: string;
+  razorpay_payment_link_reference_id: string; // Our internal order_id
+  razorpay_payment_link_status: string;
   razorpay_signature: string;
 }
 
-async function verifySignature(
-  orderId: string,
+// Payment Links signature formula:
+// hmac_sha256(payment_link_id + "|" + reference_id + "|" + status + "|" + payment_id, secret)
+async function verifyPaymentLinkSignature(
+  paymentLinkId: string,
+  referenceId: string,
+  status: string,
   paymentId: string,
   signature: string,
   secret: string
 ): Promise<boolean> {
   const encoder = new TextEncoder();
-  const data = `${orderId}|${paymentId}`;
+  const data = `${paymentLinkId}|${referenceId}|${status}|${paymentId}`;
   
   const key = await crypto.subtle.importKey(
     "raw",
@@ -71,10 +76,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: VerifyPaymentRequest = await req.json();
-    const { order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
+    const body: VerifyPaymentLinkRequest = await req.json();
+    const { 
+      razorpay_payment_id, 
+      razorpay_payment_link_id, 
+      razorpay_payment_link_reference_id,
+      razorpay_payment_link_status,
+      razorpay_signature 
+    } = body;
 
-    if (!order_id || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    // The reference_id is our internal order_id
+    const orderId = razorpay_payment_link_reference_id;
+
+    if (!orderId || !razorpay_payment_link_id || !razorpay_payment_id || !razorpay_signature) {
       return new Response(
         JSON.stringify({ error: "Missing required parameters" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -88,16 +102,29 @@ Deno.serve(async (req) => {
     // Check if already processed (idempotency)
     const { data: existingOrder } = await adminSupabase
       .from("payment_orders")
-      .select("status, rz_payment_id")
-      .eq("order_id", order_id)
+      .select("status, rz_payment_id, order_type, plan, billing_period, credits_amount, amount_cents")
+      .eq("order_id", orderId)
       .single();
 
     if (existingOrder?.status === 'paid') {
+      // Already processed - return success with existing data
+      const { data: credits } = await adminSupabase
+        .from("nloc_credits")
+        .select("credits_remaining")
+        .eq("user_id", user.id)
+        .single();
+
       return new Response(
         JSON.stringify({
           success: true,
           already_processed: true,
-          message: "Payment already verified",
+          status: "paid",
+          orderType: existingOrder.order_type,
+          plan: existingOrder.plan,
+          billingPeriod: existingOrder.billing_period,
+          creditsAmount: existingOrder.credits_amount,
+          amountCents: existingOrder.amount_cents,
+          creditsRemaining: credits?.credits_remaining || 0,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -112,15 +139,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const isValid = await verifySignature(
-      razorpay_order_id,
+    const isValid = await verifyPaymentLinkSignature(
+      razorpay_payment_link_id,
+      razorpay_payment_link_reference_id,
+      razorpay_payment_link_status,
       razorpay_payment_id,
       razorpay_signature,
       keySecret
     );
 
     if (!isValid) {
-      console.error("Invalid payment signature for order:", order_id);
+      console.error("Invalid payment signature for order:", orderId);
       return new Response(
         JSON.stringify({ error: "Invalid payment signature" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -135,13 +164,13 @@ Deno.serve(async (req) => {
         rz_signature: razorpay_signature,
         updated_at: new Date().toISOString(),
       })
-      .eq("order_id", order_id);
+      .eq("order_id", orderId);
 
     // Process the payment success
     const { data: result, error: processError } = await adminSupabase.rpc(
       "process_payment_success",
       {
-        p_order_id: order_id,
+        p_order_id: orderId,
         p_cf_payment_id: razorpay_payment_id, // Using existing column name for compatibility
       }
     );
@@ -154,10 +183,30 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get updated credits
+    const { data: credits } = await adminSupabase
+      .from("nloc_credits")
+      .select("credits_remaining")
+      .eq("user_id", user.id)
+      .single();
+
+    // Get order details for response
+    const { data: orderDetails } = await adminSupabase
+      .from("payment_orders")
+      .select("order_type, plan, billing_period, credits_amount, amount_cents")
+      .eq("order_id", orderId)
+      .single();
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Payment verified and processed",
+        status: "paid",
+        orderType: orderDetails?.order_type,
+        plan: orderDetails?.plan,
+        billingPeriod: orderDetails?.billing_period,
+        creditsAmount: orderDetails?.credits_amount,
+        amountCents: orderDetails?.amount_cents,
+        creditsRemaining: credits?.credits_remaining || 0,
         ...result,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

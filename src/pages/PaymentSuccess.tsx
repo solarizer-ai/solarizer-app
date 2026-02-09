@@ -23,10 +23,20 @@ export default function PaymentSuccess() {
   const navigate = useNavigate();
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pollCount, setPollCount] = useState(0);
   const metaTagRef = useRef<HTMLMetaElement | null>(null);
+  const verificationAttempted = useRef(false);
 
-  const orderId = searchParams.get("order_id");
+  // Extract Payment Link callback parameters
+  const razorpayPaymentId = searchParams.get("razorpay_payment_id");
+  const razorpayPaymentLinkId = searchParams.get("razorpay_payment_link_id");
+  const razorpayPaymentLinkReferenceId = searchParams.get("razorpay_payment_link_reference_id");
+  const razorpayPaymentLinkStatus = searchParams.get("razorpay_payment_link_status");
+  const razorpaySignature = searchParams.get("razorpay_signature");
+
+  // Fallback for legacy order_id parameter
+  const legacyOrderId = searchParams.get("order_id");
 
   // Add noindex meta tag to prevent search engine indexing
   useEffect(() => {
@@ -44,47 +54,95 @@ export default function PaymentSuccess() {
   }, []);
 
   useEffect(() => {
-    if (!orderId) {
+    // Prevent double verification
+    if (verificationAttempted.current) return;
+
+    // Check if we have Payment Link callback parameters
+    const hasPaymentLinkParams = razorpayPaymentId && razorpayPaymentLinkId && 
+                                  razorpayPaymentLinkReferenceId && razorpaySignature;
+
+    if (!hasPaymentLinkParams && !legacyOrderId) {
       navigate("/pricing");
       return;
     }
 
+    verificationAttempted.current = true;
+
     const verifyPayment = async () => {
       try {
-        // Use invokeWithRefresh with order_id in body
-        const { data: result, error } = await invokeWithRefresh<PaymentStatus>(
-          "razorpay-verify-payment",
-          { body: { order_id: orderId } }
-        );
+        if (hasPaymentLinkParams) {
+          // Payment Links verification
+          const { data: result, error } = await invokeWithRefresh<PaymentStatus>(
+            "razorpay-verify-payment",
+            { 
+              body: { 
+                razorpay_payment_id: razorpayPaymentId,
+                razorpay_payment_link_id: razorpayPaymentLinkId,
+                razorpay_payment_link_reference_id: razorpayPaymentLinkReferenceId,
+                razorpay_payment_link_status: razorpayPaymentLinkStatus || "paid",
+                razorpay_signature: razorpaySignature,
+              } 
+            }
+          );
 
-        if (error) {
-          console.error("Verification error:", error);
-          setIsLoading(false);
-          return;
-        }
+          if (error) {
+            console.error("Verification error:", error);
+            setError("Payment verification failed. Please contact support if you were charged.");
+            setIsLoading(false);
+            return;
+          }
 
-        if (result) {
-          setPaymentStatus(result);
+          if (result) {
+            setPaymentStatus(result);
+            setIsLoading(false);
+          }
+        } else if (legacyOrderId) {
+          // Legacy order_id based polling (fallback)
+          const { data: result, error } = await invokeWithRefresh<PaymentStatus>(
+            "razorpay-verify-payment",
+            { body: { order_id: legacyOrderId } }
+          );
 
-          // If still pending and we haven't polled too many times, poll again
-          if (result.status === "pending" && pollCount < 10) {
-            setTimeout(() => {
-              setPollCount((c) => c + 1);
-            }, 2000);
+          if (error) {
+            console.error("Verification error:", error);
+            setIsLoading(false);
+            return;
+          }
+
+          if (result) {
+            setPaymentStatus(result);
+
+            // If still pending and we haven't polled too many times, poll again
+            if (result.status === "pending" && pollCount < 10) {
+              verificationAttempted.current = false;
+              setTimeout(() => {
+                setPollCount((c) => c + 1);
+              }, 2000);
+            } else {
+              setIsLoading(false);
+            }
           } else {
             setIsLoading(false);
           }
-        } else {
-          setIsLoading(false);
         }
       } catch (error) {
         console.error("Verification error:", error);
+        setError("An unexpected error occurred during verification.");
         setIsLoading(false);
       }
     };
 
     verifyPayment();
-  }, [orderId, navigate, pollCount]);
+  }, [
+    razorpayPaymentId, 
+    razorpayPaymentLinkId, 
+    razorpayPaymentLinkReferenceId, 
+    razorpayPaymentLinkStatus,
+    razorpaySignature,
+    legacyOrderId,
+    navigate, 
+    pollCount
+  ]);
 
   const formatAmount = (cents: number) => {
     return `$${(cents / 100).toFixed(2)}`;
@@ -115,6 +173,7 @@ export default function PaymentSuccess() {
 
   const isSuccess = paymentStatus?.success || paymentStatus?.status === "paid";
   const isPending = paymentStatus?.status === "pending" || paymentStatus?.status === "processing";
+  const hasError = error || (!isSuccess && !isPending);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -143,7 +202,7 @@ export default function PaymentSuccess() {
                 <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
                 <CardTitle className="text-2xl text-destructive">Payment Failed</CardTitle>
                 <CardDescription>
-                  Something went wrong with your payment. Please try again.
+                  {error || "Something went wrong with your payment. Please try again."}
                 </CardDescription>
               </>
             )}
@@ -197,7 +256,7 @@ export default function PaymentSuccess() {
               <Button onClick={() => navigate("/audits")} className="w-full">
                 Go to Dashboard
               </Button>
-              {!isSuccess && !isPending && (
+              {hasError && (
                 <Button variant="outline" onClick={() => navigate("/pricing")} className="w-full">
                   Back to Pricing
                 </Button>
