@@ -20,9 +20,8 @@ const PLAN_PRICES: Record<string, number> = {
 // Plan order for validation
 const PLAN_ORDER: Record<string, number> = {
   starter: 0,
-  launch: 1,
-  pro: 2,
-  business: 3,
+  pro: 1,
+  business: 2,
 };
 
 function getRazorpayAuth(): string {
@@ -32,21 +31,6 @@ function getRazorpayAuth(): string {
     throw new Error("Razorpay credentials not configured");
   }
   return "Basic " + btoa(`${keyId}:${keySecret}`);
-}
-
-function calculateProration(
-  fromPlan: string,
-  toPlan: string,
-  daysRemaining: number,
-  totalDays: number
-): number {
-  const fromPrice = PLAN_PRICES[fromPlan] || 0;
-  const toPrice = PLAN_PRICES[toPlan] || 0;
-  const priceDifference = toPrice - fromPrice;
-  
-  // Prorate based on remaining days in the cycle
-  const prorationAmount = Math.ceil((priceDifference * daysRemaining) / totalDays);
-  return Math.max(prorationAmount, 0);
 }
 
 Deno.serve(async (req) => {
@@ -111,23 +95,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Calculate proration
-    const now = new Date();
-    const periodStart = new Date(subscription.current_period_start);
-    const periodEnd = subscription.current_period_end 
-      ? new Date(subscription.current_period_end)
-      : new Date(periodStart.getTime() + 30 * 24 * 60 * 60 * 1000);
-    
-    const totalDays = Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
-    const daysRemaining = Math.max(0, Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-    
-    const prorationAmount = calculateProration(fromPlan, toPlan, daysRemaining, totalDays);
+    // Calculate full price difference (no time-based proration)
+    const upgradeAmount = (PLAN_PRICES[toPlan] || 0) - (PLAN_PRICES[fromPlan] || 0);
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // If proration amount is 0 or very small, just upgrade directly
-    if (prorationAmount < 100) { // Less than $1
+    // If amount is 0 or very small, just upgrade directly
+    if (upgradeAmount < 100) { // Less than $1
       await adminSupabase
         .from("subscriptions")
         .update({
@@ -161,10 +136,10 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: prorationAmount,
+        amount: upgradeAmount,
         currency: "USD",
         reference_id: orderId,
-        description: `Upgrade to ${planDisplayName} Plan (prorated)`,
+        description: `Upgrade to ${planDisplayName} Plan`,
         callback_url: callbackUrl,
         callback_method: "get",
         notes: {
@@ -192,7 +167,7 @@ Deno.serve(async (req) => {
       p_user_id: user.id,
       p_order_id: orderId,
       p_order_type: "upgrade",
-      p_amount_cents: prorationAmount,
+      p_amount_cents: upgradeAmount,
       p_payment_session_id: rzPaymentLink.id,
       p_plan: toPlan,
       p_billing_period: "monthly",
@@ -206,7 +181,6 @@ Deno.serve(async (req) => {
         metadata: {
           from_plan: fromPlan,
           to_plan: toPlan,
-          proration_days: daysRemaining,
         },
       })
       .eq("order_id", orderId);
@@ -217,7 +191,7 @@ Deno.serve(async (req) => {
         flowType: "proration_order",
         paymentUrl: rzPaymentLink.short_url,
         orderId,
-        prorationAmount,
+        upgradeAmount,
         fromPlan,
         toPlan,
       }),
