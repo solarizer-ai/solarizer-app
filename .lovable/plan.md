@@ -1,72 +1,69 @@
 
 
-# Fix: Upgrade Payment Success Page Shows Wrong Info
+# Fix: Unify Plan Naming + Settings Hook + Proration Bug
 
-## Problem
+## Overview
 
-After upgrading from Launch to Business, the PaymentSuccess page shows:
-- **"Power-up Credits"** instead of "Plan Upgrade"
-- **"$NaN"** for Amount Paid (amountCents is null/undefined)
-- Generic messaging instead of upgrade-specific copy
+Three fixes in one pass:
+1. **Settings page** still uses the old Cashfree hook -- swap to Razorpay
+2. **Proration amount bug** -- `starter` mapped to `$0` instead of `$149`
+3. **Unify plan naming** -- eliminate the dual `"starter"` / `"launch"` terminology
 
-Two root causes:
-1. The `razorpay-verify-payment` function may return null `amountCents` when the payment order isn't found or the field is missing, and the frontend's `formatAmount` doesn't handle null/undefined gracefully.
-2. The PaymentSuccess page needs better upgrade-specific UI (title, description, and details section).
+## Plan Naming Decision
 
-## Changes
+The database enum is `('starter', 'pro', 'business')` -- changing it would require a migration and risk breaking existing data. So **`starter` becomes the single canonical identifier everywhere in code**. The word "Launch" only appears in **display labels** (UI text shown to users).
 
-### 1. `src/pages/PaymentSuccess.tsx` -- Better upgrade handling and null safety
+This eliminates all the messy `launch`-to-`starter` conversions scattered across the codebase.
 
-- **formatAmount**: Guard against null/undefined/NaN values, show "N/A" instead of "$NaN"
-- **Title**: Show "Upgrade Successful!" for upgrade orders instead of generic "Payment Successful!"
-- **Description**: Show "You've been upgraded to [Plan]" for upgrades
-- **Summary section**: Show upgrade-specific details (From Plan -> To Plan) instead of generic fields
-- **Handle missing amountCents**: Don't render the "Amount Paid" row if value is invalid
+## Changes by File
 
-### 2. `supabase/functions/razorpay-verify-payment/index.ts` -- Ensure amountCents is always valid
-
-- Default `amountCents` to `0` if the value from the database is null
-- Ensure `orderType` is always returned correctly from the order record
-
-## Technical Details
-
-### PaymentSuccess.tsx changes
-
-```tsx
-// Safe formatAmount
-const formatAmount = (cents?: number | null) => {
-  if (cents == null || isNaN(cents)) return null;
-  return `$${(cents / 100).toFixed(2)}`;
-};
-
-// Dynamic title based on orderType
-const getTitle = () => {
-  if (paymentStatus?.orderType === "upgrade") return "Upgrade Successful!";
-  if (paymentStatus?.orderType === "subscription") return "Subscription Activated!";
-  return "Payment Successful!";
-};
-
-// Dynamic description
-const getDescription = () => {
-  if (paymentStatus?.orderType === "upgrade") {
-    return `You've been upgraded to the ${getPlanDisplayName(paymentStatus.plan)} plan.`;
-  }
-  return "Thank you for your purchase. Your account has been updated.";
-};
-
-// Upgrade-specific summary showing plan name + billing
-// Only show Amount Paid row when formatAmount returns a value
-// Show "Plan" row for upgrade/subscription orders
-```
-
-### razorpay-verify-payment changes
-
-- Ensure `amountCents` defaults to `0` when null: `amountCents: orderDetails?.amount_cents ?? 0`
-
-### Files Modified
+### Backend (Edge Functions)
 
 | File | Change |
 |------|--------|
-| `src/pages/PaymentSuccess.tsx` | Upgrade-specific UI, null-safe formatAmount, dynamic title/description |
-| `supabase/functions/razorpay-verify-payment/index.ts` | Default amountCents to 0 when null |
+| `supabase/functions/razorpay-upgrade-subscription/index.ts` | Fix `PLAN_PRICES`: set `starter: 14900`. Remove `launch` key. Fix interface type from `"pro" \| "business"` to include `"starter"`. |
+| `supabase/functions/razorpay-create-subscription/index.ts` | Change interface from `"launch"` to `"starter"`. Change `RAZORPAY_PLAN_IDS` key from `launch` to `starter`. |
+| `supabase/functions/razorpay-create-order/index.ts` | Change interface plan type from `"launch"` to `"starter"`. |
+| `supabase/functions/razorpay-webhook/index.ts` | Change default plan fallback from `"launch"` to `"starter"`. |
+| `supabase/functions/cashfree-create-subscription/index.ts` | Change interface from `"launch"` to `"starter"`. |
+| `supabase/functions/cashfree-create-order/index.ts` | Change interface from `"launch"` to `"starter"`. |
 
+### Frontend (Hooks)
+
+| File | Change |
+|------|--------|
+| `src/pages/Settings.tsx` | (1) Swap `useCashfreeSubscription` to `useRazorpaySubscription`. (2) Change all `"launch"` type annotations to `"starter"`. Remove all `launch`-to-`starter` conversion logic. |
+| `src/hooks/useRazorpaySubscription.ts` | Change `CreateSubscriptionParams.plan` from `"launch"` to `"starter"`. |
+| `src/hooks/useRazorpayCheckout.ts` | Change `CreateOrderParams.plan` from `"launch"` to `"starter"`. |
+| `src/hooks/useCashfreeSubscription.ts` | Change interface from `"launch"` to `"starter"`. |
+| `src/hooks/useCashfreeCheckout.ts` | Change interface from `"launch"` to `"starter"`. |
+
+### Frontend (Components)
+
+| File | Change |
+|------|--------|
+| `src/components/settings/SubscriptionPlanSelector.tsx` | Change `Plan.id` type and PLANS array to use `"starter"` instead of `"launch"`. Remove `normalizedCurrentPlan` / `normalizedPending` mappings. Keep display name as "Launch". |
+| `src/components/UpgradeConfirmationModal.tsx` | Remove `"launch"` check -- just `"starter"` maps to "Launch" display. |
+| `src/components/CancelSubscriptionModal.tsx` | Already uses `"starter"` -> "Launch" display. No change needed. |
+| `src/components/DowngradeWarningModal.tsx` | Already uses `"starter"` -> "Launch" display. No change needed. |
+
+### Frontend (Pages)
+
+| File | Change |
+|------|--------|
+| `src/pages/Pricing.tsx` | Remove `launch`-to-`starter` conversion in `handleConfirmDowngrade`. Use `"starter"` directly. |
+| `src/pages/SubscriptionSuccess.tsx` | Already handles `"starter"` display. No change needed. |
+
+### Lib
+
+| File | Change |
+|------|--------|
+| `src/lib/nlocCalculator.ts` | Remove duplicate `launch` entries from `SUBSCRIPTION_CREDITS` and `PLAN_CREDIT_RATES`. Keep only `starter`. |
+
+## Summary of What Gets Eliminated
+
+- All `"launch" | "pro" | "business"` type unions become `"starter" | "pro" | "business"`
+- All `targetDowngradePlan === "launch" ? "starter" : targetDowngradePlan` conversions are removed
+- All `currentPlan === "starter" ? "launch" : currentPlan` normalizations are removed
+- The `PLAN_PRICES` / `PLAN_ORDER` mappings no longer need both `starter` and `launch` keys
+- Display name mapping stays: `starter` -> "Launch" in UI labels only
