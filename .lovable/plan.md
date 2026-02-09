@@ -1,142 +1,105 @@
 
-# Plan: Fix Razorpay Payment Flow Issues
+# Plan: Switch Razorpay Checkout from Modal to Full-Page Redirect
 
-## Problem Summary
-After successful Razorpay payment, users are not redirected to the success page. The payment actually succeeds (credits are added), but the verification step fails on retry attempts.
+## Current Behavior
+The Razorpay checkout opens as a popup/modal overlay on the same page (as shown in your screenshot). This is the default "Standard Checkout" behavior.
 
-## Root Causes Identified
+## Desired Behavior
+Redirect users to Razorpay's hosted payment page in a full browser navigation, then redirect back to your success page after payment.
 
-1. **Field Name Mismatch**: The edge function expects `addressLine1` (camelCase) but receives `address_line1` (snake_case)
-2. **Missing Idempotency**: The verify endpoint returns 400 on duplicate calls instead of graceful success
-3. **No Early Success Check**: Frontend doesn't check if order is already paid before retrying verification
+## Solution Overview
+Add `callback_url` and `redirect: true` options to the Razorpay checkout configuration. This requires creating a new server-side endpoint to handle Razorpay's POST callback.
 
 ---
 
 ## Implementation Steps
 
-### Step 1: Fix Billing Data Field Mapping in Edge Function
+### Step 1: Create a New Edge Function for Callback Handling
+**File**: `supabase/functions/razorpay-callback/index.ts`
+
+This endpoint will:
+1. Receive POST from Razorpay with payment details
+2. Extract our internal `order_id` from Razorpay's order notes
+3. Verify the payment signature
+4. Process the payment
+5. Redirect the user to `/payment-success?order_id=xxx`
+
+```text
+Razorpay POST → razorpay-callback → Verify & Process → Redirect to /payment-success
+```
+
+### Step 2: Update Edge Function to Return Callback URL
 **File**: `supabase/functions/razorpay-create-order/index.ts`
 
-Update the interface and mapping to accept snake_case fields that match the frontend:
+Return the callback URL in the response so the frontend can use it:
+- Add `callbackUrl` to response: `https://xylfnqrtzqfduutdcxvu.supabase.co/functions/v1/razorpay-callback`
 
-```typescript
-billingData?: {
-  phone: string;
-  address_line1: string;
-  address_line2?: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-  company_name?: string;
-  tax_id?: string;
-}
-```
-
-And update the upsert mapping:
-```typescript
-address_line1: billingData.address_line1,
-address_line2: billingData.address_line2 || null,
-postal_code: billingData.postal_code,
-company_name: billingData.company_name || null,
-tax_id: billingData.tax_id || null,
-```
-
-### Step 2: Add Idempotency to Payment Verification
-**File**: `supabase/functions/razorpay-verify-payment/index.ts`
-
-Before verifying signature, check if order is already paid:
-
-```typescript
-// Check if already processed (idempotency)
-const { data: existingOrder } = await adminSupabase
-  .from("payment_orders")
-  .select("status, rz_payment_id")
-  .eq("order_id", order_id)
-  .single();
-
-if (existingOrder?.status === 'paid') {
-  return new Response(
-    JSON.stringify({
-      success: true,
-      already_processed: true,
-      message: "Payment already verified",
-    }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-}
-```
-
-### Step 3: Improve Frontend Handler Robustness
+### Step 3: Update Frontend Checkout Hook
 **File**: `src/hooks/useRazorpayCheckout.ts`
 
-Handle `already_processed` response as success:
+Modify the Razorpay options to include:
+- `callback_url`: The edge function URL that handles the redirect
+- `redirect: true`: Enables full-page redirect mode
 
-```typescript
-if (verifyError || !verifyResult?.success) {
-  toast({
-    title: "Payment Verification Failed",
-    description: verifyResult?.error || "Please contact support.",
-    variant: "destructive",
-  });
-  setIsLoading(false);
-  resolve(false);
-  return;
-}
+Remove the `handler` function since it won't be used in redirect mode.
 
-// Redirect to success page (works for both new and already_processed)
-window.location.href = `/payment-success?order_id=${orderId}`;
-resolve(true);
-```
-
-### Step 4: Add Order State Verification Before Redirect
-**File**: `src/hooks/useRazorpayCheckout.ts`
-
-After verification, confirm the order is readable before redirecting (from the troubleshooting pattern):
-
-```typescript
-// Verify order is accessible before redirecting
-const { data: confirmedOrder } = await supabase
-  .from("payment_orders")
-  .select("status")
-  .eq("order_id", orderId)
-  .single();
-
-if (confirmedOrder?.status === 'paid') {
-  window.location.href = `/payment-success?order_id=${orderId}`;
-  resolve(true);
-} else {
-  // Fallback: redirect anyway since webhook may process it
-  window.location.href = `/payment-success?order_id=${orderId}`;
-  resolve(true);
-}
-```
+### Step 4: Allowlist Callback URL in Razorpay Dashboard
+You'll need to add the callback URL to your Razorpay dashboard's allowlisted URLs:
+- Go to Razorpay Dashboard → Settings → Checkout Configuration
+- Add: `https://xylfnqrtzqfduutdcxvu.supabase.co/functions/v1/razorpay-callback`
 
 ---
 
 ## Technical Details
 
-| Change | File | Purpose |
-|--------|------|---------|
-| Fix field mapping | `razorpay-create-order/index.ts` | Prevent billing profile insert errors |
-| Add idempotency check | `razorpay-verify-payment/index.ts` | Return success on duplicate verifications |
-| Handle already_processed | `useRazorpayCheckout.ts` | Ensure redirect happens on retries |
-| Verify order state | `useRazorpayCheckout.ts` | Confirm data is readable before redirect |
+### New Callback Flow
+
+```text
+┌─────────────┐    ┌──────────────┐    ┌─────────────────────┐    ┌─────────────────┐
+│   User      │───►│  Razorpay    │───►│  razorpay-callback  │───►│ /payment-success│
+│ clicks Pay  │    │  full page   │    │  (edge function)    │    │    (frontend)   │
+└─────────────┘    │  checkout    │    │                     │    └─────────────────┘
+                   └──────────────┘    │ 1. Parse POST body  │
+                                       │ 2. Get order_id     │
+                                       │ 3. Verify signature │
+                                       │ 4. Process payment  │
+                                       │ 5. 302 redirect     │
+                                       └─────────────────────┘
+```
+
+### Callback Edge Function Logic
+
+1. Parse `application/x-www-form-urlencoded` POST body from Razorpay
+2. Extract `razorpay_order_id`, `razorpay_payment_id`, `razorpay_signature`
+3. Fetch our internal `order_id` from `payment_orders` table using `rz_order_id`
+4. Verify HMAC signature
+5. Call `process_payment_success` RPC
+6. Return HTTP 302 redirect to `/payment-success?order_id=xxx`
+
+### Frontend Changes
+
+| Current | New |
+|---------|-----|
+| `handler: function(response) {...}` | Removed (not used in redirect mode) |
+| Modal opens on page | Full-page redirect to Razorpay |
+| JavaScript handles response | Server handles POST callback |
 
 ---
 
-## Testing Checklist
+## Files to Create/Modify
 
-After implementation:
-1. Purchase power-up credits with billing info → Should redirect to success page
-2. Refresh during payment → Should not create duplicate credits
-3. Complete payment quickly → Should redirect without delay
-4. Check billing_profiles table → Should have correct address data
+| File | Action | Purpose |
+|------|--------|---------|
+| `supabase/functions/razorpay-callback/index.ts` | Create | Handle POST callback from Razorpay |
+| `supabase/functions/razorpay-create-order/index.ts` | Modify | Return callback URL |
+| `src/hooks/useRazorpayCheckout.ts` | Modify | Add callback_url and redirect options |
 
 ---
 
-## Files to Modify
+## Post-Implementation Steps
 
-1. `supabase/functions/razorpay-create-order/index.ts` - Fix billingData interface
-2. `supabase/functions/razorpay-verify-payment/index.ts` - Add idempotency check
-3. `src/hooks/useRazorpayCheckout.ts` - Improve error handling and add state verification
+1. **Deploy the new edge function** (automatic)
+2. **Allowlist the callback URL** in Razorpay Dashboard:
+   - Navigate to: Settings → Checkout Configuration → Callback URL
+   - Add: `https://xylfnqrtzqfduutdcxvu.supabase.co/functions/v1/razorpay-callback`
+3. **Test the full flow** with a test payment
