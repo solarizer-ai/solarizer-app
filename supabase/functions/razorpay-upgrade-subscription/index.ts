@@ -124,11 +124,11 @@ Deno.serve(async (req) => {
     
     const prorationAmount = calculateProration(fromPlan, toPlan, daysRemaining, totalDays);
 
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
+
     // If proration amount is 0 or very small, just upgrade directly
     if (prorationAmount < 100) { // Less than $1
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
-
       await adminSupabase
         .from("subscriptions")
         .update({
@@ -147,10 +147,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create a proration order for the difference
+    // Create a Payment Link (same approach as power-ups)
     const orderId = `upgrade_${Date.now()}_${user.id.slice(0, 8)}`;
+    const callbackUrl = Deno.env.get("SUPABASE_URL")?.includes("localhost")
+      ? "http://localhost:5173/payment-success"
+      : "https://solarizer-app.lovable.app/payment-success";
 
-    const rzResponse = await fetch("https://api.razorpay.com/v1/orders", {
+    const planDisplayName = toPlan.charAt(0).toUpperCase() + toPlan.slice(1);
+
+    const rzResponse = await fetch("https://api.razorpay.com/v1/payment_links", {
       method: "POST",
       headers: {
         Authorization: getRazorpayAuth(),
@@ -159,7 +164,10 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount: prorationAmount,
         currency: "USD",
-        receipt: orderId,
+        reference_id: orderId,
+        description: `Upgrade to ${planDisplayName} Plan (prorated)`,
+        callback_url: callbackUrl,
+        callback_method: "get",
         notes: {
           user_id: user.id,
           order_type: "upgrade",
@@ -171,25 +179,22 @@ Deno.serve(async (req) => {
 
     if (!rzResponse.ok) {
       const errorText = await rzResponse.text();
-      console.error("Razorpay create upgrade order error:", errorText);
+      console.error("Razorpay create payment link error:", errorText);
       return new Response(
-        JSON.stringify({ error: "Failed to create upgrade order" }),
+        JSON.stringify({ error: "Failed to create upgrade payment link" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const rzOrder = await rzResponse.json();
+    const rzPaymentLink = await rzResponse.json();
 
     // Store the upgrade order
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
-
     await adminSupabase.rpc("create_payment_order", {
       p_user_id: user.id,
       p_order_id: orderId,
       p_order_type: "upgrade",
       p_amount_cents: prorationAmount,
-      p_payment_session_id: rzOrder.id,
+      p_payment_session_id: rzPaymentLink.id,
       p_plan: toPlan,
       p_billing_period: "monthly",
       p_credits_amount: null,
@@ -198,7 +203,7 @@ Deno.serve(async (req) => {
     await adminSupabase
       .from("payment_orders")
       .update({
-        rz_order_id: rzOrder.id,
+        rz_payment_link_id: rzPaymentLink.id,
         metadata: {
           from_plan: fromPlan,
           to_plan: toPlan,
@@ -211,12 +216,11 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         flowType: "proration_order",
+        paymentUrl: rzPaymentLink.short_url,
         orderId,
-        rzOrderId: rzOrder.id,
         prorationAmount,
         fromPlan,
         toPlan,
-        keyId: Deno.env.get("RAZORPAY_KEY_ID"),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
