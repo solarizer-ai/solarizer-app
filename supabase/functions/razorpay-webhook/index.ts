@@ -104,35 +104,63 @@ Deno.serve(async (req) => {
     switch (event) {
       case "payment.captured": {
         // One-time payment captured
-        const orderId = entity?.order_id;
+        const rzOrderId = entity?.order_id;
         const paymentId = entity?.id;
         const amountCents = entity?.amount;
+        const notes = entity?.notes || {};
 
-        if (orderId) {
-          // Find our order by Razorpay order ID
-          const { data: order } = await supabase
+        let order = null;
+
+        // Try finding by Razorpay order ID first (standard orders)
+        if (rzOrderId) {
+          const { data } = await supabase
             .from("payment_orders")
-            .select("order_id, order_type, plan, user_id")
-            .eq("rz_order_id", orderId)
+            .select("order_id, order_type, plan, user_id, metadata")
+            .eq("rz_order_id", rzOrderId)
             .single();
+          order = data;
+        }
 
-          if (order) {
-            // Process payment success
-            await supabase.rpc("process_payment_success", {
-              p_order_id: order.order_id,
-              p_cf_payment_id: paymentId,
-            });
+        // Fallback: Payment Link orders store our order_id in notes.reference_id
+        if (!order && notes.reference_id) {
+          const { data } = await supabase
+            .from("payment_orders")
+            .select("order_id, order_type, plan, user_id, metadata")
+            .eq("order_id", notes.reference_id)
+            .single();
+          order = data;
+        }
 
-            // For upgrade orders, update the plan
-            if (order.order_type === "upgrade" && order.plan) {
-              await supabase
-                .from("subscriptions")
-                .update({
-                  plan: order.plan,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("user_id", order.user_id);
-            }
+        if (order) {
+          // Process payment success
+          await supabase.rpc("process_payment_success", {
+            p_order_id: order.order_id,
+            p_cf_payment_id: paymentId,
+          });
+
+          // For upgrade orders, update the subscription plan
+          if (order.order_type === "upgrade" && order.plan) {
+            const metadata = order.metadata as Record<string, string> | null;
+            const fromPlan = metadata?.from_plan || "starter";
+
+            await supabase
+              .from("subscriptions")
+              .update({
+                plan: order.plan,
+                pending_plan: null,
+                pending_plan_effective_date: null,
+                cancel_at_period_end: false,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("user_id", order.user_id);
+
+            await supabase
+              .from("subscription_history")
+              .insert({
+                user_id: order.user_id,
+                previous_plan: fromPlan,
+                new_plan: order.plan,
+              });
           }
         }
         break;

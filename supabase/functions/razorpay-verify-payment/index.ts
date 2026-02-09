@@ -107,7 +107,40 @@ Deno.serve(async (req) => {
       .single();
 
     if (existingOrder?.status === 'paid') {
-      // Already processed - return success with existing data
+      // Already processed - but check if upgrade was actually applied
+      if (existingOrder.order_type === 'upgrade' && existingOrder.plan) {
+        const { data: currentSub } = await adminSupabase
+          .from("subscriptions")
+          .select("plan")
+          .eq("user_id", user.id)
+          .single();
+
+        // If the subscription still has the old plan, apply the upgrade now
+        if (currentSub && currentSub.plan !== existingOrder.plan) {
+          const metadata = existingOrder.metadata as Record<string, string> | null;
+          const fromPlan = metadata?.from_plan || currentSub.plan;
+
+          await adminSupabase
+            .from("subscriptions")
+            .update({
+              plan: existingOrder.plan,
+              pending_plan: null,
+              pending_plan_effective_date: null,
+              cancel_at_period_end: false,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", user.id);
+
+          await adminSupabase
+            .from("subscription_history")
+            .insert({
+              user_id: user.id,
+              previous_plan: fromPlan,
+              new_plan: existingOrder.plan,
+            });
+        }
+      }
+
       const { data: credits } = await adminSupabase
         .from("nloc_credits")
         .select("credits_remaining")
