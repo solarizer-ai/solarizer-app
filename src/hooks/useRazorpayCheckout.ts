@@ -19,7 +19,9 @@ interface RazorpayOptions {
   name: string;
   description?: string;
   image?: string;
-  handler: (response: RazorpayResponse) => void;
+  handler?: (response: RazorpayResponse) => void;
+  callback_url?: string;
+  redirect?: boolean;
   prefill?: {
     email?: string;
     contact?: string;
@@ -68,6 +70,7 @@ interface CreateOrderResponse {
   currency: string;
   description: string;
   keyId: string;
+  callbackUrl: string;
   error?: string;
 }
 
@@ -104,7 +107,7 @@ export function useRazorpayCheckout() {
         return false;
       }
 
-      const { orderId, rzOrderId, amountCents, currency, description, keyId } = data;
+      const { orderId, rzOrderId, amountCents, currency, description, keyId, callbackUrl } = data;
 
       // Check if Razorpay SDK is loaded
       if (typeof window.Razorpay === "undefined") {
@@ -116,87 +119,30 @@ export function useRazorpayCheckout() {
         return false;
       }
 
-      // Open Razorpay Checkout
-      return new Promise<boolean>((resolve) => {
-        const options: RazorpayOptions = {
-          key: keyId,
-          order_id: rzOrderId,
-          amount: amountCents,
-          currency: currency,
-          name: "Solarizer",
-          description: description,
-          handler: async (response: RazorpayResponse) => {
-            // Verify payment on server
-            try {
-              const { data: verifyResult, error: verifyError } = await invokeWithRefresh<{ success: boolean; already_processed?: boolean; error?: string }>(
-                "razorpay-verify-payment",
-                {
-                  body: {
-                    order_id: orderId,
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                  },
-                }
-              );
+      // Open Razorpay Checkout with full-page redirect
+      const options: RazorpayOptions = {
+        key: keyId,
+        order_id: rzOrderId,
+        amount: amountCents,
+        currency: currency,
+        name: "Solarizer",
+        description: description,
+        callback_url: callbackUrl,
+        redirect: true,
+        prefill: {
+          email: user?.email || session.user.email || "",
+        },
+        theme: {
+          color: "#3B82F6",
+        },
+      };
 
-              if (verifyError || !verifyResult?.success) {
-                toast({
-                  title: "Payment Verification Failed",
-                  description: verifyResult?.error || "Please contact support.",
-                  variant: "destructive",
-                });
-                setIsLoading(false);
-                resolve(false);
-                return;
-              }
-
-              // Verify order is accessible before redirecting
-              const { data: confirmedOrder } = await supabase
-                .from("payment_orders")
-                .select("status")
-                .eq("order_id", orderId)
-                .single();
-
-              // Redirect to success page (works for both new and already_processed)
-              if (confirmedOrder?.status === 'paid' || verifyResult.already_processed) {
-                window.location.href = `/payment-success?order_id=${orderId}`;
-                resolve(true);
-              } else {
-                // Fallback: redirect anyway since webhook may process it
-                window.location.href = `/payment-success?order_id=${orderId}`;
-                resolve(true);
-              }
-            } catch (err) {
-              console.error("Payment verification error:", err);
-              toast({
-                title: "Payment Error",
-                description: "Failed to verify payment. Please contact support.",
-                variant: "destructive",
-              });
-              setIsLoading(false);
-              resolve(false);
-            }
-          },
-          prefill: {
-            email: user?.email || session.user.email || "",
-          },
-          theme: {
-            color: "#3B82F6", // Primary brand color
-          },
-          modal: {
-            ondismiss: () => {
-              setIsLoading(false);
-              resolve(false);
-            },
-            escape: true,
-            confirm_close: true,
-          },
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      });
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+      
+      // In redirect mode, the page will navigate away
+      // Return true since we initiated the checkout successfully
+      return true;
     } catch (error) {
       console.error("Checkout error:", error);
       toast({

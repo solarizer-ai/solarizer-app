@@ -188,6 +188,9 @@ Deno.serve(async (req) => {
       .update({ rz_order_id: rzOrder.id })
       .eq("order_id", orderId);
 
+    const supabaseProjectUrl = Deno.env.get("SUPABASE_URL")!;
+    const callbackUrl = `${supabaseProjectUrl}/functions/v1/razorpay-callback`;
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -197,6 +200,7 @@ Deno.serve(async (req) => {
         currency: "USD",
         description,
         keyId: Deno.env.get("RAZORPAY_KEY_ID"),
+        callbackUrl,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
