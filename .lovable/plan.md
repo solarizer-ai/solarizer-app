@@ -1,52 +1,46 @@
 
 
-# Simplify Checkout: Remove Billing Info Modal
+# Fix: Solidity Code Blocks Not Rendering in Remediation Guide
 
-## What Changes
+## Problem
 
-Remove the `BillingInfoModal` step from all checkout flows. Instead of collecting full address/phone/tax details before payment, just pass the customer's name and email (from their account) directly to Razorpay. Razorpay's hosted checkout page handles everything else.
+The remediation text stored in the database contains code blocks without triple-backtick delimiters. Instead of:
 
-## Why This Is Safe
+````
+```solidity
+function foo() { ... }
+```
+````
 
-- Razorpay's hosted checkout already collects payment details
-- The billing_profiles table can stay in the database (no data loss) but won't be required for checkout
-- Customer name and email are already available from the auth session
+The data looks like:
 
-## Files to Change
+```text
+...some text.
 
-### 1. `src/components/PurchasePowerUpModal.tsx`
-- Remove `BillingInfoModal` import and usage
-- Remove `showBillingModal` state
-- Remove `handleBillingConfirm` -- merge into `handlePurchaseClick`
-- Call `initiateCheckout` directly on purchase click (no billing modal step)
-- Remove `billingData` from the checkout params
+solidity
+function foo() { ... }
+```
 
-### 2. `src/pages/Pricing.tsx`
-- Remove `BillingInfoModal` import and usage
-- Remove `billingModalOpen` state
-- Adjust subscription purchase flow to call checkout directly without billing modal
+The current `renderWithCodeFormatting` regex only matches triple-backtick fenced blocks, so these unfenced code blocks render as plain inline text.
 
-### 3. `src/hooks/useRazorpayCheckout.ts`
-- Remove `billingData` from `CreateOrderParams` interface
+## Fix
 
-### 4. `src/hooks/useRazorpaySubscription.ts`
-- Remove `billingData` from subscription creation params (if present)
+### File: `src/components/FindingItem.tsx`
 
-### 5. `supabase/functions/razorpay-create-order/index.ts`
-- Remove `billingData` handling (the upsert to `billing_profiles`)
-- Keep passing `customer.email` and add `customer.name` from user metadata to the Razorpay Payment Link
+Update `renderWithCodeFormatting` to detect unfenced code blocks. After the existing triple-backtick extraction pass, add a second pass on remaining text segments that detects the pattern:
 
-### 6. `src/types/billing.ts`
-- Keep the file (types may be used elsewhere) but the `BillingData` type is no longer needed for checkout
+- A line containing only a known language identifier (e.g., `solidity`, `sol`, `javascript`, `python`, etc.)
+- Followed by lines that look like code (containing `{`, `}`, `function`, `require`, `//`, etc.)
 
-### 7. `src/components/BillingInfoModal.tsx`
-- Can be deleted entirely (no remaining consumers)
+**Implementation approach:**
 
-## What Stays
+1. After the triple-backtick extraction loop (around line 200), add a post-processing step on text segments
+2. For each text segment, use a regex like: `/\n(solidity|sol)\n([\s\S]+?)(?=\n\n|\n[A-Z]|$)/g` to find bare language tags followed by code
+3. Split those into proper `codeblock` segment objects so they render with syntax highlighting
 
-- The `billing_profiles` table remains in the database (no migration needed)
-- The `useBillingProfile` hook stays (used on Settings/BillingHistory pages if applicable)
+This is a minimal change -- only the `renderWithCodeFormatting` function is modified. No other files or database changes needed.
 
-## User Impact
+| File | Change |
+|------|--------|
+| `src/components/FindingItem.tsx` | Add unfenced code block detection in `renderWithCodeFormatting` |
 
-Clicking "Purchase" or "Subscribe" now goes straight to Razorpay's payment page -- no intermediate form. Faster checkout with less friction.
