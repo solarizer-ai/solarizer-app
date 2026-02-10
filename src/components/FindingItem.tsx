@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb, Lock, Zap } from "lucide-react";
+import CodeBlock from "@/components/CodeBlock";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FindingComments } from "@/components/FindingComments";
@@ -246,19 +247,13 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
       // Render code block with syntax highlighting for Solidity
       const isSolidity = segment.language === 'solidity' || segment.language === 'sol';
       return (
-        <div key={segmentIndex} className="my-3 bg-background rounded-md border border-border p-3 text-sm overflow-x-auto max-w-full" style={{ fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace" }}>
-          {segment.language && (
-            <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">
-              {segment.language}
-            </div>
-          )}
-          <div className="min-w-max">
-            {isSolidity || useHighlighting 
-              ? highlightSolidityCode(segment.code, 1) 
-              : <pre className="whitespace-pre overflow-x-auto text-foreground/90">{segment.code}</pre>
-            }
-          </div>
-        </div>
+        <CodeBlock
+          key={segmentIndex}
+          code={segment.code}
+          language={segment.language}
+          useHighlighting={isSolidity || useHighlighting}
+          highlightFn={isSolidity || useHighlighting ? highlightSolidityCode : undefined}
+        />
       );
     }
     
@@ -543,11 +538,12 @@ const FindingItem = ({
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               Affected Code
             </h4>
-            <div className="bg-background rounded-md border border-border p-3 text-sm overflow-x-auto max-w-full" style={{ fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace" }}>
-              <div className="min-w-max">
-                {highlightSolidityCode(finding.code, finding.startLine)}
-              </div>
-            </div>
+            <CodeBlock
+              code={finding.code}
+              startLine={finding.startLine}
+              useHighlighting={true}
+              highlightFn={highlightSolidityCode}
+            />
             </div>
           )}
 
