@@ -90,7 +90,9 @@ const Index = () => {
   // Global scan context
   const { startScan, isScanning } = useScan();
   
-  // Modal state for in-progress analysis
+  // Subscribe modal for users with no plan
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   
   // Subscription & credits state
@@ -251,6 +253,12 @@ const Index = () => {
   };
 
   const handleNewAudit = () => {
+    // If no subscription, show subscribe prompt
+    if (!subscription) {
+      setShowSubscribeModal(true);
+      return;
+    }
+    
     // If analysis is in progress, show modal instead of wizard
     if (analysisInProgress) {
       setShowAnalysisModal(true);
@@ -549,6 +557,50 @@ const Index = () => {
         open={showAnalysisModal}
         onOpenChange={setShowAnalysisModal}
       />
+
+      {/* Subscribe Modal for users with no plan */}
+      <AlertDialog open={showSubscribeModal} onOpenChange={setShowSubscribeModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              Subscribe to Run Analysis
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>You need an active plan to run security analyses. Choose a plan that fits your needs:</p>
+              <div className="grid gap-2 pt-2">
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Launch</p>
+                    <p className="text-xs text-muted-foreground">1 file per scan · 150 nLOC</p>
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">$49/mo</p>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border border-primary/40 bg-primary/5">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Pro</p>
+                    <p className="text-xs text-muted-foreground">Unlimited files · 50 nLOC credits</p>
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">$299/mo</p>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Business</p>
+                    <p className="text-xs text-muted-foreground">Unlimited files · 50 nLOC credits · Sharing</p>
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">$499/mo</p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate("/pricing")}>
+              View Plans
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>
