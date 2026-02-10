@@ -117,7 +117,8 @@ const Settings = () => {
     }
   };
 
-  const plan = subscription?.plan || 'starter';
+  const hasSubscription = !!subscription;
+  const plan = subscription?.plan || null;
   const isPro = plan === 'pro';
   const isBusiness = plan === 'business';
   const isPaid = isPro || isBusiness;
@@ -130,6 +131,7 @@ const Settings = () => {
   const hasPaymentMethod = subscription?.payment_method_saved === true;
 
   const getPlanDisplayName = () => {
+    if (!hasSubscription) return 'No Plan';
     if (subscription?.pending_plan) {
       const pendingName = subscription.pending_plan === 'business' ? 'Business' : 
                           subscription.pending_plan === 'pro' ? 'Pro' : 'Launch';
@@ -141,6 +143,7 @@ const Settings = () => {
   };
 
   const getPlanDescription = () => {
+    if (!hasSubscription) return 'Subscribe to a plan to start using the platform';
     if (hasPendingCancellation && subscription?.current_period_end) {
       return `Access until ${format(new Date(subscription.current_period_end), "MMM d, yyyy")}`;
     }
@@ -366,7 +369,15 @@ const Settings = () => {
                         </div>
                       )}
 
-                      {!isPaid && (
+                      {!hasSubscription && (
+                        <Button onClick={() => navigate("/pricing")} className="gap-2">
+                          <Zap className="w-4 h-4" />
+                          Subscribe to a Plan
+                          <ArrowUpRight className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      {hasSubscription && !isPaid && (
                         <Button onClick={() => navigate("/pricing")} className="gap-2">
                           <Zap className="w-4 h-4" />
                           Upgrade to Pro
@@ -403,12 +414,13 @@ const Settings = () => {
                   <Card>
                     <CardContent className="pt-6">
                       <SubscriptionPlanSelector
-                        currentPlan={subscription?.plan || "starter"}
+                        currentPlan={subscription?.plan || null}
                         pendingPlan={subscription?.pending_plan || null}
                         pendingPlanDate={subscription?.pending_plan_effective_date || null}
                         hasPendingCancellation={hasPendingCancellation}
                         onUpgrade={handleUpgradeClick}
                         onDowngrade={handleDowngradeClick}
+                        onSubscribe={() => navigate("/pricing")}
                         onCancelPendingDowngrade={() => cancelPendingDowngrade()}
                         isLoading={subscriptionActionLoading || isSchedulingDowngrade}
                         isCancellingDowngrade={isCancellingDowngrade}

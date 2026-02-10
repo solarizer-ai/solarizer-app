@@ -32,12 +32,13 @@ const PLANS: Plan[] = [
 ];
 
 interface SubscriptionPlanSelectorProps {
-  currentPlan: "starter" | "pro" | "business";
+  currentPlan: "starter" | "pro" | "business" | null;
   pendingPlan: "starter" | "pro" | "business" | null;
   pendingPlanDate: string | null;
   hasPendingCancellation: boolean;
   onUpgrade: (plan: "pro" | "business") => void;
   onDowngrade: (plan: "starter" | "pro") => void;
+  onSubscribe?: (plan: "starter" | "pro" | "business") => void;
   onCancelPendingDowngrade: () => void;
   isLoading: boolean;
   isCancellingDowngrade: boolean;
@@ -52,13 +53,19 @@ export function SubscriptionPlanSelector({
   hasPendingCancellation,
   onUpgrade,
   onDowngrade,
+  onSubscribe,
   onCancelPendingDowngrade,
   isLoading,
   isCancellingDowngrade,
 }: SubscriptionPlanSelectorProps) {
-  const currentPlanOrder = PLAN_ORDER[currentPlan];
+  const currentPlanOrder = currentPlan ? PLAN_ORDER[currentPlan] : -1;
 
   const getPlanAction = (planId: Plan["id"]) => {
+    // No subscription = all plans are "subscribe"
+    if (currentPlan === null) {
+      return "subscribe";
+    }
+    
     const planOrder = PLAN_ORDER[planId];
     
     if (planId === currentPlan) {
@@ -94,6 +101,22 @@ export function SubscriptionPlanSelector({
     }
 
     switch (action) {
+      case "subscribe":
+        return (
+          <Button
+            size="sm"
+            className="w-full gap-1"
+            onClick={() => onSubscribe?.(plan.id)}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <ArrowUp className="w-3 h-3" />
+            )}
+            Subscribe
+          </Button>
+        );
       case "current":
         return (
           <Badge variant="secondary" className="w-full justify-center py-1.5">

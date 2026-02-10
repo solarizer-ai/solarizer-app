@@ -36,7 +36,7 @@ export const PLAN_LIMITS = {
   starter: {
     nlocPerScan: 150,
     maxFilesPerScan: 1,
-    initialCredits: 50,
+    initialCredits: 0,
   },
   pro: {
     monthlyNloc: 150,
