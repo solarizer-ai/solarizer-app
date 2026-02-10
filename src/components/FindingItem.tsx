@@ -246,7 +246,7 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
       // Render code block with syntax highlighting for Solidity
       const isSolidity = segment.language === 'solidity' || segment.language === 'sol';
       return (
-        <div key={segmentIndex} className="my-3 bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto max-w-full">
+        <div key={segmentIndex} className="my-3 bg-background rounded-md border border-border p-3 text-sm overflow-x-auto max-w-full" style={{ fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace" }}>
           {segment.language && (
             <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">
               {segment.language}
@@ -543,7 +543,7 @@ const FindingItem = ({
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               Affected Code
             </h4>
-            <div className="bg-background rounded-md border border-border p-3 font-mono text-sm overflow-x-auto max-w-full">
+            <div className="bg-background rounded-md border border-border p-3 text-sm overflow-x-auto max-w-full" style={{ fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace" }}>
               <div className="min-w-max">
                 {highlightSolidityCode(finding.code, finding.startLine)}
               </div>
