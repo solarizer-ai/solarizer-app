@@ -203,8 +203,45 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
   if (lastIndex < normalizedText.length) {
     segments.push(normalizedText.slice(lastIndex));
   }
+
+  // Second pass: detect unfenced code blocks (bare language tag on its own line followed by code)
+  const knownLangs = ['solidity', 'sol', 'javascript', 'typescript', 'python', 'rust', 'go', 'java', 'cpp', 'c'];
+  const langPattern = new RegExp(`(?:^|\\n)(${knownLangs.join('|')})\\n([\\s\\S]+?)(?=\\n\\n(?:[A-Z])|$)`, 'g');
   
-  return segments.map((segment, segmentIndex) => {
+  const processedSegments: typeof segments = [];
+  for (const seg of segments) {
+    if (typeof seg !== 'string') {
+      processedSegments.push(seg);
+      continue;
+    }
+    
+    let segLastIndex = 0;
+    let langMatch;
+    langPattern.lastIndex = 0;
+    let hasMatch = false;
+    
+    while ((langMatch = langPattern.exec(seg)) !== null) {
+      hasMatch = true;
+      const matchStart = langMatch.index + (langMatch[0].startsWith('\n') ? 1 : 0);
+      if (matchStart > segLastIndex) {
+        processedSegments.push(seg.slice(segLastIndex, matchStart));
+      }
+      processedSegments.push({
+        type: 'codeblock' as const,
+        language: langMatch[1],
+        code: langMatch[2].trim(),
+      });
+      segLastIndex = langMatch.index + langMatch[0].length;
+    }
+    
+    if (!hasMatch) {
+      processedSegments.push(seg);
+    } else if (segLastIndex < seg.length) {
+      processedSegments.push(seg.slice(segLastIndex));
+    }
+  }
+  
+  return processedSegments.map((segment, segmentIndex) => {
     if (typeof segment === 'object' && segment.type === 'codeblock') {
       // Render code block with syntax highlighting for Solidity
       const isSolidity = segment.language === 'solidity' || segment.language === 'sol';
