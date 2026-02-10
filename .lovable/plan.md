@@ -1,46 +1,60 @@
 
 
-# Fix: Solidity Code Blocks Not Rendering in Remediation Guide
+# Add Copy Button, Auto-Format & Indent Code Blocks
 
-## Problem
-
-The remediation text stored in the database contains code blocks without triple-backtick delimiters. Instead of:
-
-````
-```solidity
-function foo() { ... }
-```
-````
-
-The data looks like:
-
-```text
-...some text.
-
-solidity
-function foo() { ... }
-```
-
-The current `renderWithCodeFormatting` regex only matches triple-backtick fenced blocks, so these unfenced code blocks render as plain inline text.
-
-## Fix
+## Changes
 
 ### File: `src/components/FindingItem.tsx`
 
-Update `renderWithCodeFormatting` to detect unfenced code blocks. After the existing triple-backtick extraction pass, add a second pass on remaining text segments that detects the pattern:
+**1. Create a `CodeBlock` wrapper component** that wraps all code blocks with:
+- A header bar showing the language label on the left and a **Copy** button (using `Copy`/`Check` icons from lucide-react) on the top-right
+- On click, copies the raw code text to clipboard and shows a brief checkmark state for 2 seconds
 
-- A line containing only a known language identifier (e.g., `solidity`, `sol`, `javascript`, `python`, etc.)
-- Followed by lines that look like code (containing `{`, `}`, `function`, `require`, `//`, etc.)
+**2. Auto-format and properly indent the code** before rendering:
+- Normalize indentation: detect the minimum leading whitespace across non-empty lines and strip it so code is left-aligned at baseline
+- **Re-indent based on brace nesting**: track `{` and `}` characters to compute proper indentation depth (2 or 4 spaces per level), so function bodies, if-blocks, etc. are visually nested like in a normal code editor
+- Trim trailing whitespace from each line
+- Collapse 3+ consecutive blank lines into 1
 
-**Implementation approach:**
+**3. Apply to all code block locations:**
+- Remediation guide code blocks (inside `renderWithCodeFormatting`)
+- Affected Code section
+- Both use the same `CodeBlock` wrapper
 
-1. After the triple-backtick extraction loop (around line 200), add a post-processing step on text segments
-2. For each text segment, use a regex like: `/\n(solidity|sol)\n([\s\S]+?)(?=\n\n|\n[A-Z]|$)/g` to find bare language tags followed by code
-3. Split those into proper `codeblock` segment objects so they render with syntax highlighting
+## Technical Details
 
-This is a minimal change -- only the `renderWithCodeFormatting` function is modified. No other files or database changes needed.
-
-| File | Change |
+| Area | Detail |
 |------|--------|
-| `src/components/FindingItem.tsx` | Add unfenced code block detection in `renderWithCodeFormatting` |
+| Copy icon | `Copy` and `Check` from `lucide-react` (already installed) |
+| Clipboard API | `navigator.clipboard.writeText()` |
+| Indentation | Brace-based: increment depth after `{`, decrement before `}`, apply 4-space indent per level |
+| Normalization | Strip common leading whitespace first, then re-indent |
+| State | Local `useState` for copied feedback, reset after 2s via `setTimeout` |
+
+### Auto-indent logic (pseudocode):
+
+```text
+depth = 0
+for each line:
+  trimmed = line.trim()
+  if trimmed starts with '}': depth--
+  formatted = '    '.repeat(depth) + trimmed
+  if trimmed ends with '{': depth++
+  output formatted line
+```
+
+### CodeBlock component structure:
+
+```text
++------------------------------------------+
+| SOLIDITY                      [Copy icon] |
++------------------------------------------+
+| 1 | function foo() {                      |
+| 2 |     require(msg.sender == owner);     |
+| 3 |     balances[msg.sender] -= amount;   |
+| 4 | }                                     |
++------------------------------------------+
+```
+
+No new files or dependencies needed -- just updates to `FindingItem.tsx`.
 
