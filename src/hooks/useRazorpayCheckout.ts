@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import type { BillingData } from "@/types/billing";
 import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 interface CreateOrderParams {
@@ -9,7 +8,6 @@ interface CreateOrderParams {
   plan?: "starter" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
-  billingData?: BillingData;
   // For upgrades
   fromPlan?: string;
   toPlan?: string;

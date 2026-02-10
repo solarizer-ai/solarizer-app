@@ -12,8 +12,6 @@ import { Input } from "@/components/ui/input";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useRazorpayCheckout } from "@/hooks/useRazorpayCheckout";
 import { toast } from "@/hooks/use-toast";
-import { BillingInfoModal } from "@/components/BillingInfoModal";
-import type { BillingData } from "@/types/billing";
 
 interface PurchasePowerUpModalProps {
   open: boolean;
@@ -34,7 +32,6 @@ export function PurchasePowerUpModal({
 }: PurchasePowerUpModalProps) {
   const [customCredits, setCustomCredits] = useState<number>(1000);
   const [inputValue, setInputValue] = useState<string>("1000");
-  const [showBillingModal, setShowBillingModal] = useState(false);
   const { data: subscription } = useSubscription();
   const { initiateCheckout, isLoading: checkoutLoading } = useRazorpayCheckout();
 
@@ -85,7 +82,7 @@ export function PurchasePowerUpModal({
     setInputValue(amount.toString());
   };
 
-  const handlePurchaseClick = () => {
+  const handlePurchaseClick = async () => {
     if (customCredits < MIN_CREDITS) {
       toast({
         title: "Minimum Purchase",
@@ -94,17 +91,9 @@ export function PurchasePowerUpModal({
       });
       return;
     }
-    // Show billing modal instead of directly initiating checkout
-    setShowBillingModal(true);
-  };
-
-  const handleBillingConfirm = async (billingData: BillingData) => {
-    setShowBillingModal(false);
-    
     await initiateCheckout({
       orderType: "power_up",
       creditsAmount: customCredits,
-      billingData,
     });
   };
 
@@ -224,14 +213,6 @@ export function PurchasePowerUpModal({
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Billing Info Modal */}
-      <BillingInfoModal
-        open={showBillingModal}
-        onOpenChange={setShowBillingModal}
-        onConfirm={handleBillingConfirm}
-        isLoading={checkoutLoading}
-      />
     </>
   );
 }

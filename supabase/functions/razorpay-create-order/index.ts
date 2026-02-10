@@ -11,17 +11,6 @@ interface CreateOrderRequest {
   plan?: "starter" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
-  billingData?: {
-    phone: string;
-    address_line1: string;
-    address_line2?: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
-    company_name?: string;
-    tax_id?: string;
-  };
   // For upgrades
   fromPlan?: string;
   toPlan?: string;
@@ -84,7 +73,7 @@ Deno.serve(async (req) => {
     }
 
     const body: CreateOrderRequest = await req.json();
-    const { orderType, plan, creditsAmount, billingData, prorationAmount } = body;
+    const { orderType, plan, creditsAmount, prorationAmount } = body;
 
     // Calculate amount based on order type
     let amountCents: number;
@@ -137,11 +126,8 @@ Deno.serve(async (req) => {
         callback_url: callbackUrl,
         callback_method: "get", // GET is easier to handle on frontend
         customer: {
+          name: user.user_metadata?.display_name || user.email?.split("@")[0] || "",
           email: user.email,
-        },
-        notify: {
-          email: false, // Don't send email notification
-          sms: false, // Don't send SMS notification
         },
         notes: {
           user_id: user.id,
@@ -164,23 +150,6 @@ Deno.serve(async (req) => {
 
     const paymentLink = await rzResponse.json();
     console.log("Payment link created:", paymentLink.id);
-
-    // Store billing profile if provided
-    if (billingData) {
-      await supabase.from("billing_profiles").upsert({
-        user_id: user.id,
-        phone: billingData.phone,
-        address_line1: billingData.address_line1,
-        address_line2: billingData.address_line2 || null,
-        city: billingData.city,
-        state: billingData.state,
-        postal_code: billingData.postal_code,
-        country: billingData.country,
-        company_name: billingData.company_name || null,
-        tax_id: billingData.tax_id || null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-    }
 
     // Store order in database using RPC
     const { error: orderError } = await supabase.rpc("create_payment_order", {
