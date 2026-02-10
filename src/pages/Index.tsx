@@ -15,7 +15,7 @@ import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
 import { AnalysisInProgressModal } from "@/components/AnalysisInProgressModal";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowRight, FileCode, Loader2, Trash2, ChevronRight } from "lucide-react";
+import { Plus, ArrowRight, FileCode, Loader2, Trash2, ChevronRight, Zap } from "lucide-react";
 import { useAudits, useAudit, useCreateAudit, useUpdateAudit, useDeleteAudit } from "@/hooks/useAudits";
 import type { AuditStatus } from "@/hooks/useAudits";
 import { useSubscription, useCredits, useDeductCredits } from "@/hooks/useSubscription";
@@ -167,6 +167,18 @@ const Index = () => {
     const nloc = clocResult?.totalNloc || calculateNLOC(codeContent);
     const plan = subscription?.plan || 'starter';
     
+    // Block if no subscription
+    if (!subscription) {
+      toast.error("No active plan", {
+        description: "Please subscribe to a plan before running an analysis.",
+        action: {
+          label: "View Plans",
+          onClick: () => navigate("/pricing"),
+        },
+      });
+      return;
+    }
+    
     setProjectName(name);
     setCode(codeContent);
     setShowResults(false);
@@ -317,8 +329,22 @@ const Index = () => {
             {/* Share Invitations Banner */}
             <ShareInvitationBanner />
 
+            {/* Subscribe Prompt for users with no plan */}
+            {!subscription && (
+              <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">No active plan</p>
+                  <p className="text-xs text-muted-foreground">Subscribe to start running security analyses</p>
+                </div>
+                <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
+                  <Zap className="w-3.5 h-3.5" />
+                  View Plans
+                </Button>
+              </div>
+            )}
+
             {/* Low Credit Warning */}
-            {(subscription?.plan === 'pro' || subscription?.plan === 'business') && 
+            {subscription && (subscription.plan === 'pro' || subscription.plan === 'business') && 
              (credits?.credits_remaining ?? 0) < 70 && (
               <LowCreditPrompt 
                 creditsRemaining={credits?.credits_remaining ?? 0}

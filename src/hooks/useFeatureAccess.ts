@@ -17,6 +17,7 @@ export interface FeatureAccess {
   // Plan info
   currentPlan: ExtendedSubscriptionPlan;
   isLoading: boolean;
+  hasSubscription: boolean;
 }
 
 /**
@@ -31,9 +32,10 @@ export function useFeatureAccess(): FeatureAccess {
   const { data: subscription, isLoading } = useSubscription();
 
   const access = useMemo(() => {
-    // Default to starter if no subscription
-    const plan = (subscription?.plan || 'starter') as ExtendedSubscriptionPlan;
+    // No subscription = no plan, all features locked
+    const plan = (subscription?.plan || null) as ExtendedSubscriptionPlan | null;
     
+    const hasSubscription = plan !== null;
     const isPro = plan === 'pro' || plan === 'business';
     const isBusiness = plan === 'business';
 
@@ -49,8 +51,9 @@ export function useFeatureAccess(): FeatureAccess {
       canCommentOnFindings: isBusiness,
       
       // Plan info
-      currentPlan: plan,
+      currentPlan: plan as ExtendedSubscriptionPlan,
       isLoading,
+      hasSubscription,
     };
   }, [subscription, isLoading]);
 

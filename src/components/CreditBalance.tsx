@@ -24,9 +24,18 @@ export function CreditBalance() {
     );
   }
 
+  // No subscription = show "No Plan" state
+  if (!subscription) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border border-border/50">
+        <Zap className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium text-muted-foreground">No Plan</span>
+      </div>
+    );
+  }
+
   const creditsRemaining = credits?.credits_remaining ?? 0;
 
-  // All plans now show credits-based display
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border border-border/50">
