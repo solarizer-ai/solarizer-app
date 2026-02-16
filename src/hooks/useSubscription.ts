@@ -14,9 +14,6 @@ export interface Subscription {
   current_period_end: string | null;
   created_at: string;
   updated_at: string;
-  // New fields for Cashfree Subscriptions
-  cf_subscription_id: string | null;
-  cf_plan_id: string | null;
   pending_plan: SubscriptionPlan | null;
   pending_plan_effective_date: string | null;
   billing_period: string | null;

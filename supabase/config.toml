@@ -21,15 +21,6 @@ verify_jwt = false
 [functions.check-stale-audits]
 verify_jwt = false
 
-[functions.cashfree-create-order]
-verify_jwt = false
-
-[functions.cashfree-webhook]
-verify_jwt = false
-
-[functions.cashfree-verify-payment]
-verify_jwt = false
-
 [functions.razorpay-create-order]
 verify_jwt = false
 

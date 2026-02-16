@@ -247,42 +247,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cf_subscription_events: {
-        Row: {
-          amount_inr: number | null
-          cf_payment_id: string | null
-          cf_subscription_id: string
-          created_at: string | null
-          event_type: string
-          id: string
-          processed_at: string | null
-          raw_payload: Json | null
-          status: string | null
-        }
-        Insert: {
-          amount_inr?: number | null
-          cf_payment_id?: string | null
-          cf_subscription_id: string
-          created_at?: string | null
-          event_type: string
-          id?: string
-          processed_at?: string | null
-          raw_payload?: Json | null
-          status?: string | null
-        }
-        Update: {
-          amount_inr?: number | null
-          cf_payment_id?: string | null
-          cf_subscription_id?: string
-          created_at?: string | null
-          event_type?: string
-          id?: string
-          processed_at?: string | null
-          raw_payload?: Json | null
-          status?: string | null
-        }
-        Relationships: []
-      }
       credit_txns: {
         Row: {
           amount: number
@@ -716,8 +680,6 @@ export type Database = {
         Row: {
           billing_period: string | null
           cancel_at_period_end: boolean | null
-          cf_plan_id: string | null
-          cf_subscription_id: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string
@@ -735,8 +697,6 @@ export type Database = {
         Insert: {
           billing_period?: string | null
           cancel_at_period_end?: boolean | null
-          cf_plan_id?: string | null
-          cf_subscription_id?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string
@@ -754,8 +714,6 @@ export type Database = {
         Update: {
           billing_period?: string | null
           cancel_at_period_end?: boolean | null
-          cf_plan_id?: string | null
-          cf_subscription_id?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string
@@ -799,15 +757,6 @@ export type Database = {
     }
     Functions: {
       accept_share_invitation: { Args: { p_share_id: string }; Returns: Json }
-      activate_subscription: {
-        Args: {
-          p_billing_period?: string
-          p_cf_plan_id: string
-          p_cf_subscription_id: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
       cancel_pending_downgrade: { Args: never; Returns: Json }
       cancel_subscription: { Args: never; Returns: Json }
       cli_deduct_credits: {
@@ -866,10 +815,6 @@ export type Database = {
           project_name: string
         }[]
       }
-      handle_subscription_payment_failed: {
-        Args: { p_cf_payment_id: string; p_cf_subscription_id: string }
-        Returns: Json
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -880,23 +825,6 @@ export type Database = {
       mark_payment_failed: { Args: { p_order_id: string }; Returns: Json }
       process_payment_success: {
         Args: { p_cf_payment_id: string; p_order_id: string }
-        Returns: Json
-      }
-      process_subscription_renewal: {
-        Args: {
-          p_amount_inr?: number
-          p_cf_payment_id: string
-          p_cf_subscription_id: string
-        }
-        Returns: Json
-      }
-      process_upgrade_success: {
-        Args: {
-          p_new_cf_plan_id: string
-          p_new_cf_subscription_id: string
-          p_new_plan: string
-          p_user_id: string
-        }
         Returns: Json
       }
       purchase_power_up: {
