@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.razorpay-callback]
 verify_jwt = false
+
+[functions.cli-auth]
+verify_jwt = false
+
+[functions.cli-generate-api-key]
+verify_jwt = false
