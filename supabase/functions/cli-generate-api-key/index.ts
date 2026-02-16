@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     const fullKey = `sol_live_${randomHex}`;
     const keyPrefix = 'sol_live';
 
-    const keyHash = await bcrypt.hash(fullKey, 10);
+    const keyHash = bcrypt.hashSync(fullKey);
 
     // Encrypt key for later reveal
     const encryptionKey = Deno.env.get('GITHUB_TOKEN_ENCRYPTION_KEY');
