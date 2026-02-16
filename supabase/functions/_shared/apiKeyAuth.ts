@@ -38,7 +38,7 @@ export async function validateApiKey(
 
   for (const key of keys) {
     try {
-      const matches = await bcrypt.compare(apiKey, key.key_hash);
+      const matches = bcrypt.compareSync(apiKey, key.key_hash);
       if (matches) {
         supabase
           .from('api_keys')
