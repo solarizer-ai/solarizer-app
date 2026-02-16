@@ -1,0 +1,1 @@
+ALTER TABLE public.audits ALTER COLUMN contract_code DROP NOT NULL;
