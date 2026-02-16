@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string | null
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name?: string | null
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string | null
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_shares: {
         Row: {
           accepted_at: string | null
@@ -63,50 +96,83 @@ export type Database = {
       }
       audits: {
         Row: {
+          complexity: number | null
+          context_metadata: Json | null
           contract_code: string
           contract_count: number
+          contracts_completed: number | null
+          contracts_total: number | null
           coverage_data: Json | null
           created_at: string
+          credits_deducted: number | null
+          current_contract: string | null
+          error_message: string | null
           grade: Database["public"]["Enums"]["security_grade"] | null
           id: string
           is_locked: boolean
           nloc_count: number | null
           project_name: string
+          scope_metadata: Json | null
           security_score: number | null
+          session_token: string | null
+          source: string | null
           status: Database["public"]["Enums"]["audit_status"]
           system_hologram: Json | null
+          tier_discount: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          complexity?: number | null
+          context_metadata?: Json | null
           contract_code: string
           contract_count?: number
+          contracts_completed?: number | null
+          contracts_total?: number | null
           coverage_data?: Json | null
           created_at?: string
+          credits_deducted?: number | null
+          current_contract?: string | null
+          error_message?: string | null
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
           is_locked?: boolean
           nloc_count?: number | null
           project_name: string
+          scope_metadata?: Json | null
           security_score?: number | null
+          session_token?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["audit_status"]
           system_hologram?: Json | null
+          tier_discount?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          complexity?: number | null
+          context_metadata?: Json | null
           contract_code?: string
           contract_count?: number
+          contracts_completed?: number | null
+          contracts_total?: number | null
           coverage_data?: Json | null
           created_at?: string
+          credits_deducted?: number | null
+          current_contract?: string | null
+          error_message?: string | null
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
           is_locked?: boolean
           nloc_count?: number | null
           project_name?: string
+          scope_metadata?: Json | null
           security_score?: number | null
+          session_token?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["audit_status"]
           system_hologram?: Json | null
+          tier_discount?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -216,6 +282,47 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      credit_txns: {
+        Row: {
+          amount: number
+          audit_id: string | null
+          balance_after: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          audit_id?: string | null
+          balance_after?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          audit_id?: string | null
+          balance_after?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_txns_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finding_comments: {
         Row: {
@@ -703,6 +810,24 @@ export type Database = {
       }
       cancel_pending_downgrade: { Args: never; Returns: Json }
       cancel_subscription: { Args: never; Returns: Json }
+      cli_deduct_credits: {
+        Args: {
+          p_amount: number
+          p_audit_id: string
+          p_description: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      cli_refund_credits: {
+        Args: {
+          p_amount: number
+          p_audit_id: string
+          p_description: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       create_payment_order: {
         Args: {
           p_amount_cents: number
