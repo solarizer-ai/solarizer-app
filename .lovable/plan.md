@@ -1,52 +1,39 @@
 
-
-# Phase 1: CLI Schema Extensions Migration
+# Phase 2: CLI Authentication Layer
 
 ## Summary
 
-Run the uploaded SQL migration to add tables, columns, and RPC functions needed for CLI integration. No existing tables, columns, or functions are modified -- this is purely additive.
+Create the CLI authentication infrastructure: a shared API key validation module and two new edge functions. All code is provided in the uploaded spec files and will be used as-is.
 
-## What Gets Created
+## Files to Create
 
-### New Tables
+### 1. `supabase/functions/_shared/apiKeyAuth.ts`
+Shared helper for API key validation using bcrypt. Imported by `cli-auth` and future CLI edge functions. Content from uploaded `spec-apiKeyAuth.ts`.
 
-| Table | Purpose |
-|-------|---------|
-| `api_keys` | Stores bcrypt-hashed API keys for CLI authentication. RLS: users can view, insert, and update (revoke) their own keys. Indexed on `key_prefix` for fast lookup. |
-| `credit_txns` | Audit trail for all credit movements (deductions, refunds, grants, purchases). RLS: users can view their own transactions only. Insert-only from backend (service role). |
+### 2. `supabase/functions/cli-auth/index.ts`
+Edge function that validates a CLI API key (`x-api-key` header) and returns user profile, subscription tier, credit balance, and any active audit. Content from uploaded `spec-cli-auth.ts`.
 
-### New Columns on `audits`
+### 3. `supabase/functions/cli-generate-api-key/index.ts`
+Edge function that generates a new API key (called from the website using standard JWT auth). Enforces a 5-key limit per user, bcrypt-hashes the key, stores it, and returns the plaintext key once. Content from uploaded `spec-cli-generate-api-key.ts`.
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| `source` | TEXT (web/cli) | Identifies audit origin |
-| `session_token` | TEXT (unique) | CLI session identifier |
-| `complexity` | INTEGER (1-3) | Audit complexity tier |
-| `credits_deducted` | NUMERIC(12,2) | Credits charged for this audit |
-| `tier_discount` | NUMERIC(4,2) | Discount applied |
-| `scope_metadata` | JSONB | Structured scope info |
-| `context_metadata` | JSONB | Structured context info |
-| `contracts_completed` | INTEGER | Progress tracking |
-| `contracts_total` | INTEGER | Progress tracking |
-| `current_contract` | TEXT | Currently processing contract |
-| `error_message` | TEXT | Failure reason |
+## Config Changes
 
-### New RPC Functions
+Append two entries to `supabase/config.toml`:
 
-| Function | Purpose |
-|----------|---------|
-| `cli_deduct_credits(p_user_id, p_amount, p_audit_id, p_description)` | Atomically deducts credits and logs a `credit_txns` entry. Used by CLI session start. |
-| `cli_refund_credits(p_user_id, p_amount, p_audit_id, p_description)` | Refunds credits and logs a `credit_txns` entry. Used on CLI audit failure/cancellation. |
+```text
+[functions.cli-auth]
+verify_jwt = false
 
-Both functions are `SECURITY DEFINER` so they can be called from edge functions with the service role key.
+[functions.cli-generate-api-key]
+verify_jwt = false
+```
 
-## Execution
+## No Secrets Needed
 
-Apply the full SQL from the uploaded `spec-migration.sql` file as a single database migration. All statements are idempotent (`IF NOT EXISTS`, `CREATE OR REPLACE`).
+`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` are already configured.
 
 ## What Does NOT Change
 
-- Existing `deduct_credits` and `refund_credits` RPCs (web flow continues using them)
-- Existing `audits` columns and RLS policies
-- No frontend code changes in this phase
-
+- Existing `_shared/encryption.ts` -- untouched
+- All existing edge functions -- untouched
+- No frontend changes in this phase
