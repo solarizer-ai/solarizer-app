@@ -1,92 +1,94 @@
 
 
-# Remove All Cashfree References
+# Add API Key Management to Settings
 
 ## Summary
 
-Cashfree is fully replaced by Razorpay. There is zero Cashfree data in the database, so all removals are safe. This plan covers edge functions, frontend hooks, database objects, config entries, and secrets.
+Add an "API Keys" section to the Security tab on the Settings page. Users can generate, reveal, copy, and revoke CLI API keys. Keys are stored encrypted (not just hashed) so they can be revealed and copied at any time.
 
-## 1. Delete Cashfree Edge Functions
+## What Gets Built
 
-Delete these 7 edge function directories and their deployed functions:
+### 1. Database Migration
 
-- `supabase/functions/cashfree-cancel-subscription/`
-- `supabase/functions/cashfree-create-order/`
-- `supabase/functions/cashfree-create-subscription/`
-- `supabase/functions/cashfree-reactivate-subscription/`
-- `supabase/functions/cashfree-upgrade-subscription/`
-- `supabase/functions/cashfree-verify-payment/`
-- `supabase/functions/cashfree-webhook/`
-
-## 2. Delete Frontend Cashfree Hooks
-
-Delete these 2 files (neither is imported anywhere):
-
-- `src/hooks/useCashfreeCheckout.ts`
-- `src/hooks/useCashfreeSubscription.ts`
-
-## 3. Clean Frontend References
-
-### `src/hooks/useSubscription.ts`
-- Remove `cf_subscription_id` and `cf_plan_id` from the `Subscription` interface (lines 17-19)
-- Remove the comment "New fields for Cashfree Subscriptions"
-
-### `src/pages/SubscriptionSuccess.tsx`
-- Line 52-54: Replace the Cashfree/Razorpay hybrid check with a Razorpay-only check:
-  ```typescript
-  const hasActiveSubscription = subscription?.status === "active" &&
-    (subscription as unknown as { rz_subscription_id?: string })?.rz_subscription_id;
-  ```
-
-## 4. Remove config.toml Entries
-
-Remove these 3 blocks from `supabase/config.toml`:
-
-```text
-[functions.cashfree-create-order]
-verify_jwt = false
-
-[functions.cashfree-webhook]
-verify_jwt = false
-
-[functions.cashfree-verify-payment]
-verify_jwt = false
-```
-
-## 5. Database Migration
-
-Drop Cashfree-specific database objects and columns (all confirmed empty):
+Add an `key_encrypted` column to the existing `api_keys` table to store the AES-encrypted version of each key:
 
 ```sql
--- Drop the cf_subscription_events table (0 rows)
-DROP TABLE IF EXISTS public.cf_subscription_events;
-
--- Drop Cashfree-only DB functions
-DROP FUNCTION IF EXISTS public.activate_subscription;
-DROP FUNCTION IF EXISTS public.process_subscription_renewal;
-DROP FUNCTION IF EXISTS public.handle_subscription_payment_failed;
-DROP FUNCTION IF EXISTS public.process_upgrade_success;
-
--- Remove Cashfree columns from subscriptions table
-ALTER TABLE public.subscriptions DROP COLUMN IF EXISTS cf_subscription_id;
-ALTER TABLE public.subscriptions DROP COLUMN IF EXISTS cf_plan_id;
+ALTER TABLE public.api_keys ADD COLUMN IF NOT EXISTS key_encrypted text;
 ```
 
-Note: `process_payment_success` and `cancel_subscription` reference `cf_` fields in their return values but are still used by Razorpay flow -- these will be cleaned up by removing the now-dropped columns (the references will simply return null going forward, which is harmless). If you'd like them fully cleaned, that can be a follow-up.
+### 2. Update Edge Function: `supabase/functions/cli-generate-api-key/index.ts`
 
-## 6. Remove Cashfree Secrets
+After generating the key and before inserting, also encrypt it using the shared `encryption.ts` utility with an `ENCRYPTION_KEY` secret. Store the encrypted value in `key_encrypted` alongside the existing bcrypt `key_hash`.
 
-Request removal of these 3 secrets (no longer used by any function):
+### 3. New Edge Function: `supabase/functions/cli-reveal-api-key/index.ts`
 
-- `CASHFREE_APP_ID`
-- `CASHFREE_SECRET_KEY`
-- `CASHFREE_ENVIRONMENT`
+- Accepts `{ keyId: string }` in the body
+- Authenticates the user via Bearer token
+- Verifies the key belongs to the authenticated user and is not revoked
+- Decrypts `key_encrypted` using the shared encryption utility
+- Returns the plaintext key
 
-## What Does NOT Change
+### 4. New Hook: `src/hooks/useApiKeys.ts`
 
-- All Razorpay edge functions remain untouched
-- All CLI edge functions remain untouched
-- `_shared/apiKeyAuth.ts` and `_shared/encryption.ts` remain untouched
-- `index.html` already only loads the Razorpay SDK -- no changes needed
-- `src/integrations/supabase/types.ts` is auto-generated and will update automatically after the migration
+Three React Query operations:
+- `useApiKeys()` -- fetches active (non-revoked) keys for the current user from `api_keys` table
+- `useGenerateApiKey()` -- mutation calling `cli-generate-api-key` edge function, invalidates query on success
+- `useRevokeApiKey()` -- mutation setting `revoked_at = now()` via Supabase client, invalidates query on success
+
+### 5. New Component: `src/components/settings/ApiKeyManager.tsx`
+
+Self-contained component with:
+- **Header** with key count indicator (e.g., "2 / 5 active keys")
+- **Generate form**: text input for key name + "Generate" button (disabled at 5 keys)
+- **Key list**: each row shows name, creation date, last used date, and:
+  - **Reveal/Copy button**: calls `cli-reveal-api-key`, then shows the key inline with a copy-to-clipboard button. The key can be copied as many times as needed.
+  - **Revoke button**: confirms via alert dialog, then revokes
+- **Empty state** when no keys exist
+
+### 6. Update: `src/pages/Settings.tsx`
+
+Import and render `<ApiKeyManager />` inside the Security tab (`TabsContent value="security"`), below any existing content.
+
+## No Secrets Needed
+
+The `ENCRYPTION_KEY` secret already exists in the project (used by `encryption.ts` for GitHub tokens). No new secrets required.
+
+## Technical Details
+
+### Key Reveal Flow
+
+```text
+User clicks "Reveal" on a key
+  -> Frontend calls cli-reveal-api-key edge function with keyId
+  -> Edge function verifies ownership, decrypts key_encrypted
+  -> Returns plaintext key
+  -> Frontend shows key inline with a Copy button
+  -> User can copy as many times as needed
+  -> Key stays visible until user navigates away or clicks "Hide"
+```
+
+### UI Layout (within Security tab)
+
+```text
++---------------------------------------------+
+| API Keys                          2/5 active |
+| Generate and manage your CLI API keys        |
+|                                              |
+| [Key Name Input]         [Generate Key]      |
+|                                              |
+| +------------------------------------------+|
+| | My CLI Key         Created Feb 10, 2026  ||
+| | Last used 2h ago                         ||
+| | sol_live_a3f8...  [Copy]       [Revoke]  ||
+| +------------------------------------------+|
+| | Production Key    Created Jan 5, 2026    ||
+| | Never used                               ||
+| |               [Reveal] [Copy]  [Revoke]  ||
+| +------------------------------------------+|
++---------------------------------------------+
+```
+
+### RLS
+
+No RLS changes needed. The `api_keys` table already has policies allowing users to SELECT, INSERT, and UPDATE their own keys.
 
