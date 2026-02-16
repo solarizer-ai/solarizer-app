@@ -100,14 +100,18 @@ export function useDeductCredits() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ nlocAmount, plan }: { nlocAmount: number; plan: SubscriptionPlan }) => {
+    mutationFn: async ({ nlocAmount, plan, auditId, projectName }: { nlocAmount: number; plan: SubscriptionPlan; auditId?: string; projectName?: string }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       // Call the secure server-side function for credit deduction
-      const { data, error } = await supabase.rpc('deduct_credits', {
+      const rpcParams: Record<string, unknown> = {
         p_nloc_amount: nlocAmount,
         p_is_starter: plan === 'starter',
-      });
+      };
+      if (auditId) rpcParams.p_audit_id = auditId;
+      if (projectName) rpcParams.p_description = `Web audit: ${projectName}`;
+
+      const { data, error } = await supabase.rpc('deduct_credits', rpcParams as any);
 
       if (error) throw error;
       

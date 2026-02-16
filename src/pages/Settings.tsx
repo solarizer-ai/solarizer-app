@@ -25,6 +25,7 @@ import { ApiKeyManager } from "@/components/settings/ApiKeyManager";
 import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlanSelector";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
+import { CreditActivityLog } from "@/components/settings/CreditActivityLog";
 
 interface Profile {
   display_name: string | null;
@@ -498,6 +499,9 @@ const Settings = () => {
                       )}
                     </CardContent>
                   </Card>
+
+                  {/* Credit Activity Log */}
+                  <CreditActivityLog />
 
                   {/* Billing History Link */}
                   <Card>
