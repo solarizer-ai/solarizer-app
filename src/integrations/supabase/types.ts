@@ -793,10 +793,20 @@ export type Database = {
         }
         Returns: Json
       }
-      deduct_credits: {
-        Args: { p_is_starter?: boolean; p_nloc_amount: number }
-        Returns: Json
-      }
+      deduct_credits:
+        | {
+            Args: { p_is_starter?: boolean; p_nloc_amount: number }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_audit_id?: string
+              p_description?: string
+              p_is_starter?: boolean
+              p_nloc_amount: number
+            }
+            Returns: Json
+          }
       get_audit_access_context: { Args: { p_audit_id: string }; Returns: Json }
       get_audit_owner_info: {
         Args: { owner_user_id: string }
