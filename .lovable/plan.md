@@ -1,48 +1,92 @@
 
 
-# Phase 3: CLI Session Lifecycle
+# Remove All Cashfree References
 
 ## Summary
 
-Create 3 edge functions for CLI audit session management, add config.toml entries, and configure 2 new secrets.
+Cashfree is fully replaced by Razorpay. There is zero Cashfree data in the database, so all removals are safe. This plan covers edge functions, frontend hooks, database objects, config entries, and secrets.
 
-## Files to Create
+## 1. Delete Cashfree Edge Functions
 
-### 1. `supabase/functions/cli-session-start/index.ts`
-Start a CLI audit session: validate API key, enforce 1 concurrent audit, deduct credits via `cli_deduct_credits` RPC, create audit record with `source = 'cli'`, sign a session JWT (HMAC-SHA256, 2hr expiry), and return it with the proxy URL. Auto-refunds on audit creation failure. Content from uploaded `spec-cli-session-start.ts`.
+Delete these 7 edge function directories and their deployed functions:
 
-### 2. `supabase/functions/cli-session-end/index.ts`
-Finalize a CLI audit session: verify session JWT, then either complete (calculate grade from findings, merge coverage data, lock audit) or fail/cancel (proportional credit refund based on contracts processed). Idempotent on already-locked audits. Content from uploaded `spec-cli-session-end.ts`.
+- `supabase/functions/cashfree-cancel-subscription/`
+- `supabase/functions/cashfree-create-order/`
+- `supabase/functions/cashfree-create-subscription/`
+- `supabase/functions/cashfree-reactivate-subscription/`
+- `supabase/functions/cashfree-upgrade-subscription/`
+- `supabase/functions/cashfree-verify-payment/`
+- `supabase/functions/cashfree-webhook/`
 
-### 3. `supabase/functions/cli-check-credits/index.ts`
-Pre-flight check: validate API key, return credit balance, subscription tier, tier discount, and any active session info. Content from uploaded `spec-cli-check-credits.ts`.
+## 2. Delete Frontend Cashfree Hooks
 
-## Config Changes
+Delete these 2 files (neither is imported anywhere):
 
-Append to `supabase/config.toml`:
+- `src/hooks/useCashfreeCheckout.ts`
+- `src/hooks/useCashfreeSubscription.ts`
+
+## 3. Clean Frontend References
+
+### `src/hooks/useSubscription.ts`
+- Remove `cf_subscription_id` and `cf_plan_id` from the `Subscription` interface (lines 17-19)
+- Remove the comment "New fields for Cashfree Subscriptions"
+
+### `src/pages/SubscriptionSuccess.tsx`
+- Line 52-54: Replace the Cashfree/Razorpay hybrid check with a Razorpay-only check:
+  ```typescript
+  const hasActiveSubscription = subscription?.status === "active" &&
+    (subscription as unknown as { rz_subscription_id?: string })?.rz_subscription_id;
+  ```
+
+## 4. Remove config.toml Entries
+
+Remove these 3 blocks from `supabase/config.toml`:
 
 ```text
-[functions.cli-session-start]
+[functions.cashfree-create-order]
 verify_jwt = false
 
-[functions.cli-session-end]
+[functions.cashfree-webhook]
 verify_jwt = false
 
-[functions.cli-check-credits]
+[functions.cashfree-verify-payment]
 verify_jwt = false
 ```
 
-## New Secrets Required
+## 5. Database Migration
 
-| Secret | Purpose |
-|--------|---------|
-| `SESSION_SECRET` | 64-char hex string for signing session JWTs. Generate with `openssl rand -hex 32`. Must match the Cloud Run AI proxy later. |
-| `CLOUD_RUN_PROXY_URL` | URL of the AI proxy service. Set placeholder `https://solarizer-ai-proxy-placeholder.run.app` for now. |
+Drop Cashfree-specific database objects and columns (all confirmed empty):
+
+```sql
+-- Drop the cf_subscription_events table (0 rows)
+DROP TABLE IF EXISTS public.cf_subscription_events;
+
+-- Drop Cashfree-only DB functions
+DROP FUNCTION IF EXISTS public.activate_subscription;
+DROP FUNCTION IF EXISTS public.process_subscription_renewal;
+DROP FUNCTION IF EXISTS public.handle_subscription_payment_failed;
+DROP FUNCTION IF EXISTS public.process_upgrade_success;
+
+-- Remove Cashfree columns from subscriptions table
+ALTER TABLE public.subscriptions DROP COLUMN IF EXISTS cf_subscription_id;
+ALTER TABLE public.subscriptions DROP COLUMN IF EXISTS cf_plan_id;
+```
+
+Note: `process_payment_success` and `cancel_subscription` reference `cf_` fields in their return values but are still used by Razorpay flow -- these will be cleaned up by removing the now-dropped columns (the references will simply return null going forward, which is harmless). If you'd like them fully cleaned, that can be a follow-up.
+
+## 6. Remove Cashfree Secrets
+
+Request removal of these 3 secrets (no longer used by any function):
+
+- `CASHFREE_APP_ID`
+- `CASHFREE_SECRET_KEY`
+- `CASHFREE_ENVIRONMENT`
 
 ## What Does NOT Change
 
-- All existing edge functions remain untouched
-- Existing `_shared/apiKeyAuth.ts` and `_shared/encryption.ts` remain untouched
-- No frontend changes
-- No database schema changes
+- All Razorpay edge functions remain untouched
+- All CLI edge functions remain untouched
+- `_shared/apiKeyAuth.ts` and `_shared/encryption.ts` remain untouched
+- `index.html` already only loads the Razorpay SDK -- no changes needed
+- `src/integrations/supabase/types.ts` is auto-generated and will update automatically after the migration
 
