@@ -56,3 +56,12 @@ verify_jwt = false
 
 [functions.cli-generate-api-key]
 verify_jwt = false
+
+[functions.cli-session-start]
+verify_jwt = false
+
+[functions.cli-session-end]
+verify_jwt = false
+
+[functions.cli-check-credits]
+verify_jwt = false
