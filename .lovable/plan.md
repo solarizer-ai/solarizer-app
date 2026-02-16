@@ -1,103 +1,34 @@
 
 
-# Add Credit Activity Log to Settings
+# Fix: CLI Session Start Failing Due to NOT NULL Constraint on `contract_code`
 
-## Summary
+## Problem
 
-Add a "Credit Activity" section to the Subscription tab in Settings, showing a chronological log of all credit movements -- deductions, grants, purchases, and refunds -- with project names and action types.
+The `cli-session-start` edge function fails when creating an audit record because the `contract_code` column on the `audits` table has a `NOT NULL` constraint. In the CLI flow, the source code is not available at session start -- it is sent later during the `run-audit` call. The insert omits `contract_code`, triggering the constraint violation.
 
-## What Gets Built
+## Solution
 
-### 1. Update Database Function: `deduct_credits`
+Make the `contract_code` column nullable via a database migration. This is safe because:
 
-The existing web `deduct_credits` RPC does **not** log to `credit_txns`. Update it to also insert a transaction record (like `cli_deduct_credits` already does), so both web and CLI deductions appear in the log.
+- The CLI flow sends code later via `run-audit`
+- The web flow already sets `contract_code` at creation time, so existing behavior is unaffected
+- No application code reads `contract_code` as a required field at audit creation time
 
-The function will be updated to accept an optional `p_audit_id` and `p_description` parameter. Web callers will pass the audit ID and project name.
+## Changes
 
-### 2. Update Web Deduction Flow
-
-Update `useDeductCredits` in `src/hooks/useSubscription.ts` and its callers (the audit wizard) to pass the audit ID and project name so the description is recorded in `credit_txns`.
-
-### 3. New Hook: `src/hooks/useCreditActivity.ts`
-
-A React Query hook that fetches from `credit_txns` joined with `audits` (for project name fallback):
-
-```typescript
-supabase
-  .from('credit_txns')
-  .select('id, type, amount, balance_after, description, audit_id, created_at')
-  .order('created_at', { ascending: false })
-  .limit(50);
-```
-
-### 4. New Component: `src/components/settings/CreditActivityLog.tsx`
-
-A card component showing the credit transaction history:
-
-- Each row displays: action icon, description (parsed for project name), amount (+/-), balance after, and timestamp
-- Color-coded: green for grants/purchases/refunds, red for deductions
-- Transaction types mapped to readable labels: "Audit Deduction", "Credit Purchase", "Subscription Grant", "Refund"
-- Project name extracted from the description field
-- Empty state when no transactions exist
-
-### 5. Update: `src/pages/Settings.tsx`
-
-Add the `<CreditActivityLog />` component inside the Subscription tab, below the existing "Credit Balance" card and above the "Billing History" link card.
-
-## UI Layout
-
-```text
-+---------------------------------------------+
-| Credit Activity                              |
-| Recent credit movements                      |
-|                                              |
-| +------------------------------------------+|
-| | - CLI Audit: MyProject (3 contracts)     ||
-| |   -15 credits    Balance: 35    2h ago   ||
-| +------------------------------------------+|
-| | + Subscription Grant                      ||
-| |   +50 credits    Balance: 50    Feb 1    ||
-| +------------------------------------------+|
-| | - Web Audit: TokenSwap                   ||
-| |   -8 credits     Balance: 0     Jan 28   ||
-| +------------------------------------------+|
-| | + Refund: Audit failed for MyProject     ||
-| |   +15 credits    Balance: 50    Jan 27   ||
-| +------------------------------------------+|
-+---------------------------------------------+
-```
-
-## Technical Details
-
-### Database Migration: Update `deduct_credits` RPC
-
-Add `credit_txns` insert to the existing `deduct_credits` function and add optional parameters for audit context:
+### 1. Database Migration
 
 ```sql
-CREATE OR REPLACE FUNCTION public.deduct_credits(
-  p_nloc_amount integer,
-  p_is_starter boolean DEFAULT false,
-  p_audit_id uuid DEFAULT NULL,
-  p_description text DEFAULT NULL
-)
-...
-  -- After the UPDATE, insert into credit_txns
-  INSERT INTO public.credit_txns (user_id, type, amount, balance_after, audit_id, description)
-  VALUES (v_user_id, 'deduction', -p_nloc_amount, v_new_balance, p_audit_id, 
-          COALESCE(p_description, 'Web audit deduction'));
-...
+ALTER TABLE public.audits ALTER COLUMN contract_code DROP NOT NULL;
 ```
 
-### Callers Updated
+### 2. No Edge Function Changes Needed
 
-The `useRunAudit` hook (or wherever `deductCredits` is called before triggering `run-audit`) will pass audit ID and project name to the RPC.
+The `cli-session-start` function's insert statement is correct -- it simply doesn't have a `contract_code` value to provide at that stage, which is expected for the CLI flow.
 
-### Transaction Type Icons and Colors
+## Impact
 
-| Type       | Icon         | Color  | Label               |
-|------------|-------------|--------|---------------------|
-| deduction  | ArrowDown   | Red    | Audit / Deduction   |
-| grant      | Gift        | Green  | Subscription Grant  |
-| purchase   | Zap         | Green  | Credit Purchase     |
-| refund     | RotateCcw   | Green  | Refund              |
+- Web flow: No change (still provides `contract_code` on insert)
+- CLI flow: Audit creation succeeds; `contract_code` remains NULL until populated later if needed
+- Existing data: Unaffected (all existing rows already have values)
 
