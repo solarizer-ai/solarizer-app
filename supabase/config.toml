@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.cli-check-credits]
 verify_jwt = false
+
+[functions.cli-reveal-api-key]
+verify_jwt = false
