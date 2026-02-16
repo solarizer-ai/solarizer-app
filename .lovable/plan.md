@@ -1,70 +1,52 @@
 
 
-# Remove Default Plan on Signup -- Require Subscription Before Use
+# Phase 1: CLI Schema Extensions Migration
 
 ## Summary
 
-New users will sign up with **no plan** and **no credits**. They must subscribe to a plan (Launch, Pro, or Business) before they can run scans or access plan-gated features. The dashboard and UI will guide unsubscribed users toward picking a plan.
+Run the uploaded SQL migration to add tables, columns, and RPC functions needed for CLI integration. No existing tables, columns, or functions are modified -- this is purely additive.
 
-## Changes
+## What Gets Created
 
-### 1. Database: `handle_new_user()` function
+### New Tables
 
-Remove the subscription and credit initialization from the trigger. After the change, the function will only create the profile and assign the `user` role -- no `subscriptions` row and no `nloc_credits` row.
+| Table | Purpose |
+|-------|---------|
+| `api_keys` | Stores bcrypt-hashed API keys for CLI authentication. RLS: users can view, insert, and update (revoke) their own keys. Indexed on `key_prefix` for fast lookup. |
+| `credit_txns` | Audit trail for all credit movements (deductions, refunds, grants, purchases). RLS: users can view their own transactions only. Insert-only from backend (service role). |
 
-### 2. Database: `initialize_user_credits()` trigger
+### New Columns on `audits`
 
-This trigger auto-creates `nloc_credits` rows on user creation. It needs to be removed or disabled since credits should only be provisioned when a subscription is purchased.
+| Column | Type | Purpose |
+|--------|------|---------|
+| `source` | TEXT (web/cli) | Identifies audit origin |
+| `session_token` | TEXT (unique) | CLI session identifier |
+| `complexity` | INTEGER (1-3) | Audit complexity tier |
+| `credits_deducted` | NUMERIC(12,2) | Credits charged for this audit |
+| `tier_discount` | NUMERIC(4,2) | Discount applied |
+| `scope_metadata` | JSONB | Structured scope info |
+| `context_metadata` | JSONB | Structured context info |
+| `contracts_completed` | INTEGER | Progress tracking |
+| `contracts_total` | INTEGER | Progress tracking |
+| `current_contract` | TEXT | Currently processing contract |
+| `error_message` | TEXT | Failure reason |
 
-### 3. Database: `purchase_subscription` RPC
+### New RPC Functions
 
-Currently this function does `UPDATE subscriptions ... WHERE user_id`. Since new users won't have a subscription row, update it to `INSERT ... ON CONFLICT` (upsert) for both the `subscriptions` and `nloc_credits` tables so the first subscription purchase creates the rows.
+| Function | Purpose |
+|----------|---------|
+| `cli_deduct_credits(p_user_id, p_amount, p_audit_id, p_description)` | Atomically deducts credits and logs a `credit_txns` entry. Used by CLI session start. |
+| `cli_refund_credits(p_user_id, p_amount, p_audit_id, p_description)` | Refunds credits and logs a `credit_txns` entry. Used on CLI audit failure/cancellation. |
 
-### 4. Frontend: Handle `null` subscription state
+Both functions are `SECURITY DEFINER` so they can be called from edge functions with the service role key.
 
-Currently the code defaults to `'starter'` when no subscription exists (`subscription?.plan || 'starter'`). Multiple files need updating:
+## Execution
 
-| File | Change |
-|------|--------|
-| `src/hooks/useFeatureAccess.ts` | Treat `null` subscription as "no plan" instead of defaulting to `starter`. All features locked. |
-| `src/components/CreditBalance.tsx` | Show "No Plan" or "Subscribe" state when subscription is `null` |
-| `src/pages/Index.tsx` | Block "Run Analysis" for users with no subscription; show prompt to subscribe. Also hide low-credit prompt when no subscription. |
-| `src/components/AuditWizard.tsx` | Guard scan submission -- if no subscription, redirect to pricing. |
-| `src/pages/Pricing.tsx` | Already handles `null` subscription with "Subscribe" button -- no change needed. |
-| `src/pages/Settings.tsx` | Show "No active plan" state in the Plans section when subscription is `null`. |
-| `src/components/settings/SubscriptionPlanSelector.tsx` | Handle `null` current plan -- show all plans as "Subscribe" instead of upgrade/downgrade. |
-| `src/lib/nlocCalculator.ts` | No structural change, but `PLAN_LIMITS.starter.initialCredits` should be updated to `0` since starter no longer auto-provisions credits on signup (credits come from subscription purchase). |
+Apply the full SQL from the uploaded `spec-migration.sql` file as a single database migration. All statements are idempotent (`IF NOT EXISTS`, `CREATE OR REPLACE`).
 
-### 5. Edge functions: Razorpay webhook / verify-payment
+## What Does NOT Change
 
-The `process_payment_success` DB function already handles subscription updates. It needs to handle the case where no `subscriptions` row exists yet (first-time purchase). Same upsert pattern as the `purchase_subscription` RPC.
-
-### 6. `useSubscription` hook
-
-The hook already returns `null` when no subscription is found (`PGRST116`). No change needed here -- the consuming components just need to stop defaulting `null` to `'starter'`.
-
-## Technical Details
-
-### Updated `handle_new_user()`:
-```text
-- Creates profile
-- Assigns 'user' role
-- NO subscription row
-- NO nloc_credits row
-```
-
-### Updated `purchase_subscription()`:
-```text
-- INSERT INTO subscriptions ... ON CONFLICT (user_id) DO UPDATE
-- INSERT INTO nloc_credits ... ON CONFLICT (user_id) DO UPDATE SET credits_remaining = credits_remaining + credits_to_add
-```
-
-### UI State Matrix:
-
-| User State | Dashboard | Run Analysis | Credits Display |
-|-----------|-----------|-------------|----------------|
-| No subscription | Shows empty state + "Subscribe" CTA | Blocked, redirects to pricing | "No Plan" badge |
-| Starter (Launch) | Full dashboard | Allowed (150 nLOC, 1 file limit) | Shows credits |
-| Pro | Full dashboard | Allowed (unlimited) | Shows credits |
-| Business | Full dashboard | Allowed (unlimited) | Shows credits |
+- Existing `deduct_credits` and `refund_credits` RPCs (web flow continues using them)
+- Existing `audits` columns and RLS policies
+- No frontend code changes in this phase
 
