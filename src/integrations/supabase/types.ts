@@ -101,7 +101,7 @@ export type Database = {
         Row: {
           complexity: number | null
           context_metadata: Json | null
-          contract_code: string
+          contract_code: string | null
           contract_count: number
           contracts_completed: number | null
           contracts_total: number | null
@@ -128,7 +128,7 @@ export type Database = {
         Insert: {
           complexity?: number | null
           context_metadata?: Json | null
-          contract_code: string
+          contract_code?: string | null
           contract_count?: number
           contracts_completed?: number | null
           contracts_total?: number | null
@@ -155,7 +155,7 @@ export type Database = {
         Update: {
           complexity?: number | null
           context_metadata?: Json | null
-          contract_code?: string
+          contract_code?: string | null
           contract_count?: number
           contracts_completed?: number | null
           contracts_total?: number | null
