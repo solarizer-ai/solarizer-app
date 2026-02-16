@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
+import { encrypt } from '../_shared/encryption.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -90,6 +91,13 @@ Deno.serve(async (req) => {
 
     const keyHash = await bcrypt.hash(fullKey, 10);
 
+    // Encrypt key for later reveal
+    const encryptionKey = Deno.env.get('GITHUB_TOKEN_ENCRYPTION_KEY');
+    let keyEncrypted: string | null = null;
+    if (encryptionKey) {
+      keyEncrypted = await encrypt(fullKey, encryptionKey);
+    }
+
     const { error: insertError } = await supabase
       .from('api_keys')
       .insert({
@@ -97,6 +105,7 @@ Deno.serve(async (req) => {
         key_hash: keyHash,
         key_prefix: keyPrefix,
         name: keyName,
+        key_encrypted: keyEncrypted,
       });
 
     if (insertError) {

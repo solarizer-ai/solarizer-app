@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { CancelSubscriptionModal } from "@/components/CancelSubscriptionModal";
 import { GitHubIntegration } from "@/components/settings/GitHubIntegration";
+import { ApiKeyManager } from "@/components/settings/ApiKeyManager";
 import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlanSelector";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
@@ -549,6 +550,7 @@ const Settings = () => {
                   </div>
                 </CardContent>
               </Card>
+              <ApiKeyManager />
             </TabsContent>
 
             <TabsContent value="sharing">
