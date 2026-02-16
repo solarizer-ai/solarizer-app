@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
     const sessionToken = await signJWT({
       sessionId: auditId,
       userId,
-      allowedModels: ['gemini-2.0-flash-001', 'gemini-2.5-pro-002', 'claude-opus-4-20250514'],
+      allowedModels: ['gemini-3-flash', 'gemini-3-pro', 'claude-opus-4-20250514'],
       maxCalls: 50,
       iat: now,
       exp: now + (2 * 60 * 60),
