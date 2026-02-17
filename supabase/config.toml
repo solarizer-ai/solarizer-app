@@ -12,8 +12,7 @@ verify_jwt = false
 [functions.fail-audit]
 verify_jwt = false
 
-[functions.check-stale-audits]
-verify_jwt = false
+[functions.razorpay-create-order]
 
 [functions.razorpay-create-order]
 verify_jwt = false
