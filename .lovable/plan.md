@@ -1,45 +1,71 @@
 
-
-# Allow Multiple Concurrent Audits
+# Remove n8n Integration and Make Solarizer CLI-Only
 
 ## Summary
 
-Remove the single-audit concurrency restriction across the entire platform (web UI and CLI edge functions), allowing users on all plans to run multiple audits simultaneously.
+Remove all n8n webhook integration and the web-based audit creation flow. The web app will remain for viewing reports, managing settings, billing, etc., but audits will only be created via the CLI.
 
 ## Changes
 
-### 1. Frontend: `src/pages/Index.tsx`
+### Edge Functions to DELETE (3 functions)
 
-- Remove the `hasActiveAnalysis` check and `analysisInProgress` guard that blocks the wizard when an audit is in progress (lines ~150-156, ~262-266)
-- Users will always be able to click "Run Analysis" and start a new audit regardless of existing active audits
-- Keep the `AnalysisInProgressModal` component available but it will no longer block new audits -- it can be repurposed or removed
+1. **`supabase/functions/cloc-estimate/`** -- Calls `N8N_WEBHOOK_URL` for CLOC estimation. CLI handles this locally.
+2. **`supabase/functions/run-audit/`** -- Calls `N8N_AUDIT_WEBHOOK_URL` to trigger the n8n audit engine. CLI uses its own session-based flow.
+3. **`supabase/functions/check-stale-audits/`** -- Cron job that uses `N8N_CALLBACK_SECRET`. Can be removed or kept; since CLI manages its own lifecycle.
 
-### 2. Frontend: `src/hooks/useActiveAnalyses.ts`
+### Edge Functions to UPDATE (3 functions -- rename secret references)
 
-- Keep this hook as-is since it may still be useful for displaying active analyses, but it will no longer gate new audit creation
+4. **`supabase/functions/save-finding/index.ts`** -- Rename `N8N_CALLBACK_SECRET` references to `CALLBACK_SECRET` (or a generic name). Logic stays the same -- the CLI backend still calls this.
+5. **`supabase/functions/complete-audit/index.ts`** -- Same rename of `N8N_CALLBACK_SECRET` to `CALLBACK_SECRET`.
+6. **`supabase/functions/fail-audit/index.ts`** -- Same rename of `N8N_CALLBACK_SECRET` to `CALLBACK_SECRET`.
 
-### 3. Edge Function: `supabase/functions/cli-session-start/index.ts`
+### Frontend Files to DELETE (web audit wizard components)
 
-- Remove the "Enforce 1 concurrent audit per user" block (lines ~132-148) that checks for active audits and returns a 409 error
-- Allow CLI users to start new sessions regardless of existing active audits
+7. **`src/components/AuditWizard.tsx`** -- The multi-step wizard for web audit creation.
+8. **`src/components/wizard/ProjectNameStep.tsx`** -- Wizard step.
+9. **`src/components/wizard/UploadMethodStep.tsx`** -- Wizard step.
+10. **`src/components/wizard/ScopeSelectionStep.tsx`** -- Wizard step.
+11. **`src/components/wizard/EstimatorStep.tsx`** -- Wizard step (uses `useClocEstimate`).
+12. **`src/components/wizard/ContextStep.tsx`** -- Wizard step.
+13. **`src/components/wizard/GitHubImportStep.tsx`** -- Wizard step.
+14. **`src/components/FileUploader.tsx`** -- File upload for wizard.
+15. **`src/components/FolderUploader.tsx`** -- Folder upload for wizard.
+16. **`src/components/FileExplorer.tsx`** -- File tree for wizard.
+17. **`src/components/FileTreeItem.tsx`** -- File tree item.
+18. **`src/components/FileTypeIcon.tsx`** -- File type icon.
+19. **`src/components/ScanningProgress.tsx`** -- Web scan animation (unused import-wise).
+20. **`src/components/ScanProgressWidget.tsx`** -- Floating progress widget (not imported anywhere).
+21. **`src/components/AnalysisInProgressModal.tsx`** -- Analysis in-progress modal.
 
-### 4. Edge Function: `supabase/functions/cli-auth/index.ts`
+### Frontend Hooks to DELETE
 
-- Keep the active audit query but change it to return a list of active audits (informational only, no blocking)
+22. **`src/hooks/useRunAudit.ts`** -- Calls `run-audit` edge function (being deleted).
+23. **`src/hooks/useClocEstimate.ts`** -- Calls `cloc-estimate` edge function (being deleted).
+24. **`src/hooks/useActiveAnalyses.ts`** -- Only used by `AnalysisInProgressModal`.
 
-### 5. Edge Function: `supabase/functions/cli-check-credits/index.ts`
+### Frontend Context to DELETE
 
-- Same as cli-auth: keep active audit info as informational, no blocking behavior
+25. **`src/contexts/ScanContext.tsx`** -- Provides web scanning state, realtime subscriptions for web-initiated audits. Only used in `Index.tsx` and `App.tsx`.
 
-### 6. Component: `src/components/AnalysisInProgressModal.tsx`
+### Frontend Files to UPDATE
 
-- Update the description text to remove "Please wait for current analyses to complete before starting a new one" since it no longer blocks
-- Optionally convert to an informational panel rather than a blocking modal
+26. **`src/pages/Index.tsx`** -- Major simplification:
+    - Remove the "editor" view entirely (the `AuditWizard`, `handleStartScan`, file upload state, etc.)
+    - Remove imports for `AuditWizard`, `useRunAudit`, `useScan`, `FileNode`, `AnalysisInProgressModal`, `ScanProgressWidget`
+    - Remove `pendingFiles` state, `handleStartScan`, `handleUpgradeNeeded`, `handlePowerUpNeeded`
+    - The "Run Analysis" button becomes a link/message directing users to use the CLI
+    - Keep: dashboard view, audit list, delete, view results, credit balance, subscription prompts
+
+27. **`src/App.tsx`** -- Remove `ScanProvider` wrapper import and usage.
+
+### Config Update
+
+28. **`supabase/config.toml`** -- Remove entries for `cloc-estimate`, `run-audit`, and `check-stale-audits`.
 
 ## Technical Details
 
-- **`src/pages/Index.tsx`**: Remove `hasActiveAnalysis` computed value and the `analysisInProgress` guard in `handleNewAudit`. The `isScanning` local state check can also be relaxed.
-- **`cli-session-start/index.ts`**: Delete the entire block from the `activeAudits` query through the 409 response (approximately lines 132-148).
-- **`cli-auth/index.ts`** and **`cli-check-credits/index.ts`**: These already return active audit info without blocking -- no changes needed, or optionally update to return multiple active audits instead of `.limit(1)`.
-- No database schema changes required.
-
+- The `save-finding`, `complete-audit`, and `fail-audit` functions are still needed -- they are server-to-server callbacks used by the CLI backend. Only the env var name changes from `N8N_CALLBACK_SECRET` to `CALLBACK_SECRET`.
+- A new secret `CALLBACK_SECRET` should be set with the same value as the current `N8N_CALLBACK_SECRET`.
+- The `check-stale-audits` function is borderline -- it guards against stuck audits regardless of source. It can be kept if desired, but since it references the n8n pattern, the plan includes removing it. Can be re-added later if needed for CLI audits.
+- The dashboard "Run Analysis" button will be replaced with guidance to use the CLI tool.
+- All report viewing, audit listing, settings, billing, and sharing features remain untouched.
