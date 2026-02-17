@@ -868,6 +868,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_chat_tokens: {
+        Args: { p_session_id: string; p_tokens: number }
+        Returns: number
+      }
       mark_payment_failed: { Args: { p_order_id: string }; Returns: Json }
       process_payment_success: {
         Args: { p_cf_payment_id: string; p_order_id: string }
