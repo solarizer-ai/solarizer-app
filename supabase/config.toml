@@ -62,3 +62,9 @@ verify_jwt = false
 
 [functions.chat-session-init]
 verify_jwt = false
+
+[functions.chat-budget-check]
+verify_jwt = false
+
+[functions.chat-token-update]
+verify_jwt = false
