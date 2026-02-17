@@ -1,47 +1,79 @@
 
 
-# Phase 5: Chat Session Management
+# Fix Chat Session JWT + Add Token Increment RPC
 
 ## Summary
 
-Create the `chat_sessions` table and `chat-session-init` edge function to support 24-hour rolling chat token budgets for the CLI.
+Two fixes required for the CLI chat feature to work end-to-end:
+
+1. The `chat-session-init` edge function does not generate a signed JWT, causing 401 errors on the Cloud Run proxy.
+2. The `increment_chat_tokens` RPC function (called by the Cloud Run proxy to update token usage) does not exist in the database.
 
 ## Changes
 
-### 1. Database Migration
+### 1. Update Edge Function: `supabase/functions/chat-session-init/index.ts`
 
-Create the `chat_sessions` table with columns for tracking per-user token budgets:
+Add JWT signing so the response includes a `chat_session_token` field:
 
-- `id`, `user_id`, `tokens_used`, `token_budget`, `started_at`, `expires_at`, `created_at`, `updated_at`
-- Index on `(user_id, expires_at DESC)` for efficient active session lookup
-- RLS enabled with a SELECT policy so users can view their own sessions
-- All writes happen via service role in edge functions
+- Import `base64url` from Deno standard library
+- Add the `signJWT()` helper (HMAC-SHA256, same as `cli-session-start`)
+- Read `SESSION_SECRET` from environment (already configured in secrets)
+- Generate a JWT with payload: `chatSessionId`, `userId`, `tokenBudget`, `tokensUsed`, `feature: 'chat'`, `iat`, `exp`
+- Return `chat_session_token` in **both** response paths (resume existing session and create new session)
 
-Token budget tiers (enforced in edge function logic):
+### 2. Database Migration: Create `increment_chat_tokens` RPC
 
-| Tier       | Budget (24h) |
-|------------|-------------|
-| free       | 50,000      |
-| starter    | 900,000     |
-| pro/business | 2,160,000 |
+Create a `SECURITY DEFINER` PostgreSQL function that atomically increments `tokens_used` on a `chat_sessions` row. Called by the Cloud Run proxy after each Gemini API call.
 
-### 2. New Edge Function: `chat-session-init`
+```sql
+CREATE OR REPLACE FUNCTION public.increment_chat_tokens(
+  p_session_id UUID,
+  p_tokens INTEGER
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_new_tokens_used INTEGER;
+BEGIN
+  UPDATE public.chat_sessions
+  SET tokens_used = tokens_used + p_tokens, updated_at = now()
+  WHERE id = p_session_id
+  RETURNING tokens_used INTO v_new_tokens_used;
 
-File: `supabase/functions/chat-session-init/index.ts`
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Chat session not found: %', p_session_id;
+  END IF;
 
-- Auth: `x-api-key` header via shared `apiKeyAuth.ts`
-- Looks up user's subscription tier to determine token budget
-- Finds active (non-expired) session for the user; if found, returns it with remaining tokens
-- If no active session, creates a new one with `expires_at = NOW() + 24h`
-- Returns: `chat_session_id`, `tokens_used`, `token_budget`, `tokens_remaining`, `expires_at`
+  RETURN v_new_tokens_used;
+END;
+$$;
+```
 
-### 3. Config Update
+### 3. No New Secrets Needed
 
-Add `[functions.chat-session-init]` with `verify_jwt = false` to `supabase/config.toml`.
+`SESSION_SECRET` is already configured in the project secrets (confirmed in the secrets list). It is the same secret used by `cli-session-start` and the Cloud Run proxy.
 
-## Technical Notes
+## Technical Details
 
-- No existing edge functions or tables are modified
-- The `tokens_used` field will be updated by the `gemini-proxy` function (Phase 6), not this function
-- Only one active session per user at a time (enforced by query logic, not DB constraint)
-- Session duration is fixed at 24 hours from creation
+### JWT Payload (matches Cloud Run proxy expectations)
+
+| Field | Type | Value |
+|-------|------|-------|
+| chatSessionId | string | UUID of chat_sessions row |
+| userId | string | Authenticated user UUID |
+| tokenBudget | number | Tier-based budget (50k/900k/2.16M) |
+| tokensUsed | number | Current usage from session |
+| feature | string | Always `'chat'` |
+| iat | number | Unix seconds (issued at) |
+| exp | number | Unix seconds (matches session expires_at) |
+
+### Files Modified
+
+- `supabase/functions/chat-session-init/index.ts` -- Add signJWT helper, base64url import, JWT generation in both response paths
+- New SQL migration -- Create `increment_chat_tokens` RPC function
+
+### No Other Changes
+
+No existing edge functions, tables, or frontend code are modified.
