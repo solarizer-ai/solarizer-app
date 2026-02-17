@@ -1,4 +1,5 @@
 import { validateApiKey, createServiceClient } from '../_shared/apiKeyAuth.ts';
+import { encode as base64url } from 'https://deno.land/std@0.208.0/encoding/base64url.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +19,32 @@ function getTokenBudget(tier: string): number {
       // free tier
       return 50_000;
   }
+}
+
+/** Sign a JWT using HMAC-SHA256 (same as cli-session-start) */
+async function signJWT(
+  payload: Record<string, unknown>,
+  secret: string
+): Promise<string> {
+  const header = { alg: 'HS256', typ: 'JWT' };
+
+  const encoder = new TextEncoder();
+  const headerB64 = base64url(encoder.encode(JSON.stringify(header)));
+  const payloadB64 = base64url(encoder.encode(JSON.stringify(payload)));
+  const data = `${headerB64}.${payloadB64}`;
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
+  const sigB64 = base64url(new Uint8Array(signature));
+
+  return `${data}.${sigB64}`;
 }
 
 Deno.serve(async (req) => {
@@ -50,6 +77,16 @@ Deno.serve(async (req) => {
     const userId = authResult.userId;
     console.log(`chat-session-init: Authenticated user ${userId}`);
 
+    // Check SESSION_SECRET
+    const sessionSecret = Deno.env.get('SESSION_SECRET');
+    if (!sessionSecret) {
+      console.error('chat-session-init: SESSION_SECRET not configured');
+      return new Response(
+        JSON.stringify({ error: 'Service temporarily unavailable' }),
+        { status: 503, headers: corsHeaders }
+      );
+    }
+
     // Determine user's tier
     const { data: subscription } = await supabase
       .from('subscriptions')
@@ -75,11 +112,25 @@ Deno.serve(async (req) => {
       const session = activeSessions[0];
       const tokensRemaining = Math.max(0, session.token_budget - session.tokens_used);
 
+      // Sign JWT for existing session
+      const expUnix = Math.floor(new Date(session.expires_at).getTime() / 1000);
+      const iatUnix = Math.floor(Date.now() / 1000);
+      const chatSessionToken = await signJWT({
+        chatSessionId: session.id,
+        userId,
+        tokenBudget: session.token_budget,
+        tokensUsed: session.tokens_used,
+        feature: 'chat',
+        iat: iatUnix,
+        exp: expUnix,
+      }, sessionSecret);
+
       console.log(`chat-session-init: Resuming session ${session.id} (${tokensRemaining} tokens remaining)`);
 
       return new Response(
         JSON.stringify({
           chat_session_id: session.id,
+          chat_session_token: chatSessionToken,
           tokens_used: session.tokens_used,
           token_budget: session.token_budget,
           tokens_remaining: tokensRemaining,
@@ -111,11 +162,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Sign JWT for new session
+    const expUnix = Math.floor(new Date(newSession.expires_at).getTime() / 1000);
+    const iatUnix = Math.floor(Date.now() / 1000);
+    const chatSessionToken = await signJWT({
+      chatSessionId: newSession.id,
+      userId,
+      tokenBudget,
+      tokensUsed: 0,
+      feature: 'chat',
+      iat: iatUnix,
+      exp: expUnix,
+    }, sessionSecret);
+
     console.log(`chat-session-init: Created new session ${newSession.id} (budget: ${tokenBudget}, tier: ${tier})`);
 
     return new Response(
       JSON.stringify({
         chat_session_id: newSession.id,
+        chat_session_token: chatSessionToken,
         tokens_used: 0,
         token_budget: tokenBudget,
         tokens_remaining: tokenBudget,
