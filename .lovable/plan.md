@@ -1,79 +1,30 @@
 
 
-# Fix Chat Session JWT + Add Token Increment RPC
+# Add Chat Budget Check + Token Update Edge Functions
 
 ## Summary
 
-Two fixes required for the CLI chat feature to work end-to-end:
-
-1. The `chat-session-init` edge function does not generate a signed JWT, causing 401 errors on the Cloud Run proxy.
-2. The `increment_chat_tokens` RPC function (called by the Cloud Run proxy to update token usage) does not exist in the database.
+Create two new edge functions that the Cloud Run proxy calls for chat token budget enforcement. Both authenticate using the existing `SESSION_SECRET` shared secret.
 
 ## Changes
 
-### 1. Update Edge Function: `supabase/functions/chat-session-init/index.ts`
+### 1. Create `supabase/functions/chat-budget-check/index.ts`
 
-Add JWT signing so the response includes a `chat_session_token` field:
+Service-to-service endpoint called by the Cloud Run proxy BEFORE forwarding to Gemini. Validates `x-service-secret` header against `SESSION_SECRET`, queries `chat_sessions` by ID, returns 200 with budget info or 429 if exhausted.
 
-- Import `base64url` from Deno standard library
-- Add the `signJWT()` helper (HMAC-SHA256, same as `cli-session-start`)
-- Read `SESSION_SECRET` from environment (already configured in secrets)
-- Generate a JWT with payload: `chatSessionId`, `userId`, `tokenBudget`, `tokensUsed`, `feature: 'chat'`, `iat`, `exp`
-- Return `chat_session_token` in **both** response paths (resume existing session and create new session)
+### 2. Create `supabase/functions/chat-token-update/index.ts`
 
-### 2. Database Migration: Create `increment_chat_tokens` RPC
+Service-to-service endpoint called AFTER receiving a Gemini response. Validates `x-service-secret`, calls the existing `increment_chat_tokens` RPC to atomically update usage, with a direct UPDATE fallback if RPC fails.
 
-Create a `SECURITY DEFINER` PostgreSQL function that atomically increments `tokens_used` on a `chat_sessions` row. Called by the Cloud Run proxy after each Gemini API call.
+### 3. Update `supabase/config.toml`
 
-```sql
-CREATE OR REPLACE FUNCTION public.increment_chat_tokens(
-  p_session_id UUID,
-  p_tokens INTEGER
-)
-RETURNS INTEGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_new_tokens_used INTEGER;
-BEGIN
-  UPDATE public.chat_sessions
-  SET tokens_used = tokens_used + p_tokens, updated_at = now()
-  WHERE id = p_session_id
-  RETURNING tokens_used INTO v_new_tokens_used;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Chat session not found: %', p_session_id;
-  END IF;
-
-  RETURN v_new_tokens_used;
-END;
-$$;
-```
-
-### 3. No New Secrets Needed
-
-`SESSION_SECRET` is already configured in the project secrets (confirmed in the secrets list). It is the same secret used by `cli-session-start` and the Cloud Run proxy.
+Add entries for both new functions with `verify_jwt = false`.
 
 ## Technical Details
 
-### JWT Payload (matches Cloud Run proxy expectations)
+- Both functions use `x-service-secret` header auth (matched against `SESSION_SECRET` env var)
+- No new secrets needed -- `SESSION_SECRET` is already configured
+- `chat-budget-check` returns 200/404/429/401
+- `chat-token-update` uses `increment_chat_tokens` RPC (created in previous migration), falls back to direct UPDATE
+- No existing code is modified
 
-| Field | Type | Value |
-|-------|------|-------|
-| chatSessionId | string | UUID of chat_sessions row |
-| userId | string | Authenticated user UUID |
-| tokenBudget | number | Tier-based budget (50k/900k/2.16M) |
-| tokensUsed | number | Current usage from session |
-| feature | string | Always `'chat'` |
-| iat | number | Unix seconds (issued at) |
-| exp | number | Unix seconds (matches session expires_at) |
-
-### Files Modified
-
-- `supabase/functions/chat-session-init/index.ts` -- Add signJWT helper, base64url import, JWT generation in both response paths
-- New SQL migration -- Create `increment_chat_tokens` RPC function
-
-### No Other Changes
-
-No existing edge functions, tables, or frontend code are modified.
