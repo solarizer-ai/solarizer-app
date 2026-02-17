@@ -147,13 +147,6 @@ const Index = () => {
   const runAudit = useRunAudit();
   const queryClient = useQueryClient();
 
-  // Check if any audit is actively analyzing (robust check from DB)
-  const hasActiveAnalysis = audits?.some(
-    audit => audit.status === 'analyzing' || audit.status === 'pending'
-  ) ?? false;
-  
-  // Combined check: client-side scanning state OR any DB audit in progress
-  const analysisInProgress = isScanning || hasActiveAnalysis;
 
   const handleStartScan = async (wizardData: { 
     projectName: string; 
@@ -259,11 +252,6 @@ const Index = () => {
       return;
     }
     
-    // If analysis is in progress, show modal instead of wizard
-    if (analysisInProgress) {
-      setShowAnalysisModal(true);
-      return;
-    }
     
     setSearchParams({});
     setView("editor");

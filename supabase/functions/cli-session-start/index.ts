@@ -130,24 +130,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Enforce 1 concurrent audit per user
-    const { data: activeAudits } = await supabase
-      .from('audits')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('is_locked', false)
-      .in('status', ['analyzing']);
-
-    if (activeAudits && activeAudits.length > 0) {
-      return new Response(
-        JSON.stringify({
-          error: 'You already have an active audit. Complete or cancel it first.',
-          active_audit_id: activeAudits[0].id,
-        }),
-        { status: 409, headers: corsHeaders }
-      );
-    }
-
     // Deduct credits
     const { data: deductResult, error: deductError } = await supabase.rpc('cli_deduct_credits', {
       p_user_id: userId,
