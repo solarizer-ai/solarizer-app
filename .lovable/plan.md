@@ -1,30 +1,45 @@
 
 
-# Add Chat Budget Check + Token Update Edge Functions
+# Allow Multiple Concurrent Audits
 
 ## Summary
 
-Create two new edge functions that the Cloud Run proxy calls for chat token budget enforcement. Both authenticate using the existing `SESSION_SECRET` shared secret.
+Remove the single-audit concurrency restriction across the entire platform (web UI and CLI edge functions), allowing users on all plans to run multiple audits simultaneously.
 
 ## Changes
 
-### 1. Create `supabase/functions/chat-budget-check/index.ts`
+### 1. Frontend: `src/pages/Index.tsx`
 
-Service-to-service endpoint called by the Cloud Run proxy BEFORE forwarding to Gemini. Validates `x-service-secret` header against `SESSION_SECRET`, queries `chat_sessions` by ID, returns 200 with budget info or 429 if exhausted.
+- Remove the `hasActiveAnalysis` check and `analysisInProgress` guard that blocks the wizard when an audit is in progress (lines ~150-156, ~262-266)
+- Users will always be able to click "Run Analysis" and start a new audit regardless of existing active audits
+- Keep the `AnalysisInProgressModal` component available but it will no longer block new audits -- it can be repurposed or removed
 
-### 2. Create `supabase/functions/chat-token-update/index.ts`
+### 2. Frontend: `src/hooks/useActiveAnalyses.ts`
 
-Service-to-service endpoint called AFTER receiving a Gemini response. Validates `x-service-secret`, calls the existing `increment_chat_tokens` RPC to atomically update usage, with a direct UPDATE fallback if RPC fails.
+- Keep this hook as-is since it may still be useful for displaying active analyses, but it will no longer gate new audit creation
 
-### 3. Update `supabase/config.toml`
+### 3. Edge Function: `supabase/functions/cli-session-start/index.ts`
 
-Add entries for both new functions with `verify_jwt = false`.
+- Remove the "Enforce 1 concurrent audit per user" block (lines ~132-148) that checks for active audits and returns a 409 error
+- Allow CLI users to start new sessions regardless of existing active audits
+
+### 4. Edge Function: `supabase/functions/cli-auth/index.ts`
+
+- Keep the active audit query but change it to return a list of active audits (informational only, no blocking)
+
+### 5. Edge Function: `supabase/functions/cli-check-credits/index.ts`
+
+- Same as cli-auth: keep active audit info as informational, no blocking behavior
+
+### 6. Component: `src/components/AnalysisInProgressModal.tsx`
+
+- Update the description text to remove "Please wait for current analyses to complete before starting a new one" since it no longer blocks
+- Optionally convert to an informational panel rather than a blocking modal
 
 ## Technical Details
 
-- Both functions use `x-service-secret` header auth (matched against `SESSION_SECRET` env var)
-- No new secrets needed -- `SESSION_SECRET` is already configured
-- `chat-budget-check` returns 200/404/429/401
-- `chat-token-update` uses `increment_chat_tokens` RPC (created in previous migration), falls back to direct UPDATE
-- No existing code is modified
+- **`src/pages/Index.tsx`**: Remove `hasActiveAnalysis` computed value and the `analysisInProgress` guard in `handleNewAudit`. The `isScanning` local state check can also be relaxed.
+- **`cli-session-start/index.ts`**: Delete the entire block from the `activeAudits` query through the 409 response (approximately lines 132-148).
+- **`cli-auth/index.ts`** and **`cli-check-credits/index.ts`**: These already return active audit info without blocking -- no changes needed, or optionally update to return multiple active audits instead of `.limit(1)`.
+- No database schema changes required.
 
