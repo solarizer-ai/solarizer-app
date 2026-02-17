@@ -59,18 +59,15 @@ Deno.serve(async (req) => {
       .eq('user_id', userId)
       .eq('is_locked', false)
       .in('status', ['analyzing'])
-      .order('created_at', { ascending: false })
-      .limit(1);
+      .order('created_at', { ascending: false });
 
-    const activeSession = activeAudits && activeAudits.length > 0
-      ? {
-          audit_id: activeAudits[0].id,
-          status: activeAudits[0].status,
-          contracts_completed: activeAudits[0].contracts_completed || 0,
-          contracts_total: activeAudits[0].contracts_total || 0,
-          project_name: activeAudits[0].project_name,
-        }
-      : null;
+    const activeSessions = (activeAudits || []).map(a => ({
+      audit_id: a.id,
+      status: a.status,
+      contracts_completed: a.contracts_completed || 0,
+      contracts_total: a.contracts_total || 0,
+      project_name: a.project_name,
+    }));
 
     return new Response(
       JSON.stringify({
@@ -78,7 +75,7 @@ Deno.serve(async (req) => {
         scans_remaining: credits?.scans_remaining || 0,
         tier,
         tier_discount: tierDiscount,
-        active_session: activeSession,
+        active_sessions: activeSessions,
       }),
       { status: 200, headers: corsHeaders }
     );

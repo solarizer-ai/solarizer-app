@@ -66,25 +66,22 @@ Deno.serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
-    // Check for active audit
+    // Fetch active audits (informational, no blocking)
     const { data: activeAudits } = await supabase
       .from('audits')
       .select('id, status, contracts_completed, contracts_total, project_name')
       .eq('user_id', userId)
       .eq('is_locked', false)
       .in('status', ['analyzing'])
-      .order('created_at', { ascending: false })
-      .limit(1);
+      .order('created_at', { ascending: false });
 
-    const activeAudit = activeAudits && activeAudits.length > 0
-      ? {
-          audit_id: activeAudits[0].id,
-          status: activeAudits[0].status,
-          contracts_completed: activeAudits[0].contracts_completed || 0,
-          contracts_total: activeAudits[0].contracts_total || 0,
-          project_name: activeAudits[0].project_name,
-        }
-      : null;
+    const activeAuditsList = (activeAudits || []).map(a => ({
+      audit_id: a.id,
+      status: a.status,
+      contracts_completed: a.contracts_completed || 0,
+      contracts_total: a.contracts_total || 0,
+      project_name: a.project_name,
+    }));
 
     const tier = subscription?.plan || 'free';
 
@@ -98,7 +95,7 @@ Deno.serve(async (req) => {
         tier,
         credits_remaining: credits?.credits_remaining || 0,
         scans_remaining: credits?.scans_remaining || 0,
-        active_audit: activeAudit,
+        active_audits: activeAuditsList,
       }),
       { status: 200, headers: corsHeaders }
     );

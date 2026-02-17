@@ -67,7 +67,7 @@ export const AnalysisInProgressModal = ({
         <DialogHeader>
           <DialogTitle>Analyses in Progress</DialogTitle>
           <DialogDescription>
-            Please wait for current analyses to complete before starting a new one.
+            Here are your currently running analyses.
           </DialogDescription>
         </DialogHeader>
 
