@@ -48,10 +48,10 @@ Deno.serve(async (req) => {
   try {
     // Validate callback secret
     const callbackSecret = req.headers.get('x-callback-secret');
-    const expectedSecret = Deno.env.get('N8N_CALLBACK_SECRET');
+    const expectedSecret = Deno.env.get('CALLBACK_SECRET');
     
     if (!expectedSecret) {
-      console.error('save-finding: N8N_CALLBACK_SECRET not configured');
+      console.error('save-finding: CALLBACK_SECRET not configured');
       return new Response(
         JSON.stringify({ error: 'Service temporarily unavailable' }),
         { status: 503, headers: corsHeaders }
