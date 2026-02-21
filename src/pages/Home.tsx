@@ -128,14 +128,14 @@ const Home = () => {
 
         <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
           <h1 className="text-[clamp(2.4rem,6vw,5.5rem)] font-black leading-[1.05] tracking-tight">
-            <span className="text-primary">Security For ALL</span>
+            <span className="text-foreground">Smart Contract Security</span>
             <br />
-            <span className="whitespace-nowrap text-foreground text-[clamp(1.8rem,4.5vw,4rem)]">Accessible Instantly</span>
+            <span className="whitespace-nowrap text-gradient text-[clamp(1.8rem,4.5vw,4rem)]">Reimagined With AI</span>
           </h1>
 
           <p className="text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
-            Multi-phase security analysis for Solidity smart contracts.
-            Point Solarizer at your code. Get a structured audit report in minutes.
+            Multi-phase AI security analysis for Solidity smart contracts.
+            Find what matters. Ship with confidence.
           </p>
         </div>
 
@@ -151,7 +151,7 @@ const Home = () => {
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-black tracking-tight">
-              Five phases. Every contract
+              Context-Aware Analysis
             </h2>
             <p className="text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
               Each contract passes through a structured pipeline — from complexity classification to line-accurate remediation
