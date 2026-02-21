@@ -104,8 +104,8 @@ const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
       </span>
       <p className="text-[11px] font-mono text-muted-foreground/30">{f.file}</p>
     </div>
-    <p className="text-base font-semibold text-foreground mt-3">{f.title}</p>
-    <p className="text-sm text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
+    <p className="text-sm md:text-base font-semibold text-foreground mt-3">{f.title}</p>
+    <p className="text-xs md:text-sm text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
   </div>
 );
 
@@ -127,13 +127,13 @@ const Home = () => {
         <HeroBackground />
 
         <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
-          <h1 className="text-[clamp(2rem,5.5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+          <h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
             <span className="whitespace-nowrap text-foreground">Smart Contract Security</span>
             <br />
-            <span className="whitespace-nowrap text-gradient text-[clamp(1.6rem,4vw,4rem)]">Reimagined With AI</span>
+            <span className="whitespace-nowrap text-gradient text-[clamp(1.3rem,3.5vw,4rem)]">Reimagined With AI</span>
           </h1>
 
-          <p className="text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
+          <p className="text-sm md:text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
             Multi-phase AI security analysis for Solidity smart contracts.
             Find what matters. Ship with confidence.
           </p>
@@ -150,10 +150,10 @@ const Home = () => {
       <section id="pipeline" className="py-24 md:py-32 bg-background">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
-            <h2 className="text-2xl md:text-4xl font-black tracking-tight whitespace-nowrap">
+            <h2 className="text-xl md:text-4xl font-black tracking-tight whitespace-nowrap">
               Context-Aware Analysis
             </h2>
-            <p className="text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
               Each contract passes through a structured pipeline — from complexity classification to line-accurate remediation
             </p>
           </div>
@@ -179,8 +179,8 @@ const Home = () => {
                     {/* Content */}
                     <div className="flex-1 pt-1">
                       <span className="terminal-pill">{phase.pill}</span>
-                      <h3 className="text-lg font-semibold text-foreground mt-1">{phase.title}</h3>
-                      <p className="text-sm text-muted-foreground/60 mt-1.5 leading-relaxed">
+                      <h3 className="text-base md:text-lg font-semibold text-foreground mt-1">{phase.title}</h3>
+                      <p className="text-xs md:text-sm text-muted-foreground/60 mt-1.5 leading-relaxed">
                         {phase.description}
                       </p>
                     </div>
@@ -196,10 +196,10 @@ const Home = () => {
       <section className="py-20 md:py-28 bg-background">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+            <h2 className="text-2xl md:text-4xl font-black tracking-tight">
               Finds what matters
             </h2>
-            <p className="text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
               Known vulnerability classes and the logic issues specific to your protocol
             </p>
           </div>
@@ -231,7 +231,7 @@ const Home = () => {
                 {protocolFindings.length}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground/50 mb-6 text-center max-w-lg mx-auto">
+            <p className="text-xs md:text-sm text-muted-foreground/50 mb-6 text-center max-w-lg mx-auto">
               Beyond known patterns, Solarizer models your protocol's specific
               invariants — the accounting rules, epoch mechanics, and collateral
               assumptions unique to your codebase
@@ -248,7 +248,7 @@ const Home = () => {
       {/* ── SECTION 4: CTA ───────────────────────────────────────────── */}
       <section className="py-20 md:py-28 bg-background">
         <div className="max-w-xl mx-auto text-center px-6">
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+          <h2 className="text-2xl md:text-4xl font-black tracking-tight">
             Run your first audit
           </h2>
 
