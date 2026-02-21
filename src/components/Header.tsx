@@ -29,7 +29,6 @@ const Header = () => {
     { href: "/", label: "Home" },
     { href: "/pricing", label: "Pricing" },
     { href: "/docs", label: "Docs" },
-    ...(user ? [{ href: "/dashboard", label: "Dashboard" }] : []),
   ];
 
   useEffect(() => {
