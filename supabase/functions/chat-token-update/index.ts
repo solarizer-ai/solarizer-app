@@ -51,55 +51,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fallback: direct UPDATE
-    console.warn('chat-token-update: RPC failed, falling back to direct UPDATE:', rpcError.message);
-
-    const { data: updated, error: updateError } = await supabase
-      .from('chat_sessions')
-      .update({ tokens_used: supabase.rpc ? undefined : undefined }) // placeholder
-      .eq('id', chat_session_id)
-      .select('tokens_used')
-      .single();
-
-    // Direct SQL-style fallback using raw update
-    const { error: fallbackError } = await supabase
-      .from('chat_sessions')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', chat_session_id);
-
-    // Since we can't do atomic increment via .update(), use a second RPC attempt or raw SQL
-    // Best effort: read current, compute, write
-    const { data: current } = await supabase
-      .from('chat_sessions')
-      .select('tokens_used')
-      .eq('id', chat_session_id)
-      .single();
-
-    if (current) {
-      const newTotal = current.tokens_used + tokens_used;
-      const { error: setError } = await supabase
-        .from('chat_sessions')
-        .update({ tokens_used: newTotal, updated_at: new Date().toISOString() })
-        .eq('id', chat_session_id);
-
-      if (setError) {
-        console.error('chat-token-update: Fallback update failed:', setError.message);
-        return new Response(
-          JSON.stringify({ error: 'Failed to update tokens' }),
-          { status: 500, headers: corsHeaders }
-        );
-      }
-
-      console.log(`chat-token-update: Fallback success. Session ${chat_session_id} total: ${newTotal}`);
-      return new Response(
-        JSON.stringify({ tokens_used: newTotal }),
-        { status: 200, headers: corsHeaders }
-      );
-    }
-
+    // RPC failed — return error so caller retries
+    console.error('chat-token-update: increment_chat_tokens RPC failed:', rpcError.message);
     return new Response(
-      JSON.stringify({ error: 'Session not found' }),
-      { status: 404, headers: corsHeaders }
+      JSON.stringify({ error: 'Failed to update tokens' }),
+      { status: 500, headers: corsHeaders }
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';

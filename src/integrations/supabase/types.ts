@@ -99,6 +99,7 @@ export type Database = {
       }
       audits: {
         Row: {
+          callback_token: string | null
           complexity: number | null
           context_metadata: Json | null
           contract_code: string | null
@@ -118,6 +119,7 @@ export type Database = {
           scope_metadata: Json | null
           security_score: number | null
           session_token: string | null
+          session_token_hash: string | null
           source: string | null
           status: Database["public"]["Enums"]["audit_status"]
           system_hologram: Json | null
@@ -126,6 +128,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          callback_token?: string | null
           complexity?: number | null
           context_metadata?: Json | null
           contract_code?: string | null
@@ -145,6 +148,7 @@ export type Database = {
           scope_metadata?: Json | null
           security_score?: number | null
           session_token?: string | null
+          session_token_hash?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["audit_status"]
           system_hologram?: Json | null
@@ -153,6 +157,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          callback_token?: string | null
           complexity?: number | null
           context_metadata?: Json | null
           contract_code?: string | null
@@ -172,6 +177,7 @@ export type Database = {
           scope_metadata?: Json | null
           security_score?: number | null
           session_token?: string | null
+          session_token_hash?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["audit_status"]
           system_hologram?: Json | null
