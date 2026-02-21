@@ -97,7 +97,7 @@ const protocolFindings = [
 ];
 
 const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
-  <div className="rounded-xl border border-border/20 bg-card/20 p-6 hover:border-border/40 transition-colors">
+  <div className="rounded-xl border border-border/20 bg-card/20 p-4 sm:p-6 hover:border-border/40 transition-colors">
     <div className="space-y-2">
       <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
         {f.severity}
@@ -123,14 +123,14 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-24 pb-16 md:pt-36">
+      <section className="relative overflow-hidden pt-20 pb-12 md:pt-36 md:pb-16">
         <HeroBackground />
 
-        <div className="relative max-w-3xl mx-auto text-center px-6">
+        <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
           <h1 className="text-[clamp(2.4rem,6vw,5.5rem)] font-black leading-[1.05] tracking-tight">
             <span className="text-primary">Security For ALL</span>
             <br />
-            <span className="whitespace-nowrap text-foreground">Accessible Instantly</span>
+            <span className="whitespace-nowrap text-foreground text-[clamp(1.8rem,4.5vw,4rem)]">Accessible Instantly</span>
           </h1>
 
           <p className="text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
@@ -139,7 +139,7 @@ const Home = () => {
           </p>
         </div>
 
-        <div className="relative mt-16 max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="relative mt-10 sm:mt-16 max-w-5xl mx-auto px-4 sm:px-6">
           <div className="relative">
             <TerminalAuditDemo />
           </div>
@@ -252,7 +252,7 @@ const Home = () => {
             Run your first audit
           </h2>
 
-          <div className="mt-8 max-w-sm mx-auto border border-border/50 rounded-lg px-6 py-4 bg-card/50 font-mono text-sm flex items-center gap-2">
+          <div className="mt-8 max-w-sm mx-auto border border-border/50 rounded-lg px-4 py-3 sm:px-6 sm:py-4 bg-card/50 font-mono text-xs sm:text-sm flex items-center gap-2">
             <span className="text-muted-foreground/40">$</span>
             <span className="text-foreground/80 flex-1 text-left select-all">
               npm install -g solarizer

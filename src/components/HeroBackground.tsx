@@ -21,12 +21,13 @@ const HeroBackground = () => {
         onMouseLeave={handleMouseLeave}
       />
 
-      {/* Orange glow that follows cursor */}
+      {/* Orange dot grid masked to cursor — dots glow orange near pointer */}
       <div
-        className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+        className="absolute inset-0 hero-dot-grid-orange pointer-events-none transition-opacity duration-300"
         style={{
           opacity: mouse.active ? 1 : 0,
-          background: `radial-gradient(circle 120px at ${mouse.x}px ${mouse.y}px, hsl(24 95% 53% / 0.25), transparent)`,
+          WebkitMaskImage: `radial-gradient(circle 150px at ${mouse.x}px ${mouse.y}px, black, transparent)`,
+          maskImage: `radial-gradient(circle 150px at ${mouse.x}px ${mouse.y}px, black, transparent)`,
         }}
       />
 

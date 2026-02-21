@@ -218,7 +218,7 @@ const TerminalAuditDemo = () => {
       </div>
 
       {/* Body */}
-      <div className="bg-[#050505] p-4 sm:p-5 font-mono text-[11px] sm:text-[12px] md:text-[13px] leading-[1.7] text-muted-foreground/70 overflow-hidden select-none h-[480px]">
+      <div className="bg-[#050505] p-3 sm:p-4 md:p-5 font-mono text-[9px] sm:text-[11px] md:text-[13px] leading-[1.7] text-muted-foreground/70 overflow-hidden select-none h-[360px] sm:h-[420px] md:h-[480px]">
         {/* Audit header */}
         <div className="text-muted-foreground/40">
           ── Security Audit: VaultProtocol ────────────────
@@ -268,7 +268,7 @@ const TerminalAuditDemo = () => {
                     const isLast = i === ct.subPhases!.length - 1;
                     const connector = isLast ? "└" : "├";
                     return (
-                      <div key={sp.label} className="ml-8 flex items-center gap-2">
+                      <div key={sp.label} className="ml-4 sm:ml-8 flex items-center gap-2">
                         <span className="text-muted-foreground/20">{connector}</span>
                         <Marker status={sp.status} />
                         <span className={sp.status === "active" ? "text-primary" : ""}>
@@ -292,7 +292,7 @@ const TerminalAuditDemo = () => {
                     const isLast = i === ct.subPhases!.length - 1;
                     const connector = isLast ? "└" : "├";
                     return (
-                      <div key={sp.label} className="ml-8 flex items-center gap-2">
+                      <div key={sp.label} className="ml-4 sm:ml-8 flex items-center gap-2">
                         <span className="text-muted-foreground/20">{connector}</span>
                         <span className="text-muted-foreground/40">☐</span>
                         <span>{sp.label}</span>
