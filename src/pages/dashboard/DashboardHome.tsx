@@ -86,7 +86,7 @@ const DashboardHome = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-foreground">
-            {getTimeBasedGreeting()}{displayName ? `, ${displayName}` : ""}!
+            {getTimeBasedGreeting()}{displayName ? `, ${displayName}` : ""}
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             Overview of your security analysis activity

@@ -22,15 +22,13 @@ import Report from "./pages/Report";
 // Dashboard pages
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import AnalysesPage from "./pages/dashboard/AnalysesPage";
-import UsagePage from "./pages/dashboard/UsagePage";
 import CreditActivityPage from "./pages/dashboard/CreditActivityPage";
 import ApiKeysPage from "./pages/dashboard/ApiKeysPage";
-import IntegrationsPage from "./pages/dashboard/IntegrationsPage";
 import BillingPage from "./pages/dashboard/BillingPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import SecurityPage from "./pages/dashboard/SecurityPage";
-import SubscriptionPage from "./pages/dashboard/SubscriptionPage";
 import SharingPage from "./pages/dashboard/SharingPage";
+import DocsPage from "./pages/dashboard/DocsPage";
 
 const queryClient = new QueryClient();
 
@@ -59,15 +57,14 @@ const App = () => (
               <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                 <Route index element={<DashboardHome />} />
                 <Route path="analyses" element={<AnalysesPage />} />
-                <Route path="usage" element={<UsagePage />} />
                 <Route path="credits" element={<CreditActivityPage />} />
                 <Route path="api-keys" element={<ApiKeysPage />} />
-                <Route path="integrations" element={<IntegrationsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="security" element={<SecurityPage />} />
-                <Route path="subscription" element={<SubscriptionPage />} />
                 <Route path="sharing" element={<SharingPage />} />
+                <Route path="docs" element={<DocsPage />} />
+                <Route path="subscription" element={<Navigate to="/dashboard/billing" replace />} />
               </Route>
 
               {/* Report stays standalone (full-width) */}

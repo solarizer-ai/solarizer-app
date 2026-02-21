@@ -3,14 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   FileSearch,
-  BarChart3,
   Coins,
   Key,
-  Link2,
   Receipt,
   User,
   Shield,
-  CreditCard,
   Users,
   BookOpen,
   LogOut,
@@ -53,12 +50,6 @@ const navGroups = [
     items: [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, end: true },
       { title: "Analyses", url: "/dashboard/analyses", icon: FileSearch },
-    ],
-  },
-  {
-    label: "ANALYTICS",
-    items: [
-      { title: "Usage", url: "/dashboard/usage", icon: BarChart3 },
       { title: "Credit Activity", url: "/dashboard/credits", icon: Coins },
     ],
   },
@@ -66,7 +57,7 @@ const navGroups = [
     label: "MANAGE",
     items: [
       { title: "API Keys", url: "/dashboard/api-keys", icon: Key },
-      { title: "Integrations", url: "/dashboard/integrations", icon: Link2 },
+      { title: "Sharing", url: "/dashboard/sharing", icon: Users },
       { title: "Billing", url: "/dashboard/billing", icon: Receipt },
     ],
   },
@@ -75,8 +66,6 @@ const navGroups = [
     items: [
       { title: "Profile", url: "/dashboard/profile", icon: User },
       { title: "Security", url: "/dashboard/security", icon: Shield },
-      { title: "Subscription", url: "/dashboard/subscription", icon: CreditCard },
-      { title: "Sharing", url: "/dashboard/sharing", icon: Users },
     ],
   },
 ];
@@ -169,9 +158,9 @@ export function DashboardSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Documentation">
-                  <NavLink
-                    to="/docs"
-                    onClick={handleNavClick}
+                    <NavLink
+                      to="/dashboard/docs"
+                      onClick={handleNavClick}
                     className="text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent transition-colors"
                     activeClassName="bg-primary/10 text-foreground font-medium"
                   >
