@@ -11,7 +11,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import ThemeToggle from "@/components/ThemeToggle";
 
 interface Profile {
   display_name: string | null;
@@ -90,7 +89,6 @@ const Header = () => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            <ThemeToggle />
 
             {/* Desktop auth */}
             <div className="hidden md:flex items-center gap-2">
