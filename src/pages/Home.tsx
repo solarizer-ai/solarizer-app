@@ -22,7 +22,7 @@ const phases = [
     title: "Exploit Intelligence",
     icon: Fingerprint,
     description:
-      "Functions deconstructed into semantic queries against a vector index of exploit signatures from real post-mortems",
+      "Contract logic matched against a massive database of exploit signatures from real post-mortems",
   },
   {
     num: "03",
@@ -97,7 +97,7 @@ const protocolFindings = [
 ];
 
 const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
-  <div className="rounded-xl border border-border/20 bg-card/20 p-4 sm:p-6 hover:border-border/40 transition-colors">
+  <div className="rounded-xl border border-border/20 bg-card/20 p-3 sm:p-6 hover:border-border/40 transition-colors">
     <div className="space-y-2">
       <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
         {f.severity}
@@ -123,7 +123,7 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-20 pb-12 md:pt-36 md:pb-16">
+      <section className="relative overflow-hidden pt-16 pb-8 md:pt-36 md:pb-16">
         <HeroBackground />
 
         <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
@@ -139,7 +139,7 @@ const Home = () => {
           </p>
         </div>
 
-        <div className="relative mt-10 sm:mt-16 max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="relative mt-8 sm:mt-16 max-w-5xl mx-auto px-4 sm:px-6">
           <div className="relative">
             <TerminalAuditDemo />
           </div>
@@ -147,7 +147,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 2: Audit Pipeline ────────────────────────────────── */}
-      <section id="pipeline" className="py-24 md:py-32 bg-background">
+      <section id="pipeline" className="py-16 md:py-32 bg-background">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-xl md:text-4xl font-black tracking-tight whitespace-nowrap">
@@ -159,17 +159,17 @@ const Home = () => {
           </div>
 
           {/* Numbered vertical sequence */}
-          <div className="relative mt-16">
+          <div className="relative mt-10 md:mt-16">
             {/* Vertical connecting line */}
             <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
 
-            <div className="space-y-10">
+            <div className="space-y-6 md:space-y-10">
               {phases.map((phase) => {
                 const Icon = phase.icon;
                 return (
                   <div
                     key={phase.pill}
-                    className="relative flex items-start gap-6 md:gap-8"
+                    className="relative flex items-start gap-4 md:gap-8"
                   >
                     {/* Number marker */}
                     <div className="relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border border-border/30 flex items-center justify-center">
@@ -193,19 +193,19 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 3: What It Finds ─────────────────────────────────── */}
-      <section className="py-20 md:py-28 bg-background">
+      <section className="py-16 md:py-28 bg-background">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-2xl md:text-4xl font-black tracking-tight">
-              Finds what matters
+              Intelligence Engine
             </h2>
             <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
-              Known vulnerability classes and the logic issues specific to your protocol
+              Solarizer finds known vulnerability classes and the logic issues specific to your protocol
             </p>
           </div>
 
           {/* Known patterns group */}
-          <div className="mt-14 rounded-2xl bg-foreground/[0.01] border border-border/10 p-6 md:p-8">
+          <div className="mt-10 md:mt-14 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-6">
               <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
                 Known vulnerability patterns
@@ -222,7 +222,7 @@ const Home = () => {
           </div>
 
           {/* Protocol-specific group */}
-          <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-6 md:p-8">
+          <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-3">
               <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
                 Protocol-specific logic
@@ -246,7 +246,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 4: CTA ───────────────────────────────────────────── */}
-      <section className="py-20 md:py-28 bg-background">
+      <section className="py-16 md:py-28 bg-background">
         <div className="max-w-xl mx-auto text-center px-6">
           <h2 className="text-2xl md:text-4xl font-black tracking-tight">
             Run your first audit
