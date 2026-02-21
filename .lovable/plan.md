@@ -1,55 +1,40 @@
 
 
-# Homepage Fixes: Terminal, Theme, Dots, Findings Layout
+# Hero Dots: Orange Glow on Cursor Hover
 
-## 1. Fix terminal animation stuck on Cross-Contract (`src/components/TerminalAuditDemo.tsx`)
+## Approach
 
-The animation has 9 frames (0-8) but stops at frame 8 with Cross-Contract active. Need to add frames 9-12 to complete the remaining phases (Validation, QA Scan, Formatting, Report Generation) and show a final "complete" state.
+The current dot grid is a pure CSS `background-image` pattern, which cannot respond to cursor position. To create a "dots light up orange near the cursor" effect, we need to layer a radial gradient glow that follows the mouse pointer on top of the dot grid.
 
-- Add frames 9-12 to `buildFrame()` to progress through phases 4-7 (Validation, QA Scan, Formatting, Report Generation) marking each done
-- Add corresponding delays to `FRAME_DELAYS` array (4 more entries)
-- Update the `frame >= 8` guard in useEffect hooks to `frame >= 12`
-- Frame 9: Cross-Contract done, Validation active
-- Frame 10: Validation done, QA Scan active  
-- Frame 11: QA Scan done, Formatting active, then Formatting done, Report Generation active
-- Frame 12: All phases done, show a completion line "Audit complete -- report saved"
+**Technique**: Add a `div` that tracks `mousemove` events and applies a `radial-gradient` mask centered on the cursor position. This gradient will be orange, fading out over ~120px, and will only be visible where dots exist (using `mix-blend-mode` or simple overlay opacity).
 
-## 2. Switch back to black theme (`src/index.css`)
+Since the parent container currently has `pointer-events-none`, we need to enable pointer events on the tracking layer while keeping the rest non-interactive.
 
-Revert the muted grey tokens back to near-black:
+## Changes
 
-| Token | Current (grey) | New (black) |
-|-------|---------------|-------------|
-| `--background` | `0 0% 9%` | `0 0% 3%` |
-| `--card` | `0 0% 12%` | `0 0% 6%` |
-| `--popover` | `0 0% 12%` | `0 0% 6%` |
-| `--secondary` | `0 0% 16%` | `0 0% 10%` |
-| `--muted` | `0 0% 16%` | `0 0% 10%` |
-| `--border` | `0 0% 20%` | `0 0% 14%` |
-| `--input` | `0 0% 16%` | `0 0% 10%` |
-| `--surface-elevated` | `0 0% 14%` | `0 0% 8%` |
-| `--surface-overlay` | `0 0% 16%` | `0 0% 10%` |
-| `--border-subtle` | `0 0% 18%` | `0 0% 12%` |
-| `--sidebar-background` | `0 0% 9%` | `0 0% 3%` |
-| `--sidebar-accent` | `0 0% 16%` | `0 0% 10%` |
-| `--sidebar-border` | `0 0% 18%` | `0 0% 12%` |
+### `src/components/HeroBackground.tsx`
 
-## 3. Make hero dot animation visible (`src/components/HeroBackground.tsx` + `src/index.css`)
+- Convert from a stateless arrow function to a component with `useState` + `onMouseMove`
+- Add a new overlay `div` with `pointer-events-auto` that covers the full hero area and tracks cursor position
+- On `mousemove`, update `x, y` state
+- Render a second layer beneath the dot grid using a `radial-gradient(circle 120px at {x}px {y}px, hsl(24 95% 53% / 0.25), transparent)` as the background
+- This orange glow will shine through the dot grid, making nearby dots appear to light up orange
+- On `mouseleave`, hide the glow (set opacity to 0 with a CSS transition)
 
-- Increase dot grid opacity from `opacity-20` to `opacity-40`
-- Increase dot size in CSS from `0.15` alpha to `0.25` alpha and dot radius from 1px to 1.5px
-- Increase pulse ring border opacity from `0.03` / `0.02` / `0.015` to `0.06` / `0.05` / `0.04` / `0.03`
+### Technical Detail
 
-## 4. Stack findings vertically (`src/pages/Home.tsx`)
+```
+Component structure:
+- Outer div (absolute inset-0, overflow-hidden)
+  - Mouse tracking div (absolute inset-0, pointer-events-auto, z-10)
+    -> onMouseMove: update x/y
+    -> onMouseLeave: hide glow
+  - Orange glow div (absolute inset-0, pointer-events-none)
+    -> style: radial-gradient centered at cursor, orange with ~120px radius
+    -> transition: opacity 300ms
+  - Dot grid div (existing, unchanged)
+  - Pulse rings (existing, unchanged)
+```
 
-- Known findings: Change `grid grid-cols-1 md:grid-cols-3` to `grid grid-cols-1` (line 217)
-- Protocol findings: Change `grid grid-cols-1 md:grid-cols-2` to `grid grid-cols-1` (line 239)
+**No new dependencies. No CSS changes needed. Single file modified.**
 
-## Technical Details
-
-**Files modified:** 4
-
-- `src/components/TerminalAuditDemo.tsx` -- Add frames 9-12 to complete all phases, update guards
-- `src/index.css` -- Revert all background/surface/border tokens to near-black values
-- `src/components/HeroBackground.tsx` -- Increase opacity on dot grid and pulse rings
-- `src/pages/Home.tsx` -- Change finding grids from multi-column to single column
