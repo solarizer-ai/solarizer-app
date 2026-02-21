@@ -1,106 +1,72 @@
 
 
-# Dashboard Sidebar & Data View Improvements
+# Credit Activity Table Redesign + Professional Date Picker & Pagination
 
-## 1. Sidebar Navigation Restructure
+## 1. Credit Activity: Column-Based Table Layout
 
-Move Billing to Account, Documentation above user footer with a separator, and remove redundant items.
-
-New sidebar structure:
+Replace the current row-card layout with a proper table inspired by the screenshot. Columns:
 
 ```text
-OVERVIEW
-  Dashboard
-  Analyses
-  Credit Activity
-
-MANAGE
-  API Keys
-  Sharing
-
-ACCOUNT
-  Profile
-  Security
-  Billing            <-- moved from MANAGE
-
-─────────────────
-Documentation        <-- above the separator/user footer
-─────────────────
-[User avatar + name]
+TIME                  | TYPE        | DESCRIPTION                              | AMOUNT   | BALANCE
+2026-02-16 14:57:23   | Refund      | Refund: Audit creation failed...         | +1,060   | 4,957,708
+2026-02-16 14:57:22   | Deduction   | CLI Audit: First Project (2 contracts)   | -1,060   | 4,956,648
 ```
 
-**File:** `src/components/DashboardSidebar.tsx`
-- Move `Billing` from MANAGE group to ACCOUNT group (after Security)
-- Documentation link stays where it is (already at bottom, above footer) -- no change needed there
-- The screenshot shows Documentation sitting right above the user profile with a divider, which matches the current layout
+- **TIME**: Formatted as `dd-MM-yyyy HH:mm:ss` (matches screenshot style)
+- **TYPE**: Badge-style label with color (green for grant/purchase/refund, red for deduction)
+- **DESCRIPTION**: Truncated text
+- **AMOUNT**: Colored number (+green / -red)
+- **BALANCE**: Balance after transaction
 
-## 2. Date Range Filter + Pagination for Credit Activity
+Uses the existing shadcn `Table` component (`Table`, `TableHeader`, `TableRow`, `TableHead`, `TableBody`, `TableCell`).
 
-Add a date range picker and pagination to the Credit Activity page.
+Column headers styled as uppercase, small, muted text matching the screenshot.
 
-**File:** `src/hooks/useCreditActivity.ts`
-- Accept `startDate`, `endDate`, `page`, and `pageSize` parameters
-- Use `.gte('created_at', startDate)` and `.lte('created_at', endDate)` when dates are provided
-- Use `.range(from, to)` for pagination instead of `.limit(50)`
-- Return a count query alongside data for total pages
+## 2. Professional Date Range Picker (Both Pages)
 
-**File:** `src/components/settings/CreditActivityLog.tsx`
-- Add date range inputs (two `<input type="date">` fields) at the top of the card
-- Add pagination controls at the bottom (Previous / Next buttons + "Page X of Y")
-- Pass date range and page state to the hook
-- Default: no date filter (show all), page 1, 20 items per page
+Replace plain `<input type="date">` with Popover + Calendar pickers:
 
-## 3. Date Range Filter + Pagination for Transaction History (Billing Page)
+```text
+[ 01-02-2026  (calendar icon) ]  to  [ 21-02-2026  (calendar icon) ]  [x Clear]
+```
 
-Add the same date range + pagination pattern to the Transaction History section.
+- Each date button opens a `Popover` with the shadcn `Calendar`
+- Display format: `dd-MM-yyyy`
+- Placeholder: "Pick a date" when no date selected
+- Calendar gets `pointer-events-auto` class for proper interaction
 
-**File:** `src/hooks/useBillingHistory.ts`
-- Add `startDate`, `endDate`, `page`, `pageSize` params to `usePowerUpPurchases` and `useSubscriptionHistory`
-- Filter by date range when provided
-- Add pagination with `.range()`
-- Return total count for pagination
+## 3. Minimal Pagination Bar (Both Pages)
 
-**File:** `src/pages/dashboard/BillingPage.tsx`
-- Add date range inputs above the Transaction History card
-- Add pagination controls below the transaction list
-- Default: no date filter, page 1, 15 items per page
+```text
+[<] [>]                                          Lines Per Page  [20 v]
+```
 
-## 4. Remove Greeting Exclamation (already done, verify)
-
-Confirm the `!` is already removed from `DashboardHome.tsx` greeting.
-
----
+- Left: icon-only square buttons (ChevronLeft/ChevronRight) for page navigation
+- Right: "Lines Per Page" label + Select dropdown (10, 15, 20, 50) on one line
+- `pageSize` becomes stateful, default 20 for credits, 15 for billing
+- Changing page size resets page to 1
 
 ## Technical Details
 
-### Pagination Pattern (shared across both views)
-
-Both hooks will follow this pattern:
-```
-- State: page (number), startDate (string | null), endDate (string | null)
-- Query: .gte/.lte for date filtering, .range((page-1)*size, page*size-1) for pagination
-- Count: separate count query or use { count: 'exact' } option in Supabase
-- UI: "Previous" / "Next" buttons, disabled at boundaries, "Page X of Y" label
-```
-
-### Date Range UI
-
-Simple inline date inputs styled with the existing Input component:
-```text
-[From: ____] [To: ____] [Clear]
-```
-Placed above each data list, inside the Card header area.
-
 ### Files to modify
 
-| File | Change |
-|------|--------|
-| `src/components/DashboardSidebar.tsx` | Move Billing to ACCOUNT group |
-| `src/hooks/useCreditActivity.ts` | Add date range filtering + pagination support |
-| `src/components/settings/CreditActivityLog.tsx` | Add date range picker + pagination UI |
-| `src/hooks/useBillingHistory.ts` | Add date range filtering + pagination support |
-| `src/pages/dashboard/BillingPage.tsx` | Add date range picker + pagination to transaction history |
+| File | Changes |
+|------|---------|
+| `src/components/settings/CreditActivityLog.tsx` | Replace card-row layout with Table; add Popover+Calendar date pickers; add new pagination bar with Lines Per Page select; add `pageSize` state |
+| `src/pages/dashboard/BillingPage.tsx` | Same date picker and pagination changes for the Transaction History section |
 
-### Files unchanged
-- All other dashboard pages, hooks, and components remain as-is
-- No new dependencies needed (date-fns already installed, Input component exists)
+### New imports for CreditActivityLog
+- `Table, TableHeader, TableRow, TableHead, TableBody, TableCell` from `@/components/ui/table`
+- `Popover, PopoverTrigger, PopoverContent` from `@/components/ui/popover`
+- `Calendar` from `@/components/ui/calendar`
+- `Select, SelectTrigger, SelectValue, SelectContent, SelectItem` from `@/components/ui/select`
+- `format` from `date-fns`
+- `CalendarIcon` from `lucide-react`
+
+### State changes
+- `startDate`/`endDate`: change from `string | null` to `Date | undefined` internally, convert to ISO string for the hook
+- New `pageSize` state (default 20 for credits, 15 for billing)
+
+### No hook changes needed
+Both `useCreditActivity` and `useBillingHistory` already accept all required parameters.
+
