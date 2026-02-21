@@ -5,42 +5,48 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerminalAuditDemo from "@/components/TerminalAuditDemo";
+import HeroBackground from "@/components/HeroBackground";
 
 const phases = [
   {
+    num: "01",
     pill: "Complexity Analysis",
     title: "Smart Scoping",
     icon: Layers,
     description:
-      "Classifies each contract as Standard, Complex DeFi, or Experimental. Complex and novel contracts trigger a deeper second-pass analysis; simple contracts are routed efficiently.",
+      "Classifies each contract by complexity. Novel contracts trigger deeper second-pass analysis; simple ones route efficiently",
   },
   {
+    num: "02",
     pill: "DNA Matching",
     title: "Exploit Intelligence",
     icon: Fingerprint,
     description:
-      "Each function is deconstructed into semantic search statements and queried against the Vulnerability DNA Matrix — a vector index of exploit signatures from real protocol post-mortems.",
+      "Functions deconstructed into semantic queries against a vector index of exploit signatures from real post-mortems",
   },
   {
+    num: "03",
     pill: "Contract Analysis",
     title: "Vulnerability Hunt",
     icon: Search,
     description:
-      "Red team simulation per contract: an initial aggressive pass targets high-confidence vulnerabilities. Complex contracts receive a second informed pass to surface chained, conditional, and multi-step exploits.",
+      "Red team simulation per contract. Complex contracts receive a second pass to surface chained, multi-step exploits",
   },
   {
+    num: "04",
     pill: "Cross-Contract Analysis",
     title: "Protocol-Wide Reasoning",
     icon: GitBranch,
     description:
-      "Traces attack paths that cross contract boundaries — multi-step exploits, shared state corruption, and inconsistent trust assumptions invisible to single-contract analysis.",
+      "Traces attack paths across contract boundaries — shared state corruption and inconsistent trust assumptions",
   },
   {
+    num: "05",
     pill: "Report Generation",
     title: "Structured Findings",
     icon: FileText,
     description:
-      "A dedicated formatting pass reads the original source to locate each finding, extract the vulnerable code block, and produce line-accurate, context-specific remediation.",
+      "Reads original source to locate each finding, extract vulnerable code, and produce line-accurate remediation",
   },
 ];
 
@@ -112,45 +118,28 @@ const Home = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const scrollToPipeline = () => {
-    document.getElementById("pipeline")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
       <section className="relative overflow-hidden pt-24 pb-0 md:pt-36">
-        <div className="absolute inset-0 bg-radial-glow pointer-events-none" />
+        <HeroBackground />
 
         <div className="relative max-w-3xl mx-auto text-center px-6">
-          <h1 className="text-[clamp(2.4rem,6vw,5.5rem)] font-black leading-[1.05] tracking-tight">
-            <span className="text-gradient">Security for all.</span>
+          <h1 className="text-[clamp(2.4rem,6vw,5.5rem)] font-black leading-[1.05] tracking-tight text-foreground">
+            Security for all
             <br />
-            <span className="text-foreground">Accessible instantly.</span>
+            Accessible instantly
           </h1>
 
           <p className="text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
             Multi-phase security analysis for Solidity smart contracts.
             Point Solarizer at your code. Get a structured audit report in minutes.
           </p>
-
-          <div className="flex items-center justify-center gap-3 mt-8">
-            <Button asChild variant="solarGlow" size="lg">
-              <Link to="/dashboard">
-                Start Auditing
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
-            </Button>
-            <Button variant="ghost" size="lg" onClick={scrollToPipeline}>
-              See How It Works
-            </Button>
-          </div>
         </div>
 
         <div className="relative mt-16 max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="absolute -inset-8 bg-primary/[0.06] blur-3xl rounded-[3rem] pointer-events-none" />
           <div className="relative">
             <TerminalAuditDemo />
           </div>
@@ -159,78 +148,118 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 2: Audit Pipeline ────────────────────────────────── */}
-      <section id="pipeline" className="py-32 md:py-40 bg-background">
-        <div className="max-w-5xl mx-auto px-6">
+      <section id="pipeline" className="py-24 md:py-32 bg-background">
+        <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-black tracking-tight">
-              Five phases. Every contract.
+              Five phases. Every contract
             </h2>
             <p className="text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
-              Each contract passes through a structured pipeline — from complexity classification to line-accurate remediation.
+              Each contract passes through a structured pipeline — from complexity classification to line-accurate remediation
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
-            {phases.map((phase) => {
-              const Icon = phase.icon;
-              return (
-                <div key={phase.pill} className="rounded-xl border border-border/30 bg-card/30 p-6 hover:border-primary/20 transition-colors">
-                  <Icon className="w-6 h-6 text-primary mb-4" />
-                  <span className="terminal-pill">{phase.pill}</span>
-                  <h3 className="text-lg font-semibold text-foreground mt-2">{phase.title}</h3>
-                  <p className="text-sm text-muted-foreground/70 mt-2">{phase.description}</p>
-                </div>
-              );
-            })}
+          {/* Numbered vertical sequence */}
+          <div className="relative mt-16">
+            {/* Vertical connecting line */}
+            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
+
+            <div className="space-y-10">
+              {phases.map((phase, i) => {
+                const Icon = phase.icon;
+                const isEven = i % 2 === 0;
+                return (
+                  <div
+                    key={phase.pill}
+                    className={`relative flex items-start gap-6 md:gap-8 ${
+                      isEven ? "" : "md:flex-row-reverse md:text-right"
+                    }`}
+                  >
+                    {/* Number marker */}
+                    <div className="relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border border-border/30 flex items-center justify-center">
+                      <span className="text-lg md:text-xl font-black text-foreground/10 absolute">
+                        {phase.num}
+                      </span>
+                      <Icon className="w-5 h-5 text-primary relative z-10" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 pt-1">
+                      <span className="terminal-pill">{phase.pill}</span>
+                      <h3 className="text-lg font-semibold text-foreground mt-1">{phase.title}</h3>
+                      <p className="text-sm text-muted-foreground/60 mt-1.5 leading-relaxed max-w-md">
+                        {phase.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── SECTION 3: What It Finds ─────────────────────────────────── */}
-      <section className="py-32 md:py-40 bg-background">
+      <section className="py-20 md:py-28 bg-background">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-black tracking-tight">
-              Finds what matters.
+              Finds what matters
             </h2>
             <p className="text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
-              Known vulnerability classes. And the logic issues specific to your protocol.
+              Known vulnerability classes and the logic issues specific to your protocol
             </p>
           </div>
 
-          <p className="mt-14 mb-6 text-xs font-mono uppercase tracking-widest text-muted-foreground/35 text-center">
-            Known vulnerability patterns
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {knownFindings.map((f) => (
-              <FindingCard key={f.title} f={f} />
-            ))}
+          {/* Known patterns group */}
+          <div className="mt-14 rounded-2xl bg-foreground/[0.01] border border-border/10 p-6 md:p-8">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground/40">
+                Known vulnerability patterns
+              </p>
+              <span className="text-[10px] font-mono text-muted-foreground/30 bg-muted/40 px-2 py-0.5 rounded-full">
+                {knownFindings.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {knownFindings.map((f) => (
+                <FindingCard key={f.title} f={f} />
+              ))}
+            </div>
           </div>
 
-          <p className="mt-14 mb-3 text-xs font-mono uppercase tracking-widest text-muted-foreground/35 text-center">
-            Protocol-specific logic
-          </p>
-          <p className="text-sm text-muted-foreground/50 mb-6 text-center max-w-lg mx-auto">
-            Beyond known patterns, Solarizer models your protocol's specific
-            invariants — the accounting rules, epoch mechanics, and collateral
-            assumptions unique to your codebase.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {protocolFindings.map((f) => (
-              <FindingCard key={f.title} f={f} />
-            ))}
+          {/* Protocol-specific group */}
+          <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-6 md:p-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground/40">
+                Protocol-specific logic
+              </p>
+              <span className="text-[10px] font-mono text-muted-foreground/30 bg-muted/40 px-2 py-0.5 rounded-full">
+                {protocolFindings.length}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground/50 mb-6 text-center max-w-lg mx-auto">
+              Beyond known patterns, Solarizer models your protocol's specific
+              invariants — the accounting rules, epoch mechanics, and collateral
+              assumptions unique to your codebase
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {protocolFindings.map((f) => (
+                <FindingCard key={f.title} f={f} />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── SECTION 4: CTA ───────────────────────────────────────────── */}
-      <section className="py-32 md:py-40 bg-background">
+      <section className="py-20 md:py-28 bg-background">
         <div className="max-w-xl mx-auto text-center px-6">
           <h2 className="text-3xl md:text-4xl font-black tracking-tight">
-            Run your first audit.
+            Run your first audit
           </h2>
 
-          <div className="mt-8 max-w-xs mx-auto border border-border/50 rounded-lg px-4 py-3 bg-card/50 font-mono text-sm flex items-center gap-2">
+          <div className="mt-8 max-w-sm mx-auto border border-border/50 rounded-lg px-6 py-4 bg-card/50 font-mono text-sm flex items-center gap-2">
             <span className="text-muted-foreground/40">$</span>
             <span className="text-foreground/80 flex-1 text-left select-all">
               npm install -g solarizer
