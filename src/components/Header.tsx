@@ -76,7 +76,7 @@ const Header = () => {
   };
 
   return (
-    <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-[60]">
+    <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-[60]">
       <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to={user ? "/dashboard" : "/"} className="flex items-center">
@@ -90,9 +90,9 @@ const Header = () => {
               key={link.href}
               to={link.href}
               className={cn(
-                "text-sm transition-colors",
+                "text-sm transition-colors relative pb-0.5",
                 isActive(link.href)
-                  ? "font-medium text-foreground"
+                  ? "font-medium text-foreground after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-[2px] after:bg-primary after:rounded-full"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -122,7 +122,7 @@ const Header = () => {
                   <Button asChild variant="ghost" size="sm">
                     <Link to="/login">Sign In</Link>
                   </Button>
-                  <Button asChild variant="solarGlow" size="sm">
+                  <Button asChild variant="solarGlow" size="sm" className="hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-shadow">
                     <Link to="/signup">Get Started</Link>
                   </Button>
                 </>

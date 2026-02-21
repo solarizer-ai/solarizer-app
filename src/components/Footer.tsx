@@ -1,12 +1,6 @@
 import { Link } from "react-router-dom";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 
-const footerLinks = [
-  { label: "Privacy", href: "/privacy" },
-  { label: "Terms", href: "/terms" },
-  { label: "Docs", href: "/docs" },
-];
-
 const Footer = () => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -26,34 +20,33 @@ const Footer = () => {
           </div>
 
           {/* Right: Links */}
-          <div className="flex items-center gap-6">
-            {footerLinks.map((link, index) => (
-              <div key={link.label} className="flex items-center gap-6">
-                <Link
-                  to={link.href}
-                  onClick={scrollToTop}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </Link>
-              </div>
-            ))}
+          <div className="flex items-start gap-10">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs text-muted-foreground/50">Product</span>
+              <Link to="/pricing" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+              <Link to="/docs" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
+              <Link to="/dashboard" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs text-muted-foreground/50">Legal</span>
+              <Link to="/privacy" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
+              <Link to="/terms" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms</Link>
+            </div>
           </div>
         </div>
 
         {/* Desktop Bottom Row */}
         <div className="hidden sm:flex items-center justify-between mt-4 pt-4 border-t border-border/50">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} ERYONIX TECHLABS PRIVATE LIMITED
+            © 2026 Eryonix Techlabs. All rights reserved.
           </p>
-          <p className="text-xs text-muted-foreground">
-            Powering secure deployments worldwide
+          <p className="text-xs text-muted-foreground/50">
+            Enterprise-grade smart contract security. For everyone.
           </p>
         </div>
 
         {/* Mobile Layout - Centered */}
         <div className="sm:hidden flex flex-col items-center text-center space-y-4">
-          {/* Logo + Brand */}
           <div className="flex items-center gap-3">
             <Link to="/" onClick={scrollToTop}>
               <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg" />
@@ -61,23 +54,15 @@ const Footer = () => {
             <span className="text-sm font-medium text-foreground">Solarizer</span>
           </div>
 
-          {/* Links Row */}
           <div className="flex items-center justify-center gap-4">
-            {footerLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.href}
-                onClick={scrollToTop}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            <Link to="/pricing" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+            <Link to="/docs" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
+            <Link to="/privacy" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
+            <Link to="/terms" onClick={scrollToTop} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms</Link>
           </div>
 
-          {/* Copyright */}
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} ERYONIX TECHLABS
+            © 2026 Eryonix Techlabs
           </p>
         </div>
       </div>

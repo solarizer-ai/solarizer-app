@@ -244,13 +244,13 @@ const Pricing = () => {
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            Flexible Audit Pricing
+            Audit-as-you-go pricing.
           </h1>
           <p
             className="text-lg text-muted-foreground max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
             style={{ animationDelay: "100ms" }}
           >
-            Credits never expire. Upgrade, downgrade, or pause without losing value.
+            50 credits included every month. Never expire, never reset.
           </p>
         </div>
 
@@ -265,7 +265,7 @@ const Pricing = () => {
                 className={cn(
                   "relative rounded-2xl border p-6 md:p-8 flex flex-col animate-in fade-in slide-in-from-bottom-6 duration-700 fill-mode-both",
                   plan.popular
-                    ? "border-primary/50 bg-card shadow-lg shadow-primary/20 scale-[1.02]"
+                    ? "border-primary/50 bg-card glow-orange-border scale-[1.02]"
                     : "border-border bg-card/50"
                 )}
                 style={{ animationDelay: `${300 + index * 100}ms` }}
@@ -346,6 +346,11 @@ const Pricing = () => {
             );
           })}
         </div>
+
+        {/* Credit explainer */}
+        <p className="text-sm text-muted-foreground/60 text-center mt-8 mb-16">
+          Credits are your monthly audit allowance. Top up anytime — unused credits carry forward.
+        </p>
 
         {/* Power Up Credits Purchase Section - Visible to everyone */}
         <div
