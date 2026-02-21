@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 const SPINNER_CHARS = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
-const FRAME_DELAYS = [1200, 1500, 1000, 2500, 2500, 2000, 2500, 2000, 2000];
+const FRAME_DELAYS = [1200, 1500, 1000, 2500, 2500, 2000, 2500, 2000, 2000, 1500, 1500, 1500, 1500];
 
 type PhaseStatus = "done" | "active" | "pending";
 
@@ -41,6 +41,7 @@ interface FrameState {
   contracts: Contract[];
   findings: FindingGroup[];
   elapsedTotal: number;
+  complete?: boolean;
 }
 
 const basePhases: Phase[] = [
@@ -83,7 +84,6 @@ function buildFrame(idx: number): FrameState {
 
   if (idx === 0) return { phases: p, contracts: c, findings: f, elapsedTotal: 0 };
 
-  // Frame 1: Complexity active
   if (idx >= 1) { p[0].status = "active"; }
   if (idx >= 2) { p[0].status = "done"; p[0].elapsed = "4s"; p[1].status = "active"; }
   if (idx >= 3) {
@@ -135,10 +135,31 @@ function buildFrame(idx: number): FrameState {
     f[0].titles.push("Epoch boundary reward over-distribution");
     f[0].count = 2;
   }
+  if (idx >= 9) {
+    p[3].status = "done"; p[3].elapsed = "18s";
+    p[4].status = "active";
+  }
+  if (idx >= 10) {
+    p[4].status = "done"; p[4].elapsed = "12s";
+    p[5].status = "active";
+  }
+  if (idx >= 11) {
+    p[5].status = "done"; p[5].elapsed = "8s";
+    p[6].status = "active";
+  }
+  if (idx >= 12) {
+    p[6].status = "done"; p[6].elapsed = "3s";
+    p[7].status = "active";
+  }
+  if (idx >= 13) {
+    p[7].status = "done"; p[7].elapsed = "5s";
+  }
 
-  const elapsed = [0, 4, 6, 8, 19, 41, 63, 111, 153][idx] || 0;
-  return { phases: p, contracts: c, findings: f, elapsedTotal: elapsed };
+  const elapsed = [0, 4, 6, 8, 19, 41, 63, 111, 153, 171, 183, 191, 194][Math.min(idx, 12)] || 0;
+  return { phases: p, contracts: c, findings: f, elapsedTotal: elapsed, complete: idx >= 13 };
 }
+
+const TOTAL_FRAMES = 13;
 
 const TerminalAuditDemo = () => {
   const [frame, setFrame] = useState(0);
@@ -148,7 +169,7 @@ const TerminalAuditDemo = () => {
 
   // Frame advancement
   useEffect(() => {
-    if (frame >= 8) return;
+    if (frame >= TOTAL_FRAMES) return;
     const delay = FRAME_DELAYS[frame];
     timerRef.current = setTimeout(() => {
       setFrame(f => f + 1);
@@ -164,7 +185,7 @@ const TerminalAuditDemo = () => {
 
   // Elapsed tick
   useEffect(() => {
-    if (frame >= 8) return;
+    if (frame >= TOTAL_FRAMES) return;
     const iv = setInterval(() => setTickOffset(t => t + 1), 1000);
     return () => clearInterval(iv);
   }, [frame]);
@@ -311,10 +332,19 @@ const TerminalAuditDemo = () => {
           </>
         )}
 
+        {/* Completion message */}
+        {state.complete && (
+          <div className="mt-4 text-green-400 font-semibold">
+            ✓ Audit complete — report saved to ./audit-report.md
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="mt-4 text-right text-muted-foreground/20 text-[10px]">
-          esc to cancel
-        </div>
+        {!state.complete && (
+          <div className="mt-4 text-right text-muted-foreground/20 text-[10px]">
+            esc to cancel
+          </div>
+        )}
       </div>
     </div>
   );

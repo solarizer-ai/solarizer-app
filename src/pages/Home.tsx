@@ -214,7 +214,7 @@ const Home = () => {
                 {knownFindings.length}
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {knownFindings.map((f) => (
                 <FindingCard key={f.title} f={f} />
               ))}
@@ -236,7 +236,7 @@ const Home = () => {
               invariants — the accounting rules, epoch mechanics, and collateral
               assumptions unique to your codebase
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {protocolFindings.map((f) => (
                 <FindingCard key={f.title} f={f} />
               ))}
