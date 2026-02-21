@@ -1,98 +1,74 @@
 
-
-# Home Page Facelift
+# Improve Pipeline Cards and Findings Section
 
 ## Summary
 
-A complete visual overhaul of the Solarizer landing page, replacing the current busy layout (orbital rings, grid overlays, glass cards, comparison tables) with four clean sections built on typography, whitespace, and a new animated terminal demo component. Header and Footer get minor polish. Pricing gets small copy and styling tweaks.
+Three improvements: (1) replace the basic vertical list in "Five phases" with professional feature cards in a grid layout, each with an icon and subtle border styling, (2) fix the terminal to a fixed height so it doesn't jump when findings appear, and (3) redesign the "Finds what matters" section with proper card-based finding items that look polished.
 
-## What Changes
+## Changes
 
-### 1. New CSS Utilities (`src/index.css`)
+### 1. Terminal fixed height (`src/components/TerminalAuditDemo.tsx`)
 
-Four new classes added inside the existing `@layer utilities` block:
+Change the terminal body from `min-h-[420px]` to a fixed `h-[480px]` with `overflow-hidden`. This prevents the terminal from growing when findings appear during the animation, keeping the layout stable.
 
-- **`.terminal-pill`** -- monospace phase label (JetBrains Mono, 0.6rem, uppercase, faint orange border)
-- **`.glow-orange-border`** -- double box-shadow for the Pricing Pro card
-- **`.terminal-cursor`** -- blinking orange cursor (2px wide, 14px tall, 700ms blink keyframe)
-- **`.terminal-spinner`** -- spinning braille characters cycling every 80ms via CSS steps
+Also stop the animation from looping: when frame reaches 8, stop advancing (no reset). Stop the elapsed tick timer too. Keep the spinner active on the final frame.
 
-No existing classes removed.
+### 2. Pipeline section redesign (`src/pages/Home.tsx`)
 
-### 2. New Component (`src/components/TerminalAuditDemo.tsx`)
+Replace the current left-border vertical list with a responsive grid of cards.
 
-A self-contained animated terminal that replaces the static hero visual. Features:
+**Layout**: `max-w-5xl` (wider than the current `max-w-2xl`), centered. Headline stays the same ("Five phases. Every contract.") but is now centered with a subtitle.
 
-- macOS-style window chrome (traffic light dots, title bar)
-- Renders a realistic CLI audit progress display with:
-  - Section headers (Audit title, Contracts, Findings)
-  - 8 phase indicators with checkmark/spinner/pending markers
-  - 4 contracts with expandable sub-phase trees
-  - Findings grouped by severity with tree connectors
-- Automatically cycles through 9 animation frames with realistic timing (1-2.5s per frame)
-- Independent spinner animation (80ms tick)
-- Live elapsed time counter
-- Loops indefinitely with instant reset
+**Card grid**: A `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3` layout with `gap-6`. Each card:
+- `rounded-xl border border-border/30 bg-card/30 p-6` with `hover:border-primary/20 transition-colors`
+- Top: a lucide icon in orange (`text-primary`) -- each phase gets a unique icon:
+  - Complexity Analysis: `Layers` icon
+  - DNA Matching: `Dna` icon  
+  - Contract Analysis: `Search` icon
+  - Cross-Contract Analysis: `GitBranch` icon
+  - Report Generation: `FileText` icon
+- Below icon: the `.terminal-pill` label (phase name)
+- Title in `text-lg font-semibold text-foreground`
+- Description in `text-sm text-muted-foreground/70`
 
-### 3. Home Page (`src/pages/Home.tsx`) -- Full Replacement
+The 5 cards fill the grid naturally: 3 on the first row, 2 on the second row centered using `md:col-span-1` on the last two items wrapped in a flex container, or simply let them flow naturally left-aligned.
 
-The entire file is replaced with four sections:
+### 3. Findings section redesign (`src/pages/Home.tsx`)
 
-**Section 1 -- Hero**
-- Large two-line headline: "Security for all." (orange gradient) + "Accessible instantly." (white)
-- Two-line description
-- Two CTAs: "Start Auditing" and "See How It Works" (smooth scroll)
-- The `TerminalAuditDemo` component with a radial orange glow behind it
-- Bottom fade dissolving into the next section
+Replace the plain `divide-y` rows with proper cards. Also widen to `max-w-4xl`.
 
-**Section 2 -- Audit Pipeline** (`#pipeline`)
-- Five phases listed vertically with a left orange border
-- Each phase has a `.terminal-pill` label, bold title, and description paragraph
-- No cards, no hover effects, no numbered steps
+**Section header**: Centered headline "Finds what matters." with centered subtitle below.
 
-**Section 3 -- What It Finds**
-- Two groups: "Known vulnerability patterns" (3 findings) and "Protocol-specific logic" (2 findings)
-- Each finding is a `divide-y` row with severity badge, title, description, and file reference
-- Severity badges color-coded (red, orange, yellow)
+**Finding cards**: Each finding becomes a card with:
+- `rounded-xl border border-border/20 bg-card/20 p-6` styling
+- Top row: severity badge (same colors as now, but slightly larger with `px-2.5 py-1 text-[11px] font-mono font-bold rounded-md`) on the left, file reference on the right in mono
+- Title: `text-base font-semibold text-foreground mt-3`
+- Description: `text-sm text-muted-foreground/60 mt-2 leading-relaxed`
 
-**Section 4 -- CTA**
-- Headline: "Run your first audit."
-- npm install box with copy-to-clipboard button
-- One "Open Dashboard" button
+**Layout**: 
+- "Known vulnerability patterns" group: 3 cards in a `grid grid-cols-1 md:grid-cols-3 gap-4`
+- "Protocol-specific logic" group: 2 cards in a `grid grid-cols-1 md:grid-cols-2 gap-4` with a framing paragraph above
 
-### 4. Header (`src/components/Header.tsx`) -- Three Edits
+Group labels stay as small uppercase mono labels but are now centered.
 
-- Blur: `backdrop-blur-sm` changed to `backdrop-blur-xl`
-- Active nav link: adds a 2px orange underline bar via `after:` pseudo-element
-- "Get Started" button: adds `hover:shadow-[0_0_20px_rgba(249,115,22,0.2)]`
+### 4. Add icon imports (`src/pages/Home.tsx`)
 
-### 5. Footer (`src/components/Footer.tsx`) -- Restructured
-
-- Desktop links reorganized into two labeled groups: "Product" (Pricing, Docs, Dashboard) and "Legal" (Privacy, Terms)
-- Copyright simplified: "2026 Eryonix Techlabs. All rights reserved."
-- Tagline: "Enterprise-grade smart contract security. For everyone."
-- Mobile copyright simplified
-
-### 6. Pricing (`src/pages/Pricing.tsx`) -- Four Small Edits
-
-- Hero headline: "Flexible Audit Pricing" changed to "Audit-as-you-go pricing."
-- Hero subtitle updated to "50 credits included every month. Never expire, never reset."
-- Pro card: `shadow-lg shadow-primary/20` replaced with `glow-orange-border`
-- Credit explainer line added below pricing cards grid
+Add `Layers, Search, GitBranch, FileText` from lucide-react. Also add `Dna` -- if unavailable, use `Fingerprint` as fallback.
 
 ## Technical Details
 
-**Files created:** 1
-- `src/components/TerminalAuditDemo.tsx` -- ~350 lines, self-contained React component with useState/useEffect for animation
+**Files modified:** 2
 
-**Files modified:** 5
-- `src/index.css` -- 4 new utility classes + 1 keyframe
-- `src/pages/Home.tsx` -- full rewrite (~280 lines)
-- `src/components/Header.tsx` -- 3 line-level edits
-- `src/components/Footer.tsx` -- restructured links and copy
-- `src/pages/Pricing.tsx` -- 4 targeted edits
+**`src/components/TerminalAuditDemo.tsx`**:
+- Line 204: change `min-h-[420px]` to `h-[480px]`
+- Lines 150-162: modify frame advancement useEffect to stop at frame 8 instead of looping
+- Lines 171-174: stop elapsed tick when frame reaches 8
 
-**No new dependencies.** All imports are already available in the project.
+**`src/pages/Home.tsx`**:
+- Add icon imports from lucide-react
+- Add icon mapping to the `phases` data array
+- Lines 156-175 (pipeline section): replace the `max-w-2xl` left-border list with a `max-w-5xl` centered grid of cards
+- Lines 177-210 (findings section): replace `max-w-2xl` `divide-y` layout with `max-w-4xl` card grid layout
+- `FindingRow` component: redesigned as `FindingCard` with border, background, and structured layout
 
-**No database or backend changes.**
-
+**No new dependencies. No database changes.**
