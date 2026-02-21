@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { verifyCallback } from '../_shared/verifyCallback.ts';
 
 // No CORS headers - this is a server-to-server callback only
 const corsHeaders = {
@@ -46,27 +47,7 @@ Deno.serve(async (req) => {
   console.log('save-finding: Request received');
 
   try {
-    // Validate callback secret
-    const callbackSecret = req.headers.get('x-callback-secret');
-    const expectedSecret = Deno.env.get('CALLBACK_SECRET');
-    
-    if (!expectedSecret) {
-      console.error('save-finding: CALLBACK_SECRET not configured');
-      return new Response(
-        JSON.stringify({ error: 'Service temporarily unavailable' }),
-        { status: 503, headers: corsHeaders }
-      );
-    }
-
-    if (callbackSecret !== expectedSecret) {
-      console.error('save-finding: Invalid callback secret');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
-    // Parse request body
+    // Parse request body first to get audit_id for per-audit auth
     let body: SaveFindingRequest;
     try {
       body = await req.json();
@@ -80,21 +61,30 @@ Deno.serve(async (req) => {
 
     const { finding, coverage_data } = body;
 
-    // Validate required fields
-    if (!finding || typeof finding !== 'object') {
+    // Validate finding object exists and has audit_id before auth check
+    if (!finding || typeof finding !== 'object' || !finding.audit_id || typeof finding.audit_id !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Invalid request parameters' }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    if (!finding.audit_id || typeof finding.audit_id !== 'string') {
+    // Initialize Supabase client with service role (needed for verifyCallback)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify per-audit callback token (with legacy fallback)
+    const authResult = await verifyCallback(req, finding.audit_id, supabase);
+    if (!authResult.valid) {
+      console.error('save-finding: Auth failed:', authResult.error);
       return new Response(
-        JSON.stringify({ error: 'Invalid request parameters' }),
-        { status: 400, headers: corsHeaders }
+        JSON.stringify({ error: authResult.error }),
+        { status: authResult.status || 401, headers: corsHeaders }
       );
     }
 
+    // Validate remaining finding fields
     if (!finding.title || typeof finding.title !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Invalid request parameters' }),
@@ -143,10 +133,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Initialize Supabase client with service role
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // supabase client already initialized above
 
     // Check if audit is locked before saving
     const { data: auditLockCheck, error: lockCheckError } = await supabase

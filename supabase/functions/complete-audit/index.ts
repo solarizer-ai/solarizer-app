@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { verifyCallback } from '../_shared/verifyCallback.ts';
 
 // No CORS headers - this is a server-to-server callback only
 const corsHeaders = {
@@ -51,27 +52,7 @@ Deno.serve(async (req) => {
   console.log('complete-audit: Request received');
 
   try {
-    // Validate callback secret
-    const callbackSecret = req.headers.get('x-callback-secret');
-    const expectedSecret = Deno.env.get('CALLBACK_SECRET');
-    
-    if (!expectedSecret) {
-      console.error('complete-audit: CALLBACK_SECRET not configured');
-      return new Response(
-        JSON.stringify({ error: 'Service temporarily unavailable' }),
-        { status: 503, headers: corsHeaders }
-      );
-    }
-
-    if (callbackSecret !== expectedSecret) {
-      console.error('complete-audit: Invalid callback secret');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
-    // Parse request body
+    // Parse request body first to get audit_id for per-audit auth
     let body: CompleteAuditRequest;
     try {
       body = await req.json();
@@ -85,7 +66,6 @@ Deno.serve(async (req) => {
 
     const { audit_id, security_score, grade, status, coverage_data, system_hologram } = body;
 
-    // Validate required fields
     if (!audit_id || typeof audit_id !== 'string') {
       return new Response(
         JSON.stringify({ error: 'audit_id is required' }),
@@ -93,6 +73,22 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Initialize Supabase client with service role
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify per-audit callback token (with legacy fallback)
+    const authResult = await verifyCallback(req, audit_id, supabase);
+    if (!authResult.valid) {
+      console.error('complete-audit: Auth failed:', authResult.error);
+      return new Response(
+        JSON.stringify({ error: authResult.error }),
+        { status: authResult.status || 401, headers: corsHeaders }
+      );
+    }
+
+    // Validate remaining fields
     if (typeof security_score !== 'number' || security_score < 0 || security_score > 100) {
       return new Response(
         JSON.stringify({ error: 'security_score must be a number between 0 and 100' }),
@@ -129,10 +125,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Initialize Supabase client with service role
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // supabase client already initialized above
 
     console.log(`complete-audit: Completing audit ${audit_id} with score ${security_score}, incoming grade ${grade}, status ${status}, coverage_tests: ${coverage_data?.total_tests ?? 0}`);
 

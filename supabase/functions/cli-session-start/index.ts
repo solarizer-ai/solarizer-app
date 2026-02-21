@@ -215,9 +215,34 @@ Deno.serve(async (req) => {
       exp: now + (2 * 60 * 60),
     }, sessionSecret);
 
+    // WEB-8: Store SHA-256 hash of session token instead of plaintext
+    const tokenBytes = new TextEncoder().encode(sessionToken);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', tokenBytes);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const sessionTokenHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // WEB-3: Generate per-audit callback token using HMAC
+    const callbackSecret = Deno.env.get('CALLBACK_SECRET');
+    let callbackToken: string | null = null;
+    if (callbackSecret) {
+      const key = await crypto.subtle.importKey(
+        'raw',
+        new TextEncoder().encode(callbackSecret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(auditId));
+      callbackToken = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     await supabase
       .from('audits')
-      .update({ session_token: sessionToken })
+      .update({
+        session_token_hash: sessionTokenHash,
+        session_token: null, // Stop storing plaintext
+        callback_token: callbackToken,
+      })
       .eq('id', auditId);
 
     console.log(`cli-session-start: Session created for audit ${auditId}`);
@@ -226,6 +251,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         session_id: auditId,
         session_token: sessionToken,
+        callback_token: callbackToken,
         proxy_url: proxyUrl,
         remaining_credits: deductResult.balance,
       }),
