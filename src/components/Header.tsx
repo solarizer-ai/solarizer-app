@@ -62,7 +62,7 @@ const Header = () => {
     <>
       {/* Floating glass pill header */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] max-w-2xl w-[calc(100%-2rem)]">
-        <div className="rounded-full bg-background/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_0_30px_rgba(0,0,0,0.3)] px-4 h-12 flex items-center justify-between">
+        <div className="rounded-full bg-white/15 backdrop-blur-xl border border-white/20 shadow-[0_0_30px_rgba(0,0,0,0.3)] px-4 h-12 flex items-center justify-between">
           {/* Left: Logo + Brand */}
           <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
             <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg object-cover" />
