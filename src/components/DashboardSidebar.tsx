@@ -58,7 +58,6 @@ const navGroups = [
     items: [
       { title: "API Keys", url: "/dashboard/api-keys", icon: Key },
       { title: "Sharing", url: "/dashboard/sharing", icon: Users },
-      { title: "Billing", url: "/dashboard/billing", icon: Receipt },
     ],
   },
   {
@@ -66,6 +65,7 @@ const navGroups = [
     items: [
       { title: "Profile", url: "/dashboard/profile", icon: User },
       { title: "Security", url: "/dashboard/security", icon: Shield },
+      { title: "Billing", url: "/dashboard/billing", icon: Receipt },
     ],
   },
 ];

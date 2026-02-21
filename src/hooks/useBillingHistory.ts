@@ -22,84 +22,91 @@ export type BillingEvent =
   | { type: 'power_up'; data: PowerUpPurchase; date: string }
   | { type: 'subscription_change'; data: SubscriptionChange; date: string };
 
-export function usePowerUpPurchases() {
+interface BillingHistoryOptions {
+  startDate?: string | null;
+  endDate?: string | null;
+  page?: number;
+  pageSize?: number;
+}
+
+export function usePowerUpPurchases(options: BillingHistoryOptions = {}) {
   const { user } = useAuth();
+  const { startDate = null, endDate = null, page = 1, pageSize = 15 } = options;
 
   return useQuery({
-    queryKey: ['power-up-purchases', user?.id],
+    queryKey: ['power-up-purchases', user?.id, startDate, endDate, page, pageSize],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) return { data: [], count: 0 };
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('power_up_purchases')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('user_id', user.id)
         .order('purchased_at', { ascending: false });
 
+      if (startDate) query = query.gte('purchased_at', startDate);
+      if (endDate) query = query.lte('purchased_at', `${endDate}T23:59:59.999Z`);
+
+      const from = (page - 1) * pageSize;
+      query = query.range(from, from + pageSize - 1);
+
+      const { data, error, count } = await query;
       if (error) throw error;
-      return data as PowerUpPurchase[];
+      return { data: data as PowerUpPurchase[], count: count || 0 };
     },
     enabled: !!user?.id,
   });
 }
 
-export function useSubscriptionHistory() {
+export function useSubscriptionHistory(options: BillingHistoryOptions = {}) {
   const { user } = useAuth();
+  const { startDate = null, endDate = null, page = 1, pageSize = 15 } = options;
 
   return useQuery({
-    queryKey: ['subscription-history', user?.id],
+    queryKey: ['subscription-history', user?.id, startDate, endDate, page, pageSize],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) return { data: [], count: 0 };
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('subscription_history')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('user_id', user.id)
         .order('changed_at', { ascending: false });
 
+      if (startDate) query = query.gte('changed_at', startDate);
+      if (endDate) query = query.lte('changed_at', `${endDate}T23:59:59.999Z`);
+
+      const from = (page - 1) * pageSize;
+      query = query.range(from, from + pageSize - 1);
+
+      const { data, error, count } = await query;
       if (error) throw error;
-      return data as SubscriptionChange[];
+      return { data: data as SubscriptionChange[], count: count || 0 };
     },
     enabled: !!user?.id,
   });
 }
 
-export function useBillingHistory() {
-  const { data: purchases, isLoading: purchasesLoading } = usePowerUpPurchases();
-  const { data: subscriptionChanges, isLoading: changesLoading } = useSubscriptionHistory();
+export function useBillingHistory(options: BillingHistoryOptions = {}) {
+  const { data: purchasesResult, isLoading: purchasesLoading } = usePowerUpPurchases(options);
+  const { data: changesResult, isLoading: changesLoading } = useSubscriptionHistory(options);
 
   const isLoading = purchasesLoading || changesLoading;
+  const purchases = purchasesResult?.data || [];
+  const subscriptionChanges = changesResult?.data || [];
+  const totalCount = (purchasesResult?.count || 0) + (changesResult?.count || 0);
 
-  // Combine and sort all billing events
   const events: BillingEvent[] = [];
 
-  if (purchases) {
-    purchases.forEach(purchase => {
-      events.push({
-        type: 'power_up',
-        data: purchase,
-        date: purchase.purchased_at,
-      });
-    });
-  }
+  purchases.forEach(purchase => {
+    events.push({ type: 'power_up', data: purchase, date: purchase.purchased_at });
+  });
 
-  if (subscriptionChanges) {
-    subscriptionChanges.forEach(change => {
-      events.push({
-        type: 'subscription_change',
-        data: change,
-        date: change.changed_at,
-      });
-    });
-  }
+  subscriptionChanges.forEach(change => {
+    events.push({ type: 'subscription_change', data: change, date: change.changed_at });
+  });
 
-  // Sort by date descending
   events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  return {
-    events,
-    isLoading,
-    purchases,
-    subscriptionChanges,
-  };
+  return { events, isLoading, totalCount, purchases, subscriptionChanges };
 }
