@@ -332,6 +332,12 @@
     animation: grid-drift 20s linear infinite;
   }
 
+  .hero-dot-grid-orange {
+    background-image: radial-gradient(circle, hsl(24 95% 53% / 0.7) 1.5px, transparent 1.5px);
+    background-size: 40px 40px;
+    animation: grid-drift 20s linear infinite;
+  }
+
   /* Hero pulse rings */
   .hero-pulse-ring {
     animation: ring-pulse 6s ease-in-out infinite;
