@@ -1,67 +1,60 @@
 
 
-# Glass Pill Header and Minimal Footer
+# Muted Grey Theme + Remove Light Mode
 
 ## Summary
 
-Redesign the Header as a floating glass pill (inspired by open-agent.io) and simplify the Footer to a single-line minimal bar.
+Shift the colour palette from pure black backgrounds (2-4% lightness) to a softer muted grey (8-14% lightness), keeping all orange accents untouched. Remove the light theme entirely -- no toggle, no `.light` CSS block, no ThemeProvider complexity.
 
-## Changes
+## What Changes
 
-### 1. Header (`src/components/Header.tsx`) -- Floating Glass Pill
+### 1. Updated colour tokens (`src/index.css`)
 
-Replace the full-width sticky header with a floating, centered pill shape:
+The `:root` variables shift from near-black to muted grey:
 
-**Outer wrapper**: Instead of a full-width `border-b` header, use a fixed-position container with `top-4` padding, centered horizontally with `left-1/2 -translate-x-1/2`, `max-w-2xl w-[calc(100%-2rem)]`. The pill itself gets:
-- `rounded-full` for the pill shape
-- `bg-background/60 backdrop-blur-xl` for glass effect
-- `border border-white/[0.08]` for a very subtle edge
-- `shadow-[0_0_30px_rgba(0,0,0,0.3)]` for depth
-- `px-4 h-12` for compact sizing (shorter than current 16/64px)
+| Token | Current | New |
+|-------|---------|-----|
+| `--background` | `0 0% 2%` | `0 0% 9%` |
+| `--card` | `0 0% 4%` | `0 0% 12%` |
+| `--popover` | `0 0% 4%` | `0 0% 12%` |
+| `--secondary` | `0 0% 10%` | `0 0% 16%` |
+| `--muted` | `0 0% 10%` | `0 0% 16%` |
+| `--muted-foreground` | `0 0% 55%` | `0 0% 60%` |
+| `--border` | `0 0% 14%` | `0 0% 20%` |
+| `--input` | `0 0% 10%` | `0 0% 16%` |
+| `--surface-elevated` | `0 0% 6%` | `0 0% 14%` |
+| `--surface-overlay` | `0 0% 8%` | `0 0% 16%` |
+| `--border-subtle` | `0 0% 12%` | `0 0% 18%` |
+| `--sidebar-background` | `0 0% 2%` | `0 0% 9%` |
+| `--sidebar-accent` | `0 0% 10%` | `0 0% 16%` |
+| `--sidebar-border` | `0 0% 12%` | `0 0% 18%` |
 
-**Layout inside the pill**:
-- Left: Logo (smaller, `w-8 h-8`) + "Solarizer" text label in `text-sm font-medium`
-- Center: Nav links inline with tighter `gap-6`, smaller `text-[13px]`, no active underline (active state is just `text-foreground font-medium` vs `text-muted-foreground/60`)
-- Right: When logged out, a single compact "Get Started" button with `rounded-full bg-primary text-primary-foreground text-xs px-4 py-1.5`. When logged in, the avatar circle. ThemeToggle stays but gets smaller.
+All orange/primary values stay exactly the same. Foreground text stays `0 0% 98%`.
 
-**Mobile**: On `md:hidden`, the pill shrinks to just logo + hamburger menu. The Sheet side panel stays the same.
+Delete the entire `.light { ... }` block (lines 73-129) and the `.dark { ... }` block (lines 131-159) since `:root` now serves as the single theme.
 
-**Page content offset**: Since the header is now floating (not in document flow), add `pt-20` to the first section of pages that use the Header, or wrap in a spacer. The hero section in `Home.tsx` already has `pt-32` so it should be fine. Other pages may need a small top-padding bump.
+### 2. Remove ThemeProvider (`src/hooks/useTheme.tsx`)
 
-### 2. Footer (`src/components/Footer.tsx`) -- Single-Line Minimal
+Simplify to just always apply "dark" class (needed for Tailwind's `darkMode: ["class"]` to work). Remove toggle/setState logic. Export a minimal hook that returns `theme: "dark"` as a static value so existing consumers (like Sonner) don't break.
 
-Replace the two-row footer with a single centered line:
+### 3. Remove ThemeToggle button
 
-**Desktop**: A single row, centered, with just:
-- `text-xs text-muted-foreground/40` copyright: "2026 Eryonix Techlabs"
-- A centered dot separator
-- Inline links: Pricing, Docs, Privacy, Terms -- all `text-xs text-muted-foreground/40 hover:text-muted-foreground`
+- Delete `src/components/ThemeToggle.tsx` (no longer needed)
+- Remove the `<ThemeToggle />` import and usage from `src/components/Header.tsx`
 
-No logo in the footer. No tagline. No border-t. No column groups. Just one clean line with generous vertical padding (`py-8`).
+### 4. Update Sonner (`src/components/ui/sonner.tsx`)
 
-**Mobile**: Same single line but links wrap naturally. Or stack as: links on one line, copyright below.
-
-### 3. Home page spacing (`src/pages/Home.tsx`)
-
-The hero already has `pt-32 md:pt-44` which provides enough clearance for the floating header. No changes needed here.
+The Sonner toaster currently reads `theme` from useTheme. It will continue to work since useTheme still returns `"dark"` -- no code change needed there.
 
 ## Technical Details
 
-**Files modified:** 2
+**Files modified:** 3
+- `src/index.css` -- update `:root` values to muted grey, delete `.light` and `.dark` blocks
+- `src/hooks/useTheme.tsx` -- simplify to static dark-only provider
+- `src/components/Header.tsx` -- remove ThemeToggle import and usage
 
-**`src/components/Header.tsx`**:
-- Replace the outer `<header>` element: remove `border-b`, change to `fixed top-4 left-1/2 -translate-x-1/2 z-[60]` with `max-w-2xl w-[calc(100%-2rem)]`
-- Inner container: `rounded-full bg-background/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_0_30px_rgba(0,0,0,0.3)] px-4 h-12`
-- Add "Solarizer" text next to logo
-- Simplify nav link styles (remove `after:` underline, use opacity-based active state)
-- Make "Get Started" button `rounded-full` with smaller sizing
-- Keep all existing logic (auth, profile fetch, mobile sheet) unchanged
-
-**`src/components/Footer.tsx`**:
-- Replace entire JSX with a single `<footer>` containing one centered flex row
-- Remove logo, column groups, tagline, border-t
-- Single line: copyright + dot separators + inline links
-- All text in `text-xs text-muted-foreground/40`
+**Files deleted:** 1
+- `src/components/ThemeToggle.tsx`
 
 **No new dependencies. No database changes.**
 
