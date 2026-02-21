@@ -127,7 +127,7 @@ const Home = () => {
         <HeroBackground />
 
         <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
-          <h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+          <h1 className="inline-block text-left text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
             <span className="whitespace-nowrap text-foreground">Smart Contract Security</span>
             <br />
             <span className="whitespace-nowrap text-gradient text-[clamp(1.3rem,3.5vw,4rem)]">Reimagined With AI</span>
