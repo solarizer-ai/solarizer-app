@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, ChevronRight } from "lucide-react";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,6 @@ const Header = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Navigation links - Dashboard only shown when logged in
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/pricing", label: "Pricing" },
@@ -37,172 +36,146 @@ const Header = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
-      
       const { data } = await supabase
         .from('profiles')
         .select('display_name, email, avatar_url')
         .eq('user_id', user.id)
         .maybeSingle();
-      
-      if (data) {
-        setProfile(data);
-      }
+      if (data) setProfile(data);
     };
-
     fetchProfile();
   }, [user]);
 
   const getInitials = () => {
-    if (profile?.display_name) {
-      return profile.display_name.slice(0, 2).toUpperCase();
-    }
-    if (profile?.email) {
-      return profile.email.slice(0, 2).toUpperCase();
-    }
-    if (user?.email) {
-      return user.email.slice(0, 2).toUpperCase();
-    }
+    if (profile?.display_name) return profile.display_name.slice(0, 2).toUpperCase();
+    if (profile?.email) return profile.email.slice(0, 2).toUpperCase();
+    if (user?.email) return user.email.slice(0, 2).toUpperCase();
     return 'U';
   };
 
   const isActive = (href: string) => {
-    if (href === "/") {
-      return location.pathname === "/";
-    }
-    if (href === "/dashboard") {
-      return location.pathname === "/dashboard";
-    }
+    if (href === "/") return location.pathname === "/";
+    if (href === "/dashboard") return location.pathname === "/dashboard";
     return location.pathname.startsWith(href);
   };
 
   return (
-    <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-[60]">
-      <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link to={user ? "/dashboard" : "/"} className="flex items-center">
-          <img src={solarizerLogo} alt="Solarizer" className="w-11 h-11 rounded-lg object-cover" />
-        </Link>
+    <>
+      {/* Floating glass pill header */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] max-w-2xl w-[calc(100%-2rem)]">
+        <div className="rounded-full bg-background/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_0_30px_rgba(0,0,0,0.3)] px-4 h-12 flex items-center justify-between">
+          {/* Left: Logo + Brand */}
+          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
+            <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg object-cover" />
+            <span className="text-sm font-medium text-foreground hidden sm:inline">Solarizer</span>
+          </Link>
 
-        {/* Desktop Navigation - Centered */}
-        <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              to={link.href}
-              className={cn(
-                "text-sm transition-colors relative pb-0.5",
-                isActive(link.href)
-                  ? "font-medium text-foreground after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-[2px] after:bg-primary after:rounded-full"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+          {/* Center: Nav links (desktop) */}
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={cn(
+                  "text-[13px] transition-colors",
+                  isActive(link.href)
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground/60 hover:text-foreground"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          
-          {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-3">
-            {!loading && (
-              user ? (
-                /* Logged in: Show user avatar */
-                <button 
-                  onClick={() => navigate("/settings")}
-                  className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <span className="text-xs font-medium text-primary">{getInitials()}</span>
-                </button>
-              ) : (
-                /* Logged out: Show auth buttons */
-                <>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/login">Sign In</Link>
-                  </Button>
-                  <Button asChild variant="solarGlow" size="sm" className="hover:shadow-[0_0_20px_rgba(249,115,22,0.2)] transition-shadow">
-                    <Link to="/signup">Get Started</Link>
-                  </Button>
-                </>
-              )
-            )}
-          </div>
-          
-          {/* Mobile Menu */}
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground hover:text-foreground">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72 bg-background border-border">
-              <div className="flex flex-col h-full py-6">
-                {/* User Info - Clickable to Settings (only if logged in) */}
-                {user && (
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+
+            {/* Desktop auth */}
+            <div className="hidden md:flex items-center gap-2">
+              {!loading && (
+                user ? (
                   <button
-                    onClick={() => {
-                      navigate("/settings");
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-3 px-2 mb-6 w-full hover:bg-muted rounded-lg py-2 transition-colors text-left"
+                    onClick={() => navigate("/settings")}
+                    className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
                   >
-                    <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">{getInitials()}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {profile?.display_name || 'User'}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {profile?.email || user?.email}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-[10px] font-medium text-primary">{getInitials()}</span>
                   </button>
-                )}
+                ) : (
+                  <Link
+                    to="/signup"
+                    className="rounded-full bg-primary text-primary-foreground text-xs px-4 py-1.5 font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    Get Started
+                  </Link>
+                )
+              )}
+            </div>
 
-                {/* Navigation Links */}
-                <nav className="flex flex-col gap-1">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      to={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "px-3 py-2.5 rounded-lg text-sm transition-colors",
-                        isActive(link.href)
-                          ? "bg-primary/10 text-foreground font-medium"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      )}
+            {/* Mobile menu */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground hover:text-foreground h-8 w-8">
+                  <Menu className="w-4 h-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72 bg-background border-border">
+                <div className="flex flex-col h-full py-6">
+                  {user && (
+                    <button
+                      onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
+                      className="flex items-center gap-3 px-2 mb-6 w-full hover:bg-muted rounded-lg py-2 transition-colors text-left"
                     >
-                      {link.label}
-                    </Link>
-                  ))}
-                </nav>
+                      <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+                        <span className="text-sm font-medium text-primary">{getInitials()}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{profile?.display_name || 'User'}</p>
+                        <p className="text-xs text-muted-foreground truncate">{profile?.email || user?.email}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  )}
 
-                {/* Mobile Auth Buttons (only if logged out) */}
-                {!loading && !user && (
-                  <div className="flex flex-col gap-2 pt-4 mt-auto border-t border-border">
-                    <Button asChild variant="outline" className="w-full">
-                      <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                        Sign In
+                  <nav className="flex flex-col gap-1">
+                    {navLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        to={link.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "px-3 py-2.5 rounded-lg text-sm transition-colors",
+                          isActive(link.href)
+                            ? "bg-primary/10 text-foreground font-medium"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        )}
+                      >
+                        {link.label}
                       </Link>
-                    </Button>
-                    <Button asChild variant="solarGlow" className="w-full">
-                      <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
-                        Get Started
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
+                    ))}
+                  </nav>
+
+                  {!loading && !user && (
+                    <div className="flex flex-col gap-2 pt-4 mt-auto border-t border-border">
+                      <Button asChild variant="outline" className="w-full">
+                        <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+                      </Button>
+                      <Button asChild variant="solarGlow" className="w-full">
+                        <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Spacer to offset fixed header */}
+      <div className="h-20" />
+    </>
   );
 };
 
