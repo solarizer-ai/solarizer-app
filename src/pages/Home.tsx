@@ -123,22 +123,22 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-16 pb-8 md:pt-36 md:pb-16">
+      <section className="relative overflow-hidden pt-24 pb-12 md:pt-40 md:pb-20">
         <HeroBackground />
 
         <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
-          <h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+          <h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight">
             <span className="block whitespace-nowrap text-foreground">Smart Contract Security</span>
-            <span className="block whitespace-nowrap text-gradient">Reimagined With AI</span>
+            <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Reimagined With AI</span>
           </h1>
 
-          <p className="text-sm md:text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
+          <p className="text-sm md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-lg mx-auto">
             Multi-phase AI security analysis for Solidity smart contracts.
             Find what matters. Ship with confidence.
           </p>
         </div>
 
-        <div className="relative mt-8 sm:mt-16 max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="relative mt-10 sm:mt-20 max-w-5xl mx-auto px-4 sm:px-6">
           <div className="relative">
             <TerminalAuditDemo />
           </div>
