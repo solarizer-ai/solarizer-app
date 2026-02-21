@@ -9,22 +9,22 @@
 
 @layer base {
   :root {
-    --background: 0 0% 9%;
+    --background: 0 0% 3%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 12%;
+    --card: 0 0% 6%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 12%;
+    --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 24 95% 53%;
     --primary-foreground: 0 0% 2%;
 
-    --secondary: 0 0% 16%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 16%;
+    --muted: 0 0% 10%;
     --muted-foreground: 0 0% 60%;
 
     --accent: 24 95% 53%;
@@ -42,16 +42,16 @@
     --critical: 280 70% 55%;
     --critical-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 16%;
+    --border: 0 0% 14%;
+    --input: 0 0% 10%;
     --ring: 24 95% 53%;
 
     --radius: 0.5rem;
 
     /* Custom tokens */
-    --surface-elevated: 0 0% 14%;
-    --surface-overlay: 0 0% 16%;
-    --border-subtle: 0 0% 18%;
+    --surface-elevated: 0 0% 8%;
+    --surface-overlay: 0 0% 10%;
+    --border-subtle: 0 0% 12%;
     --text-secondary: 0 0% 60%;
     --text-tertiary: 0 0% 45%;
     
@@ -60,13 +60,13 @@
     --solar-glow: 24 100% 60%;
     --solar-deep: 24 90% 45%;
 
-    --sidebar-background: 0 0% 9%;
+    --sidebar-background: 0 0% 3%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 24 95% 53%;
     --sidebar-primary-foreground: 0 0% 2%;
-    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 18%;
+    --sidebar-border: 0 0% 12%;
     --sidebar-ring: 24 95% 53%;
   }
 
@@ -327,7 +327,7 @@
 
   /* Hero animated dot grid */
   .hero-dot-grid {
-    background-image: radial-gradient(circle, hsl(var(--foreground) / 0.15) 1px, transparent 1px);
+    background-image: radial-gradient(circle, hsl(var(--foreground) / 0.25) 1.5px, transparent 1.5px);
     background-size: 40px 40px;
     animation: grid-drift 20s linear infinite;
   }
