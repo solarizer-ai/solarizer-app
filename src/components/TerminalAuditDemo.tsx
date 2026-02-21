@@ -148,15 +148,10 @@ const TerminalAuditDemo = () => {
 
   // Frame advancement
   useEffect(() => {
-    const delay = frame === 8 ? 2000 : FRAME_DELAYS[frame];
+    if (frame >= 8) return;
+    const delay = FRAME_DELAYS[frame];
     timerRef.current = setTimeout(() => {
-      if (frame >= 8) {
-        setFrame(0);
-        setTickOffset(0);
-        setTimeout(() => setFrame(1), 800);
-      } else {
-        setFrame(f => f + 1);
-      }
+      setFrame(f => f + 1);
     }, delay);
     return () => clearTimeout(timerRef.current);
   }, [frame]);
@@ -169,9 +164,10 @@ const TerminalAuditDemo = () => {
 
   // Elapsed tick
   useEffect(() => {
+    if (frame >= 8) return;
     const iv = setInterval(() => setTickOffset(t => t + 1), 1000);
     return () => clearInterval(iv);
-  }, []);
+  }, [frame]);
 
   const state = buildFrame(frame);
   const spinner = SPINNER_CHARS[spinnerIdx];
@@ -201,7 +197,7 @@ const TerminalAuditDemo = () => {
       </div>
 
       {/* Body */}
-      <div className="bg-[#050505] p-4 sm:p-5 font-mono text-[11px] sm:text-[12px] md:text-[13px] leading-[1.7] text-muted-foreground/70 overflow-hidden select-none min-h-[420px]">
+      <div className="bg-[#050505] p-4 sm:p-5 font-mono text-[11px] sm:text-[12px] md:text-[13px] leading-[1.7] text-muted-foreground/70 overflow-hidden select-none h-[480px]">
         {/* Audit header */}
         <div className="text-muted-foreground/40">
           ── Security Audit: VaultProtocol ────────────────

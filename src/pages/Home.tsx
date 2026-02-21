@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Copy, Check } from "lucide-react";
+import { ArrowRight, Copy, Check, Layers, Fingerprint, Search, GitBranch, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -10,30 +10,35 @@ const phases = [
   {
     pill: "Complexity Analysis",
     title: "Smart Scoping",
+    icon: Layers,
     description:
       "Classifies each contract as Standard, Complex DeFi, or Experimental. Complex and novel contracts trigger a deeper second-pass analysis; simple contracts are routed efficiently.",
   },
   {
     pill: "DNA Matching",
     title: "Exploit Intelligence",
+    icon: Fingerprint,
     description:
       "Each function is deconstructed into semantic search statements and queried against the Vulnerability DNA Matrix — a vector index of exploit signatures from real protocol post-mortems.",
   },
   {
     pill: "Contract Analysis",
     title: "Vulnerability Hunt",
+    icon: Search,
     description:
       "Red team simulation per contract: an initial aggressive pass targets high-confidence vulnerabilities. Complex contracts receive a second informed pass to surface chained, conditional, and multi-step exploits.",
   },
   {
     pill: "Cross-Contract Analysis",
     title: "Protocol-Wide Reasoning",
+    icon: GitBranch,
     description:
       "Traces attack paths that cross contract boundaries — multi-step exploits, shared state corruption, and inconsistent trust assumptions invisible to single-contract analysis.",
   },
   {
     pill: "Report Generation",
     title: "Structured Findings",
+    icon: FileText,
     description:
       "A dedicated formatting pass reads the original source to locate each finding, extract the vulnerable code block, and produce line-accurate, context-specific remediation.",
   },
@@ -85,16 +90,16 @@ const protocolFindings = [
   },
 ];
 
-const FindingRow = ({ f }: { f: typeof knownFindings[0] }) => (
-  <div className="py-5 flex flex-col sm:flex-row gap-3 sm:gap-4">
-    <span className={`${f.badgeClass} text-[10px] font-mono font-semibold px-2 py-0.5 rounded shrink-0 self-start`}>
-      {f.severity}
-    </span>
-    <div className="min-w-0">
-      <p className="text-sm font-semibold text-foreground">{f.title}</p>
-      <p className="text-sm text-muted-foreground/70 mt-1">{f.description}</p>
-      <p className="text-xs font-mono text-muted-foreground/40 mt-2">{f.file}</p>
+const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
+  <div className="rounded-xl border border-border/20 bg-card/20 p-6 hover:border-border/40 transition-colors">
+    <div className="flex items-center justify-between">
+      <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
+        {f.severity}
+      </span>
+      <span className="text-[11px] font-mono text-muted-foreground/30">{f.file}</span>
     </div>
+    <p className="text-base font-semibold text-foreground mt-3">{f.title}</p>
+    <p className="text-sm text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
   </div>
 );
 
@@ -155,55 +160,64 @@ const Home = () => {
 
       {/* ── SECTION 2: Audit Pipeline ────────────────────────────────── */}
       <section id="pipeline" className="py-32 md:py-40 bg-background">
-        <div className="max-w-2xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight">
-            Five phases.
-            <br />
-            Every contract.
-          </h2>
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+              Five phases. Every contract.
+            </h2>
+            <p className="text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+              Each contract passes through a structured pipeline — from complexity classification to line-accurate remediation.
+            </p>
+          </div>
 
-          <div className="border-l border-border/30 pl-8 mt-12 space-y-0">
-            {phases.map((phase) => (
-              <div key={phase.pill} className="pb-10 last:pb-0">
-                <span className="terminal-pill">{phase.pill}</span>
-                <h3 className="text-base font-semibold text-foreground">{phase.title}</h3>
-                <p className="text-sm text-muted-foreground/70 mt-1">{phase.description}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
+            {phases.map((phase) => {
+              const Icon = phase.icon;
+              return (
+                <div key={phase.pill} className="rounded-xl border border-border/30 bg-card/30 p-6 hover:border-primary/20 transition-colors">
+                  <Icon className="w-6 h-6 text-primary mb-4" />
+                  <span className="terminal-pill">{phase.pill}</span>
+                  <h3 className="text-lg font-semibold text-foreground mt-2">{phase.title}</h3>
+                  <p className="text-sm text-muted-foreground/70 mt-2">{phase.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ── SECTION 3: What It Finds ─────────────────────────────────── */}
       <section className="py-32 md:py-40 bg-background">
-        <div className="max-w-2xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight">
-            Finds what matters.
-          </h2>
-          <p className="text-base text-muted-foreground/70 mt-4">
-            Known vulnerability classes. And the logic issues specific to your protocol.
-          </p>
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+              Finds what matters.
+            </h2>
+            <p className="text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+              Known vulnerability classes. And the logic issues specific to your protocol.
+            </p>
+          </div>
 
-          <p className="mt-12 mb-6 text-xs font-mono uppercase tracking-widest text-muted-foreground/35">
+          <p className="mt-14 mb-6 text-xs font-mono uppercase tracking-widest text-muted-foreground/35 text-center">
             Known vulnerability patterns
           </p>
-          <div className="divide-y divide-border/20">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {knownFindings.map((f) => (
-              <FindingRow key={f.title} f={f} />
+              <FindingCard key={f.title} f={f} />
             ))}
           </div>
 
-          <p className="mt-12 mb-3 text-xs font-mono uppercase tracking-widest text-muted-foreground/35">
+          <p className="mt-14 mb-3 text-xs font-mono uppercase tracking-widest text-muted-foreground/35 text-center">
             Protocol-specific logic
           </p>
-          <p className="text-sm text-muted-foreground/50 mb-6">
+          <p className="text-sm text-muted-foreground/50 mb-6 text-center max-w-lg mx-auto">
             Beyond known patterns, Solarizer models your protocol's specific
             invariants — the accounting rules, epoch mechanics, and collateral
             assumptions unique to your codebase.
           </p>
-          <div className="divide-y divide-border/20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {protocolFindings.map((f) => (
-              <FindingRow key={f.title} f={f} />
+              <FindingCard key={f.title} f={f} />
             ))}
           </div>
         </div>
