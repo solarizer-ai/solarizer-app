@@ -1,24 +1,24 @@
 
-
-# Fix Hero Text Alignment
+# Fix "Reimagined With AI" Text Getting Cut Off
 
 ## Problem
-The two heading lines have different font sizes, so with `text-center`, each line centers independently — creating different left edges. "Reimagined With AI" appears shifted right compared to "Smart Contract Security."
+At certain viewport widths, the heading "Reimagined With AI" overflows the `max-w-3xl` container. Because the parent section has `overflow-hidden`, the "AI" part gets clipped and disappears.
 
 ## Solution
-Make the `h1` an `inline-block` element with `text-left` alignment. The parent container keeps `text-center`, which centers the `inline-block` h1 as a whole. Inside, both lines left-align to the same edge, forming a clean vertical column.
+Remove `overflow-hidden` from the hero section so text is never clipped. The HeroBackground component handles its own overflow internally, so this is safe. Additionally, widen the hero container from `max-w-3xl` to `max-w-4xl` to give the headings more room.
 
-## Change (`src/pages/Home.tsx`, line 130)
+## Changes (src/pages/Home.tsx)
 
-**Before:**
-```html
-<h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+**Line 132** -- Remove `overflow-hidden` from the hero section:
+```
+Before: <section className="relative overflow-hidden pt-24 pb-12 md:pt-40 md:pb-20">
+After:  <section className="relative pt-24 pb-12 md:pt-40 md:pb-20">
 ```
 
-**After:**
-```html
-<h1 className="inline-block text-left text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+**Line 135** -- Widen the text container:
+```
+Before: <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
+After:  <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6">
 ```
 
-Adding `inline-block text-left` makes the h1 shrink-wrap to the width of "Smart Contract Security" (the longer line), then both lines share the same left edge. The parent's `text-center` keeps the entire block horizontally centered on the page. No other elements are affected — the description paragraph remains independently centered via its own `mx-auto`.
-
+These two small changes ensure the heading text is never clipped at any viewport width.
