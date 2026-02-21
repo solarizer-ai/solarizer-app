@@ -1,316 +1,241 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Brain, Dna, ShieldCheck, ArrowRight, CheckCircle2, FileCode2, Shield, Lock, Cpu, Check, X, FileCheck } from "lucide-react";
+import { ArrowRight, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import TerminalAuditDemo from "@/components/TerminalAuditDemo";
 
-const features = [
+const phases = [
   {
-    icon: Brain,
-    title: "Logic & Economic Analysis",
-    description: "We go beyond basic scanning to detect broken invariants, insolvent math, and 'phantom' accounting errors that could lead to protocol-wide liquidity drains.",
+    pill: "Complexity Analysis",
+    title: "Smart Scoping",
+    description:
+      "Classifies each contract as Standard, Complex DeFi, or Experimental. Complex and novel contracts trigger a deeper second-pass analysis; simple contracts are routed efficiently.",
   },
   {
-    icon: FileCheck,
-    title: "Security Coverage Transparency",
-    description: "Every analysis generates a comprehensive report listing every hypothesis tested. You get data-driven proof of your protocol's resilience against smart contract security threats.",
+    pill: "DNA Matching",
+    title: "Exploit Intelligence",
+    description:
+      "Each function is deconstructed into semantic search statements and queried against the Vulnerability DNA Matrix — a vector index of exploit signatures from real protocol post-mortems.",
   },
   {
-    icon: FileCode2,
-    title: "AI-Powered Remediation",
-    description: "Receive precise, syntax-perfect Solidity fixes. Our analysis provides remediation code tailored to your specific variable naming and project architecture.",
+    pill: "Contract Analysis",
+    title: "Vulnerability Hunt",
+    description:
+      "Red team simulation per contract: an initial aggressive pass targets high-confidence vulnerabilities. Complex contracts receive a second informed pass to surface chained, conditional, and multi-step exploits.",
   },
   {
-    icon: Lock,
-    title: "Private Analysis Environment",
-    description: "Your IP remains protected. Analysis occurs in a stateless, isolated environment with 100% zero data retention. Your code is wiped the moment your report is finalized.",
+    pill: "Cross-Contract Analysis",
+    title: "Protocol-Wide Reasoning",
+    description:
+      "Traces attack paths that cross contract boundaries — multi-step exploits, shared state corruption, and inconsistent trust assumptions invisible to single-contract analysis.",
+  },
+  {
+    pill: "Report Generation",
+    title: "Structured Findings",
+    description:
+      "A dedicated formatting pass reads the original source to locate each finding, extract the vulnerable code block, and produce line-accurate, context-specific remediation.",
   },
 ];
 
-const intelligenceLoop = [
+const knownFindings = [
   {
-    icon: Brain,
-    step: "01",
-    title: "Contextual Modeling",
-    headline: "Contextual Modeling",
-    description: "Our engine performs a comprehensive analysis of your architecture, mapping state changes and cross-contract dependencies to understand the global logic of your smart contract.",
+    severity: "CRITICAL",
+    badgeClass: "bg-red-500/10 text-red-400",
+    title: "Read-only reentrancy via getPricePerShare()",
+    description:
+      "getPricePerShare() reads totalAssets() during an active withdrawal. An attacker exploits this stale mid-callback value to inflate collateral valuation in a dependent lending protocol.",
+    file: "Vault.sol · line 334",
   },
   {
-    icon: Dna,
-    step: "02",
-    title: "Heuristic Analysis",
-    headline: "Heuristic Analysis",
-    description: "Your code is put through an intensive analysis phase against our proprietary Vulnerability DNA Matrix—an evolving index of complex smart contract security risks and exploit patterns.",
+    severity: "HIGH",
+    badgeClass: "bg-orange-500/10 text-orange-400",
+    title: "Fee-on-transfer token insolvency in deposit()",
+    description:
+      "Protocol records msg.value as deposited without measuring the actual received balance. Recorded liability grows faster than real holdings.",
+    file: "DepositHandler.sol · line 89",
   },
   {
-    icon: ShieldCheck,
-    step: "03",
-    title: "Semantic AI Validation",
-    headline: "Semantic AI Validation",
-    description: "Results are refined through a dedicated AI analysis layer. This process challenges every finding to eliminate false positives, ensuring your report contains only high-signal security insights.",
+    severity: "MEDIUM",
+    badgeClass: "bg-yellow-500/10 text-yellow-500",
+    title: "TWAP window insufficient for low-liquidity pairs",
+    description:
+      "15-minute window allows single-block price manipulation on thin markets, affecting liquidations, collateral checks, and rebalances.",
+    file: "PriceOracle.sol · line 211",
   },
 ];
 
-
-const comparisonData = [
+const protocolFindings = [
   {
-    feature: "Delivery Time",
-    manual: "7–21 Days (Average)",
-    solarizer: "Minutes (On-Demand)",
+    severity: "CRITICAL",
+    badgeClass: "bg-red-500/10 text-red-400",
+    title: "Epoch boundary reward over-distribution",
+    description:
+      "Users entering the final block of an epoch receive a full allocation. Combined with rebasing, repeated entry-exit systematically drains the rewards reserve across consecutive cycles.",
+    file: "RewardVault.sol · line 298",
   },
   {
-    feature: "Analysis Depth",
-    manual: "Manual Line-by-Line",
-    solarizer: "Multi-Stage Analysis",
-  },
-  {
-    feature: "Logic Verification",
-    manual: "Subjective Human Review",
-    solarizer: "Semantic Analysis",
-  },
-  {
-    feature: "Availability",
-    manual: "Scheduled Waitlists",
-    solarizer: "Instant Access",
+    severity: "HIGH",
+    badgeClass: "bg-orange-500/10 text-orange-400",
+    title: "Liquidation threshold bypass via callback ordering",
+    description:
+      "The collateral ratio check in liquidate() fires after the external repayment call. An attacker re-enters addCollateral() mid-liquidation to inflate their ratio and exit without penalty.",
+    file: "LendingCore.sol · line 167",
   },
 ];
+
+const FindingRow = ({ f }: { f: typeof knownFindings[0] }) => (
+  <div className="py-5 flex flex-col sm:flex-row gap-3 sm:gap-4">
+    <span className={`${f.badgeClass} text-[10px] font-mono font-semibold px-2 py-0.5 rounded shrink-0 self-start`}>
+      {f.severity}
+    </span>
+    <div className="min-w-0">
+      <p className="text-sm font-semibold text-foreground">{f.title}</p>
+      <p className="text-sm text-muted-foreground/70 mt-1">{f.description}</p>
+      <p className="text-xs font-mono text-muted-foreground/40 mt-2">{f.file}</p>
+    </div>
+  </div>
+);
 
 const Home = () => {
-  const scrollToHowItWorks = () => {
-    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText("npm install -g solarizer");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const scrollToPipeline = () => {
+    document.getElementById("pipeline")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
-        
-        {/* Subtle grid overlay for depth */}
-        <div className="absolute inset-0 bg-grid-subtle opacity-[0.04]" />
-        
-        {/* Radial spotlight effect */}
-        <div className="absolute inset-0 bg-radial-glow" />
-        
-        {/* Solar Ring Visual */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="relative w-[500px] h-[500px] opacity-30">
-            {/* Outer ring */}
-            <div className="absolute inset-0 rounded-full border border-primary/30 animate-orbit" />
-            {/* Middle ring */}
-            <div className="absolute inset-8 rounded-full border border-primary/40 animate-orbit-reverse" />
-            {/* Inner ring */}
-            <div className="absolute inset-16 rounded-full border border-primary/50 animate-orbit" style={{ animationDuration: '15s' }} />
-            {/* Core glow */}
-            <div className="absolute inset-24 rounded-full bg-primary/10 animate-pulse-glow" />
-            {/* Center dot */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary glow-orange-sm" />
+      {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
+      <section className="relative overflow-hidden pt-24 pb-0 md:pt-36">
+        <div className="absolute inset-0 bg-radial-glow pointer-events-none" />
+
+        <div className="relative max-w-3xl mx-auto text-center px-6">
+          <h1 className="text-[clamp(2.4rem,6vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+            <span className="text-gradient">Security for all.</span>
+            <br />
+            <span className="text-foreground">Accessible instantly.</span>
+          </h1>
+
+          <p className="text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
+            Multi-phase security analysis for Solidity smart contracts.
+            Point Solarizer at your code. Get a structured audit report in minutes.
+          </p>
+
+          <div className="flex items-center justify-center gap-3 mt-8">
+            <Button asChild variant="solarGlow" size="lg">
+              <Link to="/dashboard">
+                Start Auditing
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="lg" onClick={scrollToPipeline}>
+              See How It Works
+            </Button>
           </div>
         </div>
-        
-        <div className="container mx-auto px-6 py-28 md:py-40 relative">
-          <div className="max-w-4xl mx-auto text-center overflow-visible">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm mb-8">
-              <Cpu className="w-4 h-4" />
-              <span className="font-medium">AI-Powered Security</span>
-            </div>
-            <h1 className="text-[clamp(1.75rem,5vw,4.5rem)] font-bold tracking-tight mb-2">
-              Architectural Reasoning.
-            </h1>
-            <p className="text-[clamp(1.5rem,4.5vw,3.75rem)] font-bold tracking-tight mb-6 text-gradient">
-              Automated Rigor.
-            </p>
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Surface-level scanners catch syntax errors; Solarizer deconstructs your protocol's entire logic model. It performs deep analysis to identify complex Solidity vulnerabilities and economic risks in minutes.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
-              <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
-                <Link to="/dashboard">
-                  Start Solarizer
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="lg" 
-                className="text-base px-8 text-muted-foreground hover:text-foreground"
-                onClick={scrollToHowItWorks}
-              >
-                See How It Works
-              </Button>
-            </div>
-            
+
+        <div className="relative mt-16 max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="absolute -inset-8 bg-primary/[0.06] blur-3xl rounded-[3rem] pointer-events-none" />
+          <div className="relative">
+            <TerminalAuditDemo />
           </div>
+          <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-background to-transparent pointer-events-none" />
         </div>
       </section>
 
-      {/* Section Divider */}
-      <div className="relative h-24">
-        <div className="absolute inset-0 section-fade-bottom" />
-      </div>
+      {/* ── SECTION 2: Audit Pipeline ────────────────────────────────── */}
+      <section id="pipeline" className="py-32 md:py-40 bg-background">
+        <div className="max-w-2xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+            Five phases.
+            <br />
+            Every contract.
+          </h2>
 
-      {/* Intelligence Loop Section */}
-      <section id="how-it-works" className="py-24 md:py-32 bg-card/30 relative">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Protocol Intelligence</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Execute high-fidelity analysis of inheritance structures and cross-contract interactions, cross-referencing them with specialized security DNA to harden your protocol.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {intelligenceLoop.map((step, index) => (
-              <div key={step.title} className="relative group">
-                <div className="bg-card border border-border rounded-xl p-6 h-full border-l-2 border-l-primary transition-all duration-300 group-hover:border-primary/60 group-hover:shadow-lg group-hover:shadow-primary/10 group-hover:glow-orange-sm group-hover:-translate-y-1">
-                  <div className="w-12 h-12 rounded-full border-2 border-primary/40 flex items-center justify-center bg-primary/5 mb-4 transition-all duration-300 group-hover:bg-primary/10 group-hover:border-primary/60">
-                    <step.icon className="w-6 h-6 text-primary transition-transform duration-300 group-hover:scale-110" />
-                  </div>
-                  <h3 className="text-xs uppercase tracking-wider text-primary mb-3">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
-                </div>
-                {index < intelligenceLoop.length - 1 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 w-8 border-t border-dashed border-primary/30" />
-                )}
+          <div className="border-l border-border/30 pl-8 mt-12 space-y-0">
+            {phases.map((phase) => (
+              <div key={phase.pill} className="pb-10 last:pb-0">
+                <span className="terminal-pill">{phase.pill}</span>
+                <h3 className="text-base font-semibold text-foreground">{phase.title}</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">{phase.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Section Divider */}
-      <div className="relative h-16">
-        <div className="absolute inset-0 section-fade-top" />
-      </div>
+      {/* ── SECTION 3: What It Finds ─────────────────────────────────── */}
+      <section className="py-32 md:py-40 bg-background">
+        <div className="max-w-2xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+            Finds what matters.
+          </h2>
+          <p className="text-base text-muted-foreground/70 mt-4">
+            Known vulnerability classes. And the logic issues specific to your protocol.
+          </p>
 
-      {/* Comparison Table Section */}
-      <section className="py-24 md:py-32">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Security Framework Comparison</h2>
+          <p className="mt-12 mb-6 text-xs font-mono uppercase tracking-widest text-muted-foreground/35">
+            Known vulnerability patterns
+          </p>
+          <div className="divide-y divide-border/20">
+            {knownFindings.map((f) => (
+              <FindingRow key={f.title} f={f} />
+            ))}
           </div>
-          <div className="max-w-4xl mx-auto">
-            <div className="overflow-x-auto -mx-6 px-6 relative">
-              <table className="w-full border-collapse min-w-[500px] md:min-w-0">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="sticky left-0 z-10 bg-background text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-foreground text-xs md:text-base after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50">Feature</th>
-                    <th className="text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-muted-foreground text-xs md:text-base">
-                      <span className="hidden sm:inline">Traditional Manual Review</span>
-                      <span className="sm:hidden">Manual</span>
-                    </th>
-                    <th className="text-left py-3 px-3 md:py-4 md:px-6 font-semibold text-primary text-xs md:text-base border-l-2 border-l-primary/40 bg-primary/5">Solarizer</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonData.map((row, index) => (
-                    <tr 
-                      key={row.feature} 
-                      className={`border-b border-border/50 transition-colors hover:bg-muted/30 ${index % 2 === 0 ? 'bg-card/30' : ''}`}
-                    >
-                      <td className="sticky left-0 z-10 bg-background py-3 px-3 md:py-4 md:px-6 font-medium text-foreground text-xs md:text-sm after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50">{row.feature}</td>
-                      <td className="py-3 px-3 md:py-4 md:px-6 text-muted-foreground text-xs md:text-sm">
-                        <div className="flex items-center gap-1 md:gap-2">
-                          <X className="w-3 h-3 md:w-4 md:h-4 text-destructive/60 flex-shrink-0" />
-                          <span className="hidden sm:inline">{row.manual}</span>
-                          <span className="sm:hidden">{row.manual.split(' ').slice(0, 2).join(' ')}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 md:py-4 md:px-6 text-foreground text-xs md:text-sm border-l-2 border-l-primary/40 bg-primary/5">
-                        <div className="flex items-center gap-1 md:gap-2">
-                          <Check className="w-3 h-3 md:w-4 md:h-4 text-primary flex-shrink-0" />
-                          <span className="hidden sm:inline">{row.solarizer}</span>
-                          <span className="sm:hidden">{row.solarizer.split(' ').slice(0, 2).join(' ')}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Section Divider */}
-      <div className="relative h-16">
-        <div className="absolute inset-0 section-fade-bottom" />
-      </div>
-
-      {/* Features Section */}
-      <section className="py-24 md:py-32 bg-card/30 relative">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Core Analysis Pillars
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Purpose-built detection capabilities that go beyond standard vulnerability analysis.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="p-6 rounded-xl bg-card border border-border hover:border-primary/40 transition-all duration-300 group hover:shadow-lg hover:shadow-primary/5"
-              >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:glow-orange-sm group-hover:bg-primary/15 transition-all duration-300">
-                  <feature.icon className="w-6 h-6 text-primary transition-transform duration-300 group-hover:scale-110" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-              </div>
+          <p className="mt-12 mb-3 text-xs font-mono uppercase tracking-widest text-muted-foreground/35">
+            Protocol-specific logic
+          </p>
+          <p className="text-sm text-muted-foreground/50 mb-6">
+            Beyond known patterns, Solarizer models your protocol's specific
+            invariants — the accounting rules, epoch mechanics, and collateral
+            assumptions unique to your codebase.
+          </p>
+          <div className="divide-y divide-border/20">
+            {protocolFindings.map((f) => (
+              <FindingRow key={f.title} f={f} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Section Divider */}
-      <div className="relative h-16">
-        <div className="absolute inset-0 section-fade-top" />
-      </div>
+      {/* ── SECTION 4: CTA ───────────────────────────────────────────── */}
+      <section className="py-32 md:py-40 bg-background">
+        <div className="max-w-xl mx-auto text-center px-6">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+            Run your first audit.
+          </h2>
 
-      {/* CTA Section */}
-      <section className="py-24 md:py-32 relative overflow-hidden">
-        {/* Radial glow background */}
-        <div className="absolute inset-0 bg-radial-glow" />
-        
-        {/* Mini solar ring decoration */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="relative w-[400px] h-[400px] opacity-10">
-            <div className="absolute inset-0 rounded-full border border-primary/40 animate-orbit" style={{ animationDuration: '30s' }} />
-            <div className="absolute inset-12 rounded-full border border-primary/30 animate-orbit-reverse" style={{ animationDuration: '25s' }} />
+          <div className="mt-8 max-w-xs mx-auto border border-border/50 rounded-lg px-4 py-3 bg-card/50 font-mono text-sm flex items-center gap-2">
+            <span className="text-muted-foreground/40">$</span>
+            <span className="text-foreground/80 flex-1 text-left select-all">
+              npm install -g solarizer
+            </span>
+            <button
+              onClick={handleCopy}
+              className="text-muted-foreground/40 hover:text-foreground transition-colors p-1"
+            >
+              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+            </button>
           </div>
-        </div>
-        
-        <div className="container mx-auto px-6 relative">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Defend Against the Unforeseen.
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              The only engine that evolves as fast as the exploit landscape.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild variant="solarGlow" size="lg" className="text-base px-8">
-                <Link to="/dashboard">
-                  Secure Your Protocol
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex items-center justify-center gap-6 mt-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-                Start Analysing Instantly
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-                100% private
-              </div>
-            </div>
+
+          <div className="mt-5">
+            <Button asChild variant="solarGlow">
+              <Link to="/dashboard">
+                Open Dashboard
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

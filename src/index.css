@@ -271,6 +271,43 @@
     box-shadow: 0 0 12px hsla(var(--solar-orange) / 0.25);
   }
 
+  /* Monospace phase label pill */
+  .terminal-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid hsl(24 95% 53% / 0.2);
+    color: hsl(24 95% 53% / 0.7);
+    background: transparent;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
+  /* Pricing featured card glow */
+  .glow-orange-border {
+    box-shadow: 0 0 0 1px hsla(24, 95%, 53%, 0.4),
+                0 0 28px hsla(24, 95%, 53%, 0.10);
+  }
+
+  /* Blinking terminal cursor */
+  .terminal-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 14px;
+    background: hsl(var(--primary));
+    animation: blink-cursor 700ms steps(2) infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes blink-cursor {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
