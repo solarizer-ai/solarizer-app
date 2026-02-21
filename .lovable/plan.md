@@ -1,126 +1,186 @@
 
+# Dashboard Redesign: Sidebar-First Console Layout
 
-# Tier 1 Security Fixes -- Implementation Plan
+Transform the authenticated experience from separate pages with a floating header into a unified console with a persistent left sidebar -- inspired by Claude Console's layout. Keep all existing visual effects (glows, hover overlays, colorful accents).
 
-Four changes that harden the backend without affecting any user-facing flows or requiring CLI updates.
+## Architecture Change
 
----
-
-## 1. WEB-1: Chat Token Race Condition Fix
-
-**What:** The `chat-token-update` function has a non-atomic fallback (lines 54-103) that does read-then-write, allowing concurrent requests to undercount token usage.
-
-**Fix:** Delete the entire fallback block. If the `increment_chat_tokens` RPC fails, return a 500 error so the caller retries cleanly. The RPC is already atomic and handles all valid cases.
-
-**File:** `supabase/functions/chat-token-update/index.ts`
-- Remove lines 54-103 (the fallback block after the successful RPC return)
-- If RPC errors, return `{ error: "Failed to update tokens" }` with status 500
-
-**Impact:** None. The fallback code was dead weight that introduced the race condition.
-
----
-
-## 2. WEB-3: Per-Audit Callback Authentication
-
-**What:** `save-finding`, `complete-audit`, and `fail-audit` all use a single global `CALLBACK_SECRET`. If leaked, every audit is compromised.
-
-**Fix:** Generate a per-audit HMAC token at session start, store it in the DB, and verify it per-audit in callback functions.
-
-**Changes:**
-
-### Database migration
-- Add `callback_token TEXT` column to `audits` table
-
-### `supabase/functions/_shared/verifyCallback.ts` (new file)
-- Shared helper that:
-  1. Reads `x-callback-token` header
-  2. Looks up the audit by ID
-  3. Uses constant-time comparison (`crypto.subtle.timingSafeEqual`) to verify token matches
-  4. Returns `{ valid: boolean, error?: string }`
-
-### `supabase/functions/cli-session-start/index.ts`
-- After creating the audit, generate `callback_token = HMAC-SHA256(CALLBACK_SECRET, auditId)`
-- Store it in the audit row
-- Return `callback_token` in the response alongside `session_token`
-
-### `supabase/functions/save-finding/index.ts`
-- Replace global secret check (lines 50-67) with a call to `verifyCallback(req, finding.audit_id, supabase)`
-
-### `supabase/functions/complete-audit/index.ts`
-- Replace global secret check (lines 55-72) with `verifyCallback(req, audit_id, supabase)`
-
-### `supabase/functions/fail-audit/index.ts`
-- Replace global secret check (lines 23-40) with `verifyCallback(req, audit_id, supabase)`
-
-**Impact on CLI:** The CLI **must** be updated to:
-1. Store `callback_token` from the `cli-session-start` response
-2. Send it as `x-callback-token` header on all callback requests (`save-finding`, `complete-audit`, `fail-audit`)
-
-This is a **breaking change** for the CLI. The old global `CALLBACK_SECRET` header will no longer work once deployed.
-
----
-
-## 3. WEB-8: Session Token Hashing
-
-**What:** The `session_token` column stores plaintext JWTs. If the database is compromised, all active session tokens are exposed.
-
-**Fix:** Store a SHA-256 hash instead of the plaintext JWT.
-
-**Changes:**
-
-### Database migration
-- Add `session_token_hash TEXT` column to `audits` table
-
-### `supabase/functions/cli-session-start/index.ts`
-- After generating `sessionToken`, compute `SHA-256(sessionToken)` as hex
-- Store the hash in `session_token_hash` instead of plaintext in `session_token`
-- Set `session_token` to `NULL` (or stop writing to it)
-
-### Future cleanup (separate migration later)
-- Once confirmed working, drop the `session_token` column entirely
-
-**Impact:** None externally. The JWT is returned to the CLI in the response and verified via its signature, not via DB lookup. The DB column was informational only.
-
----
-
-## 4. WEB-7: Content Security Policy (Report-Only)
-
-**What:** No CSP headers means zero XSS mitigation from the browser.
-
-**Fix:** Add a `Content-Security-Policy-Report-Only` meta tag to `index.html`. Starting in report-only mode means nothing breaks -- the browser just logs violations to the console so we can tune the policy before enforcing.
-
-**File:** `index.html`
-- Add meta tag in `<head>`:
+Currently, each protected page (Dashboard, Audits, Settings, Billing) is a standalone page with its own Header + Footer. The new design introduces a shared console shell with a persistent sidebar, replacing the floating pill header for authenticated users.
 
 ```text
-<meta http-equiv="Content-Security-Policy-Report-Only"
-  content="
-    default-src 'self';
-    script-src 'self' https://checkout.razorpay.com;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    font-src 'self' https://fonts.gstatic.com;
-    img-src 'self' data: https://storage.googleapis.com https://*.googleusercontent.com;
-    connect-src 'self' https://xylfnqrtzqfduutdcxvu.supabase.co https://api.razorpay.com https://lux-chat.razorpay.com;
-    frame-src https://api.razorpay.com;
-  ">
++-------------------+------------------------------------------+
+| SOLARIZER         |                                          |
+|                   |  Content area (changes per route)         |
+| OVERVIEW          |                                          |
+|   Dashboard       |  e.g. Dashboard stats, audit cards,      |
+|   Analyses        |  severity breakdown, trend chart          |
+|                   |                                          |
+| ANALYTICS         |                                          |
+|   Usage           |                                          |
+|   Credit Activity |                                          |
+|                   |                                          |
+| MANAGE            |                                          |
+|   API Keys        |                                          |
+|   Integrations    |                                          |
+|   Billing         |                                          |
+|                   |                                          |
+| ACCOUNT           |                                          |
+|   Profile         |                                          |
+|   Security        |                                          |
+|   Subscription    |                                          |
+|   Sharing         |                                          |
+|                   |                                          |
+| [Docs]            |                                          |
+| [User avatar]     |                                          |
++-------------------+------------------------------------------+
 ```
 
-**Impact:** None. Report-only mode does not block anything. We monitor console for violations, then switch to enforcing later.
+## Sidebar Navigation Groups
 
----
+| Group | Items | Route |
+|-------|-------|-------|
+| OVERVIEW | Dashboard | `/dashboard` |
+| | Analyses | `/dashboard/analyses` |
+| ANALYTICS | Usage (DashboardStats + SecurityTrend) | `/dashboard/usage` |
+| | Credit Activity (CreditActivityLog) | `/dashboard/credits` |
+| MANAGE | API Keys (ApiKeyManager) | `/dashboard/api-keys` |
+| | Integrations (GitHubIntegration) | `/dashboard/integrations` |
+| | Billing (BillingHistory) | `/dashboard/billing` |
+| ACCOUNT | Profile | `/dashboard/profile` |
+| | Security | `/dashboard/security` |
+| | Subscription (Plans + Credits) | `/dashboard/subscription` |
+| | Sharing | `/dashboard/sharing` |
+
+## What Changes
+
+### New Files
+
+**`src/components/DashboardSidebar.tsx`**
+- Uses the existing shadcn `Sidebar` component
+- Logo + "Solarizer" brand at top
+- Grouped nav items with section labels (OVERVIEW, ANALYTICS, MANAGE, ACCOUNT)
+- Uses `NavLink` with `activeClassName` for route highlighting
+- Icons for each item (LayoutDashboard, FileSearch, BarChart3, Coins, Key, Link2, Receipt, User, Shield, CreditCard, Users)
+- Bottom: Documentation link + user avatar/name with click-to-expand for logout
+- Collapsible to icon-only "mini" mode (w-14)
+- Mobile: Sheet-based overlay sidebar with hamburger trigger
+
+**`src/layouts/DashboardLayout.tsx`**
+- Wraps all authenticated routes
+- `SidebarProvider` + `DashboardSidebar` + main content area
+- No Header or Footer -- the sidebar replaces both
+- Content area has its own scroll, padded with `px-8 py-6`
+- A small `SidebarTrigger` button in the top-left of the content area for collapse/expand
+
+**`src/pages/dashboard/DashboardHome.tsx`**
+- Extracted from current `Index.tsx`: greeting, stats, audit cards (4), severity breakdown, security trend
+- Keeps all existing glows, hover overlays, and colorful accents
+- Removes Header/Footer (handled by layout)
+- Removes CLI banner (sidebar makes it obvious)
+
+**`src/pages/dashboard/AnalysesPage.tsx`**
+- Content from current `Audits.tsx` (search, filters, full audit grid)
+- Removes Header/Footer
+
+**`src/pages/dashboard/UsagePage.tsx`**
+- Full-width DashboardStats + SecurityTrend + SeverityBreakdown
+- Analytics-focused view
+
+**`src/pages/dashboard/CreditActivityPage.tsx`**
+- Full-width CreditActivityLog component
+
+**`src/pages/dashboard/ApiKeysPage.tsx`**
+- Full-width ApiKeyManager component (extracted from Settings security tab)
+
+**`src/pages/dashboard/IntegrationsPage.tsx`**
+- Full-width GitHubIntegration component
+
+**`src/pages/dashboard/BillingPage.tsx`**
+- Content from current `BillingHistory.tsx` page, minus Header/Footer/back button
+
+**`src/pages/dashboard/ProfilePage.tsx`**
+- Profile form + logout button (from Settings profile tab)
+
+**`src/pages/dashboard/SecurityPage.tsx`**
+- Password + 2FA settings (from Settings security tab, minus ApiKeyManager which is its own page)
+
+**`src/pages/dashboard/SubscriptionPage.tsx`**
+- Current plan card + plan selector + credits + power-up (from Settings subscription tab)
+
+**`src/pages/dashboard/SharingPage.tsx`**
+- Sharing settings (from Settings sharing tab)
+
+### Modified Files
+
+**`src/App.tsx`**
+- Wrap all `/dashboard/*` routes under a `DashboardLayout`
+- Old `/settings`, `/audits`, `/billing` routes redirect to their new `/dashboard/*` equivalents
+- Public routes (Home, Pricing, Docs, Auth) keep the floating header as-is
+
+**`src/components/Header.tsx`**
+- Remove "Dashboard" from nav links (sidebar handles it)
+- Keep header only for public/unauthenticated pages
+
+**`src/pages/Index.tsx`**
+- Becomes a thin wrapper that redirects to `/dashboard` or renders `DashboardHome`
+
+### Unchanged Files (preserved as-is)
+- All existing components (AuditCard, DashboardStats, SeverityBreakdown, SecurityTrend, CreditBalance, etc.) -- they just get used inside new page wrappers
+- All hooks, edge functions, types, UI components
+- Public pages (Home, Pricing, Docs, Auth, etc.)
+- All visual effects: hover glows, gradient overlays, colorful severity bars, card shadows
+
+## Sidebar Styling
+
+- Background: `bg-[hsl(0,0%,4%)]` (slightly darker than main bg)
+- Border: `border-r border-[hsl(0,0%,10%)]`
+- Section labels: `text-[10px] uppercase tracking-wider text-muted-foreground/50 font-semibold`
+- Active item: `bg-primary/10 text-foreground font-medium border-l-2 border-l-primary`
+- Hover: `hover:bg-muted/50 hover:text-foreground`
+- Logo area: Solarizer logo + name, same styling as current header
+- User area at bottom: avatar circle + name + email, clickable to profile
+- Collapse trigger: `PanelLeftClose` / `PanelLeft` icon
+
+## Mobile Behavior
+
+- Sidebar hidden by default on screens < `md`
+- Hamburger menu button in top-left of content area
+- Opens as a Sheet overlay (existing shadcn Sheet pattern)
+- Auto-closes on navigation
+
+## Routing Strategy
+
+Use nested routes under `/dashboard`:
+
+```text
+/dashboard              -> DashboardHome
+/dashboard/analyses     -> AnalysesPage
+/dashboard/usage        -> UsagePage
+/dashboard/credits      -> CreditActivityPage
+/dashboard/api-keys     -> ApiKeysPage
+/dashboard/integrations -> IntegrationsPage
+/dashboard/billing      -> BillingPage
+/dashboard/profile      -> ProfilePage
+/dashboard/security     -> SecurityPage
+/dashboard/subscription -> SubscriptionPage
+/dashboard/sharing      -> SharingPage
+```
+
+Old routes (`/settings`, `/audits`, `/billing`) will redirect:
+- `/settings` -> `/dashboard/profile`
+- `/settings?tab=subscription` -> `/dashboard/subscription`
+- `/settings?tab=security` -> `/dashboard/security`
+- `/settings?tab=sharing` -> `/dashboard/sharing`
+- `/settings?tab=integrations` -> `/dashboard/integrations`
+- `/audits` -> `/dashboard/analyses`
+- `/billing` -> `/dashboard/billing`
 
 ## Implementation Order
 
-| Step | Item | Effort |
-|------|------|--------|
-| 1 | WEB-1: Delete fallback block in `chat-token-update` | ~5 min |
-| 2 | WEB-8: Add `session_token_hash`, update `cli-session-start` | ~15 min |
-| 3 | WEB-3: Add `callback_token`, create shared verifier, update 4 functions | ~30 min |
-| 4 | WEB-7: Add CSP report-only meta tag | ~5 min |
-
-## Technical Notes
-
-- WEB-3 is a **breaking change for the CLI**. You will need to update the CLI to send `callback_token` before deploying this change to production.
-- WEB-7 uses `Content-Security-Policy-Report-Only` so it is safe to deploy immediately. The `connect-src` includes the Supabase project URL and Razorpay domains.
-- WEB-8 uses a dual-column approach (`session_token` + `session_token_hash`) so existing sessions are not disrupted during rollout.
-
+1. Create `DashboardSidebar.tsx` component
+2. Create `DashboardLayout.tsx` layout wrapper
+3. Extract each settings tab and page into its own `/dashboard/*` page component
+4. Update `App.tsx` routing to use nested dashboard routes
+5. Add redirects for old routes
+6. Update Header to remove Dashboard link for authenticated users
+7. Test all navigation paths and verify visual effects are preserved
