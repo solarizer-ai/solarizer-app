@@ -96,8 +96,14 @@ const protocolFindings = [
   },
 ];
 
+const severityBorder: Record<string, string> = {
+  CRITICAL: "border-red-500/30",
+  HIGH: "border-orange-500/30",
+  MEDIUM: "border-yellow-500/30",
+};
+
 const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
-  <div className="rounded-xl border border-border/20 bg-card/20 p-3 sm:p-6 hover:border-border/40 transition-colors">
+  <div className={`rounded-xl border bg-card/20 p-3 sm:p-6 hover:border-opacity-60 transition-colors ${severityBorder[f.severity] || "border-border/20"}`}>
     <div className="space-y-2">
       <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
         {f.severity}
