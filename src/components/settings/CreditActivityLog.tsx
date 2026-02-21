@@ -1,8 +1,13 @@
-import { ArrowDown, Gift, Zap, RotateCcw, Inbox } from "lucide-react";
+import { useState } from "react";
+import { ArrowDown, Gift, Zap, RotateCcw, Inbox, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useCreditActivity, CreditTransaction } from "@/hooks/useCreditActivity";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const PAGE_SIZE = 20;
 
 const typeConfig: Record<string, { icon: typeof ArrowDown; color: string; label: string }> = {
   deduction: { icon: ArrowDown, color: "text-destructive", label: "Deduction" },
@@ -46,13 +51,50 @@ function TransactionRow({ txn }: { txn: CreditTransaction }) {
 }
 
 export function CreditActivityLog() {
-  const { data: transactions, isLoading } = useCreditActivity();
+  const [page, setPage] = useState(1);
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
+
+  const { data: result, isLoading } = useCreditActivity({ startDate, endDate, page, pageSize: PAGE_SIZE });
+  const transactions = result?.data || [];
+  const totalCount = result?.count || 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  const clearFilters = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setPage(1);
+  };
+
+  const hasFilters = startDate || endDate;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Credit Activity</CardTitle>
         <CardDescription>Recent credit movements</CardDescription>
+        <div className="flex items-center gap-2 pt-2 flex-wrap">
+          <Input
+            type="date"
+            value={startDate || ""}
+            onChange={(e) => { setStartDate(e.target.value || null); setPage(1); }}
+            placeholder="From"
+            className="w-[150px] h-8 text-xs"
+          />
+          <span className="text-xs text-muted-foreground">to</span>
+          <Input
+            type="date"
+            value={endDate || ""}
+            onChange={(e) => { setEndDate(e.target.value || null); setPage(1); }}
+            placeholder="To"
+            className="w-[150px] h-8 text-xs"
+          />
+          {hasFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-xs gap-1">
+              <X className="w-3 h-3" /> Clear
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -67,17 +109,44 @@ export function CreditActivityLog() {
               </div>
             ))}
           </div>
-        ) : !transactions?.length ? (
+        ) : !transactions.length ? (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <Inbox className="w-8 h-8 mb-2" />
             <p className="text-sm">No credit activity yet</p>
           </div>
         ) : (
-          <div className="divide-y divide-border/50">
-            {transactions.map(txn => (
-              <TransactionRow key={txn.id} txn={txn} />
-            ))}
-          </div>
+          <>
+            <div className="divide-y divide-border/50">
+              {transactions.map(txn => (
+                <TransactionRow key={txn.id} txn={txn} />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 mt-2 border-t border-border/50">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="gap-1"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

@@ -4,7 +4,8 @@ import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Zap, Calendar, ArrowUpRight, CreditCard, Clock, XCircle, Receipt } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Zap, Calendar, ArrowUpRight, CreditCard, Clock, XCircle, Receipt, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
@@ -15,6 +16,8 @@ import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlan
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 
+const HISTORY_PAGE_SIZE = 15;
+
 const BillingPage = () => {
   const navigate = useNavigate();
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
@@ -24,9 +27,19 @@ const BillingPage = () => {
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<"pro" | "business">("pro");
   const [targetDowngradePlan, setTargetDowngradePlan] = useState<"starter" | "pro">("starter");
 
+  // Transaction history filters
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyStartDate, setHistoryStartDate] = useState<string | null>(null);
+  const [historyEndDate, setHistoryEndDate] = useState<string | null>(null);
+
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
-  const { events, isLoading: eventsLoading } = useBillingHistory();
+  const { events, isLoading: eventsLoading, totalCount } = useBillingHistory({
+    startDate: historyStartDate,
+    endDate: historyEndDate,
+    page: historyPage,
+    pageSize: HISTORY_PAGE_SIZE,
+  });
   const {
     cancelSubscription,
     reactivateSubscription,
@@ -48,6 +61,8 @@ const BillingPage = () => {
   const creditsUsed = credits?.credits_used_this_period || 0;
   const hasPendingDowngrade = subscription?.pending_plan !== null && subscription?.pending_plan !== undefined;
   const hasPendingCancellation = subscription?.cancel_at_period_end === true;
+  const historyTotalPages = Math.max(1, Math.ceil(totalCount / HISTORY_PAGE_SIZE));
+  const hasHistoryFilters = historyStartDate || historyEndDate;
 
   const getPlanDisplayName = () => {
     if (!hasSubscription) return "No Plan";
@@ -297,6 +312,26 @@ const BillingPage = () => {
         <CardHeader>
           <CardTitle>Transaction History</CardTitle>
           <CardDescription>All your power-up purchases and plan changes</CardDescription>
+          <div className="flex items-center gap-2 pt-2 flex-wrap">
+            <Input
+              type="date"
+              value={historyStartDate || ""}
+              onChange={(e) => { setHistoryStartDate(e.target.value || null); setHistoryPage(1); }}
+              className="w-[150px] h-8 text-xs"
+            />
+            <span className="text-xs text-muted-foreground">to</span>
+            <Input
+              type="date"
+              value={historyEndDate || ""}
+              onChange={(e) => { setHistoryEndDate(e.target.value || null); setHistoryPage(1); }}
+              className="w-[150px] h-8 text-xs"
+            />
+            {hasHistoryFilters && (
+              <Button variant="ghost" size="sm" onClick={() => { setHistoryStartDate(null); setHistoryEndDate(null); setHistoryPage(1); }} className="h-8 px-2 text-xs gap-1">
+                <X className="w-3 h-3" /> Clear
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {eventsLoading ? (
@@ -308,7 +343,32 @@ const BillingPage = () => {
               <p className="text-sm text-muted-foreground/70">Your purchases and plan changes will appear here</p>
             </div>
           ) : (
-            <div className="divide-y divide-border">{events.map((event) => renderEvent(event))}</div>
+            <>
+              <div className="divide-y divide-border">{events.map((event) => renderEvent(event))}</div>
+              {historyTotalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                    disabled={historyPage <= 1}
+                    className="gap-1"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                  </Button>
+                  <span className="text-xs text-muted-foreground">Page {historyPage} of {historyTotalPages}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))}
+                    disabled={historyPage >= historyTotalPages}
+                    className="gap-1"
+                  >
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
