@@ -1,43 +1,24 @@
 
 
-# Home Page Polish: Header, Copy, and Mobile Spacing
+# Fix Hero Text Alignment
 
-## 1. Header Glass Effect (`src/components/Header.tsx`)
+## Problem
+The two heading lines have different font sizes, so with `text-center`, each line centers independently — creating different left edges. "Reimagined With AI" appears shifted right compared to "Smart Contract Security."
 
-**Line 65**: Update the header container classes:
-- Remove the orange border (`border border-primary/40`) and replace with a subtle white/grey border (`border border-white/10`)
-- Increase glass effect by changing `bg-black/60` to `bg-black/70 backdrop-blur-2xl`
+## Solution
+Make the `h1` an `inline-block` element with `text-left` alignment. The parent container keeps `text-center`, which centers the `inline-block` h1 as a whole. Inside, both lines left-align to the same edge, forming a clean vertical column.
 
-## 2. Phase Description Update (`src/pages/Home.tsx`)
+## Change (`src/pages/Home.tsx`, line 130)
 
-**Line 24-25**: Replace the DNA Matching phase description:
-- From: "Functions deconstructed into semantic queries against a vector index of exploit signatures from real post-mortems"
-- To: "Contract logic matched against a massive database of exploit signatures from real post-mortems"
+**Before:**
+```html
+<h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+```
 
-## 3. "Finds what matters" Section Rename (`src/pages/Home.tsx`)
+**After:**
+```html
+<h1 className="inline-block text-left text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+```
 
-**Lines 199-204**: Update heading and description:
-- Heading: "Finds what matters" -> "Intelligence Engine"
-- Description: "Known vulnerability classes and the logic issues specific to your protocol" -> "Solarizer finds known vulnerability classes and the logic issues specific to your protocol"
+Adding `inline-block text-left` makes the h1 shrink-wrap to the width of "Smart Contract Security" (the longer line), then both lines share the same left edge. The parent's `text-center` keeps the entire block horizontally centered on the page. No other elements are affected — the description paragraph remains independently centered via its own `mx-auto`.
 
-## 4. Mobile Spacing and Padding Adjustments (`src/pages/Home.tsx`)
-
-Tighten padding and spacing across all sections for a cleaner mobile layout:
-
-- **Hero section** (line 126): Reduce top padding on mobile from `pt-20` to `pt-16`, bottom from `pb-12` to `pb-8`
-- **Terminal demo wrapper** (line 142): Reduce mobile top margin from `mt-10` to `mt-8`
-- **Pipeline section** (line 150): Reduce mobile padding from `py-24` to `py-16`
-- **Pipeline inner spacing** (line 162): Reduce top margin from `mt-16` to `mt-10 md:mt-16`
-- **Pipeline items** (line 166): Tighten spacing from `space-y-10` to `space-y-6 md:space-y-10`
-- **Pipeline items gap** (line 172): Reduce mobile gap from `gap-6` to `gap-4 md:gap-8`
-- **Findings section** (line 196): Reduce mobile padding from `py-20` to `py-16`
-- **Findings top group** (line 208): Reduce mobile top margin from `mt-14` to `mt-10 md:mt-14`, padding from `p-6` to `p-4 md:p-8`
-- **Findings bottom group** (line 225): Reduce padding from `p-6` to `p-4 md:p-8`
-- **CTA section** (line 249): Reduce mobile padding from `py-20` to `py-16`
-- **FindingCard** (line 100): Adjust padding from `p-4 sm:p-6` to `p-3 sm:p-6`
-
-### Technical Details
-
-All changes are in two files:
-- `src/components/Header.tsx` line 65: border and backdrop classes
-- `src/pages/Home.tsx`: copy updates on lines 24-25, 199-204; spacing adjustments across multiple section containers and inner elements
