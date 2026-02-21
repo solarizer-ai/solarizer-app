@@ -98,11 +98,11 @@ const protocolFindings = [
 
 const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
   <div className="rounded-xl border border-border/20 bg-card/20 p-6 hover:border-border/40 transition-colors">
-    <div className="flex items-center justify-between">
+    <div className="space-y-2">
       <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
         {f.severity}
       </span>
-      <span className="text-[11px] font-mono text-muted-foreground/30">{f.file}</span>
+      <p className="text-[11px] font-mono text-muted-foreground/30">{f.file}</p>
     </div>
     <p className="text-base font-semibold text-foreground mt-3">{f.title}</p>
     <p className="text-sm text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
@@ -123,14 +123,14 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-24 pb-0 md:pt-36">
+      <section className="relative overflow-hidden pt-24 pb-16 md:pt-36">
         <HeroBackground />
 
         <div className="relative max-w-3xl mx-auto text-center px-6">
-          <h1 className="text-[clamp(2.4rem,6vw,5.5rem)] font-black leading-[1.05] tracking-tight text-foreground">
-            Security for all
+          <h1 className="text-[clamp(2.4rem,6vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+            <span className="text-primary">Security For ALL</span>
             <br />
-            Accessible instantly
+            <span className="whitespace-nowrap text-foreground">Accessible Instantly</span>
           </h1>
 
           <p className="text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
@@ -143,7 +143,6 @@ const Home = () => {
           <div className="relative">
             <TerminalAuditDemo />
           </div>
-          <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-background to-transparent pointer-events-none" />
         </div>
       </section>
 
@@ -165,29 +164,23 @@ const Home = () => {
             <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
 
             <div className="space-y-10">
-              {phases.map((phase, i) => {
+              {phases.map((phase) => {
                 const Icon = phase.icon;
-                const isEven = i % 2 === 0;
                 return (
                   <div
                     key={phase.pill}
-                    className={`relative flex items-start gap-6 md:gap-8 ${
-                      isEven ? "" : "md:flex-row-reverse md:text-right"
-                    }`}
+                    className="relative flex items-start gap-6 md:gap-8"
                   >
                     {/* Number marker */}
                     <div className="relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border border-border/30 flex items-center justify-center">
-                      <span className="text-lg md:text-xl font-black text-foreground/10 absolute">
-                        {phase.num}
-                      </span>
-                      <Icon className="w-5 h-5 text-primary relative z-10" />
+                      <Icon className="w-5 h-5 text-primary" />
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 pt-1">
                       <span className="terminal-pill">{phase.pill}</span>
                       <h3 className="text-lg font-semibold text-foreground mt-1">{phase.title}</h3>
-                      <p className="text-sm text-muted-foreground/60 mt-1.5 leading-relaxed max-w-md">
+                      <p className="text-sm text-muted-foreground/60 mt-1.5 leading-relaxed">
                         {phase.description}
                       </p>
                     </div>
