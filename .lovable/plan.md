@@ -1,56 +1,55 @@
 
 
-# Homepage Visual Fixes
+# Homepage Fixes: Terminal, Theme, Dots, Findings Layout
 
-## Summary
+## 1. Fix terminal animation stuck on Cross-Contract (`src/components/TerminalAuditDemo.tsx`)
 
-Five targeted fixes: orange heading, terminal visibility, phase number removal, text alignment in pipeline, and finding card layout.
+The animation has 9 frames (0-8) but stops at frame 8 with Cross-Contract active. Need to add frames 9-12 to complete the remaining phases (Validation, QA Scan, Formatting, Report Generation) and show a final "complete" state.
 
-## Changes
+- Add frames 9-12 to `buildFrame()` to progress through phases 4-7 (Validation, QA Scan, Formatting, Report Generation) marking each done
+- Add corresponding delays to `FRAME_DELAYS` array (4 more entries)
+- Update the `frame >= 8` guard in useEffect hooks to `frame >= 12`
+- Frame 9: Cross-Contract done, Validation active
+- Frame 10: Validation done, QA Scan active  
+- Frame 11: QA Scan done, Formatting active, then Formatting done, Report Generation active
+- Frame 12: All phases done, show a completion line "Audit complete -- report saved"
 
-### 1. Hero heading -- "Security For ALL" in orange (`src/pages/Home.tsx`)
+## 2. Switch back to black theme (`src/index.css`)
 
-Line 130-134: Change the h1 so "Security For ALL" is wrapped in a `text-primary` span (solar orange), and "Accessible instantly" stays `text-foreground`. Use `whitespace-nowrap` on "Accessible instantly" to prevent wrapping. Remove the `<br />` between them -- use a block-level structure instead:
+Revert the muted grey tokens back to near-black:
 
-```
-<h1 class="...">
-  <span class="text-primary">Security For ALL</span>
-  <br />
-  <span class="whitespace-nowrap">Accessible Instantly</span>
-</h1>
-```
+| Token | Current (grey) | New (black) |
+|-------|---------------|-------------|
+| `--background` | `0 0% 9%` | `0 0% 3%` |
+| `--card` | `0 0% 12%` | `0 0% 6%` |
+| `--popover` | `0 0% 12%` | `0 0% 6%` |
+| `--secondary` | `0 0% 16%` | `0 0% 10%` |
+| `--muted` | `0 0% 16%` | `0 0% 10%` |
+| `--border` | `0 0% 20%` | `0 0% 14%` |
+| `--input` | `0 0% 16%` | `0 0% 10%` |
+| `--surface-elevated` | `0 0% 14%` | `0 0% 8%` |
+| `--surface-overlay` | `0 0% 16%` | `0 0% 10%` |
+| `--border-subtle` | `0 0% 18%` | `0 0% 12%` |
+| `--sidebar-background` | `0 0% 9%` | `0 0% 3%` |
+| `--sidebar-accent` | `0 0% 16%` | `0 0% 10%` |
+| `--sidebar-border` | `0 0% 18%` | `0 0% 12%` |
 
-### 2. Terminal gradient fix (`src/pages/Home.tsx`)
+## 3. Make hero dot animation visible (`src/components/HeroBackground.tsx` + `src/index.css`)
 
-Line 146: The `h-48 bg-gradient-to-t from-background` overlay is hiding the bottom of the terminal. Remove this div entirely so the terminal is fully visible. Add `pb-16` to the hero section instead for bottom spacing.
+- Increase dot grid opacity from `opacity-20` to `opacity-40`
+- Increase dot size in CSS from `0.15` alpha to `0.25` alpha and dot radius from 1px to 1.5px
+- Increase pulse ring border opacity from `0.03` / `0.02` / `0.015` to `0.06` / `0.05` / `0.04` / `0.03`
 
-### 3. Remove phase numbers (`src/pages/Home.tsx`)
+## 4. Stack findings vertically (`src/pages/Home.tsx`)
 
-Line 180-182: Delete the `<span>` that renders `phase.num` ("01", "02", etc.) inside the circle marker. The icon already sits in the circle -- just remove the number watermark behind it.
-
-### 4. Fix text alignment for alternating phases (`src/pages/Home.tsx`)
-
-Lines 174-176: The alternating layout (`md:flex-row-reverse md:text-right`) causes the description text to misalign from the heading on right-aligned items. Remove the alternating behavior entirely -- all phases should be left-aligned in a consistent vertical sequence. Remove `isEven` logic and the conditional classes.
-
-Line 190: Remove `max-w-md` from the description paragraph so text flows naturally under the heading.
-
-### 5. Finding card layout -- severity and file on separate lines (`src/pages/Home.tsx`)
-
-Lines 100-106: Currently severity badge and file info are on the same row (`flex items-center justify-between`). Change to a stacked layout:
-- Severity badge on its own line
-- File path on a separate line below the severity badge
-- Use `space-y-2` vertical stack instead of horizontal flex
+- Known findings: Change `grid grid-cols-1 md:grid-cols-3` to `grid grid-cols-1` (line 217)
+- Protocol findings: Change `grid grid-cols-1 md:grid-cols-2` to `grid grid-cols-1` (line 239)
 
 ## Technical Details
 
-**Files modified:** 1 (`src/pages/Home.tsx`)
+**Files modified:** 4
 
-- Line 126: Change `pb-0` to `pb-16` on hero section, keeping `overflow-hidden`
-- Lines 130-134: Restructure h1 with `text-primary` span for "Security For ALL" and `whitespace-nowrap` for "Accessible Instantly"
-- Line 146: Delete the gradient overlay div entirely
-- Lines 170-176: Remove `isEven` variable and alternating flex-row-reverse classes
-- Lines 180-182: Delete the phase number `<span>`
-- Line 190: Remove `max-w-md` constraint
-- Lines 100-106 (FindingCard): Replace horizontal flex with vertical stack -- severity badge first, file path below
-
-**No new dependencies. No database changes.**
+- `src/components/TerminalAuditDemo.tsx` -- Add frames 9-12 to complete all phases, update guards
+- `src/index.css` -- Revert all background/surface/border tokens to near-black values
+- `src/components/HeroBackground.tsx` -- Increase opacity on dot grid and pulse rings
+- `src/pages/Home.tsx` -- Change finding grids from multi-column to single column
