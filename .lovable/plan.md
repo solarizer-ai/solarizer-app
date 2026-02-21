@@ -1,103 +1,56 @@
 
-# Homepage Redesign -- Apple-Level Polish
 
-## Design Critique (Current State)
+# Homepage Visual Fixes
 
-Looking at the page with a critical eye, several things feel "template-grade" rather than crafted:
+## Summary
 
-1. **Hero**: The headline is large but lacks spatial rhythm. The subtitle reads like a feature list, not a value proposition. The orange gradient on "Security for all" feels decorative rather than intentional. Two competing CTAs dilute focus. No ambient texture -- the background is flat dead space.
+Five targeted fixes: orange heading, terminal visibility, phase number removal, text alignment in pipeline, and finding card layout.
 
-2. **Pipeline section**: The 3+2 card grid floats in a sea of empty grey. Cards are uniform rectangles with no visual hierarchy -- every card screams at the same volume. The gap between the pipeline section and findings section is ~300px of nothingness.
+## Changes
 
-3. **Findings section**: Cards are fine structurally but feel disconnected from the pipeline above. The two group labels ("Known vulnerability patterns" / "Protocol-specific logic") are tiny uppercase mono text that gets lost. There is no visual connective tissue between sections.
+### 1. Hero heading -- "Security For ALL" in orange (`src/pages/Home.tsx`)
 
-4. **CTA section**: "Run your first audit." with a copy-paste command and an orange button -- functional but emotionally flat. No sense of momentum or payoff.
+Line 130-134: Change the h1 so "Security For ALL" is wrapped in a `text-primary` span (solar orange), and "Accessible instantly" stays `text-foreground`. Use `whitespace-nowrap` on "Accessible instantly" to prevent wrapping. Remove the `<br />` between them -- use a block-level structure instead:
 
-5. **Overall rhythm**: Every section uses the same `py-32 md:py-40` spacing, creating a monotonous cadence. Apple pages vary rhythm -- tight clusters followed by breathing room.
-
----
-
-## Improvement Plan
-
-### 1. Hero Section Overhaul (`src/pages/Home.tsx`)
-
-**Typography cleanup** (as requested):
-- Remove `text-gradient` from "Security for all" -- plain `text-foreground`
-- Single line: "Security for all" (line break on mobile only), "Accessible instantly" on the same or next line
-- Remove full stops from both lines
-- Remove "Start Auditing" and "See How It Works" buttons entirely
-
-**Animated background** (as requested):
-- Add a `HeroBackground` component with a subtle animated dot-grid pattern
-- Implementation: CSS `radial-gradient` creating a 1px dot every 40px, animated with a slow diagonal drift (`background-position` keyframe over 20s)
-- A secondary layer: 3-4 very faint concentric circles (absolute positioned divs, `border border-white/[0.03]`, `rounded-full`) that slowly pulse in scale using CSS transforms
-- Overall container opacity: 20-30% so it stays atmospheric, not distracting
-- This creates a "radar sweep" / "scanning field" feel that matches the security theme -- distinct from open-agent.io's light-mode flowing lines
-
-**Terminal shadow removal** (as requested):
-- Remove `shadow-[0_0_80px_rgba(249,115,22,0.07)]` from `TerminalAuditDemo.tsx`
-
-**Remove orange glows** (as requested):
-- Delete the `bg-radial-glow` div
-- Delete the `bg-primary/[0.06] blur-3xl` div around the terminal
-
-### 2. Pipeline Section -- Numbered Sequence
-
-Replace the uniform card grid with a **numbered vertical sequence** layout that feels more intentional:
-
-- Each phase gets a large number (01-05) in `text-6xl font-black text-white/[0.04]` as a watermark behind the card content
-- Cards alternate between left-aligned and right-aligned on desktop (staggered layout), creating visual rhythm
-- On mobile: simple vertical stack
-- Reduce card descriptions by ~30% -- shorter, punchier copy
-- Add a thin vertical line connecting the cards (a `border-l border-dashed border-border/20` running through the left side)
-
-### 3. Findings Section -- Tighter Integration
-
-- Reduce top padding from `py-32` to `py-20` to close the dead-space gap
-- Give each finding group a subtle section background: a very faint `bg-white/[0.01]` rounded container that groups the cards together
-- Add a count badge next to each group label: "Known vulnerability patterns (3)" in a small pill
-
-### 4. CTA Section -- Sharper Close
-
-- Reduce padding to `py-20`
-- Remove "Run your first audit." full stop
-- Make the `npm install` block slightly larger with more horizontal padding for breathing room
-
-### 5. CSS Additions (`src/index.css`)
-
-Add the hero background animation keyframe:
 ```
-@keyframes grid-drift {
-  0% { background-position: 0px 0px; }
-  100% { background-position: 40px 40px; }
-}
+<h1 class="...">
+  <span class="text-primary">Security For ALL</span>
+  <br />
+  <span class="whitespace-nowrap">Accessible Instantly</span>
+</h1>
 ```
 
-Add a `.hero-dot-grid` utility with the repeating radial-gradient dot pattern.
+### 2. Terminal gradient fix (`src/pages/Home.tsx`)
 
-Add a `.hero-pulse-ring` utility for the concentric circle pulse animation.
+Line 146: The `h-48 bg-gradient-to-t from-background` overlay is hiding the bottom of the terminal. Remove this div entirely so the terminal is fully visible. Add `pb-16` to the hero section instead for bottom spacing.
 
----
+### 3. Remove phase numbers (`src/pages/Home.tsx`)
+
+Line 180-182: Delete the `<span>` that renders `phase.num` ("01", "02", etc.) inside the circle marker. The icon already sits in the circle -- just remove the number watermark behind it.
+
+### 4. Fix text alignment for alternating phases (`src/pages/Home.tsx`)
+
+Lines 174-176: The alternating layout (`md:flex-row-reverse md:text-right`) causes the description text to misalign from the heading on right-aligned items. Remove the alternating behavior entirely -- all phases should be left-aligned in a consistent vertical sequence. Remove `isEven` logic and the conditional classes.
+
+Line 190: Remove `max-w-md` from the description paragraph so text flows naturally under the heading.
+
+### 5. Finding card layout -- severity and file on separate lines (`src/pages/Home.tsx`)
+
+Lines 100-106: Currently severity badge and file info are on the same row (`flex items-center justify-between`). Change to a stacked layout:
+- Severity badge on its own line
+- File path on a separate line below the severity badge
+- Use `space-y-2` vertical stack instead of horizontal flex
 
 ## Technical Details
 
-**Files modified: 3**
+**Files modified:** 1 (`src/pages/Home.tsx`)
 
-**`src/pages/Home.tsx`**:
-- Remove `text-gradient` class, remove full stops, restructure heading to single logical line
-- Remove both CTA buttons and `scrollToPipeline` function
-- Remove `bg-radial-glow` overlay div (line 125)
-- Remove `bg-primary/[0.06] blur-3xl` terminal glow div (line 153)
-- Add inline `HeroBackground` component with dot-grid and pulse rings
-- Adjust section spacing: pipeline `py-24`, findings `py-20`, CTA `py-20`
-
-**`src/components/TerminalAuditDemo.tsx`**:
-- Line 186: Remove `shadow-[0_0_80px_rgba(249,115,22,0.07)]` from the outer div class
-
-**`src/index.css`**:
-- Add `@keyframes grid-drift` for the diagonal dot drift
-- Add `@keyframes ring-pulse` for concentric circle scale animation
-- Add `.hero-dot-grid` utility class
-- Add `.hero-pulse-ring` utility class
+- Line 126: Change `pb-0` to `pb-16` on hero section, keeping `overflow-hidden`
+- Lines 130-134: Restructure h1 with `text-primary` span for "Security For ALL" and `whitespace-nowrap` for "Accessible Instantly"
+- Line 146: Delete the gradient overlay div entirely
+- Lines 170-176: Remove `isEven` variable and alternating flex-row-reverse classes
+- Lines 180-182: Delete the phase number `<span>`
+- Line 190: Remove `max-w-md` constraint
+- Lines 100-106 (FindingCard): Replace horizontal flex with vertical stack -- severity badge first, file path below
 
 **No new dependencies. No database changes.**
