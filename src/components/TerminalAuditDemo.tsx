@@ -183,7 +183,7 @@ const TerminalAuditDemo = () => {
   };
 
   return (
-    <div className="rounded-2xl ring-1 ring-white/[0.05] shadow-[0_0_80px_rgba(249,115,22,0.07)] overflow-hidden">
+    <div className="rounded-2xl ring-1 ring-white/[0.05] overflow-hidden">
       {/* Title bar */}
       <div className="h-8 bg-[#0f0f0f] flex items-center px-3 gap-2">
         <div className="flex gap-1.5">
