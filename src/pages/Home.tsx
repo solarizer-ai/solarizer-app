@@ -128,8 +128,8 @@ const Home = () => {
 
         <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
           <h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
-            <span className="block text-foreground">Smart Contract Security</span>
-            <span className="block text-gradient">Reimagined With AI</span>
+            <span className="block whitespace-nowrap text-foreground">Smart Contract Security</span>
+            <span className="block whitespace-nowrap text-gradient">Reimagined With AI</span>
           </h1>
 
           <p className="text-sm md:text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
