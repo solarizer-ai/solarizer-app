@@ -129,10 +129,10 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-24 pb-12 md:pt-40 md:pb-20">
+      <section className="relative pt-24 pb-12 md:pt-40 md:pb-20">
         <HeroBackground />
 
-        <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
+        <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6">
           <h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight">
             <span className="block whitespace-nowrap text-foreground">Smart Contract Security</span>
             <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Reimagined With AI</span>
