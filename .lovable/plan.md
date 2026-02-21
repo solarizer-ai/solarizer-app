@@ -1,71 +1,98 @@
 
-# Remove n8n Integration and Make Solarizer CLI-Only
+
+# Home Page Facelift
 
 ## Summary
 
-Remove all n8n webhook integration and the web-based audit creation flow. The web app will remain for viewing reports, managing settings, billing, etc., but audits will only be created via the CLI.
+A complete visual overhaul of the Solarizer landing page, replacing the current busy layout (orbital rings, grid overlays, glass cards, comparison tables) with four clean sections built on typography, whitespace, and a new animated terminal demo component. Header and Footer get minor polish. Pricing gets small copy and styling tweaks.
 
-## Changes
+## What Changes
 
-### Edge Functions to DELETE (3 functions)
+### 1. New CSS Utilities (`src/index.css`)
 
-1. **`supabase/functions/cloc-estimate/`** -- Calls `N8N_WEBHOOK_URL` for CLOC estimation. CLI handles this locally.
-2. **`supabase/functions/run-audit/`** -- Calls `N8N_AUDIT_WEBHOOK_URL` to trigger the n8n audit engine. CLI uses its own session-based flow.
-3. **`supabase/functions/check-stale-audits/`** -- Cron job that uses `N8N_CALLBACK_SECRET`. Can be removed or kept; since CLI manages its own lifecycle.
+Four new classes added inside the existing `@layer utilities` block:
 
-### Edge Functions to UPDATE (3 functions -- rename secret references)
+- **`.terminal-pill`** -- monospace phase label (JetBrains Mono, 0.6rem, uppercase, faint orange border)
+- **`.glow-orange-border`** -- double box-shadow for the Pricing Pro card
+- **`.terminal-cursor`** -- blinking orange cursor (2px wide, 14px tall, 700ms blink keyframe)
+- **`.terminal-spinner`** -- spinning braille characters cycling every 80ms via CSS steps
 
-4. **`supabase/functions/save-finding/index.ts`** -- Rename `N8N_CALLBACK_SECRET` references to `CALLBACK_SECRET` (or a generic name). Logic stays the same -- the CLI backend still calls this.
-5. **`supabase/functions/complete-audit/index.ts`** -- Same rename of `N8N_CALLBACK_SECRET` to `CALLBACK_SECRET`.
-6. **`supabase/functions/fail-audit/index.ts`** -- Same rename of `N8N_CALLBACK_SECRET` to `CALLBACK_SECRET`.
+No existing classes removed.
 
-### Frontend Files to DELETE (web audit wizard components)
+### 2. New Component (`src/components/TerminalAuditDemo.tsx`)
 
-7. **`src/components/AuditWizard.tsx`** -- The multi-step wizard for web audit creation.
-8. **`src/components/wizard/ProjectNameStep.tsx`** -- Wizard step.
-9. **`src/components/wizard/UploadMethodStep.tsx`** -- Wizard step.
-10. **`src/components/wizard/ScopeSelectionStep.tsx`** -- Wizard step.
-11. **`src/components/wizard/EstimatorStep.tsx`** -- Wizard step (uses `useClocEstimate`).
-12. **`src/components/wizard/ContextStep.tsx`** -- Wizard step.
-13. **`src/components/wizard/GitHubImportStep.tsx`** -- Wizard step.
-14. **`src/components/FileUploader.tsx`** -- File upload for wizard.
-15. **`src/components/FolderUploader.tsx`** -- Folder upload for wizard.
-16. **`src/components/FileExplorer.tsx`** -- File tree for wizard.
-17. **`src/components/FileTreeItem.tsx`** -- File tree item.
-18. **`src/components/FileTypeIcon.tsx`** -- File type icon.
-19. **`src/components/ScanningProgress.tsx`** -- Web scan animation (unused import-wise).
-20. **`src/components/ScanProgressWidget.tsx`** -- Floating progress widget (not imported anywhere).
-21. **`src/components/AnalysisInProgressModal.tsx`** -- Analysis in-progress modal.
+A self-contained animated terminal that replaces the static hero visual. Features:
 
-### Frontend Hooks to DELETE
+- macOS-style window chrome (traffic light dots, title bar)
+- Renders a realistic CLI audit progress display with:
+  - Section headers (Audit title, Contracts, Findings)
+  - 8 phase indicators with checkmark/spinner/pending markers
+  - 4 contracts with expandable sub-phase trees
+  - Findings grouped by severity with tree connectors
+- Automatically cycles through 9 animation frames with realistic timing (1-2.5s per frame)
+- Independent spinner animation (80ms tick)
+- Live elapsed time counter
+- Loops indefinitely with instant reset
 
-22. **`src/hooks/useRunAudit.ts`** -- Calls `run-audit` edge function (being deleted).
-23. **`src/hooks/useClocEstimate.ts`** -- Calls `cloc-estimate` edge function (being deleted).
-24. **`src/hooks/useActiveAnalyses.ts`** -- Only used by `AnalysisInProgressModal`.
+### 3. Home Page (`src/pages/Home.tsx`) -- Full Replacement
 
-### Frontend Context to DELETE
+The entire file is replaced with four sections:
 
-25. **`src/contexts/ScanContext.tsx`** -- Provides web scanning state, realtime subscriptions for web-initiated audits. Only used in `Index.tsx` and `App.tsx`.
+**Section 1 -- Hero**
+- Large two-line headline: "Security for all." (orange gradient) + "Accessible instantly." (white)
+- Two-line description
+- Two CTAs: "Start Auditing" and "See How It Works" (smooth scroll)
+- The `TerminalAuditDemo` component with a radial orange glow behind it
+- Bottom fade dissolving into the next section
 
-### Frontend Files to UPDATE
+**Section 2 -- Audit Pipeline** (`#pipeline`)
+- Five phases listed vertically with a left orange border
+- Each phase has a `.terminal-pill` label, bold title, and description paragraph
+- No cards, no hover effects, no numbered steps
 
-26. **`src/pages/Index.tsx`** -- Major simplification:
-    - Remove the "editor" view entirely (the `AuditWizard`, `handleStartScan`, file upload state, etc.)
-    - Remove imports for `AuditWizard`, `useRunAudit`, `useScan`, `FileNode`, `AnalysisInProgressModal`, `ScanProgressWidget`
-    - Remove `pendingFiles` state, `handleStartScan`, `handleUpgradeNeeded`, `handlePowerUpNeeded`
-    - The "Run Analysis" button becomes a link/message directing users to use the CLI
-    - Keep: dashboard view, audit list, delete, view results, credit balance, subscription prompts
+**Section 3 -- What It Finds**
+- Two groups: "Known vulnerability patterns" (3 findings) and "Protocol-specific logic" (2 findings)
+- Each finding is a `divide-y` row with severity badge, title, description, and file reference
+- Severity badges color-coded (red, orange, yellow)
 
-27. **`src/App.tsx`** -- Remove `ScanProvider` wrapper import and usage.
+**Section 4 -- CTA**
+- Headline: "Run your first audit."
+- npm install box with copy-to-clipboard button
+- One "Open Dashboard" button
 
-### Config Update
+### 4. Header (`src/components/Header.tsx`) -- Three Edits
 
-28. **`supabase/config.toml`** -- Remove entries for `cloc-estimate`, `run-audit`, and `check-stale-audits`.
+- Blur: `backdrop-blur-sm` changed to `backdrop-blur-xl`
+- Active nav link: adds a 2px orange underline bar via `after:` pseudo-element
+- "Get Started" button: adds `hover:shadow-[0_0_20px_rgba(249,115,22,0.2)]`
+
+### 5. Footer (`src/components/Footer.tsx`) -- Restructured
+
+- Desktop links reorganized into two labeled groups: "Product" (Pricing, Docs, Dashboard) and "Legal" (Privacy, Terms)
+- Copyright simplified: "2026 Eryonix Techlabs. All rights reserved."
+- Tagline: "Enterprise-grade smart contract security. For everyone."
+- Mobile copyright simplified
+
+### 6. Pricing (`src/pages/Pricing.tsx`) -- Four Small Edits
+
+- Hero headline: "Flexible Audit Pricing" changed to "Audit-as-you-go pricing."
+- Hero subtitle updated to "50 credits included every month. Never expire, never reset."
+- Pro card: `shadow-lg shadow-primary/20` replaced with `glow-orange-border`
+- Credit explainer line added below pricing cards grid
 
 ## Technical Details
 
-- The `save-finding`, `complete-audit`, and `fail-audit` functions are still needed -- they are server-to-server callbacks used by the CLI backend. Only the env var name changes from `N8N_CALLBACK_SECRET` to `CALLBACK_SECRET`.
-- A new secret `CALLBACK_SECRET` should be set with the same value as the current `N8N_CALLBACK_SECRET`.
-- The `check-stale-audits` function is borderline -- it guards against stuck audits regardless of source. It can be kept if desired, but since it references the n8n pattern, the plan includes removing it. Can be re-added later if needed for CLI audits.
-- The dashboard "Run Analysis" button will be replaced with guidance to use the CLI tool.
-- All report viewing, audit listing, settings, billing, and sharing features remain untouched.
+**Files created:** 1
+- `src/components/TerminalAuditDemo.tsx` -- ~350 lines, self-contained React component with useState/useEffect for animation
+
+**Files modified:** 5
+- `src/index.css` -- 4 new utility classes + 1 keyframe
+- `src/pages/Home.tsx` -- full rewrite (~280 lines)
+- `src/components/Header.tsx` -- 3 line-level edits
+- `src/components/Footer.tsx` -- restructured links and copy
+- `src/pages/Pricing.tsx` -- 4 targeted edits
+
+**No new dependencies.** All imports are already available in the project.
+
+**No database or backend changes.**
+
