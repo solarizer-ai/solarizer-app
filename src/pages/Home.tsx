@@ -127,10 +127,10 @@ const Home = () => {
         <HeroBackground />
 
         <div className="relative max-w-3xl mx-auto text-center px-4 sm:px-6">
-          <h1 className="text-[clamp(2.4rem,6vw,5.5rem)] font-black leading-[1.05] tracking-tight">
-            <span className="text-foreground">Smart Contract Security</span>
+          <h1 className="text-[clamp(2rem,5.5vw,5.5rem)] font-black leading-[1.05] tracking-tight">
+            <span className="whitespace-nowrap text-foreground">Smart Contract Security</span>
             <br />
-            <span className="whitespace-nowrap text-gradient text-[clamp(1.8rem,4.5vw,4rem)]">Reimagined With AI</span>
+            <span className="whitespace-nowrap text-gradient text-[clamp(1.6rem,4vw,4rem)]">Reimagined With AI</span>
           </h1>
 
           <p className="text-lg text-muted-foreground/70 mt-5 max-w-lg mx-auto">
@@ -150,7 +150,7 @@ const Home = () => {
       <section id="pipeline" className="py-24 md:py-32 bg-background">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight">
+            <h2 className="text-2xl md:text-4xl font-black tracking-tight whitespace-nowrap">
               Context-Aware Analysis
             </h2>
             <p className="text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
@@ -207,10 +207,10 @@ const Home = () => {
           {/* Known patterns group */}
           <div className="mt-14 rounded-2xl bg-foreground/[0.01] border border-border/10 p-6 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-6">
-              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground/40">
+              <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
                 Known vulnerability patterns
               </p>
-              <span className="text-[10px] font-mono text-muted-foreground/30 bg-muted/40 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-mono text-primary/50 bg-primary/10 px-2 py-0.5 rounded-full">
                 {knownFindings.length}
               </span>
             </div>
@@ -224,10 +224,10 @@ const Home = () => {
           {/* Protocol-specific group */}
           <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-6 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-3">
-              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground/40">
+              <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
                 Protocol-specific logic
               </p>
-              <span className="text-[10px] font-mono text-muted-foreground/30 bg-muted/40 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-mono text-primary/50 bg-primary/10 px-2 py-0.5 rounded-full">
                 {protocolFindings.length}
               </span>
             </div>
