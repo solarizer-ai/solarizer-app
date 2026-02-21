@@ -4,8 +4,11 @@ import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Loader2, Zap, Calendar, ArrowUpRight, CreditCard, Clock, XCircle, Receipt, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Loader2, Zap, Calendar, ArrowUpRight, CreditCard, Clock, XCircle, Receipt, ChevronLeft, ChevronRight, X, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
@@ -16,7 +19,7 @@ import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlan
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 
-const HISTORY_PAGE_SIZE = 15;
+const DEFAULT_HISTORY_PAGE_SIZE = 15;
 
 const BillingPage = () => {
   const navigate = useNavigate();
@@ -27,18 +30,21 @@ const BillingPage = () => {
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<"pro" | "business">("pro");
   const [targetDowngradePlan, setTargetDowngradePlan] = useState<"starter" | "pro">("starter");
 
-  // Transaction history filters
   const [historyPage, setHistoryPage] = useState(1);
-  const [historyStartDate, setHistoryStartDate] = useState<string | null>(null);
-  const [historyEndDate, setHistoryEndDate] = useState<string | null>(null);
+  const [historyPageSize, setHistoryPageSize] = useState(DEFAULT_HISTORY_PAGE_SIZE);
+  const [historyStartDate, setHistoryStartDate] = useState<Date | undefined>(undefined);
+  const [historyEndDate, setHistoryEndDate] = useState<Date | undefined>(undefined);
+
+  const historyStartDateStr = historyStartDate ? format(historyStartDate, "yyyy-MM-dd") : null;
+  const historyEndDateStr = historyEndDate ? format(historyEndDate, "yyyy-MM-dd") : null;
 
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
   const { events, isLoading: eventsLoading, totalCount } = useBillingHistory({
-    startDate: historyStartDate,
-    endDate: historyEndDate,
+    startDate: historyStartDateStr,
+    endDate: historyEndDateStr,
     page: historyPage,
-    pageSize: HISTORY_PAGE_SIZE,
+    pageSize: historyPageSize,
   });
   const {
     cancelSubscription,
@@ -61,7 +67,7 @@ const BillingPage = () => {
   const creditsUsed = credits?.credits_used_this_period || 0;
   const hasPendingDowngrade = subscription?.pending_plan !== null && subscription?.pending_plan !== undefined;
   const hasPendingCancellation = subscription?.cancel_at_period_end === true;
-  const historyTotalPages = Math.max(1, Math.ceil(totalCount / HISTORY_PAGE_SIZE));
+  const historyTotalPages = Math.max(1, Math.ceil(totalCount / historyPageSize));
   const hasHistoryFilters = historyStartDate || historyEndDate;
 
   const getPlanDisplayName = () => {
@@ -313,21 +319,31 @@ const BillingPage = () => {
           <CardTitle>Transaction History</CardTitle>
           <CardDescription>All your power-up purchases and plan changes</CardDescription>
           <div className="flex items-center gap-2 pt-2 flex-wrap">
-            <Input
-              type="date"
-              value={historyStartDate || ""}
-              onChange={(e) => { setHistoryStartDate(e.target.value || null); setHistoryPage(1); }}
-              className="w-[150px] h-8 text-xs"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-8 w-[160px] justify-start text-left text-xs font-normal", !historyStartDate && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                  {historyStartDate ? format(historyStartDate, "dd-MM-yyyy") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarPicker mode="single" selected={historyStartDate} onSelect={(d) => { setHistoryStartDate(d); setHistoryPage(1); }} initialFocus className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
             <span className="text-xs text-muted-foreground">to</span>
-            <Input
-              type="date"
-              value={historyEndDate || ""}
-              onChange={(e) => { setHistoryEndDate(e.target.value || null); setHistoryPage(1); }}
-              className="w-[150px] h-8 text-xs"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-8 w-[160px] justify-start text-left text-xs font-normal", !historyEndDate && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                  {historyEndDate ? format(historyEndDate, "dd-MM-yyyy") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarPicker mode="single" selected={historyEndDate} onSelect={(d) => { setHistoryEndDate(d); setHistoryPage(1); }} initialFocus className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
             {hasHistoryFilters && (
-              <Button variant="ghost" size="sm" onClick={() => { setHistoryStartDate(null); setHistoryEndDate(null); setHistoryPage(1); }} className="h-8 px-2 text-xs gap-1">
+              <Button variant="ghost" size="sm" onClick={() => { setHistoryStartDate(undefined); setHistoryEndDate(undefined); setHistoryPage(1); }} className="h-8 px-2 text-xs gap-1">
                 <X className="w-3 h-3" /> Clear
               </Button>
             )}
@@ -345,29 +361,30 @@ const BillingPage = () => {
           ) : (
             <>
               <div className="divide-y divide-border">{events.map((event) => renderEvent(event))}</div>
-              {historyTotalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
-                    disabled={historyPage <= 1}
-                    className="gap-1"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
+              <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setHistoryPage(p => Math.max(1, p - 1))} disabled={historyPage <= 1}>
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <span className="text-xs text-muted-foreground">Page {historyPage} of {historyTotalPages}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))}
-                    disabled={historyPage >= historyTotalPages}
-                    className="gap-1"
-                  >
-                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))} disabled={historyPage >= historyTotalPages}>
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Lines Per Page</span>
+                  <Select value={String(historyPageSize)} onValueChange={(v) => { setHistoryPageSize(Number(v)); setHistoryPage(1); }}>
+                    <SelectTrigger className="h-8 w-[70px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="15">15</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </>
           )}
         </CardContent>
