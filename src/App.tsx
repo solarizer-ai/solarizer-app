@@ -7,10 +7,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import DocsLayout from "@/layouts/DocsLayout";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Auth from "./pages/Auth";
-import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 import ComingSoon from "./pages/ComingSoon";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -28,7 +28,13 @@ import BillingPage from "./pages/dashboard/BillingPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import SecurityPage from "./pages/dashboard/SecurityPage";
 import SharingPage from "./pages/dashboard/SharingPage";
-import DocsPage from "./pages/dashboard/DocsPage";
+
+// Docs pages
+import SetupPage from "./pages/docs/SetupPage";
+import AuditsDocsPage from "./pages/docs/AuditsPage";
+import GradesPage from "./pages/docs/GradesPage";
+import ReferencePage from "./pages/docs/ReferencePage";
+import FaqPage from "./pages/docs/FaqPage";
 
 const queryClient = new QueryClient();
 
@@ -47,11 +53,20 @@ const App = () => (
               <Route path="/login" element={<Auth />} />
               <Route path="/signup" element={<Auth />} />
               <Route path="/coming-soon" element={<ComingSoon />} />
-              <Route path="/docs" element={<Docs />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
               <Route path="/subscription-success" element={<ProtectedRoute><SubscriptionSuccess /></ProtectedRoute>} />
+
+              {/* Docs (sidebar layout, public) */}
+              <Route path="/docs" element={<DocsLayout />}>
+                <Route index element={<Navigate to="/docs/setup" replace />} />
+                <Route path="setup" element={<SetupPage />} />
+                <Route path="audits" element={<AuditsDocsPage />} />
+                <Route path="grades" element={<GradesPage />} />
+                <Route path="reference" element={<ReferencePage />} />
+                <Route path="faq" element={<FaqPage />} />
+              </Route>
 
               {/* Dashboard (sidebar layout) */}
               <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
@@ -63,7 +78,7 @@ const App = () => (
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="security" element={<SecurityPage />} />
                 <Route path="sharing" element={<SharingPage />} />
-                <Route path="docs" element={<DocsPage />} />
+                <Route path="docs" element={<Navigate to="/docs/setup" replace />} />
                 <Route path="subscription" element={<Navigate to="/dashboard/billing" replace />} />
               </Route>
 
