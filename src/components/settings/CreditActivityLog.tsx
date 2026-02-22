@@ -127,7 +127,7 @@ export function CreditActivityLog() {
                           : config.label}
                       </TableCell>
                       <TableCell className={cn("text-xs font-semibold text-right whitespace-nowrap", isPositive ? "text-success" : "text-destructive")}>
-                        {isPositive ? "+" : ""}{txn.amount.toLocaleString()}
+                        {Math.abs(txn.amount).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-xs text-foreground text-right whitespace-nowrap">
                         {txn.balance_after !== null ? txn.balance_after.toLocaleString() : "—"}
