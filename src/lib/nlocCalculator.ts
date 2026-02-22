@@ -65,9 +65,9 @@ export const SUBSCRIPTION_CREDITS = {
  * Credit rates per plan (in cents)
  */
 export const PLAN_CREDIT_RATES = {
-  starter: 550,  // $5.50 per credit (Spark plan)
-  pro: 500,      // $5.00 per credit (Blaze plan)
-  business: 450, // $4.50 per credit (Inferno plan)
+  starter: 280,  // $2.80 per credit (Spark plan)
+  pro: 250,      // $2.50 per credit (Blaze plan)
+  business: 220, // $2.20 per credit (Inferno plan)
 } as const;
 
 /**

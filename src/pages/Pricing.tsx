@@ -39,7 +39,7 @@ const pricingPlans: PricingPlan[] = [
     label: 'Essentials',
     monthlyPrice: 149,
     monthlyCredits: 50,
-    powerUpPrice: 5.5,
+    powerUpPrice: 2.8,
     popular: false,
     features: [
       { text: 'Single-pass vulnerability scanning', included: true },
@@ -59,7 +59,7 @@ const pricingPlans: PricingPlan[] = [
     label: 'Most Popular',
     monthlyPrice: 199,
     monthlyCredits: 50,
-    powerUpPrice: 5,
+    powerUpPrice: 2.5,
     popular: true,
     features: [
       { text: 'Everything in Spark, plus:', included: true, isHeader: true },
@@ -78,7 +78,7 @@ const pricingPlans: PricingPlan[] = [
     label: 'Full Power',
     monthlyPrice: 499,
     monthlyCredits: 50,
-    powerUpPrice: 4.5,
+    powerUpPrice: 2.2,
     popular: false,
     features: [
       { text: 'Everything in Blaze, plus:', included: true, isHeader: true },
@@ -86,7 +86,7 @@ const pricingPlans: PricingPlan[] = [
       { text: 'Share reports on dashboard', included: true },
       { text: 'Invite up to 5 collaborators', included: true },
       { text: 'Comment & track remediation progress', included: true },
-      { text: 'Lowest power-up rate ($4.50/credit)', included: true },
+      { text: 'Lowest power-up rate ($2.20/credit)', included: true },
     ],
   },
 ];
@@ -370,7 +370,7 @@ const Pricing = () => {
           <p className="text-muted-foreground mb-4">
             {user && subscription
               ? `Purchase additional Power up Credits at $${getDiscountedPrice()}/credit based on your ${formatPlanName(subscription.plan)} plan.`
-              : `Purchase additional Power up Credits starting at $4.50/credit with a subscription.`
+              : `Purchase additional Power up Credits starting at $2.20/credit with a subscription.`
             }
           </p>
           <Button

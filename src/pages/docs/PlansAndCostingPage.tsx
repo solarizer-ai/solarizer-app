@@ -286,9 +286,9 @@ export default function PlansAndCostingPage() {
               <DocTable
                 headers={["Plan", "Power-Up rate", "Savings"]}
                 rows={[
-                  [<strong className="text-foreground">Spark</strong>, "$5.50/credit", <No />],
-                  [<strong className="text-foreground">Blaze</strong>, "$5.00/credit", "9% off"],
-                  [<strong className="text-foreground">Inferno</strong>, "$4.50/credit", "18% off"],
+                  [<strong className="text-foreground">Spark</strong>, "$2.80/credit", <No />],
+                  [<strong className="text-foreground">Blaze</strong>, "$2.50/credit", "~11% off"],
+                  [<strong className="text-foreground">Inferno</strong>, "$2.20/credit", "~21% off"],
                 ]}
               />
               <p>
@@ -347,7 +347,7 @@ export default function PlansAndCostingPage() {
                   ],
                   ["Invite collaborators (up to 5)", <No />, <No />, <Yes />],
                   ["Comment and track remediation", <No />, <No />, <Yes />],
-                  [<strong className="text-foreground">Power-Up rate</strong>, "$5.50/credit", "$5.00/credit", "$4.50/credit"],
+                  [<strong className="text-foreground">Power-Up rate</strong>, "$2.80/credit", "$2.50/credit", "$2.20/credit"],
                 ]}
               />
             </CardContent>
@@ -567,7 +567,7 @@ export default function PlansAndCostingPage() {
               />
               <p>
                 <strong className="text-foreground">Total: 233 credits.</strong> With 50 monthly
-                credits, you need 183 Power-Up credits ($5.50 each = $1,006.50).
+                credits, you need 183 Power-Up credits ($2.80 each = $512.40).
                 Or wait 5 months to accumulate 250 credits and run it for free.
               </p>
               <p className="font-medium text-foreground">What happens during the audit:</p>

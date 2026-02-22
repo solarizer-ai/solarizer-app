@@ -26,10 +26,10 @@ const PLAN_PRICES: Record<string, number> = {
 
 // Power-up prices per credit in cents based on plan
 const POWER_UP_RATES: Record<string, number> = {
-  starter: 550, // $5.50
-  launch: 550, // $5.50
-  pro: 500, // $5.00
-  business: 450, // $4.50
+  starter: 280, // $2.80
+  launch: 280, // $2.80
+  pro: 250, // $2.50
+  business: 220, // $2.20
 };
 
 // Frontend URL for callbacks
