@@ -291,7 +291,7 @@ const Pricing = () => {
 
                 {/* Plan Name */}
                 <div className="mt-4 mb-6">
-                  <h3 className="text-2xl font-bold mb-1">{plan.name}</h3>
+                  <h3 className="text-2xl font-bold mb-1 bg-gradient-to-r from-primary to-yellow-400 bg-clip-text text-transparent">{plan.name}</h3>
                 </div>
 
                 {/* Price */}
