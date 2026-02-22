@@ -37,20 +37,20 @@ export function PurchasePowerUpModal({
 
   const plan = subscription?.plan || 'starter';
 
-  // Fixed pricing per credit based on plan
+  // Fixed pricing per credit based on plan (matches PLAN_CREDIT_RATES)
   const getPricePerCreditCents = (): number => {
-    if (plan === 'business') return 500; // $5.00
-    if (plan === 'pro') return 600;      // $6.00
-    return 700;                           // $7.00
+    if (plan === 'business') return 450; // $4.50
+    if (plan === 'pro') return 500;      // $5.00
+    return 550;                           // $5.50
   };
 
   const pricePerCreditCents = getPricePerCreditCents();
   const pricePerCreditDollars = pricePerCreditCents / 100;
 
-  // Calculate discount from base $7
+  // Calculate discount from base $5.50
   const getDiscountPercent = (): number => {
-    if (plan === 'business') return 29;
-    if (plan === 'pro') return 14;
+    if (plan === 'business') return 18;
+    if (plan === 'pro') return 9;
     return 0;
   };
 
@@ -98,9 +98,9 @@ export function PurchasePowerUpModal({
   };
 
   const getPlanLabel = () => {
-    if (plan === 'business') return 'Business';
-    if (plan === 'pro') return 'Pro';
-    return 'Launch';
+    if (plan === 'business') return 'Inferno';
+    if (plan === 'pro') return 'Blaze';
+    return 'Spark';
   };
 
   return (
