@@ -432,8 +432,8 @@ export default function PlansAndCostingPage() {
   Reduce scope or upgrade to Blaze.`}
               </pre>
               <p>
-                Context files don't count toward the scope limit — only scope
-                files do.
+                Both scope files and context files count toward the nLOC limit.
+                Plan your file selection accordingly.
               </p>
               <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-xs">
                 <strong className="text-foreground">Note:</strong> You'll also see a yellow warning
@@ -688,9 +688,9 @@ Reduce scope or upgrade to Blaze.`}
                 </li>
               </ol>
               <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-xs">
-                <strong className="text-foreground">Note:</strong> Context files don't count toward
-                the scope limit. Include as many interfaces and libraries as you
-                want — they only affect credit cost at the discounted 0.15× rate.
+                <strong className="text-foreground">Note:</strong> Context files count toward the
+                nLOC limit, but at the discounted 0.15× credit rate. Factor them
+                into your scope planning.
               </div>
             </CardContent>
           </Card>
