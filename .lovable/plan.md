@@ -1,61 +1,45 @@
 
 
-# Interactive 3D Solarizer Logo — Two-Column CTA Layout
+# Premium 3D Solarizer Logo — Bold, Thick, and Shiny
 
-## Overview
-Place the actual Solarizer logo as a 3D object beside the "Secure your contracts from your terminal" CTA section. Instead of a generic "S" letter, the logo PNG will be used as a texture on a 3D plane, giving it depth, glow, and rotation.
+## Problem
+The logo currently renders on a visible square box and looks flat. It needs to feel bold, thick, shiny, and premium — not a thin rotating card.
 
-## Visual Layout
+## Changes (single file: `src/components/Logo3D.tsx`)
 
-```text
-Desktop (md+):
-+-------------------+----------------------------+
-|                   |  Secure your contracts     |
-|  [3D Solarizer    |  from your terminal        |
-|   Logo spinning   |                            |
-|   with glow]      |  subtitle text...          |
-|                   |  $ npm install -g solarizer|
-|                   |  View documentation ->     |
-+-------------------+----------------------------+
+### 1. Use a thicker extruded box instead of a flat plane
+- Keep `boxGeometry` but change args from `[2.4, 2.4, 0.15]` to `[2.5, 2.5, 0.35]` — increasing depth from 0.15 to 0.35 for a bold, chunky feel
+- The thicker depth gives the logo a strong 3D presence as it rotates
 
-Mobile:
-+----------------------------+
-|     [3D Solarizer Logo]    |
-+----------------------------+
-|  Secure your contracts     |
-|  from your terminal        |
-|  subtitle text...          |
-|  $ npm install -g ...      |
-|  View documentation ->     |
-+----------------------------+
-```
+### 2. Make transparent parts invisible
+- Set `alphaTest={0.5}` on the material so transparent PNG regions are cut away — only the S logo and its immediate background show
+- Keep `transparent={true}`
 
-## Technical Details
+### 3. Boost premium shiny feel
+- Increase `emissiveIntensity` from `0.15` to `0.5` for a stronger orange glow
+- Decrease `roughness` from `0.4` to `0.15` for a highly reflective, glossy surface
+- Increase `metalness` from `0.3` to `0.7` for a bold metallic sheen
+- These values together create a polished metal look
 
-### Dependencies to Install
-- `@react-three/fiber@^8.18.0`
-- `@react-three/drei@^9.122.0`
-- `three@^0.160.0`
+### 4. Enhance lighting for shine and depth
+- Increase main orange `pointLight` intensity from `1` to `1.8`
+- Increase secondary white `pointLight` intensity from `0.4` to `0.8`
+- Add a third rim light from behind: `position={[0, 0, -3]}`, `intensity={0.6}`, `color="#F97316"` — creates an orange edge glow as it spins
+- Increase `ambientLight` intensity from `0.6` to `0.8` to brighten the overall scene
 
-### New File: `src/components/Logo3D.tsx`
-- Uses `useTexture` from drei to load `solarizer-logo.png` as a texture
-- Renders the logo on a rounded 3D plane (or box with slight depth) to give it a 3D card-like appearance
-- Orange emissive glow around the edges using a subtle point light
-- Slow auto-rotation on Y-axis via `useFrame`
-- Subtle floating animation (sine-wave Y oscillation)
-- Ambient light + orange-tinted point light for branded depth
-- Accepts `className` prop for external sizing
-- No orbit controls — purely automatic animation
+### 5. No other files modified
 
-### Modified File: `src/pages/Home.tsx`
-- Lazy-import `Logo3D` with `React.lazy` + `Suspense`
-- Restructure CTA section (Section 4) into a two-column grid:
-  - Container: `grid grid-cols-1 md:grid-cols-2 gap-8 items-center`
-  - Left column (desktop) / Top (mobile): `Logo3D` in a `w-48 h-48 md:w-56 md:h-56 mx-auto` container
-  - Right column (desktop) / Bottom (mobile): existing heading, subtitle, install box, docs link
-  - Text alignment: `text-center md:text-left`
-- Increase section `max-w` from `max-w-2xl` to `max-w-4xl`
+## Summary of Material Values
 
-### Why Texture Instead of Text3D
-The Solarizer logo is a custom graphic (PNG), not a standard letter. Using it as a texture on a 3D surface preserves the actual brand identity while still achieving the interactive 3D spinning effect with depth and glow.
+| Property          | Before | After |
+|-------------------|--------|-------|
+| Box depth         | 0.15   | 0.35  |
+| emissiveIntensity | 0.15   | 0.5   |
+| roughness         | 0.4    | 0.15  |
+| metalness         | 0.3    | 0.7   |
+| alphaTest         | none   | 0.5   |
+| Main light        | 1.0    | 1.8   |
+| Fill light        | 0.4    | 0.8   |
+| Ambient light     | 0.6    | 0.8   |
+| Rim light         | none   | 0.6   |
 
