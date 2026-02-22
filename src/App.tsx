@@ -35,6 +35,7 @@ import AuditsDocsPage from "./pages/docs/AuditsPage";
 import GradesPage from "./pages/docs/GradesPage";
 import ReferencePage from "./pages/docs/ReferencePage";
 import FaqPage from "./pages/docs/FaqPage";
+import PlansAndCostingPage from "./pages/docs/PlansAndCostingPage";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="grades" element={<GradesPage />} />
                 <Route path="reference" element={<ReferencePage />} />
                 <Route path="faq" element={<FaqPage />} />
+                <Route path="plans-and-costing" element={<PlansAndCostingPage />} />
               </Route>
 
               {/* Dashboard (sidebar layout) */}
