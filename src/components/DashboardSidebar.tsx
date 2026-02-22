@@ -159,7 +159,7 @@ export function DashboardSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Documentation">
                     <NavLink
-                      to="/dashboard/docs"
+                      to="/docs/setup"
                       onClick={handleNavClick}
                     className="text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent transition-colors"
                     activeClassName="bg-primary/10 text-foreground font-medium"
