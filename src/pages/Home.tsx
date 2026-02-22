@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, Check, Layers, Fingerprint, Search, GitBranch, FileText } from "lucide-react";
+import { Copy, Check, Layers, Fingerprint, Search, GitBranch, FileText, Shield, Lock, EyeOff, CheckCircle2, Workflow, KeyRound } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerminalAuditDemo from "@/components/TerminalAuditDemo";
@@ -92,6 +92,45 @@ const protocolFindings = [
     description:
       "The collateral ratio check in liquidate() fires after the external repayment call. An attacker re-enters addCollateral() mid-liquidation to inflate their ratio and exit without penalty.",
     file: "LendingCore.sol · line 167",
+  },
+];
+
+const securityFeatures = [
+  {
+    icon: Shield,
+    title: "Agentic Red Team",
+    description:
+      "Not a single model with a prompt. A coordinated squad of specialized AI models, each purpose-built for a different attack surface. Trained to break your protocol on real-world exploit patterns.",
+  },
+  {
+    icon: Lock,
+    title: "Isolated Analysis",
+    description:
+      "Every audit runs in its own sandboxed environment. No shared state between audits. No cross-contamination. Your contracts are analysed in isolation that exists only for the duration of your session.",
+  },
+  {
+    icon: EyeOff,
+    title: "Your Code Stays Yours",
+    description:
+      "Solarizer never trains on your codebase. Your source code is never stored on our infrastructure beyond your active session. When the audit ends, the environment is destroyed.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "AI-Validated Findings",
+    description:
+      "Every finding passes through a dedicated validation layer that challenges and filters false positives. What reaches your report has been verified with line-accurate evidence and severity ranking.",
+  },
+  {
+    icon: Workflow,
+    title: "Structured, Not Random",
+    description:
+      "A deterministic multi-phase pipeline — not random prompts hoping for the best. Checkpoint and resume without losing progress. Reproducible, auditable results every time.",
+  },
+  {
+    icon: KeyRound,
+    title: "Zero-Trust by Default",
+    description:
+      "Sandboxed execution with no ambient credentials. Every operation is scoped to your session. No trust assumptions between components. Defense in depth at every layer.",
   },
 ];
 
@@ -248,7 +287,41 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── SECTION 4: CTA ───────────────────────────────────────────── */}
+      {/* ── SECTION 4: Robust Security ─────────────────────────────── */}
+      <section className="py-10 md:py-20">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-2xl md:text-4xl font-black tracking-tight">
+              Robust Security
+            </h2>
+            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+              Not just another GPT-Wrapper
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-8 md:mt-10">
+            {securityFeatures.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={feature.title}
+                  className="rounded-2xl bg-foreground/[0.01] border border-border/10 p-5 md:p-8 hover:border-primary/20 transition-colors"
+                >
+                  <Icon className="w-5 h-5 text-primary mb-4" />
+                  <p className="text-sm md:text-base font-semibold text-foreground">
+                    {feature.title}
+                  </p>
+                  <p className="text-xs md:text-sm text-muted-foreground/60 mt-2 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 5: CTA ───────────────────────────────────────────── */}
       <section className="py-12 md:py-24">
         <div className="max-w-2xl mx-auto text-center px-6">
           <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15]">
