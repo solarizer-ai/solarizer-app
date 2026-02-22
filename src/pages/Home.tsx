@@ -1,12 +1,10 @@
-import { useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Copy, Check, Layers, Fingerprint, Search, GitBranch, FileText } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerminalAuditDemo from "@/components/TerminalAuditDemo";
 import HeroBackground from "@/components/HeroBackground";
-
-const Logo3D = lazy(() => import("@/components/Logo3D"));
 
 const phases = [
   {
@@ -252,40 +250,32 @@ const Home = () => {
 
       {/* ── SECTION 4: CTA ───────────────────────────────────────────── */}
       <section className="py-12 md:py-24">
-        <div className="max-w-4xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          {/* 3D Logo */}
-          <Suspense fallback={<div className="w-48 h-48 md:w-56 md:h-56 mx-auto" />}>
-            <Logo3D className="w-48 h-48 md:w-56 md:h-56 mx-auto" />
-          </Suspense>
+        <div className="max-w-2xl mx-auto text-center px-6">
+          <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15]">
+            <span className="block">Secure your contracts</span>
+            <span className="block text-gradient mt-1 md:mt-2">from your terminal</span>
+          </h2>
 
-          {/* CTA Content */}
-          <div className="text-center md:text-left">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15]">
-              <span className="block">Secure your contracts</span>
-              <span className="block text-gradient mt-1 md:mt-2">from your terminal</span>
-            </h2>
+          <p className="text-sm md:text-lg text-muted-foreground/60 mt-6 max-w-lg mx-auto leading-relaxed">
+            Multi-phase AI analysis, exploit-pattern matching, and line-accurate remediation — all from a single CLI command.
+          </p>
 
-            <p className="text-sm md:text-lg text-muted-foreground/60 mt-6 max-w-lg leading-relaxed">
-              Multi-phase AI analysis, exploit-pattern matching, and line-accurate remediation — all from a single CLI command.
-            </p>
-
-            <div className="mt-8 max-w-sm border border-border/50 rounded-xl px-5 py-4 sm:px-6 sm:py-4 bg-card/50 font-mono text-xs sm:text-sm flex items-center gap-2 hover:border-primary/30 transition-all mx-auto md:mx-0">
-              <span className="text-muted-foreground/40">$</span>
-              <span className="text-foreground/80 flex-1 text-left select-all">
-                npm install -g solarizer
-              </span>
-              <button
-                onClick={handleCopy}
-                className="text-muted-foreground/40 hover:text-foreground transition-colors p-1"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-
-            <Link to="/docs" className="inline-block mt-5 text-sm text-primary hover:underline">
-              View documentation →
-            </Link>
+          <div className="mt-8 max-w-sm mx-auto border border-border/50 rounded-xl px-5 py-4 sm:px-6 sm:py-4 bg-card/50 font-mono text-xs sm:text-sm flex items-center gap-2 hover:border-primary/30 transition-all">
+            <span className="text-muted-foreground/40">$</span>
+            <span className="text-foreground/80 flex-1 text-left select-all">
+              npm install -g solarizer
+            </span>
+            <button
+              onClick={handleCopy}
+              className="text-muted-foreground/40 hover:text-foreground transition-colors p-1"
+            >
+              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+            </button>
           </div>
+
+          <Link to="/docs" className="inline-block mt-5 text-sm text-primary hover:underline">
+            View documentation →
+          </Link>
         </div>
       </section>
 
