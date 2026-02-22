@@ -14,14 +14,14 @@ import { cn } from "@/lib/utils";
 
 const typeConfig: Record<string, { icon: typeof ArrowDown; color: string; label: string; badgeVariant: "destructive" | "default" | "secondary" | "outline" }> = {
   deduction: { icon: ArrowDown, color: "text-destructive", label: "Deduction", badgeVariant: "destructive" },
-  grant: { icon: Gift, color: "text-emerald-500", label: "Grant", badgeVariant: "default" },
-  purchase: { icon: Zap, color: "text-emerald-500", label: "Purchase", badgeVariant: "default" },
-  refund: { icon: RotateCcw, color: "text-emerald-500", label: "Refund", badgeVariant: "default" },
+  grant: { icon: Gift, color: "text-success", label: "Grant", badgeVariant: "default" },
+  purchase: { icon: Zap, color: "text-success", label: "Purchase", badgeVariant: "default" },
+  refund: { icon: RotateCcw, color: "text-success", label: "Refund", badgeVariant: "default" },
 };
 
 export function CreditActivityLog() {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(5);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
@@ -124,7 +124,7 @@ export function CreditActivityLog() {
                       <TableCell className="text-xs text-foreground max-w-[280px] truncate">
                         {txn.description || config.label}
                       </TableCell>
-                      <TableCell className={cn("text-xs font-semibold text-right whitespace-nowrap", isPositive ? "text-emerald-500" : "text-destructive")}>
+                      <TableCell className={cn("text-xs font-semibold text-right whitespace-nowrap", isPositive ? "text-success" : "text-destructive")}>
                         {isPositive ? "+" : ""}{txn.amount.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-xs text-foreground text-right whitespace-nowrap">
@@ -152,8 +152,8 @@ export function CreditActivityLog() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
                     <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="15">15</SelectItem>
                     <SelectItem value="20">20</SelectItem>
                     <SelectItem value="50">50</SelectItem>
                   </SelectContent>
