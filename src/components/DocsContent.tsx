@@ -55,14 +55,32 @@ const Code = ({ children }: { children: React.ReactNode }) => (
 
 const DocsContent = () => {
   return (
-    <Tabs defaultValue="getting-started" className="space-y-6">
-      <TabsList>
-        <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
-        <TabsTrigger value="faq">FAQ</TabsTrigger>
+    <Tabs defaultValue="setup" className="space-y-6">
+      <TabsList className="flex flex-wrap">
+        <TabsTrigger value="setup" className="flex items-center gap-1.5">
+          <BookOpen className="w-3.5 h-3.5" />
+          Setup
+        </TabsTrigger>
+        <TabsTrigger value="audits" className="flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5" />
+          Audits
+        </TabsTrigger>
+        <TabsTrigger value="grades" className="flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5" />
+          Grades
+        </TabsTrigger>
+        <TabsTrigger value="reference" className="flex items-center gap-1.5">
+          <Terminal className="w-3.5 h-3.5" />
+          Reference
+        </TabsTrigger>
+        <TabsTrigger value="faq" className="flex items-center gap-1.5">
+          <HelpCircle className="w-3.5 h-3.5" />
+          FAQ
+        </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="getting-started" className="space-y-6">
-        {/* Card 1: Installation & Setup */}
+      {/* Installation & Setup */}
+      <TabsContent value="setup">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -71,7 +89,7 @@ const DocsContent = () => {
             </CardTitle>
             <CardDescription>Get up and running in under 2 minutes</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             <div className="space-y-4">
               <div className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -109,8 +127,10 @@ const DocsContent = () => {
             </div>
           </CardContent>
         </Card>
+      </TabsContent>
 
-        {/* Card 2: Running an Audit */}
+      {/* Running an Audit */}
+      <TabsContent value="audits">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -162,8 +182,10 @@ const DocsContent = () => {
             </div>
           </CardContent>
         </Card>
+      </TabsContent>
 
-        {/* Card 3: Security Grades */}
+      {/* Security Grades */}
+      <TabsContent value="grades">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -200,8 +222,10 @@ const DocsContent = () => {
             </div>
           </CardContent>
         </Card>
+      </TabsContent>
 
-        {/* Card 4: Dashboard Reference */}
+      {/* Dashboard Reference */}
+      <TabsContent value="reference">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -243,7 +267,8 @@ const DocsContent = () => {
         </Card>
       </TabsContent>
 
-      <TabsContent value="faq" className="space-y-6">
+      {/* FAQ */}
+      <TabsContent value="faq">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
