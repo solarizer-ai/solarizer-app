@@ -155,7 +155,7 @@ const Home = () => {
       <section id="pipeline" className="py-16 md:py-32 bg-background">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
-            <h2 className="text-xl md:text-4xl font-black tracking-tight whitespace-nowrap">
+            <h2 className="text-2xl md:text-4xl font-black tracking-tight whitespace-nowrap">
               Context-Aware Analysis
             </h2>
             <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
@@ -184,7 +184,6 @@ const Home = () => {
                     {/* Content */}
                     <div className="flex-1 pt-1">
                       <span className="terminal-pill">{phase.pill}</span>
-                      <h3 className="text-base md:text-lg font-semibold text-foreground mt-1">{phase.title}</h3>
                       <p className="text-xs md:text-sm text-muted-foreground/60 mt-1.5 leading-relaxed">
                         {phase.description}
                       </p>
