@@ -335,15 +335,10 @@ const Report = () => {
 
                   {/* Tabbed Interface: Scope, Coverage & Findings */}
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="scope" className="flex items-center gap-2">
                         <FileCode className="w-4 h-4" />
                         Scope
-                      </TabsTrigger>
-                      <TabsTrigger value="coverage" className="flex items-center gap-2">
-                        <Shield className="w-4 h-4" />
-                        Coverage
-                        {!canViewSecurityCoverage && <Lock className="w-3 h-3 ml-1 text-muted-foreground" />}
                       </TabsTrigger>
                       <TabsTrigger value="findings" className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4" />
@@ -361,22 +356,6 @@ const Report = () => {
                         auditStatus={currentAudit?.status}
                         systemHologram={currentAudit?.system_hologram as { scope?: string[]; all_files?: string[] } | null}
                       />
-                    </TabsContent>
-
-                    <TabsContent value="coverage" className="mt-4">
-                      {canViewSecurityCoverage ? (
-                        <SecurityCoverageTab
-                          coverageData={currentAudit?.coverage_data as CoverageData | null}
-                          onViewIssue={handleViewIssue}
-                        />
-                      ) : (
-                        <FeatureLockedOverlay
-                          featureName="Security Coverage"
-                          requiredPlan="pro"
-                          description="See a complete ledger of all security tests run on your contracts."
-                          onUpgrade={() => setUpgradeModalOpen(true)}
-                        />
-                      )}
                     </TabsContent>
 
                     <TabsContent value="findings" className="mt-4">

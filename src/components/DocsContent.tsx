@@ -47,26 +47,6 @@ const faqs = [
     answer:
       "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation and report exports, you will need to upgrade to the Pro Plan.",
   },
-  {
-    question: 'What is Security Coverage and how is it different from "Findings"?',
-    answer:
-      '"Findings" only show you what is broken. Security Coverage shows you everything we checked to ensure it was safe. It is a complete ledger of all security hypotheses—such as "Does this contract have reentrancy protection?"—and their results.',
-  },
-  {
-    question: "Why is this important for me?",
-    answer:
-      "It provides transparency and trust. Instead of wondering if an auditor simply missed a bug, you can see a line-by-line verification that specific risks (like Integer Overflows or Access Control failures) were tested and passed.",
-  },
-  {
-    question: 'What does a "PASSED" test mean in the coverage?',
-    answer:
-      'A "PASSED" status means the engine specifically analyzed that vector and found the contract to be secure against it. For these tests, we provide Proof—a brief explanation of why that specific logic is safe (e.g., "Uses OpenZeppelin\'s ReentrancyGuard").',
-  },
-  {
-    question: 'What happens when a test "FAILS"?',
-    answer:
-      'If a test fails, it is automatically linked to a detailed Finding. You can click the "View Issue" button next to any failed test to see the exact line of code, the severity of the risk, and the recommended fix.',
-  },
 ];
 
 const Code = ({ children }: { children: React.ReactNode }) => (
@@ -271,7 +251,7 @@ const DocsContent = () => {
               Frequently Asked Questions
             </CardTitle>
             <CardDescription>
-              Common questions about Solarizer, credits, and security coverage
+              Common questions about Solarizer and credits
             </CardDescription>
           </CardHeader>
           <CardContent>
