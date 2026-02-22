@@ -128,7 +128,7 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative pt-28 pb-12 md:pt-40 md:pb-20">
+      <section className="relative pt-28 pb-8 md:pt-40 md:pb-14">
         <HeroBackground />
 
         <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6">
@@ -143,7 +143,7 @@ const Home = () => {
           </p>
         </div>
 
-        <div className="relative mt-14 sm:mt-20 max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="relative mt-10 sm:mt-16 max-w-5xl mx-auto px-4 sm:px-6">
           <div className="relative">
             <TerminalAuditDemo />
           </div>
@@ -151,7 +151,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 2: Audit Pipeline ────────────────────────────────── */}
-      <section id="pipeline" className="py-16 md:py-32 bg-background">
+      <section id="pipeline" className="py-10 md:py-20">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-2xl md:text-4xl font-black tracking-tight whitespace-nowrap">
@@ -163,11 +163,11 @@ const Home = () => {
           </div>
 
           {/* Numbered vertical sequence */}
-          <div className="relative mt-10 md:mt-16">
+          <div className="relative mt-8 md:mt-12">
             {/* Vertical connecting line */}
             <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
 
-            <div className="space-y-6 md:space-y-10">
+            <div className="space-y-5 md:space-y-8">
               {phases.map((phase) => {
                 const Icon = phase.icon;
                 return (
@@ -196,7 +196,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 3: What It Finds ─────────────────────────────────── */}
-      <section className="py-16 md:py-28 bg-background">
+      <section className="py-10 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-2xl md:text-4xl font-black tracking-tight">
@@ -208,7 +208,7 @@ const Home = () => {
           </div>
 
           {/* Known patterns group */}
-          <div className="mt-10 md:mt-14 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
+          <div className="mt-8 md:mt-10 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-6">
               <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
                 Known vulnerability patterns
@@ -249,7 +249,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 4: CTA ───────────────────────────────────────────── */}
-      <section className="py-16 md:py-28 bg-background">
+      <section className="py-12 md:py-24">
         <div className="max-w-2xl mx-auto text-center px-6">
           <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15]">
             <span className="block">Secure your contracts</span>
