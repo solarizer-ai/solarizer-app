@@ -129,7 +129,7 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative pt-24 pb-12 md:pt-40 md:pb-20">
+      <section className="relative pt-28 pb-12 md:pt-40 md:pb-20">
         <HeroBackground />
 
         <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6">
@@ -138,13 +138,22 @@ const Home = () => {
             <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Reimagined With AI</span>
           </h1>
 
-          <p className="text-sm md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-lg mx-auto">
+          <p className="text-base md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-lg mx-auto leading-relaxed">
             Multi-phase AI security analysis for Solidity smart contracts.
             Find what matters. Ship with confidence.
           </p>
+
+          <div className="mt-8">
+            <Button asChild variant="solarGlow" className="w-full sm:w-auto">
+              <Link to="/dashboard">
+                Get Started
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </Button>
+          </div>
         </div>
 
-        <div className="relative mt-10 sm:mt-20 max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="relative mt-14 sm:mt-20 max-w-5xl mx-auto px-4 sm:px-6">
           <div className="relative">
             <TerminalAuditDemo />
           </div>
