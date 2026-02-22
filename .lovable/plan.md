@@ -1,36 +1,61 @@
 
 
-# Add "Robust Security" Section to Home Page
+# Add "Plans & Costing" Documentation Page
 
 ## Overview
-Add a new section between the Intelligence Engine section and the CTA section on the home page, showcasing Solarizer's security guarantees with 6 feature cards in a 2-column grid.
+Create a new documentation page at `/docs/plans-and-costing` with 4 tabs covering credits, plan comparison, analysis depth, and worked examples. Add a sidebar link in the docs navigation.
 
 ## Changes
 
-### `src/pages/Home.tsx`
+### 1. Create `src/pages/docs/PlansAndCostingPage.tsx`
 
-**1. Add new icon imports** to the existing lucide-react import:
-- `Shield`, `Lock`, `EyeOff`, `CheckCircle2`, `Workflow`, `KeyRound`
+A new page with 4 tabs using the existing `Tabs`/`TabsContent`/`Card` pattern from other docs pages:
 
-**2. Add `securityFeatures` data array** after `protocolFindings` and before `severityBorder`:
-- Agentic Red Team (Shield)
-- Isolated Analysis (Lock)
-- Your Code Stays Yours (EyeOff)
-- AI-Validated Findings (CheckCircle2)
-- Structured, Not Random (Workflow)
-- Zero-Trust by Default (KeyRound)
+**Tab 1 -- How Credits Work** (5 cards):
+- The Credit System (Coins icon) -- base rate explanation
+- Complexity Multipliers (Layers icon) -- L1/L2/L3 table
+- Context Files: 85% Discount (FileStack icon) -- scope vs context
+- How Your Audit Cost Is Calculated (Calculator icon) -- formula + worked example table
+- Power-Up Credits (Zap icon) -- plan rate comparison table
 
-**3. Add new section in JSX** between Section 3 (Intelligence Engine) and the CTA:
-- Section header: "Robust Security" / "Not just another GPT-Wrapper"
-- 2-column responsive grid (`grid-cols-1 md:grid-cols-2`) with 6 cards
-- Each card: icon, title, description
-- Matches existing design system (same card styling as Intelligence Engine)
+**Tab 2 -- Plan Comparison** (1 card):
+- Full feature comparison matrix with checkmarks/dashes across Spark, Blaze, Inferno
 
-**4. Renumber section comments**: CTA becomes Section 5.
+**Tab 3 -- Analysis Depth** (4 cards):
+- Your Audit Never Stops (Shield icon) -- plan adaptation explanation + code block
+- Scope Limits (AlertTriangle icon) -- per-plan limits table + warning example
+- What Runs on Each Plan (ListChecks icon) -- 7-phase breakdown table
+- Dashboard Reports (Cloud icon) -- per-plan report access table
+
+**Tab 4 -- Examples** (4 cards):
+- Solo developer on Spark -- 280 nLOC ERC-20 walkthrough
+- DeFi team on Blaze -- 3-contract + context walkthrough
+- Hitting the scope limit -- warning UX explanation
+- Resuming after upgrade -- checkpoint behavior
+
+### 2. Update `src/components/DocsSidebar.tsx`
+
+Add a new nav item to the `navItems` array:
+```
+{ title: "Plans & Costing", url: "/docs/plans-and-costing", icon: Coins }
+```
+
+Import `Coins` from lucide-react.
+
+### 3. Update `src/App.tsx`
+
+Add route inside the `/docs` layout:
+```
+<Route path="plans-and-costing" element={<PlansAndCostingPage />} />
+```
+
+Import the new page component.
 
 ## Technical Details
-- No new files or components needed
-- All styling uses existing Tailwind utilities
-- Cards use `bg-foreground/[0.01]`, `border-border/10`, `hover:border-primary/20`, `rounded-2xl`
-- Section wrapper: `py-10 md:py-20`, `max-w-4xl mx-auto px-6`
 
+- All tables rendered as HTML `table` elements with Tailwind styling matching existing docs pages
+- Code blocks use the existing `Code` inline component pattern and `pre`/`code` for multi-line blocks
+- Cards use `Card`/`CardHeader`/`CardTitle`/`CardDescription`/`CardContent` from the UI library
+- Check marks rendered as green checkmarks, dashes as muted text
+- No new dependencies required -- all icons from lucide-react
+- Page is public (inside DocsLayout, no ProtectedRoute)
