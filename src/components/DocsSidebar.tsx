@@ -7,6 +7,7 @@ import {
   HelpCircle,
   ArrowLeft,
   FileSearch,
+  Coins,
 } from "lucide-react";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 import { NavLink } from "@/components/NavLink";
@@ -28,6 +29,7 @@ const navItems = [
   { title: "Setup", url: "/docs/setup", icon: BookOpen },
   { title: "Audits", url: "/docs/audits", icon: FileSearch },
   { title: "Grades", url: "/docs/grades", icon: Shield },
+  { title: "Plans & Costing", url: "/docs/plans-and-costing", icon: Coins },
   { title: "Reference", url: "/docs/reference", icon: Terminal },
   { title: "FAQ", url: "/docs/faq", icon: HelpCircle },
 ];
