@@ -36,9 +36,9 @@ const Home = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
             {/* Left: Copy */}
             <div>
-              <h1 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight">
-                <span className="block text-foreground">Smart Contract Security</span>
-                <span className="block text-gradient mt-1 md:mt-2">Reimagined With AI</span>
+              <h1 className="w-fit text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight">
+                <span className="block whitespace-nowrap text-foreground">Smart Contract Security</span>
+                <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Reimagined With AI</span>
               </h1>
 
               <p className="text-base md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-[520px] leading-relaxed">
