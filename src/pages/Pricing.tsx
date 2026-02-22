@@ -63,7 +63,7 @@ const pricingPlans: PricingPlan[] = [
       { text: 'Finding Recommendations (Remediation)', included: true },
       { text: 'Export Report', included: true },
       { text: 'QA Findings (Low, Info)', included: true },
-      { text: 'Security Coverage', included: true },
+      
       { text: 'Power up Credits at 14% Off', included: true },
     ],
   },
