@@ -65,7 +65,6 @@ const Header = () => {
           {/* Left: Logo + Brand */}
           <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
             <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg object-cover" />
-            <span className="text-sm font-medium text-foreground hidden sm:inline">Solarizer</span>
           </Link>
 
           {/* Center: Nav links (desktop) */}
