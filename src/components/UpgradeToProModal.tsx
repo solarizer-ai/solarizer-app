@@ -34,12 +34,12 @@ export function UpgradeToProModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            Upgrade to Pro
+            Upgrade to Blaze
           </DialogTitle>
           <DialogDescription>
             {reason === 'file_limit' 
-              ? "Launch plan only supports 1 file per scan. Upgrade to Pro for multi-file analysis."
-              : `Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit for Launch.`
+              ? "Spark plan only supports 1 file per scan. Upgrade to Blaze for multi-file analysis."
+              : `Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit for Spark.`
             }
           </DialogDescription>
         </DialogHeader>
@@ -63,7 +63,7 @@ export function UpgradeToProModal({
 
           <div className="pt-2 space-y-2">
             <Button className="w-full" size="lg">
-              Upgrade to Pro
+              Upgrade to Blaze
             </Button>
             <Button 
               variant="ghost" 

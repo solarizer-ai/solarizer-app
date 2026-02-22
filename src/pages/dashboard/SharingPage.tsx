@@ -24,7 +24,7 @@ const SharingPage = () => {
           <CardDescription>
             {canShareReports
               ? "Share audit reports with collaborators directly from each report"
-              : "Upgrade to Business to share reports with others"}
+              : "Upgrade to Inferno to share reports with others"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -37,7 +37,7 @@ const SharingPage = () => {
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                 <ul className="space-y-2 text-sm text-foreground/90">
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" />Share reports directly from the report page</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" />Collaborators get Business features on shared reports</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" />Collaborators get Inferno features on shared reports</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" />Comment on findings together</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-primary" />Track remediation progress as a team</li>
                 </ul>
@@ -48,13 +48,13 @@ const SharingPage = () => {
               <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
                 <ul className="space-y-2 text-sm text-foreground/90">
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" />Share audit reports with collaborators</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" />Collaborators get Business features on shared reports</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" />Collaborators get Inferno features on shared reports</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" />Comment on findings together</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-500" />Track remediation progress as a team</li>
                 </ul>
               </div>
               <Button onClick={() => navigate("/pricing")} className="gap-2">
-                <Zap className="w-4 h-4" />Upgrade to Business
+                <Zap className="w-4 h-4" />Upgrade to Inferno
               </Button>
             </div>
           )}

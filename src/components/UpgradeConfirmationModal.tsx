@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { formatPlanName } from "@/lib/planNames";
 
 interface UpgradeConfirmationModalProps {
   open: boolean;
@@ -20,19 +21,21 @@ interface UpgradeConfirmationModalProps {
 
 const PLAN_FEATURES: Record<string, string[]> = {
   pro: [
-    "GitHub Import",
-    "Finding Recommendations",
-    "Export Reports",
-    "QA Findings (Low, Info)",
-    "Security Coverage",
-    "14% off Power-Up Credits",
+    "Deep scan on L2+ contracts (two-pass)",
+    "All severity levels (+ Low, Info, Gas)",
+    "Up to 3,000 nLOC per audit",
+    "Cross-contract analysis",
+    "AI validation (false positive elimination)",
+    "Remediation guidance",
+    "Free dashboard report access",
   ],
   business: [
-    "Everything in Pro",
-    "Share reports in Dashboard",
-    "Invite up to 5 Collaborators",
-    "Comment & Track Remediation",
-    "29% off Power-Up Credits",
+    "Everything in Blaze",
+    "Up to 12,000 nLOC per audit",
+    "Share reports on dashboard",
+    "Invite up to 5 collaborators",
+    "Comment & track remediation progress",
+    "Lowest power-up rate ($4.50/credit)",
   ],
 };
 
@@ -45,12 +48,6 @@ export function UpgradeConfirmationModal({
   onConfirm,
   isLoading = false,
 }: UpgradeConfirmationModalProps) {
-  const formatPlanName = (plan: string) => {
-    if (plan === "business") return "Business";
-    if (plan === "pro") return "Pro";
-    if (plan === "starter") return "Launch";
-    return plan;
-  };
 
   const prorationDollars = (prorationAmount / 100).toFixed(2);
   const features = PLAN_FEATURES[toPlan] || [];

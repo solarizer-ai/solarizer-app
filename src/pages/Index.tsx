@@ -274,25 +274,25 @@ const Index = () => {
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p>You need an active plan to run security analyses. Choose a plan that fits your needs:</p>
-              <div className="grid gap-2 pt-2">
+                <div className="grid gap-2 pt-2">
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Launch</p>
-                    <p className="text-xs text-muted-foreground">1 file per scan · 150 nLOC</p>
+                    <p className="text-sm font-medium text-foreground">Spark</p>
+                    <p className="text-xs text-muted-foreground">1 file per scan · 500 nLOC</p>
                   </div>
-                  <p className="text-sm font-semibold text-foreground">$49/mo</p>
+                  <p className="text-sm font-semibold text-foreground">$149/mo</p>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border border-primary/40 bg-primary/5">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Pro</p>
-                    <p className="text-xs text-muted-foreground">Unlimited files · 50 nLOC credits</p>
+                    <p className="text-sm font-medium text-foreground">Blaze</p>
+                    <p className="text-xs text-muted-foreground">Deep scan · 3,000 nLOC · 50 credits</p>
                   </div>
-                  <p className="text-sm font-semibold text-foreground">$299/mo</p>
+                  <p className="text-sm font-semibold text-foreground">$199/mo</p>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Business</p>
-                    <p className="text-xs text-muted-foreground">Unlimited files · 50 nLOC credits · Sharing</p>
+                    <p className="text-sm font-medium text-foreground">Inferno</p>
+                    <p className="text-xs text-muted-foreground">12,000 nLOC · 50 credits · Sharing</p>
                   </div>
                   <p className="text-sm font-semibold text-foreground">$499/mo</p>
                 </div>

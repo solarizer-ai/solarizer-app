@@ -161,7 +161,7 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Upgrade to Pro to view {severity} findings</p>
+                      <p>Upgrade to Blaze to view {severity} findings</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
 import { PLAN_CREDIT_RATES, calculateDowngradeCredits } from "@/lib/nlocCalculator";
+import { formatPlanName } from "@/lib/planNames";
 
 type PlanType = keyof typeof PLAN_CREDIT_RATES;
 
@@ -36,8 +37,8 @@ export function DowngradeWarningModal({
   const currentValue = currentCredits * fromRate;
   const newValue = newCredits * toRate;
 
-  const fromPlanLabel = fromPlan === 'starter' ? 'Launch' : fromPlan.charAt(0).toUpperCase() + fromPlan.slice(1);
-  const toPlanLabel = toPlan === 'starter' ? 'Launch' : toPlan.charAt(0).toUpperCase() + toPlan.slice(1);
+  const fromPlanLabel = formatPlanName(fromPlan);
+  const toPlanLabel = formatPlanName(toPlan);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

@@ -13,21 +13,21 @@ interface Plan {
 const PLANS: Plan[] = [
   {
     id: "starter",
-    name: "Launch",
+    name: "Spark",
     price: 149,
-    keyFeature: "150 nLOC per scan",
+    keyFeature: "500 nLOC per scan",
   },
   {
     id: "pro",
-    name: "Pro",
+    name: "Blaze",
     price: 199,
-    keyFeature: "Unlimited nLOC + GitHub",
+    keyFeature: "3,000 nLOC + deep scan",
   },
   {
     id: "business",
-    name: "Business",
+    name: "Inferno",
     price: 499,
-    keyFeature: "Everything in Pro + Teams",
+    keyFeature: "12,000 nLOC + teams",
   },
 ];
 

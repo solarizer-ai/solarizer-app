@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { invokeWithRefresh } from "@/lib/sessionRefresh";
+import { formatPlanName } from "@/lib/planNames";
 
 interface PaymentStatus {
   success: boolean;
@@ -166,13 +167,7 @@ export default function PaymentSuccess() {
   };
 
   const getPlanDisplayName = (plan?: string) => {
-    if (!plan) return "";
-    const displayNames: Record<string, string> = {
-      starter: "Launch",
-      pro: "Pro",
-      business: "Business",
-    };
-    return displayNames[plan] || plan.charAt(0).toUpperCase() + plan.slice(1);
+    return formatPlanName(plan || null);
   };
 
   if (isLoading && !paymentStatus) {

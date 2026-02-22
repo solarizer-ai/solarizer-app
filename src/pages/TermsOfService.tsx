@@ -98,7 +98,7 @@ const TermsOfService = () => {
               <div>
                 <h3 className="text-lg font-medium text-foreground mb-2">5.1 Subscription Tiers</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Solarizer offers various tiers (e.g., Launch, Pro, Business).
+                  Solarizer offers various tiers (e.g., Spark, Blaze, Inferno).
                 </p>
               </div>
               <div>
