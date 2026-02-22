@@ -1,72 +1,40 @@
 
 
-# Credit Activity Table Redesign + Professional Date Picker & Pagination
+# Mobile Hero Section - Spacious & Premium Redesign
 
-## 1. Credit Activity: Column-Based Table Layout
+Inspired by OpenAgent's mobile layout, make the Solarizer home page hero feel more spacious, bold, and premium on mobile devices.
 
-Replace the current row-card layout with a proper table inspired by the screenshot. Columns:
+## Changes Overview
 
-```text
-TIME                  | TYPE        | DESCRIPTION                              | AMOUNT   | BALANCE
-2026-02-16 14:57:23   | Refund      | Refund: Audit creation failed...         | +1,060   | 4,957,708
-2026-02-16 14:57:22   | Deduction   | CLI Audit: First Project (2 contracts)   | -1,060   | 4,956,648
-```
+### 1. Heading & Subheading (No Wrapping)
+- Keep `whitespace-nowrap` on both heading lines ("Smart Contract Security" and "Reimagined With AI")
+- Keep the existing `clamp` sizing that auto-shrinks to fit without wrapping
+- No changes to heading/subheading text behavior
 
-- **TIME**: Formatted as `dd-MM-yyyy HH:mm:ss` (matches screenshot style)
-- **TYPE**: Badge-style label with color (green for grant/purchase/refund, red for deduction)
-- **DESCRIPTION**: Truncated text
-- **AMOUNT**: Colored number (+green / -red)
-- **BALANCE**: Balance after transaction
+### 2. Larger Mobile Subtitle
+- Increase the description paragraph from `text-sm` to `text-base` on mobile for better readability
+- Add slightly more line-height for breathing room
 
-Uses the existing shadcn `Table` component (`Table`, `TableHeader`, `TableRow`, `TableHead`, `TableBody`, `TableCell`).
+### 3. Full-Width CTA Button on Mobile
+- Add a prominent full-width "Get Started" button with an arrow icon, positioned between the subtitle and the terminal demo
+- Style: full-width on mobile (`w-full`), auto-width on desktop (`sm:w-auto`), using the existing `solarGlow` variant
+- Links to `/dashboard`
 
-Column headers styled as uppercase, small, muted text matching the screenshot.
+### 4. More Vertical Spacing
+- Increase top padding on mobile hero section (from `pt-24` to `pt-28`)
+- Add more gap between subtitle and terminal demo (increase `mt-10` to `mt-14` on mobile)
+- Add spacing around the CTA button
 
-## 2. Professional Date Range Picker (Both Pages)
-
-Replace plain `<input type="date">` with Popover + Calendar pickers:
-
-```text
-[ 01-02-2026  (calendar icon) ]  to  [ 21-02-2026  (calendar icon) ]  [x Clear]
-```
-
-- Each date button opens a `Popover` with the shadcn `Calendar`
-- Display format: `dd-MM-yyyy`
-- Placeholder: "Pick a date" when no date selected
-- Calendar gets `pointer-events-auto` class for proper interaction
-
-## 3. Minimal Pagination Bar (Both Pages)
-
-```text
-[<] [>]                                          Lines Per Page  [20 v]
-```
-
-- Left: icon-only square buttons (ChevronLeft/ChevronRight) for page navigation
-- Right: "Lines Per Page" label + Select dropdown (10, 15, 20, 50) on one line
-- `pageSize` becomes stateful, default 20 for credits, 15 for billing
-- Changing page size resets page to 1
-
-## Technical Details
-
-### Files to modify
+## File to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/settings/CreditActivityLog.tsx` | Replace card-row layout with Table; add Popover+Calendar date pickers; add new pagination bar with Lines Per Page select; add `pageSize` state |
-| `src/pages/dashboard/BillingPage.tsx` | Same date picker and pagination changes for the Transaction History section |
+| `src/pages/Home.tsx` | Update subtitle size, add CTA button between subtitle and terminal, adjust vertical spacing |
 
-### New imports for CreditActivityLog
-- `Table, TableHeader, TableRow, TableHead, TableBody, TableCell` from `@/components/ui/table`
-- `Popover, PopoverTrigger, PopoverContent` from `@/components/ui/popover`
-- `Calendar` from `@/components/ui/calendar`
-- `Select, SelectTrigger, SelectValue, SelectContent, SelectItem` from `@/components/ui/select`
-- `format` from `date-fns`
-- `CalendarIcon` from `lucide-react`
+## Technical Details
 
-### State changes
-- `startDate`/`endDate`: change from `string | null` to `Date | undefined` internally, convert to ISO string for the hook
-- New `pageSize` state (default 20 for credits, 15 for billing)
-
-### No hook changes needed
-Both `useCreditActivity` and `useBillingHistory` already accept all required parameters.
+- Subtitle: Change from `text-sm md:text-lg` to `text-base md:text-lg`
+- CTA: Add a `Link` wrapped `Button` (variant `solarGlow`) between the subtitle `<p>` and the terminal `<div>`, styled with `w-full sm:w-auto` and wrapped in a `div` with `mt-8` for spacing
+- Hero section padding: `pt-28 md:pt-40`
+- Terminal section top margin: `mt-14 sm:mt-20`
 
