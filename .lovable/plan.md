@@ -1,61 +1,39 @@
 
 
-# Interactive 3D Solarizer Logo — Two-Column CTA Layout
+# Fix Header Overlap on Content Pages
 
-## Overview
-Place the actual Solarizer logo as a 3D object beside the "Secure your contracts from your terminal" CTA section. Instead of a generic "S" letter, the logo PNG will be used as a texture on a 3D plane, giving it depth, glow, and rotation.
+## Problem
+The floating header is fixed at the top of the viewport (`fixed top-4`, height `h-14` = 56px, plus 16px top offset = ~72px total). Several pages don't have enough top padding on their `<main>` content, causing the heading text to sit behind or overlap with the header.
 
-## Visual Layout
+## Affected Pages
 
-```text
-Desktop (md+):
-+-------------------+----------------------------+
-|                   |  Secure your contracts     |
-|  [3D Solarizer    |  from your terminal        |
-|   Logo spinning   |                            |
-|   with glow]      |  subtitle text...          |
-|                   |  $ npm install -g solarizer|
-|                   |  View documentation ->     |
-+-------------------+----------------------------+
+| Page | Current top padding | Overlaps? |
+|------|-------------------|-----------|
+| **Docs.tsx** | `py-8` (32px) | Yes -- visible in screenshot |
+| **PrivacyPolicy.tsx** | `py-12` (48px) | Yes |
+| **TermsOfService.tsx** | `py-12` (48px) | Yes |
+| **Pricing.tsx** | `py-16` mobile / `py-24` desktop | Borderline on mobile |
+| **ComingSoon.tsx** | `py-24` (96px) | No |
+| **Home.tsx** | Hero section with large spacing | No |
 
-Mobile:
-+----------------------------+
-|     [3D Solarizer Logo]    |
-+----------------------------+
-|  Secure your contracts     |
-|  from your terminal        |
-|  subtitle text...          |
-|  $ npm install -g ...      |
-|  View documentation ->     |
-+----------------------------+
-```
+## Fix
+Replace insufficient top padding with `pt-24` (96px) on each affected page's `<main>` element, which provides comfortable clearance below the fixed header. Bottom padding remains unchanged.
 
-## Technical Details
+### Changes
 
-### Dependencies to Install
-- `@react-three/fiber@^8.18.0`
-- `@react-three/drei@^9.122.0`
-- `three@^0.160.0`
+**src/pages/Docs.tsx** (line 71)
+- Change: `className="container mx-auto px-6 py-8"` 
+- To: `className="container mx-auto px-6 pt-24 pb-8"`
 
-### New File: `src/components/Logo3D.tsx`
-- Uses `useTexture` from drei to load `solarizer-logo.png` as a texture
-- Renders the logo on a rounded 3D plane (or box with slight depth) to give it a 3D card-like appearance
-- Orange emissive glow around the edges using a subtle point light
-- Slow auto-rotation on Y-axis via `useFrame`
-- Subtle floating animation (sine-wave Y oscillation)
-- Ambient light + orange-tinted point light for branded depth
-- Accepts `className` prop for external sizing
-- No orbit controls — purely automatic animation
+**src/pages/PrivacyPolicy.tsx** (line 10)
+- Change: `className="flex-1 container max-w-4xl mx-auto px-4 py-12"`
+- To: `className="flex-1 container max-w-4xl mx-auto px-4 pt-24 pb-12"`
 
-### Modified File: `src/pages/Home.tsx`
-- Lazy-import `Logo3D` with `React.lazy` + `Suspense`
-- Restructure CTA section (Section 4) into a two-column grid:
-  - Container: `grid grid-cols-1 md:grid-cols-2 gap-8 items-center`
-  - Left column (desktop) / Top (mobile): `Logo3D` in a `w-48 h-48 md:w-56 md:h-56 mx-auto` container
-  - Right column (desktop) / Bottom (mobile): existing heading, subtitle, install box, docs link
-  - Text alignment: `text-center md:text-left`
-- Increase section `max-w` from `max-w-2xl` to `max-w-4xl`
+**src/pages/TermsOfService.tsx** (line 10)
+- Change: `className="flex-1 container max-w-4xl mx-auto px-4 py-12"`
+- To: `className="flex-1 container max-w-4xl mx-auto px-4 pt-24 pb-12"`
 
-### Why Texture Instead of Text3D
-The Solarizer logo is a custom graphic (PNG), not a standard letter. Using it as a texture on a 3D surface preserves the actual brand identity while still achieving the interactive 3D spinning effect with depth and glow.
+**src/pages/Pricing.tsx** (line 243)
+- Change: `className="container mx-auto px-4 py-16 md:py-24"`
+- To: `className="container mx-auto px-4 pt-24 pb-16 md:pb-24"`
 
