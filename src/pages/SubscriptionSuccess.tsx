@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
+import { formatPlanName } from "@/lib/planNames";
 
 const SubscriptionSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -77,9 +78,7 @@ const SubscriptionSuccess = () => {
   }, [subId, subscription, attempts, refetchSubscription, refetchCredits, plan]);
 
   const getPlanName = () => {
-    if (plan === "business") return "Business";
-    if (plan === "pro") return "Pro";
-    return "Launch";
+    return formatPlanName(plan);
   };
 
   const getTitle = () => {

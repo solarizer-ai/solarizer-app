@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useBillingHistory, BillingEvent } from "@/hooks/useBillingHistory";
 import { useSubscription } from "@/hooks/useSubscription";
+import { formatPlanName } from "@/lib/planNames";
 
 const BillingHistory = () => {
   const navigate = useNavigate();
@@ -21,10 +22,8 @@ const BillingHistory = () => {
     }).format(cents / 100);
   };
 
-  const formatPlanName = (plan: string | null) => {
-    if (!plan) return 'None';
-    if (plan === 'starter') return 'Launch';
-    return plan.charAt(0).toUpperCase() + plan.slice(1);
+  const formatPlanNameLocal = (plan: string | null) => {
+    return formatPlanName(plan);
   };
 
   const renderEvent = (event: BillingEvent, index: number) => {

@@ -17,6 +17,7 @@ import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
+import { formatPlanName } from "@/lib/planNames";
 import { format } from "date-fns";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { CancelSubscriptionModal } from "@/components/CancelSubscriptionModal";
@@ -135,13 +136,10 @@ const Settings = () => {
   const getPlanDisplayName = () => {
     if (!hasSubscription) return 'No Plan';
     if (subscription?.pending_plan) {
-      const pendingName = subscription.pending_plan === 'business' ? 'Business' : 
-                          subscription.pending_plan === 'pro' ? 'Pro' : 'Launch';
-      return `${plan === 'business' ? 'Business' : plan === 'pro' ? 'Pro' : 'Launch'} → ${pendingName}`;
+      const pendingName = formatPlanName(subscription.pending_plan);
+      return `${formatPlanName(plan)} → ${pendingName}`;
     }
-    if (plan === 'business') return 'Business';
-    if (plan === 'pro') return 'Pro';
-    return 'Launch';
+    return formatPlanName(plan);
   };
 
   const getPlanDescription = () => {
@@ -382,7 +380,7 @@ const Settings = () => {
                       {hasSubscription && !isPaid && (
                         <Button onClick={() => navigate("/pricing")} className="gap-2">
                           <Zap className="w-4 h-4" />
-                          Upgrade to Pro
+                          Upgrade to Blaze
                           <ArrowUpRight className="w-4 h-4" />
                         </Button>
                       )}
@@ -435,10 +433,10 @@ const Settings = () => {
                       <CardTitle>
                         {isPaid ? "Power-Up Credits" : "Credit Balance"}
                       </CardTitle>
-                      <CardDescription>
+                    <CardDescription>
                         {isPaid 
                           ? "Your credit balance and usage this billing cycle" 
-                          : "Your Launch plan credit balance"}
+                          : "Your Spark plan credit balance"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -493,7 +491,7 @@ const Settings = () => {
                           </p>
                           <Button onClick={() => navigate("/pricing")} className="w-full gap-2">
                             <Zap className="w-4 h-4" />
-                            Upgrade to Pro for larger projects
+                            Upgrade to Blaze for larger projects
                           </Button>
                         </>
                       )}
@@ -567,7 +565,7 @@ const Settings = () => {
                   <CardDescription>
                     {canShareReports 
                       ? "Share audit reports with collaborators directly from each report"
-                      : "Upgrade to Business to share reports with others"}
+                      : "Upgrade to Inferno to share reports with others"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -585,7 +583,7 @@ const Settings = () => {
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-primary" />
-                            Collaborators get Business features on shared reports
+                            Collaborators get Inferno features on shared reports
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-primary" />
@@ -608,7 +606,7 @@ const Settings = () => {
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
-                            Collaborators get Business features on shared reports
+                            Collaborators get Inferno features on shared reports
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-4 h-4 text-purple-500" />
@@ -622,7 +620,7 @@ const Settings = () => {
                       </div>
                       <Button onClick={() => navigate("/pricing")} className="gap-2">
                         <Zap className="w-4 h-4" />
-                        Upgrade to Business
+                        Upgrade to Inferno
                       </Button>
                     </div>
                   )}

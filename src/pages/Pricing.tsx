@@ -12,6 +12,7 @@ import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { useToast } from "@/hooks/use-toast";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
+import { formatPlanName } from "@/lib/planNames";
 
 interface PricingFeature {
   text: string;
@@ -34,53 +35,58 @@ interface PricingPlan {
 const pricingPlans: PricingPlan[] = [
   {
     id: 'starter',
-    name: 'Launch',
-    label: 'Starter',
+    name: 'Spark',
+    label: 'Essentials',
     monthlyPrice: 149,
     monthlyCredits: 50,
-    powerUpPrice: 7,
+    powerUpPrice: 5.5,
     popular: false,
     features: [
-      { text: 'Critical, High, and Medium Findings', included: true },
-      { text: 'Web Dashboard View Only', included: true },
-      { text: 'Power up Credits available', included: true },
-      { text: 'No GitHub Import', included: false, grayed: true },
-      { text: 'No Remediation', included: false, grayed: true },
-      { text: 'No Export', included: false, grayed: true },
+      { text: 'Single-pass vulnerability scanning', included: true },
+      { text: 'All complexity levels (L1, L2, L3)', included: true },
+      { text: 'Critical, High & Medium findings', included: true },
+      { text: 'Up to 500 nLOC per audit', included: true },
+      { text: 'Local markdown report', included: true },
+      { text: 'Dashboard report access (5 credits each)', included: true },
+      { text: 'No deep scan', included: false, grayed: true },
+      { text: 'No cross-contract analysis', included: false, grayed: true },
+      { text: 'No remediation guidance', included: false, grayed: true },
     ],
   },
   {
     id: 'pro',
-    name: 'Pro',
+    name: 'Blaze',
     label: 'Most Popular',
     monthlyPrice: 199,
     monthlyCredits: 50,
-    powerUpPrice: 6,
+    powerUpPrice: 5,
     popular: true,
     features: [
-      { text: 'Everything in Launch, plus:', included: true, isHeader: true },
-      { text: 'GitHub Import', included: true },
-      { text: 'Finding Recommendations (Remediation)', included: true },
-      { text: 'Export Report', included: true },
-      { text: 'QA Findings (Low, Info)', included: true },
-      
-      { text: 'Power up Credits at 14% Off', included: true },
+      { text: 'Everything in Spark, plus:', included: true, isHeader: true },
+      { text: 'Deep scan on L2+ contracts (two-pass)', included: true },
+      { text: 'All severity levels (+ Low, Info, Gas)', included: true },
+      { text: 'Up to 3,000 nLOC per audit', included: true },
+      { text: 'Cross-contract analysis', included: true },
+      { text: 'AI validation (false positive elimination)', included: true },
+      { text: 'Remediation guidance', included: true },
+      { text: 'Free dashboard report access', included: true },
     ],
   },
   {
     id: 'business',
-    name: 'Business',
-    label: 'For Teams',
+    name: 'Inferno',
+    label: 'Full Power',
     monthlyPrice: 499,
     monthlyCredits: 50,
-    powerUpPrice: 5,
+    powerUpPrice: 4.5,
     popular: false,
     features: [
-      { text: 'Everything in Pro, plus:', included: true, isHeader: true },
-      { text: 'Share reports in Dashboard', included: true },
-      { text: 'Invite up to 5 Collaborators', included: true },
-      { text: 'Comment & Track Remediation Progress', included: true },
-      { text: 'Power up Credits at 29% Off', included: true },
+      { text: 'Everything in Blaze, plus:', included: true, isHeader: true },
+      { text: 'Up to 12,000 nLOC per audit', included: true },
+      { text: 'Share reports on dashboard', included: true },
+      { text: 'Invite up to 5 collaborators', included: true },
+      { text: 'Comment & track remediation progress', included: true },
+      { text: 'Lowest power-up rate ($4.50/credit)', included: true },
     ],
   },
 ];
@@ -227,7 +233,7 @@ const Pricing = () => {
   const getDiscountedPrice = () => {
     const currentPlan = subscription?.plan || 'starter';
     const plan = pricingPlans.find(p => p.id === currentPlan);
-    return plan?.powerUpPrice || 7;
+    return plan?.powerUpPrice || 5.5;
   };
 
   const getCurrentPlanForModal = (): 'starter' | 'pro' | 'business' => {
@@ -244,13 +250,13 @@ const Pricing = () => {
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            Audit-as-you-go pricing.
+            Security that scales with your code.
           </h1>
           <p
             className="text-lg text-muted-foreground max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
             style={{ animationDelay: "100ms" }}
           >
-            50 credits included every month. Never expire, never reset.
+            From solo devs to full teams. One engine, three intensities.
           </p>
         </div>
 
@@ -349,7 +355,7 @@ const Pricing = () => {
 
         {/* Credit explainer */}
         <p className="text-sm text-muted-foreground/60 text-center mt-8 mb-16">
-          Credits are your monthly audit allowance. Top up anytime — unused credits carry forward.
+          50 monthly credits included with every plan. Unused credits carry forward — they never expire.
         </p>
 
         {/* Power Up Credits Purchase Section - Visible to everyone */}
@@ -363,8 +369,8 @@ const Pricing = () => {
           </div>
           <p className="text-muted-foreground mb-4">
             {user && subscription
-              ? `Purchase additional Power up Credits at $${getDiscountedPrice()}/credit based on your current plan.`
-              : `Purchase additional Power up Credits starting at $5/credit with a subscription.`
+              ? `Purchase additional Power up Credits at $${getDiscountedPrice()}/credit based on your ${formatPlanName(subscription.plan)} plan.`
+              : `Purchase additional Power up Credits starting at $4.50/credit with a subscription.`
             }
           </p>
           <Button

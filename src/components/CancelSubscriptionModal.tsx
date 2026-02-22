@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { formatPlanName } from "@/lib/planNames";
 
 interface CancelSubscriptionModalProps {
   open: boolean;
@@ -28,11 +29,6 @@ export function CancelSubscriptionModal({
   onConfirm,
   isLoading = false,
 }: CancelSubscriptionModalProps) {
-  const formatPlanName = (plan: string) => {
-    if (plan === "business") return "Business";
-    if (plan === "pro") return "Pro";
-    return "Launch";
-  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

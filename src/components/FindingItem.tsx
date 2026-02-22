@@ -569,20 +569,20 @@ const FindingItem = ({
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <Lock className="w-4 h-4 text-primary" />
-                      <p className="text-sm text-foreground/90">
-                        Upgrade to Pro to view AI-powered fix recommendations
-                      </p>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onUpgradeClick?.();
-                      }}
-                      className="shrink-0"
-                    >
-                      <Zap className="w-3.5 h-3.5 mr-1.5" />
-                      Upgrade to Pro
+                       <p className="text-sm text-foreground/90">
+                         Upgrade to Blaze to view AI-powered fix recommendations
+                       </p>
+                     </div>
+                     <Button 
+                       size="sm" 
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         onUpgradeClick?.();
+                       }}
+                       className="shrink-0"
+                     >
+                       <Zap className="w-3.5 h-3.5 mr-1.5" />
+                       Upgrade to Blaze
                     </Button>
                   </div>
                 </div>

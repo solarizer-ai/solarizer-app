@@ -41,7 +41,6 @@ const Report = () => {
     canViewRemediation, 
     canExportReport, 
     canViewQAFindings, 
-    canViewSecurityCoverage,
     canShareReports,
     canCommentOnFindings,
     canEditCode,
@@ -262,7 +261,7 @@ const Report = () => {
                       </TooltipTrigger>
                       {!canExportReport && (
                         <TooltipContent>
-                          <p>Upgrade to Pro to export reports</p>
+                          <p>Upgrade to Blaze to export reports</p>
                         </TooltipContent>
                       )}
                     </Tooltip>
@@ -370,12 +369,12 @@ const Report = () => {
                                   {hiddenQAFindingsCount} additional QA finding{hiddenQAFindingsCount !== 1 ? 's' : ''} available
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  Upgrade to Pro to view Low and Informational findings
+                                  Upgrade to Blaze to view Low and Informational findings
                                 </p>
                               </div>
                             </div>
                             <Button size="sm" onClick={() => setUpgradeModalOpen(true)}>
-                              Upgrade to Pro
+                              Upgrade to Blaze
                             </Button>
                           </div>
                         )}

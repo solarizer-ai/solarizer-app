@@ -5,13 +5,12 @@ import { useSubscription, SubscriptionPlan } from "./useSubscription";
 export type ExtendedSubscriptionPlan = SubscriptionPlan | 'business';
 
 export interface ReportFeatureAccess {
-  // Pro+ features
+  // Blaze+ features
   canViewRemediation: boolean;
   canExportReport: boolean;
   canViewQAFindings: boolean;
-  canViewSecurityCoverage: boolean;
   
-  // Business only features
+  // Inferno only features
   canShareReports: boolean;
   canAddTeamMembers: boolean;
   canCommentOnFindings: boolean;
@@ -81,15 +80,14 @@ export function useReportFeatureAccess(auditId: string | null): ReportFeatureAcc
   const isBusiness = effectivePlan === 'business';
 
   return {
-    // Pro+ features - available if effective plan is Pro or higher
+    // Blaze+ features - available if effective plan is Blaze or higher
     canViewRemediation: isPro,
     canExportReport: isPro,
     canViewQAFindings: isPro,
-    canViewSecurityCoverage: isPro,
     
-    // Business only features - available if effective plan is Business
-    canShareReports: isBusiness && isOwner, // Only owners can share
-    canAddTeamMembers: isBusiness && isOwner, // Only owners manage teams
+    // Inferno only features - available if effective plan is Inferno
+    canShareReports: isBusiness && isOwner,
+    canAddTeamMembers: isBusiness && isOwner,
     canCommentOnFindings: isBusiness,
     
     // Collaborator restrictions - these are ONLY for the owner

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { PLAN_LIMITS } from "@/lib/nlocCalculator";
+import { formatPlanName } from "@/lib/planNames";
 import { useBillingHistory, BillingEvent } from "@/hooks/useBillingHistory";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { CancelSubscriptionModal } from "@/components/CancelSubscriptionModal";
@@ -73,12 +74,10 @@ const BillingPage = () => {
   const getPlanDisplayName = () => {
     if (!hasSubscription) return "No Plan";
     if (subscription?.pending_plan) {
-      const pendingName = subscription.pending_plan === "business" ? "Business" : subscription.pending_plan === "pro" ? "Pro" : "Launch";
-      return `${plan === "business" ? "Business" : plan === "pro" ? "Pro" : "Launch"} → ${pendingName}`;
+      const pendingName = formatPlanName(subscription.pending_plan);
+      return `${formatPlanName(plan)} → ${pendingName}`;
     }
-    if (plan === "business") return "Business";
-    if (plan === "pro") return "Pro";
-    return "Launch";
+    return formatPlanName(plan);
   };
 
   const getPlanDescription = () => {
@@ -107,10 +106,8 @@ const BillingPage = () => {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
   };
 
-  const formatPlanName = (p: string | null) => {
-    if (!p) return "None";
-    if (p === "starter") return "Launch";
-    return p.charAt(0).toUpperCase() + p.slice(1);
+  const formatPlanNameLocal = (p: string | null) => {
+    return formatPlanName(p);
   };
 
   const renderEvent = (event: BillingEvent) => {
@@ -227,7 +224,7 @@ const BillingPage = () => {
 
           {hasSubscription && !isPaid && (
             <Button onClick={() => navigate("/pricing")} className="gap-2">
-              <Zap className="w-4 h-4" />Upgrade to Pro<ArrowUpRight className="w-4 h-4" />
+              <Zap className="w-4 h-4" />Upgrade to Blaze<ArrowUpRight className="w-4 h-4" />
             </Button>
           )}
 
@@ -276,7 +273,7 @@ const BillingPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>{isPaid ? "Power-Up Credits" : "Credit Balance"}</CardTitle>
-          <CardDescription>{isPaid ? "Your credit balance and usage this billing cycle" : "Your Launch plan credit balance"}</CardDescription>
+          <CardDescription>{isPaid ? "Your credit balance and usage this billing cycle" : "Your Spark plan credit balance"}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isPaid ? (
@@ -306,7 +303,7 @@ const BillingPage = () => {
               </div>
               <p className="text-xs text-muted-foreground">Each scan uses up to {PLAN_LIMITS.starter.nlocPerScan} credits (1 file max)</p>
               <Button onClick={() => navigate("/pricing")} className="w-full gap-2">
-                <Zap className="w-4 h-4" />Upgrade to Pro for larger projects
+                <Zap className="w-4 h-4" />Upgrade to Blaze for larger projects
               </Button>
             </>
           )}
