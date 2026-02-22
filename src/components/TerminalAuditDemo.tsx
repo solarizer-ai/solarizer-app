@@ -218,7 +218,7 @@ const TerminalAuditDemo = () => {
       </div>
 
       {/* Body */}
-      <div className="bg-[#050505] p-3 sm:p-4 md:p-5 font-mono text-[9px] sm:text-[11px] md:text-[13px] leading-[1.7] text-muted-foreground/70 overflow-hidden select-none h-[360px] sm:h-[420px] md:h-[480px]">
+      <div className="bg-[#050505] p-3 sm:p-4 md:p-5 font-mono text-[9px] sm:text-[11px] md:text-[13px] leading-[1.7] text-muted-foreground/70 overflow-hidden select-none h-[300px] sm:h-[420px] md:h-[480px]">
         {/* Audit header */}
         <div className="text-muted-foreground/40">
           ── Security Audit: VaultProtocol ────────────────
