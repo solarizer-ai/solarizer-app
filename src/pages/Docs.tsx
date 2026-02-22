@@ -68,7 +68,7 @@ const Docs = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-6 pt-24 pb-8">
         <div className="space-y-6">
           {/* Page Header */}
           <div>
