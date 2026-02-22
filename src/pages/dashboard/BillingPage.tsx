@@ -19,7 +19,7 @@ import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlan
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 
-const DEFAULT_HISTORY_PAGE_SIZE = 15;
+const DEFAULT_HISTORY_PAGE_SIZE = 5;
 
 const BillingPage = () => {
   const navigate = useNavigate();
@@ -377,8 +377,8 @@ const BillingPage = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
                       <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="15">15</SelectItem>
                       <SelectItem value="20">20</SelectItem>
                       <SelectItem value="50">50</SelectItem>
                     </SelectContent>
