@@ -35,7 +35,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "Share reports on dashboard",
     "Invite up to 5 collaborators",
     "Comment & track remediation progress",
-    "Lowest power-up rate ($4.50/credit)",
+    "Lowest power-up rate ($2.20/credit)",
   ],
 };
 

@@ -39,18 +39,18 @@ export function PurchasePowerUpModal({
 
   // Fixed pricing per credit based on plan (matches PLAN_CREDIT_RATES)
   const getPricePerCreditCents = (): number => {
-    if (plan === 'business') return 450; // $4.50
-    if (plan === 'pro') return 500;      // $5.00
-    return 550;                           // $5.50
+    if (plan === 'business') return 220; // $2.20
+    if (plan === 'pro') return 250;      // $2.50
+    return 280;                           // $2.80
   };
 
   const pricePerCreditCents = getPricePerCreditCents();
   const pricePerCreditDollars = pricePerCreditCents / 100;
 
-  // Calculate discount from base $5.50
+  // Calculate discount from base $2.80
   const getDiscountPercent = (): number => {
-    if (plan === 'business') return 18;
-    if (plan === 'pro') return 9;
+    if (plan === 'business') return 21;
+    if (plan === 'pro') return 11;
     return 0;
   };
 
