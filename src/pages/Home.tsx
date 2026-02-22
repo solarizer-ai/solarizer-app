@@ -138,19 +138,10 @@ const Home = () => {
             <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Reimagined With AI</span>
           </h1>
 
-          <p className="text-base md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-lg mx-auto leading-relaxed">
+          <p className="text-xs md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-lg mx-auto leading-relaxed">
             Multi-phase AI security analysis for Solidity smart contracts.
             Find what matters. Ship with confidence.
           </p>
-
-          <div className="mt-8">
-            <Button asChild variant="solarGlow" className="w-full sm:w-auto">
-              <Link to="/dashboard">
-                Get Started
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
-            </Button>
-          </div>
         </div>
 
         <div className="relative mt-14 sm:mt-20 max-w-5xl mx-auto px-4 sm:px-6">
