@@ -193,7 +193,7 @@ const Home = () => {
       <section id="pipeline" className="py-10 md:py-20">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
-            <h2 className="text-2xl md:text-4xl font-black tracking-tight whitespace-nowrap">
+            <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight whitespace-nowrap leading-[1.15]">
               Context-Aware Analysis
             </h2>
             <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
@@ -238,7 +238,7 @@ const Home = () => {
       <section className="py-10 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
-            <h2 className="text-2xl md:text-4xl font-black tracking-tight">
+            <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
               Intelligence Engine
             </h2>
             <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
@@ -291,7 +291,7 @@ const Home = () => {
       <section className="py-10 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
-            <h2 className="text-2xl md:text-4xl font-black tracking-tight">
+            <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
               Robust Security
             </h2>
             <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
