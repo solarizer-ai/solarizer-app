@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
   BookOpen,
   Shield,
@@ -33,6 +34,7 @@ const navItems = [
 
 export function DocsSidebar() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { setOpenMobile } = useSidebar();
 
   const handleNavClick = () => setOpenMobile(false);
@@ -58,27 +60,30 @@ export function DocsSidebar() {
       <SidebarSeparator />
 
       <SidebarContent className="px-1">
-        {/* Back link */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Back to Dashboard">
-                  <NavLink
-                    to="/dashboard"
-                    onClick={handleNavClick}
-                    className="text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back to Dashboard</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {user && (
+          <>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Back to Dashboard">
+                      <NavLink
+                        to="/dashboard"
+                        onClick={handleNavClick}
+                        className="text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Back to Dashboard</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        <SidebarSeparator />
+            <SidebarSeparator />
+          </>
+        )}
 
         {/* Doc sections */}
         <SidebarGroup>
