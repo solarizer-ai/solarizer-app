@@ -122,7 +122,9 @@ export function CreditActivityLog() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-foreground max-w-[280px] truncate">
-                        {txn.description || config.label}
+                        {txn.description
+                          ? txn.description.replace(/^(?:CLI Audit|Audit):\s*/i, "").replace(/\s*\(.*\)\s*$/, "")
+                          : config.label}
                       </TableCell>
                       <TableCell className={cn("text-xs font-semibold text-right whitespace-nowrap", isPositive ? "text-success" : "text-destructive")}>
                         {isPositive ? "+" : ""}{txn.amount.toLocaleString()}
