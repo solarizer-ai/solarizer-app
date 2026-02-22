@@ -1,28 +1,61 @@
 
-# Tighten Spacing & Polish for Continuous Flow
 
-## Philosophy
-Reduce inter-section gaps so the page reads as one seamless narrative scroll rather than isolated blocks. Also apply small senior-level polish tweaks: softer transitions between sections, consistent rhythm, and removing redundant `bg-background` declarations.
+# Interactive 3D Solarizer Logo — Two-Column CTA Layout
 
-## Changes (all in `src/pages/Home.tsx`)
+## Overview
+Place the actual Solarizer logo as a 3D object beside the "Secure your contracts from your terminal" CTA section. Instead of a generic "S" letter, the logo PNG will be used as a texture on a 3D plane, giving it depth, glow, and rotation.
 
-### 1. Reduce Section Padding
-| Section | Current | New |
-|---------|---------|-----|
-| Hero (bottom) | `pb-12 md:pb-20` | `pb-8 md:pb-14` |
-| Pipeline | `py-16 md:py-32` | `py-10 md:py-20` |
-| Intelligence Engine | `py-16 md:py-28` | `py-10 md:py-20` |
-| CTA | `py-16 md:py-28` | `py-12 md:py-24` |
+## Visual Layout
 
-### 2. Tighten Internal Spacing
-- Pipeline heading-to-timeline gap: `mt-10 md:mt-16` becomes `mt-8 md:mt-12`
-- Intelligence Engine heading-to-cards gap: `mt-10 md:mt-14` becomes `mt-8 md:mt-10`
-- Pipeline phase items: `space-y-6 md:space-y-10` becomes `space-y-5 md:space-y-8`
+```text
+Desktop (md+):
++-------------------+----------------------------+
+|                   |  Secure your contracts     |
+|  [3D Solarizer    |  from your terminal        |
+|   Logo spinning   |                            |
+|   with glow]      |  subtitle text...          |
+|                   |  $ npm install -g solarizer|
+|                   |  View documentation ->     |
++-------------------+----------------------------+
 
-### 3. Remove Redundant `bg-background`
-All three body sections (Pipeline, Intelligence Engine, CTA) repeat `bg-background` which is already set on the page wrapper. Removing these creates a cleaner codebase and ensures the sections feel visually unified rather than stacked.
+Mobile:
++----------------------------+
+|     [3D Solarizer Logo]    |
++----------------------------+
+|  Secure your contracts     |
+|  from your terminal        |
+|  subtitle text...          |
+|  $ npm install -g ...      |
+|  View documentation ->     |
++----------------------------+
+```
 
-### 4. Terminal Top Margin
-Reduce `mt-14 sm:mt-20` to `mt-10 sm:mt-16` so the terminal sits closer to the subtitle.
+## Technical Details
 
-## No other files modified
+### Dependencies to Install
+- `@react-three/fiber@^8.18.0`
+- `@react-three/drei@^9.122.0`
+- `three@^0.160.0`
+
+### New File: `src/components/Logo3D.tsx`
+- Uses `useTexture` from drei to load `solarizer-logo.png` as a texture
+- Renders the logo on a rounded 3D plane (or box with slight depth) to give it a 3D card-like appearance
+- Orange emissive glow around the edges using a subtle point light
+- Slow auto-rotation on Y-axis via `useFrame`
+- Subtle floating animation (sine-wave Y oscillation)
+- Ambient light + orange-tinted point light for branded depth
+- Accepts `className` prop for external sizing
+- No orbit controls — purely automatic animation
+
+### Modified File: `src/pages/Home.tsx`
+- Lazy-import `Logo3D` with `React.lazy` + `Suspense`
+- Restructure CTA section (Section 4) into a two-column grid:
+  - Container: `grid grid-cols-1 md:grid-cols-2 gap-8 items-center`
+  - Left column (desktop) / Top (mobile): `Logo3D` in a `w-48 h-48 md:w-56 md:h-56 mx-auto` container
+  - Right column (desktop) / Bottom (mobile): existing heading, subtitle, install box, docs link
+  - Text alignment: `text-center md:text-left`
+- Increase section `max-w` from `max-w-2xl` to `max-w-4xl`
+
+### Why Texture Instead of Text3D
+The Solarizer logo is a custom graphic (PNG), not a standard letter. Using it as a texture on a 3D surface preserves the actual brand identity while still achieving the interactive 3D spinning effect with depth and glow.
+
