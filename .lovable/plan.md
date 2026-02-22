@@ -1,61 +1,39 @@
 
 
-# Add "Plans & Costing" Documentation Page
+# Update Per-Credit Pricing to $2.80 / $2.50 / $2.20
 
 ## Overview
-Create a new documentation page at `/docs/plans-and-costing` with 4 tabs covering credits, plan comparison, analysis depth, and worked examples. Add a sidebar link in the docs navigation.
+Update all credit rate references from $5.50/$5.00/$4.50 to $2.80/$2.50/$2.20 for Spark/Blaze/Inferno respectively, across all frontend components, docs, and the backend edge function.
 
-## Changes
+## Files to Update
 
-### 1. Create `src/pages/docs/PlansAndCostingPage.tsx`
+### 1. `src/lib/nlocCalculator.ts` (source of truth)
+- Change `PLAN_CREDIT_RATES`: starter 550 -> 280, pro 500 -> 250, business 450 -> 220
 
-A new page with 4 tabs using the existing `Tabs`/`TabsContent`/`Card` pattern from other docs pages:
+### 2. `src/components/PurchasePowerUpModal.tsx`
+- Update `getPricePerCreditCents`: business 450 -> 220, pro 500 -> 250, starter 550 -> 280
+- Update discount percent calculation (base is now $2.80): business ~21%, pro ~11%
+- Update comment "Calculate discount from base $5.50" -> "$2.80"
 
-**Tab 1 -- How Credits Work** (5 cards):
-- The Credit System (Coins icon) -- base rate explanation
-- Complexity Multipliers (Layers icon) -- L1/L2/L3 table
-- Context Files: 85% Discount (FileStack icon) -- scope vs context
-- How Your Audit Cost Is Calculated (Calculator icon) -- formula + worked example table
-- Power-Up Credits (Zap icon) -- plan rate comparison table
+### 3. `src/pages/Pricing.tsx`
+- Update `powerUpPrice` in plan data: Spark 5.5 -> 2.8, Blaze 5 -> 2.5, Inferno 4.5 -> 2.2
+- Update Inferno feature text: "$4.50/credit" -> "$2.20/credit"
+- Update fallback text: "starting at $4.50/credit" -> "starting at $2.20/credit"
 
-**Tab 2 -- Plan Comparison** (1 card):
-- Full feature comparison matrix with checkmarks/dashes across Spark, Blaze, Inferno
+### 4. `src/components/UpgradeConfirmationModal.tsx`
+- Update business features: "$4.50/credit" -> "$2.20/credit"
 
-**Tab 3 -- Analysis Depth** (4 cards):
-- Your Audit Never Stops (Shield icon) -- plan adaptation explanation + code block
-- Scope Limits (AlertTriangle icon) -- per-plan limits table + warning example
-- What Runs on Each Plan (ListChecks icon) -- 7-phase breakdown table
-- Dashboard Reports (Cloud icon) -- per-plan report access table
+### 5. `src/pages/docs/PlansAndCostingPage.tsx`
+- Power-Up rate table (Tab 1): $5.50/$5.00/$4.50 -> $2.80/$2.50/$2.20
+- Savings percentages: recalculate from $2.80 base (Blaze ~11% off, Inferno ~21% off)
+- Plan Comparison table (Tab 2): same rate updates
+- Example walkthrough (Tab 4): $5.50 each = $1,006.50 -> $2.80 each = $512.40
 
-**Tab 4 -- Examples** (4 cards):
-- Solo developer on Spark -- 280 nLOC ERC-20 walkthrough
-- DeFi team on Blaze -- 3-contract + context walkthrough
-- Hitting the scope limit -- warning UX explanation
-- Resuming after upgrade -- checkpoint behavior
+### 6. `supabase/functions/razorpay-create-order/index.ts` (backend)
+- Update `POWER_UP_RATES`: starter/launch 550 -> 280, pro 500 -> 250, business 450 -> 220
 
-### 2. Update `src/components/DocsSidebar.tsx`
+## Discount Percentages (recalculated from $2.80 base)
+- Spark: $2.80 -- base (0% off)
+- Blaze: $2.50 -- ~11% off
+- Inferno: $2.20 -- ~21% off
 
-Add a new nav item to the `navItems` array:
-```
-{ title: "Plans & Costing", url: "/docs/plans-and-costing", icon: Coins }
-```
-
-Import `Coins` from lucide-react.
-
-### 3. Update `src/App.tsx`
-
-Add route inside the `/docs` layout:
-```
-<Route path="plans-and-costing" element={<PlansAndCostingPage />} />
-```
-
-Import the new page component.
-
-## Technical Details
-
-- All tables rendered as HTML `table` elements with Tailwind styling matching existing docs pages
-- Code blocks use the existing `Code` inline component pattern and `pre`/`code` for multi-line blocks
-- Cards use `Card`/`CardHeader`/`CardTitle`/`CardDescription`/`CardContent` from the UI library
-- Check marks rendered as green checkmarks, dashes as muted text
-- No new dependencies required -- all icons from lucide-react
-- Page is public (inside DocsLayout, no ProtectedRoute)
