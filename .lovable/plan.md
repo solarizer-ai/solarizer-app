@@ -1,25 +1,30 @@
 
+# Redesign "Run Your First Audit" CTA Section
 
-# Home Page Mobile UI Refinements
+Inspired by the Gemini CLI screenshot -- large bold heading, descriptive subtitle, polished install command box, and a secondary link below.
 
 ## Changes
 
-### 1. Increase Section Heading Sizes (Consistent)
-Both "Context-Aware Analysis" and "Intelligence Engine" headings will be bumped to the same larger mobile size: `text-2xl` on mobile (currently `text-xl` for pipeline and `text-2xl` for intelligence engine -- making both `text-2xl`).
+### File: `src/pages/Home.tsx` (Section 4, lines 252-280)
 
-**File:** `src/pages/Home.tsx`
-- Line 158: Change `text-xl md:text-4xl` to `text-2xl md:text-4xl`
-- Line 204: Already `text-2xl md:text-4xl` -- no change needed
+Replace the current minimal CTA section with:
 
-### 2. Remove Subtitles from Pipeline Phases
-Remove the `<h3>` subtitle line (e.g., "Smart Scoping", "Exploit Intelligence") from each pipeline phase card, keeping only the pill label and description.
+1. **Larger, bolder heading** -- increase to `text-3xl md:text-5xl` with `font-black`, split into two lines:
+   - Line 1: "Secure your contracts"
+   - Line 2: "from your terminal" (styled with `text-gradient` like the hero)
 
-**File:** `src/pages/Home.tsx`
-- Line 187: Delete the `<h3>` element rendering `phase.title`
+2. **Descriptive subtitle** -- add a paragraph below the heading:
+   - "Multi-phase AI analysis, exploit-pattern matching, and line-accurate remediation -- all from a single CLI command."
+   - Styled `text-sm md:text-lg text-muted-foreground/60`
 
-### 3. Compact Terminal on Mobile
-Reduce the fixed mobile height from `h-[360px]` to `h-[300px]` so it looks more like a compact desktop window rather than stretching vertically.
+3. **Polished install command box** -- keep the existing `npm install -g solarizer` but style it more prominently:
+   - Slightly larger padding, rounded-xl, subtle border glow on hover (`hover:border-primary/30 transition-all`)
+   - Keep the copy button
 
-**File:** `src/components/TerminalAuditDemo.tsx`
-- Line 221: Change `h-[360px] sm:h-[420px] md:h-[480px]` to `h-[300px] sm:h-[420px] md:h-[480px]`
+4. **Secondary link below** -- replace the "Open Dashboard" button with a text link styled in primary color:
+   - "View documentation" linking to `/docs`
+   - Styled as `text-sm text-primary hover:underline` with no button wrapper
 
+5. **Remove** the current "Open Dashboard" button
+
+### No other files modified
