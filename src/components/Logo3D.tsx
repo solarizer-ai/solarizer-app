@@ -15,14 +15,15 @@ const LogoMesh = () => {
 
   return (
     <mesh ref={meshRef}>
-      <boxGeometry args={[2.4, 2.4, 0.15]} />
+      <boxGeometry args={[2.5, 2.5, 0.35]} />
       <meshStandardMaterial
         map={texture}
         transparent
+        alphaTest={0.5}
         emissive="#F97316"
-        emissiveIntensity={0.15}
-        roughness={0.4}
-        metalness={0.3}
+        emissiveIntensity={0.5}
+        roughness={0.15}
+        metalness={0.7}
       />
     </mesh>
   );
@@ -35,9 +36,10 @@ const Logo3D = ({ className }: { className?: string }) => (
       gl={{ alpha: true, antialias: true }}
       style={{ background: "transparent" }}
     >
-      <ambientLight intensity={0.6} />
-      <pointLight position={[3, 3, 3]} intensity={1} color="#F97316" />
-      <pointLight position={[-3, -2, 2]} intensity={0.4} color="#ffffff" />
+      <ambientLight intensity={0.8} />
+      <pointLight position={[3, 3, 3]} intensity={1.8} color="#F97316" />
+      <pointLight position={[-3, -2, 2]} intensity={0.8} color="#ffffff" />
+      <pointLight position={[0, 0, -3]} intensity={0.6} color="#F97316" />
       <LogoMesh />
     </Canvas>
   </div>
