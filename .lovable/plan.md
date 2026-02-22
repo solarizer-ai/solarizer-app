@@ -1,48 +1,51 @@
 
+# Docs Page: Sidebar Navigation Layout
 
-# Rewrite Documentation Pages with Accurate CLI Content
+## What Changes
 
-## Overview
-Replace outdated web-UI content in both `DocsPage.tsx` (dashboard) and `Docs.tsx` (public) with accurate CLI-based documentation. The page structure (Tabs, Cards, Accordion) stays the same. FAQ tab is untouched. Only the Getting Started tab content changes, plus two new cards are added.
+### 1. Unified docs route
+- Remove `/docs` as a standalone public page with Header/Footer
+- Redirect `/docs` to `/docs/setup` 
+- Create nested routes: `/docs/setup`, `/docs/audits`, `/docs/grades`, `/docs/reference`, `/docs/faq`
+- Dashboard sidebar "Documentation" link changes from `/dashboard/docs` to `/docs/setup`
+- Remove `/dashboard/docs` route and `DocsPage.tsx`
 
-## Changes
+### 2. New Docs layout with sidebar (`src/layouts/DocsLayout.tsx`)
+- A standalone layout (not inside DashboardLayout) with its own mini sidebar on the left
+- Sidebar contains 5 nav items matching the current tabs: Setup, Audits, Grades, Reference, FAQ -- each with its icon
+- Includes a "Back to Dashboard" or site header link at top for navigation context
+- Uses the same sidebar components (`Sidebar`, `SidebarMenu`, etc.) for visual consistency with the dashboard
+- Content area renders an `<Outlet />` for the active section
 
-### Both files: `src/pages/dashboard/DocsPage.tsx` and `src/pages/Docs.tsx`
+### 3. Split `DocsContent.tsx` into 5 page components
+Create individual page components under `src/pages/docs/`:
+- `SetupPage.tsx` -- Installation & Setup card
+- `AuditsPage.tsx` -- Running an Audit card
+- `GradesPage.tsx` -- Security Grades card
+- `ReferencePage.tsx` -- Dashboard Reference card
+- `FaqPage.tsx` -- FAQ accordion card
 
-Since both files contain identical docs content, both get the same updates:
+Each is a simple component rendering its respective Card (extracted from the current DocsContent).
 
-**1. Add `Terminal` to lucide-react imports**
+### 4. Route updates in `App.tsx`
+```
+/docs          -> redirect to /docs/setup
+/docs/setup    -> DocsLayout > SetupPage
+/docs/audits   -> DocsLayout > AuditsPage
+/docs/grades   -> DocsLayout > GradesPage
+/docs/reference -> DocsLayout > ReferencePage
+/docs/faq      -> DocsLayout > FaqPage
+/dashboard/docs -> redirect to /docs/setup
+```
 
-**2. Card 1: "Installation & Setup" (replaces "Quick Start Guide")**
-- Title: "Installation & Setup"
-- Description: "Get up and running in under 2 minutes"
-- 3 numbered steps with inline code snippets:
-  - Step 1: Install the CLI (`npm install -g @solarizer/cli`)
-  - Step 2: Launch & Authenticate (run `solarizer`, paste API key, or use env var `SOLARIZER_API_KEY`)
-  - Step 3: You're on the Dashboard (navigate with arrow keys, select with Enter)
-- Code snippets rendered in a minimal monospace `bg-muted` inline style
-
-**3. Card 2: "Running an Audit" (new card, inserted before Security Grades)**
-- Icon: `Shield`
-- Title: "Running an Audit"
-- Description: "The 6-step guided audit wizard"
-- 7 numbered steps covering the full audit flow (Start Audit, Project Name, Select Scope Files, Context Files, Additional Context, Complexity Estimate, Cost Confirmation)
-- Followed by a "What happens next" section listing the 6 analysis phases (Hunting, Cross-Contract, Validation, QA Scan, Formatting, Report Generation) as a clean bulleted list
-
-**4. Card 3: Security Grades -- no changes**
-
-**5. Card 4: "Dashboard Reference" (new card, added after Security Grades)**
-- Icon: `Terminal`
-- Title: "Dashboard Reference"
-- Description: "Actions available from the Solarizer dashboard"
-- Clean table with 3 columns: Action, Section, Description (6 rows covering Start Audit, Resume Audit, Theme, Auth, Editor, Permissions)
-- Navigation hints below the table showing keyboard shortcuts
+### 5. Sidebar link update in `DashboardSidebar.tsx`
+- Change the Documentation nav link from `/dashboard/docs` to `/docs/setup`
 
 ## Technical Details
 
-- No new dependencies needed
-- No structural changes to the page layout (Tabs/Cards pattern preserved)
-- Inline code uses a `font-mono text-xs bg-muted px-1.5 py-0.5 rounded` style for consistency
-- The table in Card 4 uses the existing `@/components/ui/table` components for a clean look
-- Both files are updated in parallel to stay in sync
-
+- **Files to create**: `src/layouts/DocsLayout.tsx`, `src/pages/docs/SetupPage.tsx`, `src/pages/docs/AuditsPage.tsx`, `src/pages/docs/GradesPage.tsx`, `src/pages/docs/ReferencePage.tsx`, `src/pages/docs/FaqPage.tsx`
+- **Files to modify**: `src/App.tsx` (route changes), `src/components/DashboardSidebar.tsx` (link update)
+- **Files to remove**: `src/pages/dashboard/DocsPage.tsx`, `src/pages/Docs.tsx` (replaced by layout + pages), `src/components/DocsContent.tsx` (split into pages)
+- The docs sidebar will include the Solarizer logo at the top and a "Back" link to return to the dashboard or home, maintaining a professional and consistent feel
+- No authentication required -- docs remain publicly accessible
+- The sidebar uses the same Shadcn sidebar primitives for visual consistency
