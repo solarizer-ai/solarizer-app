@@ -1,25 +1,163 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Copy, Check, Layers, Fingerprint, Search, GitBranch, FileText, Shield, Lock, EyeOff, CheckCircle2, Workflow, KeyRound } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerminalAuditDemo from "@/components/TerminalAuditDemo";
 import HeroBackground from "@/components/HeroBackground";
-import RealFindings from "@/components/home/RealFindings";
-import DifferentiatorComparison from "@/components/home/DifferentiatorComparison";
-import HowItWorks from "@/components/home/HowItWorks";
-import SpeedPositioning from "@/components/home/SpeedPositioning";
-import EngineExplanation from "@/components/home/EngineExplanation";
-import TrustSignals from "@/components/home/TrustSignals";
 
-const INSTALL_CMD = "curl -fsSL https://solarizer.io/install.sh | bash";
+const phases = [
+  {
+    num: "01",
+    pill: "Complexity Analysis",
+    title: "Smart Scoping",
+    icon: Layers,
+    description:
+      "Classifies each contract by complexity. Novel contracts trigger deeper second-pass analysis; simple ones route efficiently",
+  },
+  {
+    num: "02",
+    pill: "DNA Matching",
+    title: "Exploit Intelligence",
+    icon: Fingerprint,
+    description:
+      "Contract logic matched against a massive database of exploit signatures from real post-mortems",
+  },
+  {
+    num: "03",
+    pill: "Contract Analysis",
+    title: "Vulnerability Hunt",
+    icon: Search,
+    description:
+      "Red team simulation per contract. Complex contracts receive a second pass to surface chained, multi-step exploits",
+  },
+  {
+    num: "04",
+    pill: "Cross-Contract Analysis",
+    title: "Protocol-Wide Reasoning",
+    icon: GitBranch,
+    description:
+      "Traces attack paths across contract boundaries — shared state corruption and inconsistent trust assumptions",
+  },
+  {
+    num: "05",
+    pill: "Report Generation",
+    title: "Structured Findings",
+    icon: FileText,
+    description:
+      "Reads original source to locate each finding, extract vulnerable code, and produce line-accurate remediation",
+  },
+];
+
+const knownFindings = [
+  {
+    severity: "CRITICAL",
+    badgeClass: "bg-red-500/10 text-red-400",
+    title: "Read-only reentrancy via getPricePerShare()",
+    description:
+      "getPricePerShare() reads totalAssets() during an active withdrawal. An attacker exploits this stale mid-callback value to inflate collateral valuation in a dependent lending protocol.",
+    file: "Vault.sol · line 334",
+  },
+  {
+    severity: "HIGH",
+    badgeClass: "bg-orange-500/10 text-orange-400",
+    title: "Fee-on-transfer token insolvency in deposit()",
+    description:
+      "Protocol records msg.value as deposited without measuring the actual received balance. Recorded liability grows faster than real holdings.",
+    file: "DepositHandler.sol · line 89",
+  },
+  {
+    severity: "MEDIUM",
+    badgeClass: "bg-yellow-500/10 text-yellow-500",
+    title: "TWAP window insufficient for low-liquidity pairs",
+    description:
+      "15-minute window allows single-block price manipulation on thin markets, affecting liquidations, collateral checks, and rebalances.",
+    file: "PriceOracle.sol · line 211",
+  },
+];
+
+const protocolFindings = [
+  {
+    severity: "CRITICAL",
+    badgeClass: "bg-red-500/10 text-red-400",
+    title: "Epoch boundary reward over-distribution",
+    description:
+      "Users entering the final block of an epoch receive a full allocation. Combined with rebasing, repeated entry-exit systematically drains the rewards reserve across consecutive cycles.",
+    file: "RewardVault.sol · line 298",
+  },
+  {
+    severity: "HIGH",
+    badgeClass: "bg-orange-500/10 text-orange-400",
+    title: "Liquidation threshold bypass via callback ordering",
+    description:
+      "The collateral ratio check in liquidate() fires after the external repayment call. An attacker re-enters addCollateral() mid-liquidation to inflate their ratio and exit without penalty.",
+    file: "LendingCore.sol · line 167",
+  },
+];
+
+const securityFeatures = [
+  {
+    icon: Shield,
+    title: "Agentic Red Team",
+    description:
+      "Not a single model with a prompt. A coordinated squad of specialized AI models, each purpose-built for a different attack surface. Trained to break your protocol on real-world exploit patterns.",
+  },
+  {
+    icon: Lock,
+    title: "Isolated Analysis",
+    description:
+      "Every audit runs in its own sandboxed environment. No shared state between audits. No cross-contamination. Your contracts are analysed in isolation that exists only for the duration of your session.",
+  },
+  {
+    icon: EyeOff,
+    title: "Your Code Stays Yours",
+    description:
+      "Solarizer never trains on your codebase. Your source code is never stored on our infrastructure beyond your active session. When the audit ends, the environment is destroyed.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "AI-Validated Findings",
+    description:
+      "Every finding passes through a dedicated validation layer that challenges and filters false positives. What reaches your report has been verified with line-accurate evidence and severity ranking.",
+  },
+  {
+    icon: Workflow,
+    title: "Structured, Not Random",
+    description:
+      "A deterministic multi-phase pipeline — not random prompts hoping for the best. Checkpoint and resume without losing progress. Reproducible, auditable results every time.",
+  },
+  {
+    icon: KeyRound,
+    title: "Zero-Trust by Default",
+    description:
+      "Sandboxed execution with no ambient credentials. Every operation is scoped to your session. No trust assumptions between components. Defense in depth at every layer.",
+  },
+];
+
+const severityBorder: Record<string, string> = {
+  CRITICAL: "border-red-500/30",
+  HIGH: "border-orange-500/30",
+  MEDIUM: "border-yellow-500/30",
+};
+
+const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
+  <div className={`rounded-xl border bg-card/20 p-3 sm:p-6 hover:border-opacity-60 transition-colors ${severityBorder[f.severity] || "border-border/20"}`}>
+    <div className="space-y-2">
+      <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
+        {f.severity}
+      </span>
+      <p className="text-[11px] font-mono text-muted-foreground/30">{f.file}</p>
+    </div>
+    <p className="text-sm md:text-base font-semibold text-foreground mt-3">{f.title}</p>
+    <p className="text-xs md:text-sm text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
+  </div>
+);
 
 const Home = () => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(INSTALL_CMD);
+    navigator.clipboard.writeText("npm install -g solarizer");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -28,81 +166,177 @@ const Home = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
 
-      {/* ── Section 1: Hero ──────────────────────────────────────── */}
-      <section className="relative min-h-[92vh] flex items-center">
+      {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
+      <section className="relative pt-28 pb-8 md:pt-40 md:pb-14">
         <HeroBackground />
 
-        <div className="relative w-full max-w-[1280px] mx-auto px-5 md:px-8 lg:px-12 xl:px-20 pt-[72px] pb-12 md:pt-28 md:pb-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-            {/* Left: Copy */}
-            <div>
-              <h1 className="w-fit text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight">
-                <span className="block whitespace-nowrap text-foreground">Smart Contract Security</span>
-                <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Reimagined With AI</span>
-              </h1>
+        <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6">
+          <h1 className="w-fit mx-auto text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight">
+            <span className="block whitespace-nowrap text-foreground">Smart Contract Security</span>
+            <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Reimagined With AI</span>
+          </h1>
 
-              <p className="text-base md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-[520px] leading-relaxed">
-                Detect real exploit paths in minutes — not weeks.
-                Trace cross-contract attack flows and receive line-accurate fixes.
-              </p>
+          <p className="text-xs md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-lg mx-auto leading-relaxed">
+            Multi-phase AI security analysis for Solidity smart contracts.
+            Find what matters. Ship with confidence.
+          </p>
+        </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 mt-6 md:mt-8">
-                <Button asChild size="lg" className="h-[52px] sm:h-12 text-base font-semibold px-8">
-                  <Link to="/dashboard">Scan Your Protocol Now</Link>
-                </Button>
-                <Button asChild variant="solarGlow" size="lg" className="h-[52px] sm:h-12 text-base font-semibold px-8">
-                  <Link to="/docs">View Documentation</Link>
-                </Button>
-              </div>
+        <div className="relative mt-10 sm:mt-16 max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="relative">
+            <TerminalAuditDemo />
+          </div>
+        </div>
+      </section>
 
-              <p className="text-[13px] text-muted-foreground/50 mt-4">
-                CLI-first · Works locally · No upload required
-              </p>
-            </div>
+      {/* ── SECTION 2: Audit Pipeline ────────────────────────────────── */}
+      <section id="pipeline" className="py-10 md:py-20">
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight whitespace-nowrap leading-[1.15]">
+              Context-Aware Analysis
+            </h2>
+            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+              Each contract passes through a structured pipeline — from complexity classification to line-accurate remediation
+            </p>
+          </div>
 
-            {/* Right: Terminal */}
-            <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-primary/60 mb-3">
-                Real Solarizer output
-              </p>
-              <div className="h-[260px] sm:h-[300px] md:h-[420px] lg:h-[460px]">
-                <TerminalAuditDemo />
-              </div>
+          {/* Numbered vertical sequence */}
+          <div className="relative mt-8 md:mt-12">
+            {/* Vertical connecting line */}
+            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
+
+            <div className="space-y-5 md:space-y-8">
+              {phases.map((phase) => {
+                const Icon = phase.icon;
+                return (
+                  <div
+                    key={phase.pill}
+                    className="relative flex items-start gap-4 md:gap-8"
+                  >
+                    {/* Number marker */}
+                    <div className="relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border border-border/30 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-primary" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 pt-1">
+                      <span className="terminal-pill">{phase.pill}</span>
+                      <p className="text-xs md:text-sm text-muted-foreground/60 mt-1.5 leading-relaxed">
+                        {phase.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Section 2: Real Findings ─────────────────────────────── */}
-      <RealFindings />
+      {/* ── SECTION 3: What It Finds ─────────────────────────────────── */}
+      <section className="py-10 md:py-20">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
+              Intelligence Engine
+            </h2>
+            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+              Solarizer finds known vulnerability classes and the logic issues specific to your protocol
+            </p>
+          </div>
 
-      {/* ── Section 3: Differentiator ────────────────────────────── */}
-      <DifferentiatorComparison />
+          {/* Known patterns group */}
+          <div className="mt-8 md:mt-10 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
+                Known vulnerability patterns
+              </p>
+              <span className="text-[10px] font-mono text-primary/50 bg-primary/10 px-2 py-0.5 rounded-full">
+                {knownFindings.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              {knownFindings.map((f) => (
+                <FindingCard key={f.title} f={f} />
+              ))}
+            </div>
+          </div>
 
-      {/* ── Section 4: How It Works ──────────────────────────────── */}
-      <HowItWorks />
+          {/* Protocol-specific group */}
+          <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
+                Protocol-specific logic
+              </p>
+              <span className="text-[10px] font-mono text-primary/50 bg-primary/10 px-2 py-0.5 rounded-full">
+                {protocolFindings.length}
+              </span>
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground/50 mb-6 text-center max-w-lg mx-auto">
+              Beyond known patterns, Solarizer models your protocol's specific
+              invariants — the accounting rules, epoch mechanics, and collateral
+              assumptions unique to your codebase
+            </p>
+            <div className="grid grid-cols-1 gap-4">
+              {protocolFindings.map((f) => (
+                <FindingCard key={f.title} f={f} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
-      {/* ── Section 5: Speed Positioning ─────────────────────────── */}
-      <SpeedPositioning />
+      {/* ── SECTION 4: Robust Security ─────────────────────────────── */}
+      <section className="py-10 md:py-20">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
+              Robust Security
+            </h2>
+            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+              Not just another GPT-Wrapper
+            </p>
+          </div>
 
-      {/* ── Section 6: Engine Explanation ─────────────────────────── */}
-      <EngineExplanation />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-8 md:mt-10">
+            {securityFeatures.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={feature.title}
+                  className="rounded-2xl bg-foreground/[0.01] border border-border/10 p-5 md:p-8 hover:border-primary/20 transition-colors"
+                >
+                  <Icon className="w-5 h-5 text-primary mb-4" />
+                  <p className="text-sm md:text-base font-semibold text-foreground">
+                    {feature.title}
+                  </p>
+                  <p className="text-xs md:text-sm text-muted-foreground/60 mt-2 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
-      {/* ── Section 7: Trust Signals ─────────────────────────────── */}
-      <TrustSignals />
-
-      {/* ── Section 8: CLI Install ───────────────────────────────── */}
-      <section className="py-[70px] md:py-[90px] lg:py-[110px] xl:py-[140px]">
-        <div className="max-w-2xl mx-auto text-center px-5 md:px-8">
-          <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
+      {/* ── SECTION 5: CTA ───────────────────────────────────────────── */}
+      <section className="py-12 md:py-24">
+        <div className="max-w-2xl mx-auto text-center px-6">
+          <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15]">
             <span className="block">Secure your contracts</span>
             <span className="block text-gradient mt-1 md:mt-2">from your terminal</span>
           </h2>
 
-          <div className="mt-8 max-w-md mx-auto border border-border/50 rounded-xl px-5 py-4 bg-card/50 font-mono text-sm flex items-center gap-2 hover:border-primary/30 transition-all">
+          <p className="text-sm md:text-lg text-muted-foreground/60 mt-6 max-w-lg mx-auto leading-relaxed">
+            Multi-phase AI analysis, exploit-pattern matching, and line-accurate remediation — all from a single CLI command.
+          </p>
+
+          <div className="mt-8 max-w-sm mx-auto border border-border/50 rounded-xl px-5 py-4 sm:px-6 sm:py-4 bg-card/50 font-mono text-xs sm:text-sm flex items-center gap-2 hover:border-primary/30 transition-all">
             <span className="text-muted-foreground/40">$</span>
-            <span className="text-foreground/80 flex-1 text-left select-all truncate">
-              {INSTALL_CMD}
+            <span className="text-foreground/80 flex-1 text-left select-all">
+              npm install -g solarizer
             </span>
             <button
               onClick={handleCopy}
@@ -115,23 +349,6 @@ const Home = () => {
           <Link to="/docs" className="inline-block mt-5 text-sm text-primary hover:underline">
             View documentation →
           </Link>
-        </div>
-      </section>
-
-      {/* ── Section 9: Final CTA ─────────────────────────────────── */}
-      <section className="py-[70px] md:py-[90px] lg:py-[110px] xl:py-[140px]">
-        <div className="max-w-2xl mx-auto text-center px-5 md:px-8">
-          <h2 className="text-[26px] md:text-4xl lg:text-5xl font-black tracking-tight leading-[1.2]">
-            Don't ship exploitable contracts.
-          </h2>
-
-          <Button asChild size="lg" className="mt-6 h-[54px] md:h-[52px] text-base font-semibold px-10 w-full sm:w-auto">
-            <Link to="/dashboard">Scan Your Protocol Now</Link>
-          </Button>
-
-          <p className="text-[13px] text-muted-foreground/50 mt-4">
-            Free scan available · Works locally · No upload required
-          </p>
         </div>
       </section>
 
