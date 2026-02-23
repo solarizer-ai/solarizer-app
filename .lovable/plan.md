@@ -1,51 +1,25 @@
 
 
-# Unified Billing Page Redesign
+# Fix Transaction History Pagination
 
-## Overview
+## Problem
 
-Merge "Current Plan" and "Plans" into one card. Simplify credits section. Apply to both `BillingPage.tsx` and `SubscriptionPage.tsx`.
+The `useBillingHistory` hook passes `pageSize` to both `usePowerUpPurchases` and `useSubscriptionHistory` independently. Each fetches up to 5 rows, resulting in up to 10 rows shown when the page size is set to 5.
 
-## Changes
+## Solution
 
-### 1. SubscriptionPlanSelector.tsx — Add cancel support
+Change `useBillingHistory` to fetch all records from both tables (remove per-table pagination) and apply pagination to the **merged and sorted** result array client-side.
 
-Add new optional props:
-- `onCancelSubscription?: () => void` — shows "Cancel Subscription" link on current plan row
-- `renewalDate?: string | null` — shows renewal info in header
-- `onReactivate?: () => void` and `isReactivating?: boolean` — for reactivate action on cancellation banner
+## Technical Changes
 
-Move the pending cancellation/downgrade banners INTO this component (above the plan list). The current plan row's action area: show "Current Plan" badge + below it a red "Cancel Subscription" text link (when not cancelled).
+### `src/hooks/useBillingHistory.ts`
 
-### 2. BillingPage.tsx — Merge cards + simplify credits
+- Remove `page` and `pageSize` params from the individual `usePowerUpPurchases` and `useSubscriptionHistory` calls inside `useBillingHistory`
+- Fetch all matching records from both tables (still respecting date filters)
+- Merge, sort by date descending, then slice the combined array using `page` and `pageSize`
+- Compute `totalCount` from the combined array length
 
-**Plan section**: Remove the separate "Current Plan" card (lines 170-252) and the separate "Plan Selector" card wrapper (lines 254-270). Replace with a single card containing:
-- Header: "Your Plan" with renewal date on the right
-- Pending cancellation/downgrade banners (now rendered by SubscriptionPlanSelector)
-- The 3 plan rows with cancel on current plan row
+### `src/pages/dashboard/BillingPage.tsx`
 
-Pass new props to SubscriptionPlanSelector: `onCancelSubscription`, `renewalDate`, `onReactivate`, `isReactivating`.
+- No changes needed — it already passes `page` and `pageSize` to `useBillingHistory`, which will now handle them correctly on the merged data
 
-**Credits section** (lines 272-311): Simplify to compact layout:
-- For paid users: Two inline stats side by side showing just "Remaining" and "Total Used" (no cycle language, no reset date). Reduce number size from `text-3xl` to `text-xl`. Right-aligned "Buy Credits" button in header area instead of full-width below.
-- For free users: Single stat "Remaining" with upgrade CTA.
-
-### 3. SubscriptionPage.tsx — Mirror same changes
-
-Apply identical merged layout and credits simplification as BillingPage.
-
-## Technical Details
-
-### SubscriptionPlanSelector.tsx
-- Add props: `onCancelSubscription`, `renewalDate`, `onReactivate`, `isReactivating`
-- Render cancellation/downgrade banners at top of component
-- In current plan row action area: Badge + cancel link below
-- Header shows "Your Plan" + renewal date
-
-### BillingPage.tsx
-- Delete lines 169-270 (two separate cards)
-- Replace with single card passing all props to enhanced SubscriptionPlanSelector
-- Credits card: remove `period_reset_at` display, rename "Credits Left" to "Remaining", rename "Used This Cycle" to "Total Used", shrink font to `text-xl`, remove full-width button — add compact "Buy Credits" button in card header
-
-### SubscriptionPage.tsx
-- Same structural changes as BillingPage (delete two cards, replace with one unified card, simplify credits)
