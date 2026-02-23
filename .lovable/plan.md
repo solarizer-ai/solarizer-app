@@ -1,25 +1,45 @@
 
 
-# Fix Transaction History Pagination
+# Update Current Plan Checkmark Position
 
-## Problem
+## Change
 
-The `useBillingHistory` hook passes `pageSize` to both `usePowerUpPurchases` and `useSubscriptionHistory` independently. Each fetches up to 5 rows, resulting in up to 10 rows shown when the page size is set to 5.
+### `src/components/settings/SubscriptionPlanSelector.tsx`
 
-## Solution
+Move the green `CheckCircle` icon from the action button area to beside the plan name in the left side of the row.
 
-Change `useBillingHistory` to fetch all records from both tables (remove per-table pagination) and apply pagination to the **merged and sorted** result array client-side.
+**Plan row (around line 155-162)**: Add the checkmark next to the plan name `<h5>`:
 
-## Technical Changes
+```
+<div className="min-w-[80px]">
+  <div className="flex items-center gap-1.5">
+    <h5 className="font-semibold text-foreground">{plan.name}</h5>
+    {isCurrent && <CheckCircle className="w-4 h-4 text-green-500" />}
+  </div>
+  <p className="text-sm text-muted-foreground">...</p>
+</div>
+```
 
-### `src/hooks/useBillingHistory.ts`
+**Action area for current plan (case "current", around line 96-112)**: Remove the `CheckCircle` from there, keep only the Cancel Subscription button:
 
-- Remove `page` and `pageSize` params from the individual `usePowerUpPurchases` and `useSubscriptionHistory` calls inside `useBillingHistory`
-- Fetch all matching records from both tables (still respecting date filters)
-- Merge, sort by date descending, then slice the combined array using `page` and `pageSize`
-- Compute `totalCount` from the combined array length
+```
+case "current":
+  return (
+    onCancelSubscription ? (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onCancelSubscription}
+        disabled={isLoading}
+        className="h-auto py-0.5 px-2 text-xs text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+      >
+        Cancel Subscription
+      </Button>
+    ) : null
+  );
+```
 
-### `src/pages/dashboard/BillingPage.tsx`
+**Import**: Add `CheckCircle` to the lucide-react import (replacing the `Check` icon usage for current plan).
 
-- No changes needed — it already passes `page` and `pageSize` to `useBillingHistory`, which will now handle them correctly on the merged data
+No other files need changes.
 
