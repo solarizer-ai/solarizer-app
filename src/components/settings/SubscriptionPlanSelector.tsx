@@ -1,4 +1,4 @@
-import { Check, ArrowUp, ArrowDown, Clock, X, Loader2, XCircle } from "lucide-react";
+import { CheckCircle, ArrowUp, ArrowDown, Clock, X, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -73,7 +73,7 @@ export function SubscriptionPlanSelector({
       if (action === "current") {
         return (
           <Badge variant="secondary" className="w-full justify-center py-1.5">
-            <Check className="w-3 h-3 mr-1" />
+            <CheckCircle className="w-3 h-3 mr-1" />
             Current Plan
           </Badge>
         );
@@ -95,21 +95,17 @@ export function SubscriptionPlanSelector({
         );
       case "current":
         return (
-          <div className="space-y-1.5">
-            <Badge variant="secondary" className="w-full justify-center py-1.5">
-              <Check className="w-3 h-3 mr-1" />
-              Current Plan
-            </Badge>
-            {onCancelSubscription && (
-              <button
-                onClick={onCancelSubscription}
-                disabled={isLoading}
-                className="w-full text-xs text-destructive/70 hover:text-destructive transition-colors disabled:opacity-50"
-              >
-                Cancel Subscription
-              </button>
-            )}
-          </div>
+          onCancelSubscription ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCancelSubscription}
+              disabled={isLoading}
+              className="h-auto py-0.5 px-2 text-xs text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+            >
+              Cancel Subscription
+            </Button>
+          ) : null
         );
       case "pending":
         return (
@@ -214,7 +210,10 @@ export function SubscriptionPlanSelector({
             >
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 <div className="min-w-[80px]">
-                  <h5 className="font-semibold text-foreground">{plan.name}</h5>
+                  <div className="flex items-center gap-1.5">
+                    <h5 className="font-semibold text-foreground">{plan.name}</h5>
+                    {isCurrent && <CheckCircle className="w-4 h-4 text-green-500" />}
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     ${plan.price}<span className="text-xs">/mo</span>
                   </p>
