@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, Check, Layers, Fingerprint, Search, GitBranch, FileText, Shield, Lock, EyeOff, CheckCircle2, Workflow, KeyRound } from "lucide-react";
+import { Copy, Check, Layers, Fingerprint, Search, GitBranch, FileText, Shield, EyeOff, Workflow, KeyRound } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TerminalAuditDemo from "@/components/TerminalAuditDemo";
@@ -103,28 +103,16 @@ const securityFeatures = [
       "Not a single model with a prompt. A coordinated squad of specialized AI models, each purpose-built for a different attack surface. Trained to break your protocol on real-world exploit patterns.",
   },
   {
-    icon: Lock,
-    title: "Isolated Analysis",
-    description:
-      "Every audit runs in its own sandboxed environment. No shared state between audits. No cross-contamination. Your contracts are analysed in isolation that exists only for the duration of your session.",
-  },
-  {
     icon: EyeOff,
     title: "Your Code Stays Yours",
     description:
       "Solarizer never trains on your codebase. Your source code is never stored on our infrastructure beyond your active session. When the audit ends, the environment is destroyed.",
   },
   {
-    icon: CheckCircle2,
-    title: "AI-Validated Findings",
-    description:
-      "Every finding passes through a dedicated validation layer that challenges and filters false positives. What reaches your report has been verified with line-accurate evidence and severity ranking.",
-  },
-  {
     icon: Workflow,
     title: "Structured, Not Random",
     description:
-      "A deterministic multi-phase pipeline — not random prompts hoping for the best. Checkpoint and resume without losing progress. Reproducible, auditable results every time.",
+      "A deterministic multi-phase pipeline — not random prompts hoping for the best. Checkpoint and resume without losing progress.",
   },
   {
     icon: KeyRound,
@@ -177,8 +165,11 @@ const Home = () => {
           </h1>
 
           <p className="text-xs md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-lg mx-auto leading-relaxed">
-            Multi-phase AI security analysis for Solidity smart contracts.
-            Find what matters. Ship with confidence.
+            Detect real exploit paths in minutes — not weeks. Trace cross-contract attack flows and receive line-accurate fixes.
+          </p>
+
+          <p className="text-[13px] text-muted-foreground/50 mt-3 md:mt-4 tracking-wide">
+            CLI-first · Works locally · No upload required
           </p>
         </div>
 
@@ -189,61 +180,13 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── SECTION 2: Audit Pipeline ────────────────────────────────── */}
-      <section id="pipeline" className="py-10 md:py-20">
-        <div className="max-w-3xl mx-auto px-6">
-          <div className="text-center">
-            <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight whitespace-nowrap leading-[1.15]">
-              Context-Aware Analysis
-            </h2>
-            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
-              Each contract passes through a structured pipeline — from complexity classification to line-accurate remediation
-            </p>
-          </div>
-
-          {/* Numbered vertical sequence */}
-          <div className="relative mt-8 md:mt-12">
-            {/* Vertical connecting line */}
-            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
-
-            <div className="space-y-5 md:space-y-8">
-              {phases.map((phase) => {
-                const Icon = phase.icon;
-                return (
-                  <div
-                    key={phase.pill}
-                    className="relative flex items-start gap-4 md:gap-8"
-                  >
-                    {/* Number marker */}
-                    <div className="relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border border-border/30 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 pt-1">
-                      <span className="terminal-pill">{phase.pill}</span>
-                      <p className="text-xs md:text-sm text-muted-foreground/60 mt-1.5 leading-relaxed">
-                        {phase.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 3: What It Finds ─────────────────────────────────── */}
+      {/* ── SECTION 2: Findings ──────────────────────────────────────── */}
       <section className="py-10 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
-              Intelligence Engine
+              From <span className="text-gradient">known exploits</span> to <span className="text-gradient">protocol specific logic</span>
             </h2>
-            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
-              Solarizer finds known vulnerability classes and the logic issues specific to your protocol
-            </p>
           </div>
 
           {/* Known patterns group */}
@@ -287,16 +230,49 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── SECTION 4: Robust Security ─────────────────────────────── */}
+      {/* ── SECTION 3: Intelligence Engine (Pipeline) ────────────────── */}
+      <section id="pipeline" className="py-10 md:py-20">
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight whitespace-nowrap leading-[1.15]">
+              Intelligence Engine
+            </h2>
+            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+              Each contract passes through a structured pipeline — from complexity classification to line-accurate remediation
+            </p>
+          </div>
+
+          <div className="relative mt-8 md:mt-12">
+            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
+            <div className="space-y-5 md:space-y-8">
+              {phases.map((phase) => {
+                const Icon = phase.icon;
+                return (
+                  <div key={phase.pill} className="relative flex items-start gap-4 md:gap-8">
+                    <div className="relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border border-border/30 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <span className="terminal-pill">{phase.pill}</span>
+                      <p className="text-xs md:text-sm text-muted-foreground/60 mt-1.5 leading-relaxed">
+                        {phase.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 4: Security Infrastructure ─────────────────────── */}
       <section className="py-10 md:py-20">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
-              Robust Security
+              Security Infrastructure, Not a Wrapper
             </h2>
-            <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
-              Not just another GPT-Wrapper
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-8 md:mt-10">
@@ -325,8 +301,8 @@ const Home = () => {
       <section className="py-12 md:py-24">
         <div className="max-w-2xl mx-auto text-center px-6">
           <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15]">
-            <span className="block">Secure your contracts</span>
-            <span className="block text-gradient mt-1 md:mt-2">from your terminal</span>
+            <span className="block">One Command</span>
+            <span className="block text-gradient mt-1 md:mt-2">Instant Security</span>
           </h2>
 
           <p className="text-sm md:text-lg text-muted-foreground/60 mt-6 max-w-lg mx-auto leading-relaxed">
