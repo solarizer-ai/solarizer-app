@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Gift, Zap, RotateCcw, Inbox, ChevronLeft, ChevronRight, X, ArrowDown, CalendarIcon } from "lucide-react";
+import { Gift, Zap, RotateCcw, Inbox, ChevronLeft, ChevronRight, X, ArrowDown, CalendarIcon, Lock, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,12 @@ import { cn } from "@/lib/utils";
 const typeConfig: Record<string, { icon: typeof ArrowDown; color: string; label: string; badgeVariant: "destructive" | "default" | "secondary" | "outline" }> = {
   deduction: { icon: ArrowDown, color: "text-destructive", label: "Deduction", badgeVariant: "destructive" },
   grant: { icon: Gift, color: "text-success", label: "Grant", badgeVariant: "default" },
+  subscription_grant: { icon: Gift, color: "text-success", label: "Grant", badgeVariant: "default" },
   purchase: { icon: Zap, color: "text-success", label: "Purchase", badgeVariant: "default" },
   refund: { icon: RotateCcw, color: "text-success", label: "Refund", badgeVariant: "default" },
+  reservation: { icon: Lock, color: "text-warning", label: "Reserved", badgeVariant: "outline" },
+  commit: { icon: CheckCircle, color: "text-destructive", label: "Committed", badgeVariant: "destructive" },
+  release: { icon: RotateCcw, color: "text-success", label: "Released", badgeVariant: "default" },
 };
 
 export function CreditActivityLog() {

@@ -61,3 +61,6 @@ verify_jwt = false
 
 [functions.chat-token-update]
 verify_jwt = false
+
+[functions.cli-session-progress]
+verify_jwt = false

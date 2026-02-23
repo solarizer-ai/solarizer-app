@@ -56,13 +56,12 @@ Deno.serve(async (req) => {
       );
     }
 
-
     console.log(`fail-audit: Processing failure for audit ${audit_id}${error_message ? `: ${error_message}` : ''}`);
 
-    // Fetch audit to get user_id and nloc_count for refund
+    // Fetch audit to get user_id and credit info for release
     const { data: audit, error: fetchError } = await supabase
       .from('audits')
-      .select('id, user_id, nloc_count, is_locked, status')
+      .select('id, user_id, credits_reserved, credits_deducted, is_locked, status')
       .eq('id', audit_id)
       .single();
 
@@ -88,27 +87,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get nloc_count for refund (default to 0 if null)
-    const nlocToRefund = audit.nloc_count || 0;
-    let creditsRefunded = 0;
+    // Release reserved credits (backwards-compat: fall back to credits_deducted)
+    const amountToRelease = audit.credits_reserved || audit.credits_deducted || 0;
+    let creditsReleased = 0;
 
-    // Refund credits if there's an amount to refund
-    if (nlocToRefund > 0) {
-      console.log(`fail-audit: Refunding ${nlocToRefund} credits to user ${audit.user_id}`);
+    if (amountToRelease > 0) {
+      console.log(`fail-audit: Releasing ${amountToRelease} credits to user ${audit.user_id}`);
       
-      const { data: refundResult, error: refundError } = await supabase
-        .rpc('refund_credits', {
+      const { data: releaseResult, error: releaseError } = await supabase
+        .rpc('cli_release_credits', {
           p_user_id: audit.user_id,
-          p_nloc_amount: nlocToRefund,
-          p_is_starter: false // Doesn't matter for credit refund logic
+          p_amount: amountToRelease,
+          p_audit_id: audit_id,
+          p_description: 'Full release: proxy failure',
         });
 
-      if (refundError) {
-        console.error('fail-audit: Failed to refund credits:', refundError);
-        // Continue with status update even if refund fails
-      } else if (refundResult?.success) {
-        creditsRefunded = nlocToRefund;
-        console.log(`fail-audit: Successfully refunded ${creditsRefunded} credits`);
+      if (releaseError) {
+        console.error('fail-audit: Failed to release credits:', releaseError);
+        // Continue with status update even if release fails
+      } else if (releaseResult?.success) {
+        creditsReleased = amountToRelease;
+        console.log(`fail-audit: Successfully released ${creditsReleased} credits`);
       }
     }
 
@@ -118,6 +117,8 @@ Deno.serve(async (req) => {
       .update({
         status: 'failed',
         is_locked: true,
+        credits_reserved: 0,
+        error_message: error_message || 'Proxy failure',
         updated_at: new Date().toISOString(),
       })
       .eq('id', audit_id);
@@ -136,7 +137,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         audit_id,
-        credits_refunded: creditsRefunded
+        credits_refunded: creditsReleased
       }),
       { status: 200, headers: corsHeaders }
     );
