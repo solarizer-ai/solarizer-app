@@ -181,7 +181,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 2: Findings ──────────────────────────────────────── */}
-      <section className="py-10 md:py-20">
+      <section className="py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
@@ -231,7 +231,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 3: Intelligence Engine (Pipeline) ────────────────── */}
-      <section id="pipeline" className="py-10 md:py-20">
+      <section id="pipeline" className="py-16 md:py-24">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight whitespace-nowrap leading-[1.15]">
@@ -267,11 +267,11 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 4: Security Infrastructure ─────────────────────── */}
-      <section className="py-10 md:py-20">
+      <section className="py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
-              Security Infrastructure, Not a Wrapper
+              <span className="text-gradient">Security Infrastructure</span>, Not a Wrapper
             </h2>
           </div>
 
@@ -298,7 +298,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 5: CTA ───────────────────────────────────────────── */}
-      <section className="py-12 md:py-24">
+      <section className="py-16 md:py-24">
         <div className="max-w-2xl mx-auto text-center px-6">
           <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
             <span className="block">One Command</span>
