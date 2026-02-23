@@ -111,7 +111,9 @@ export type Database = {
           credits_deducted: number | null
           credits_reserved: number
           current_contract: string | null
+          current_phase: string | null
           error_message: string | null
+          findings_count: number | null
           grade: Database["public"]["Enums"]["security_grade"] | null
           id: string
           is_locked: boolean
@@ -142,7 +144,9 @@ export type Database = {
           credits_deducted?: number | null
           credits_reserved?: number
           current_contract?: string | null
+          current_phase?: string | null
           error_message?: string | null
+          findings_count?: number | null
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
           is_locked?: boolean
@@ -173,7 +177,9 @@ export type Database = {
           credits_deducted?: number | null
           credits_reserved?: number
           current_contract?: string | null
+          current_phase?: string | null
           error_message?: string | null
+          findings_count?: number | null
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
           is_locked?: boolean
