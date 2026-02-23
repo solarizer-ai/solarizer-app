@@ -158,7 +158,10 @@ Deno.serve(async (req) => {
       updateData.contracts_total = body.contracts_total;
     }
     if (body.current_phase !== undefined) {
-      updateData.current_contract = body.current_phase;
+      updateData.current_phase = body.current_phase;
+    }
+    if (body.findings_count !== undefined) {
+      updateData.findings_count = body.findings_count;
     }
 
     const { error: updateError } = await supabase
