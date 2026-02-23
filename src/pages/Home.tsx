@@ -131,13 +131,13 @@ const severityBorder: Record<string, string> = {
 const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
   <div className={`rounded-[14px] border bg-card/20 p-5 sm:p-6 hover:border-opacity-60 transition-colors ${severityBorder[f.severity] || "border-border/20"}`}>
     <div className="space-y-2">
-      <span className={`${f.badgeClass} text-xs font-mono font-bold px-2.5 py-1 rounded-md`}>
+      <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
         {f.severity}
       </span>
-      <p className="text-sm sm:text-[11px] font-mono text-muted-foreground/30">{f.file}</p>
+      <p className="text-[11px] font-mono text-muted-foreground/30">{f.file}</p>
     </div>
-    <p className="text-[18px] sm:text-base font-semibold text-foreground mt-3">{f.title}</p>
-    <p className="text-[15px] sm:text-sm text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
+    <p className="text-sm font-semibold text-foreground mt-3">{f.title}</p>
+    <p className="text-xs text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
   </div>
 );
 
