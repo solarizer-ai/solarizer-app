@@ -25,7 +25,7 @@ export function UpgradeToProModal({
   const features = [
     { icon: Shield, text: "50 credits monthly allowance" },
     { icon: Code2, text: "Multi-file analysis up to 3,000 nLOC per audit" },
-    { icon: Zap, text: "Purchase Power-Ups for larger projects" },
+    { icon: Zap, text: "Purchase credits for larger projects" },
   ];
 
   return (

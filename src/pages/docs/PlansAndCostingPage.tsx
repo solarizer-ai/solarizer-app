@@ -261,18 +261,18 @@ export default function PlansAndCostingPage() {
               />
               <p>
                 With 50 included credits, this audit costs{" "}
-                <strong className="text-foreground">690 credits</strong> from your Power-Up balance —
+                <strong className="text-foreground">690 credits</strong> from your balance —
                 or zero extra if you've accumulated credits over multiple months.
               </p>
             </CardContent>
           </Card>
 
-          {/* Card 5 — Power-Up Credits */}
+          {/* Card 5 — Additional Credits */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Power-Up credits</CardTitle>
+                <CardTitle className="text-lg">Additional credits</CardTitle>
               </div>
               <CardDescription>
                 Top up anytime, pay less on higher plans
@@ -281,10 +281,10 @@ export default function PlansAndCostingPage() {
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>
                 Every plan includes 50 credits per month. Need more? Purchase
-                Power-Up credits at a rate that improves with your plan:
+                additional credits at a rate that improves with your plan:
               </p>
               <DocTable
-                headers={["Plan", "Power-Up rate", "Savings"]}
+                headers={["Plan", "Credit rate", "Savings"]}
                 rows={[
                   [<strong className="text-foreground">Spark</strong>, "$2.80/credit", <No />],
                   [<strong className="text-foreground">Blaze</strong>, "$2.50/credit", "~11% off"],
@@ -292,7 +292,7 @@ export default function PlansAndCostingPage() {
                 ]}
               />
               <p>
-                Power-Up credits stack with your monthly allocation and never
+                Additional credits stack with your monthly allocation and never
                 expire as long as you maintain an active subscription.
               </p>
             </CardContent>
@@ -347,7 +347,7 @@ export default function PlansAndCostingPage() {
                   ],
                   ["Invite collaborators (up to 5)", <No />, <No />, <Yes />],
                   ["Comment and track remediation", <No />, <No />, <Yes />],
-                  [<strong className="text-foreground">Power-Up rate</strong>, "$2.80/credit", "$2.50/credit", "$2.20/credit"],
+                  [<strong className="text-foreground">Credit rate</strong>, "$2.80/credit", "$2.50/credit", "$2.20/credit"],
                 ]}
               />
             </CardContent>

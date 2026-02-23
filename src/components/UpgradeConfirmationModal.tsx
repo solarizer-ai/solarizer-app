@@ -21,7 +21,7 @@ interface UpgradeConfirmationModalProps {
 
 const PLAN_FEATURES: Record<string, string[]> = {
   pro: [
-    "Deep scan on L2+ contracts (two-pass)",
+    "Deep scan on L2+ contracts",
     "All severity levels (+ Low, Info, Gas)",
     "Up to 3,000 nLOC per audit",
     "Cross-contract analysis",
@@ -35,7 +35,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "Share reports on dashboard",
     "Invite up to 5 collaborators",
     "Comment & track remediation progress",
-    "Lowest power-up rate ($2.20/credit)",
+    "Lowest credit rate ($2.20/credit)",
   ],
 };
 

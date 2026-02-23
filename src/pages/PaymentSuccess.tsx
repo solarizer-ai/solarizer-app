@@ -242,7 +242,7 @@ export default function PaymentSuccess() {
                     <Zap className="h-4 w-4" />
                   )}
                   {paymentStatus.orderType === "subscription" ? "Subscription" : 
-                   paymentStatus.orderType === "upgrade" ? "Plan Upgrade" : "Power-up Credits"}
+                   paymentStatus.orderType === "upgrade" ? "Plan Upgrade" : "Credits"}
                 </div>
 
                 {(paymentStatus.orderType === "subscription" || paymentStatus.orderType === "upgrade") && paymentStatus.plan && (

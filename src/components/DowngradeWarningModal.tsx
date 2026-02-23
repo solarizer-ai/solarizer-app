@@ -55,7 +55,7 @@ export function DowngradeWarningModal({
             </p>
             
             <p>
-              To preserve the monetary value of your Power up Credits, your balance will be adjusted:
+              To preserve the monetary value of your credits, your balance will be adjusted:
             </p>
 
             <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-2">
@@ -89,7 +89,7 @@ export function DowngradeWarningModal({
             </p>
 
             <p className="text-xs text-muted-foreground">
-              ⓘ This conversion only applies to Power up Credits. Your monetary investment is preserved.
+              ⓘ This conversion preserves your monetary investment.
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>

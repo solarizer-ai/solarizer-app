@@ -9,12 +9,12 @@ import { HelpCircle } from "lucide-react";
 
 const faqs = [
   {
-    question: "What is a Power up Credit?",
+    question: "What is a credit?",
     answer:
-      "Simple: 1 Power up Credit allows you to audit exactly 1 line of Solidity code. It's the fuel for your smart contract's security.",
+      "Simple: 1 credit allows you to audit exactly 1 line of Solidity code. It's the fuel for your smart contract's security.",
   },
   {
-    question: "What exactly counts towards my Power up Credit limit?",
+    question: "What exactly counts towards my credit limit?",
     answer:
       "Every line of code in the files you upload is scanned and counted towards your quota. This includes imports and external libraries if they are present in the file. Tip: To save credits, we recommend flattening your contracts or only uploading your core logic files.",
   },
@@ -24,14 +24,14 @@ const faqs = [
       "Your credit balance is yours. If you Upgrade your plan, your existing balance is maintained 1:1. If you Downgrade, credits are converted based on the Credit Fair Usage Policy to preserve their monetary value.",
   },
   {
-    question: "Do my Power up Credits expire?",
+    question: "Do my credits expire?",
     answer:
-      "No. Power up Credits remain in your account forever until used. They never expire as long as you maintain an active subscription.",
+      "No. Credits remain in your account forever until used. They never expire as long as you maintain an active subscription.",
   },
   {
-    question: "Can I buy Power ups without a subscription?",
+    question: "Can I buy credits without a subscription?",
     answer:
-      "No. You need an active subscription (Launch, Pro, or Business) to access the Solarizer analysis engine. However, you can buy as many Power ups as you need on top of any active plan.",
+      "No. You need an active subscription (Spark, Blaze, or Inferno) to access the Solarizer analysis engine. However, you can buy as many credits as you need on top of any active plan.",
   },
   {
     question: "Why can't I see remediation recommendations on the Launch Plan?",

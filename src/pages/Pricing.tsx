@@ -47,7 +47,7 @@ const pricingPlans: PricingPlan[] = [
       { label: 'nLOC limit per audit', value: '500' },
       { label: 'Reports', value: 'Local markdown' },
       { label: 'Dashboard reports', value: '5 credits each' },
-      { label: 'Power-up rate', value: '$2.80/credit' },
+      { label: 'Credit rate', value: '$2.80/credit' },
     ],
   },
   {
@@ -68,7 +68,7 @@ const pricingPlans: PricingPlan[] = [
       { label: 'AI validation', value: 'Included' },
       { label: 'Remediation guidance', value: 'Included' },
       { label: 'Dashboard reports', value: 'Free' },
-      { label: 'Power-up rate', value: '$2.50/credit' },
+      { label: 'Credit rate', value: '$2.50/credit' },
     ],
   },
   {
@@ -85,7 +85,7 @@ const pricingPlans: PricingPlan[] = [
       { label: 'nLOC limit per audit', value: '12,000' },
       { label: 'Report sharing', value: 'Up to 5 collaborators' },
       { label: 'Remediation tracking', value: 'Included' },
-      { label: 'Power-up rate', value: '$2.20/credit' },
+      { label: 'Credit rate', value: '$2.20/credit' },
     ],
   },
 ];
@@ -326,7 +326,7 @@ const Pricing = () => {
           50 monthly credits included with every plan. Unused credits carry forward — they never expire.
         </p>
 
-        {/* Power Up Credits Purchase Section */}
+        {/* Additional Credits Purchase Section */}
         <div
           className="max-w-lg mx-auto mb-16 p-6 rounded-2xl border border-primary/30 bg-card/50 animate-in fade-in slide-in-from-bottom-4 duration-500"
           style={{ animationDelay: "600ms" }}
@@ -337,8 +337,8 @@ const Pricing = () => {
           </div>
           <p className="text-muted-foreground mb-4">
             {user && subscription
-              ? `Purchase additional Power up Credits at $${getDiscountedPrice()}/credit based on your ${formatPlanName(subscription.plan)} plan.`
-              : `Purchase additional Power up Credits starting at $2.20/credit with a subscription.`
+              ? `Purchase additional credits at $${getDiscountedPrice()}/credit based on your ${formatPlanName(subscription.plan)} plan.`
+              : `Purchase additional credits starting at $2.20/credit with a subscription.`
             }
           </p>
           <Button
@@ -352,7 +352,7 @@ const Pricing = () => {
               if (!subscription) {
                 toast({
                   title: "Subscription Required",
-                  description: "Please subscribe to a plan before purchasing power-up credits.",
+                  description: "Please subscribe to a plan before purchasing credits.",
                 });
                 return;
               }
