@@ -65,8 +65,8 @@ export function useRazorpaySubscription() {
       }
 
       const { data, error } = await invokeWithRefresh<SubscriptionResponse>(
-        "razorpay-create-subscription",
-        { body: params }
+        "razorpay-create-order",
+        { body: { orderType: "subscription", plan: params.plan, billingPeriod: params.billingPeriod } }
       );
 
       if (error || !data?.success) {
@@ -79,17 +79,14 @@ export function useRazorpaySubscription() {
         return false;
       }
 
-      const { shortUrl } = data;
-      
-      if (shortUrl) {
-        // Redirect to Razorpay subscription page for card authorization
-        window.location.href = shortUrl;
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
         return true;
       }
 
       toast({
         title: "Subscription Error",
-        description: "No authorization link received. Please try again.",
+        description: "No payment link received. Please try again.",
         variant: "destructive",
       });
       return false;
@@ -228,19 +225,27 @@ export function useRazorpaySubscription() {
     },
   });
 
-  // Cancel subscription at period end
-  const cancelSubscription = async (cancelImmediately = false): Promise<boolean> => {
+  // Cancel subscription at period end (local RPC, no Razorpay API call needed with Payment Links)
+  const cancelSubscription = async (): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const { data, error } = await invokeWithRefresh<CancelResponse>(
-        "razorpay-cancel-subscription",
-        { body: { cancelImmediately } }
-      );
+      const { data, error } = await supabase.rpc("cancel_subscription");
 
-      if (error || !data?.success) {
+      if (error) {
         toast({
           title: "Cancellation Failed",
-          description: data?.error || "Please try again later.",
+          description: error.message || "Please try again later.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      const result = data as unknown as { success: boolean; access_until?: string; error?: string };
+
+      if (!result?.success) {
+        toast({
+          title: "Cancellation Failed",
+          description: result?.error || "Please try again later.",
           variant: "destructive",
         });
         return false;
@@ -248,9 +253,9 @@ export function useRazorpaySubscription() {
 
       toast({
         title: "Subscription Cancelled",
-        description: data.accessUntil 
-          ? `Your access will continue until ${new Date(data.accessUntil).toLocaleDateString()}.`
-          : data.message,
+        description: result.access_until
+          ? `Your access will continue until ${new Date(result.access_until).toLocaleDateString()}.`
+          : "Your subscription has been cancelled.",
       });
       
       queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });

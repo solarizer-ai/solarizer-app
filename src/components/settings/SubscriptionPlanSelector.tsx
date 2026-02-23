@@ -34,6 +34,7 @@ interface SubscriptionPlanSelectorProps {
   renewalDate?: string | null;
   onReactivate?: () => void;
   isReactivating?: boolean;
+  onRenew?: (planId: string) => void;
 }
 
 const PLAN_ORDER = { starter: 0, pro: 1, business: 2 };
@@ -53,6 +54,7 @@ export function SubscriptionPlanSelector({
   renewalDate,
   onReactivate,
   isReactivating,
+  onRenew,
 }: SubscriptionPlanSelectorProps) {
   const currentPlanOrder = currentPlan ? PLAN_ORDER[currentPlan] : -1;
 
@@ -141,7 +143,7 @@ export function SubscriptionPlanSelector({
         <h4 className="text-sm font-medium text-foreground">Your Plan</h4>
         {renewalDate && !hasPendingCancellation && (
           <p className="text-xs text-muted-foreground">
-            Renews {format(new Date(renewalDate), "MMM d, yyyy")}
+            Expires {format(new Date(renewalDate), "MMM d, yyyy")}
           </p>
         )}
         {pendingPlan && pendingPlanDate && (
@@ -204,7 +206,7 @@ export function SubscriptionPlanSelector({
               )}
             >
               <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className="min-w-[80px]">
+              <div className="min-w-[80px]">
                   <div className="flex items-center gap-1.5">
                     <h5 className="font-semibold text-foreground">{plan.name}</h5>
                     {isCurrent && <CheckCircle className="w-4 h-4 text-green-500" />}
@@ -213,6 +215,12 @@ export function SubscriptionPlanSelector({
                     ${plan.price}<span className="text-xs">/mo</span>
                   </p>
                 </div>
+                {isCurrent && onRenew && renewalDate && 
+                  new Date(renewalDate).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000 && (
+                  <Button variant="default" size="sm" onClick={() => onRenew(plan.id)}>
+                    Renew Plan
+                  </Button>
+                )}
                 {isPending && (
                   <Badge variant="outline" className="hidden sm:flex bg-amber-100 text-amber-700 border-amber-300 text-xs dark:bg-amber-900/30 dark:text-amber-400">
                     Scheduled

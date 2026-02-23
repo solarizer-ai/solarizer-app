@@ -319,7 +319,7 @@ const Settings = () => {
                         </div>
                         {isPaid && subscription?.current_period_end && (
                           <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Renews on</p>
+                            <p className="text-xs text-muted-foreground">Expires on</p>
                             <p className="text-sm font-medium">
                               {format(new Date(subscription.current_period_end), "MMM d, yyyy")}
                             </p>
@@ -392,7 +392,7 @@ const Settings = () => {
                           <span>
                               {isPro ? "$199" : "$499"}/month
                               {subscription?.current_period_end && (
-                                <> • Next billing: {format(new Date(subscription.current_period_end), "MMM d, yyyy")}</>
+                                <> • Expires: {format(new Date(subscription.current_period_end), "MMM d, yyyy")}</>
                               )}
                             </span>
                           </div>

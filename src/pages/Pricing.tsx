@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
-import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { useToast } from "@/hooks/use-toast";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
@@ -95,9 +94,7 @@ const pricingPlans: PricingPlan[] = [
 
 const Pricing = () => {
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
-  const [downgradeModalOpen, setDowngradeModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [targetDowngradePlan, setTargetDowngradePlan] = useState<'starter' | 'pro' | 'business'>('starter');
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'business'>('pro');
   
   const { user, loading: authLoading } = useAuth();
@@ -206,21 +203,18 @@ const Pricing = () => {
       };
     }
 
-    // Downgrade
+    // Downgrade — users select a different plan at renewal
     return {
-      text: "Downgrade",
+      text: "Switch at Renewal",
       variant: "outline" as "outline",
       action: () => {
-        setTargetDowngradePlan(planId);
-        setDowngradeModalOpen(true);
+        toast({
+          title: "Plan Change",
+          description: "To switch to this plan, select it when your current plan expires.",
+        });
       },
-      disabled: isSchedulingDowngrade,
+      disabled: false,
     };
-  };
-
-  const handleConfirmDowngrade = () => {
-    setDowngradeModalOpen(false);
-    scheduleDowngrade(targetDowngradePlan);
   };
 
   const getProrationAmount = () => {
@@ -403,16 +397,6 @@ const Pricing = () => {
       <PurchasePowerUpModal
         open={powerUpModalOpen}
         onOpenChange={setPowerUpModalOpen}
-      />
-
-      {/* Downgrade Warning Modal */}
-      <DowngradeWarningModal
-        open={downgradeModalOpen}
-        onOpenChange={setDowngradeModalOpen}
-        currentCredits={credits?.credits_remaining || 0}
-        fromPlan={getCurrentPlanForModal()}
-        toPlan={targetDowngradePlan}
-        onConfirm={handleConfirmDowngrade}
       />
 
       {/* Upgrade Confirmation Modal */}
