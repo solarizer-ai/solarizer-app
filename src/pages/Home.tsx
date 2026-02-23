@@ -129,15 +129,15 @@ const severityBorder: Record<string, string> = {
 };
 
 const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
-  <div className={`rounded-xl border bg-card/20 p-3 sm:p-6 hover:border-opacity-60 transition-colors ${severityBorder[f.severity] || "border-border/20"}`}>
+  <div className={`rounded-[14px] border bg-card/20 p-5 sm:p-6 hover:border-opacity-60 transition-colors ${severityBorder[f.severity] || "border-border/20"}`}>
     <div className="space-y-2">
-      <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
+      <span className={`${f.badgeClass} text-xs font-mono font-bold px-2.5 py-1 rounded-md`}>
         {f.severity}
       </span>
-      <p className="text-[11px] font-mono text-muted-foreground/30">{f.file}</p>
+      <p className="text-sm sm:text-[11px] font-mono text-muted-foreground/30">{f.file}</p>
     </div>
-    <p className="text-sm md:text-base font-semibold text-foreground mt-3">{f.title}</p>
-    <p className="text-xs md:text-sm text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
+    <p className="text-[18px] sm:text-base font-semibold text-foreground mt-3">{f.title}</p>
+    <p className="text-[15px] sm:text-sm text-muted-foreground/60 mt-2 leading-relaxed">{f.description}</p>
   </div>
 );
 
@@ -155,25 +155,25 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative pt-28 pb-8 md:pt-40 md:pb-14">
+      <section className="relative pt-[72px] pb-12 md:pt-40 md:pb-14">
         <HeroBackground />
 
-        <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6">
+        <div className="relative max-w-4xl mx-auto text-center px-5 md:px-6">
           <h1 className="w-fit mx-auto text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight">
             <span className="block whitespace-nowrap text-foreground">Smart Contract Security</span>
             <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Reimagined With AI</span>
           </h1>
 
-          <p className="text-xs md:text-lg text-muted-foreground/70 mt-6 md:mt-8 max-w-lg mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-muted-foreground/70 mt-4 md:mt-8 max-w-lg mx-auto leading-relaxed">
             Detect real exploit paths in minutes — not weeks. Trace cross-contract attack flows and receive line-accurate fixes.
           </p>
 
-          <p className="text-[13px] text-muted-foreground/50 mt-3 md:mt-4 tracking-wide">
+          <p className="text-[13px] text-muted-foreground/50 mt-3.5 md:mt-4 tracking-wide">
             CLI-first · Works locally · No upload required
           </p>
         </div>
 
-        <div className="relative mt-10 sm:mt-16 max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="relative mt-10 sm:mt-16 max-w-5xl mx-auto px-5 md:px-6">
           <div className="relative">
             <TerminalAuditDemo />
           </div>
@@ -182,7 +182,7 @@ const Home = () => {
 
       {/* ── SECTION 2: Findings ──────────────────────────────────────── */}
       <section className="py-16 md:py-24">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-4xl mx-auto px-5 md:px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
               From <span className="text-gradient">known exploits</span> to <span className="text-gradient">protocol specific logic</span>
@@ -232,7 +232,7 @@ const Home = () => {
 
       {/* ── SECTION 3: Intelligence Engine (Pipeline) ────────────────── */}
       <section id="pipeline" className="py-16 md:py-24">
-        <div className="max-w-3xl mx-auto px-6">
+        <div className="max-w-3xl mx-auto px-5 md:px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight whitespace-nowrap leading-[1.15]">
               Intelligence Engine
@@ -268,7 +268,7 @@ const Home = () => {
 
       {/* ── SECTION 4: Security Infrastructure ─────────────────────── */}
       <section className="py-16 md:py-24">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-4xl mx-auto px-5 md:px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
               <span className="text-gradient">Security Infrastructure</span>, Not a Wrapper
@@ -281,7 +281,7 @@ const Home = () => {
               return (
                 <div
                   key={feature.title}
-                  className="rounded-2xl bg-foreground/[0.01] border border-border/10 p-5 md:p-8 hover:border-primary/20 transition-colors"
+                  className="rounded-xl md:rounded-2xl bg-foreground/[0.01] border border-border/10 p-5 md:p-8 hover:border-primary/20 transition-colors"
                 >
                   <Icon className="w-5 h-5 text-primary mb-4" />
                   <p className="text-sm md:text-base font-semibold text-foreground">
@@ -299,7 +299,7 @@ const Home = () => {
 
       {/* ── SECTION 5: CTA ───────────────────────────────────────────── */}
       <section className="py-16 md:py-24">
-        <div className="max-w-2xl mx-auto text-center px-6">
+        <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
           <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
             <span className="block">One Command</span>
             <span className="block text-gradient mt-1 md:mt-2">Instant Security</span>
@@ -309,7 +309,7 @@ const Home = () => {
             Multi-phase AI analysis, exploit-pattern matching, and line-accurate remediation — all from a single CLI command.
           </p>
 
-          <div className="mt-8 max-w-sm mx-auto border border-border/50 rounded-xl px-5 py-4 sm:px-6 sm:py-4 bg-card/50 font-mono text-xs sm:text-sm flex items-center gap-2 hover:border-primary/30 transition-all">
+          <div className="mt-8 max-w-sm mx-auto border border-border/50 rounded-xl p-[18px] sm:px-6 sm:py-4 bg-card/50 font-mono text-base sm:text-sm flex items-center gap-2 hover:border-primary/30 transition-all">
             <span className="text-muted-foreground/40">$</span>
             <span className="text-foreground/80 flex-1 text-left select-all">
               npm install -g solarizer
