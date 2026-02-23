@@ -110,7 +110,7 @@ export function PurchasePowerUpModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
-              Purchase Power up Credits
+              Purchase Credits
             </DialogTitle>
             <DialogDescription>
               {deficit > 0 
@@ -200,7 +200,7 @@ export function PurchasePowerUpModal({
                 onClick={handlePurchaseClick}
                 disabled={checkoutLoading || customCredits < MIN_CREDITS}
               >
-                {checkoutLoading ? "Processing..." : "Purchase Power up Credits"}
+                {checkoutLoading ? "Processing..." : "Purchase Credits"}
               </Button>
               <Button
                 variant="ghost"

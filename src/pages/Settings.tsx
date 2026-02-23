@@ -431,7 +431,7 @@ const Settings = () => {
                   <Card>
                     <CardHeader>
                       <CardTitle>
-                        {isPaid ? "Power-Up Credits" : "Credit Balance"}
+                        {isPaid ? "Credits" : "Credit Balance"}
                       </CardTitle>
                     <CardDescription>
                         {isPaid 

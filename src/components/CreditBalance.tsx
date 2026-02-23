@@ -50,7 +50,7 @@ export function CreditBalance() {
           <TooltipContent side="bottom" className="max-w-xs">
             <p>
               {isPaid 
-                ? "Credits remaining. Purchase Power-Ups for additional capacity." 
+                ? "Credits remaining. Purchase more for additional capacity." 
                 : `Spark plan: ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit max, 1 file per scan`}
             </p>
           </TooltipContent>

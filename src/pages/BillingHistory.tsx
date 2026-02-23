@@ -38,7 +38,7 @@ const BillingHistory = () => {
               <Zap className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-medium text-foreground">Power-Up Purchase</p>
+              <p className="font-medium text-foreground">Credit Purchase</p>
               <p className="text-sm text-muted-foreground">
                 +{event.data.nloc_amount.toLocaleString()} nLOC credits
               </p>
@@ -147,7 +147,7 @@ const BillingHistory = () => {
             <CardHeader>
               <CardTitle>Transaction History</CardTitle>
               <CardDescription>
-                All your power-up purchases and plan changes
+                All your credit purchases and plan changes
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -180,7 +180,7 @@ const BillingHistory = () => {
                     <p className="text-2xl font-bold text-foreground">
                       {events.filter(e => e.type === 'power_up').length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Power-Ups Purchased</p>
+                    <p className="text-sm text-muted-foreground">Credits Purchased</p>
                   </div>
                 </CardContent>
               </Card>
