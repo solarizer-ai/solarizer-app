@@ -96,14 +96,9 @@ export function SubscriptionPlanSelector({
       case "current":
         return (
           onCancelSubscription ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onCancelSubscription}
-              disabled={isLoading}
-              className="h-auto py-0.5 px-2 text-xs text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-            >
-              Cancel Subscription
+            <Button variant="outline" size="sm" className="w-full gap-1" onClick={onCancelSubscription} disabled={isLoading}>
+              <X className="w-3 h-3" />
+              Cancel
             </Button>
           ) : null
         );
