@@ -1,109 +1,51 @@
 
+The plan is to update the pricing page and associated components to reflect the refined "nLOC limit per audit" terminology, while also implementing the "Includes everything in previous plan" structure for Blaze and Inferno tiers. We will also fix several hardcoded inconsistencies in credits and limits across the dashboard to ensure the UI matches the actual business logic.
 
-# Pricing Page Redesign: Netflix-Inspired Minimal Layout
+### 1. Update Core Constants
+Update `src/lib/nlocCalculator.ts` to match the latest plan limits presented on the pricing page (500 for Spark, 3,000 for Blaze, 12,000 for Inferno).
 
-Adapt the Netflix-style plan comparison layout for Solarizer's dark theme. The key design shift: replace the current checkmark/feature list with clean **label-value rows separated by dividers**, and add **gradient header banners** per plan.
+### 2. Redesign Pricing Page Specs
+In `src/pages/Pricing.tsx`:
+- Change `nLOC limit` to `nLOC limit per audit` for all plans.
+- Simplify Blaze and Inferno's `Scan depth` value to `"Deep scan"`.
+- Restructure Blaze and Inferno to use a new `Includes` row (e.g., `"Everything in Spark"`) and remove redundant specifications (like complexity levels) to maintain a minimalist look.
+- Add a subtle highlight to the "Includes" value in the UI to distinguish it as a tier marker.
 
-## Design Changes
+### 3. Ensure App-Wide Consistency
+Update hardcoded descriptions and labels in other components that are currently out of sync with the 50-credit monthly allowance and the new nLOC limits:
+- **`UpgradeToProModal.tsx`**: Fix the Blaze price ($19 → $199), update monthly allowance (150 → 50 credits), and use the "per audit" terminology.
+- **`Settings.tsx`**: Update plan descriptions to show 50 credits and use "nLOC limit per audit".
+- **`CreditBalance.tsx`**: Update the tooltip description for Spark users.
+- **`PlansAndCostingPage.tsx` (Docs)**: Update comparison tables and body text to use "nLOC limit per audit" for consistency.
 
-**Current layout:** Cards with checkmark/X feature lists, badge labels, and per-card CTA buttons.
+---
 
-**New layout (Netflix-inspired):**
-- Each card gets a **gradient header banner** with plan name and a short tagline (e.g., "Spark / Essentials")
-- Features become **label + bold value rows** separated by subtle horizontal dividers (e.g., "Scan depth" / "Single-pass", "nLOC limit" / "500")
-- Per-card CTA buttons remain (unlike Netflix's single bottom button) since Solarizer needs per-plan subscribe/upgrade actions
-- "Most Popular" badge stays on Blaze card
-- Clean, airy spacing with more padding
+### Technical Details
 
-**Gradient banners per plan (dark theme adapted):**
-- Spark: subtle warm gray gradient
-- Blaze: orange-to-amber gradient (brand primary)
-- Inferno: deep orange-to-red gradient
-
-## Data Restructuring
-
-Replace the `features: PricingFeature[]` array with a `specs` array of `{ label: string; value: string }` pairs:
-
-**Spark:**
-| Label | Value |
-|-------|-------|
-| Scan depth | Single-pass |
-| Complexity levels | L1, L2, L3 |
-| Severity coverage | Critical, High, Medium |
-| nLOC limit | 500 |
-| Reports | Local markdown |
-| Dashboard reports | 5 credits each |
-| Power-up rate | $2.80/credit |
-
-**Blaze:**
-| Label | Value |
-|-------|-------|
-| Scan depth | Deep scan (two-pass) |
-| Complexity levels | L1, L2, L3 |
-| Severity coverage | All (+ Low, Info, Gas) |
-| nLOC limit | 3,000 |
-| Cross-contract | Included |
-| AI validation | Included |
-| Remediation guidance | Included |
-| Dashboard reports | Free |
-| Power-up rate | $2.50/credit |
-
-**Inferno:**
-| Label | Value |
-|-------|-------|
-| Scan depth | Deep scan (two-pass) |
-| Complexity levels | L1, L2, L3 |
-| Severity coverage | All (+ Low, Info, Gas) |
-| nLOC limit | 12,000 |
-| Report sharing | Up to 5 collaborators |
-| Remediation tracking | Included |
-| Dashboard reports | Free |
-| Power-up rate | $2.20/credit |
-
-## File Changes
-
-**Only `src/pages/Pricing.tsx` is modified.** All business logic (getButtonConfig, modals, hooks) stays identical.
-
-### Layout structure per card:
-
-```
-+----------------------------------+
-|  [Gradient Banner]               |
-|  Plan Name                       |
-|  Tagline                         |
-|           [Most Popular badge]   |
-+----------------------------------+
-|                                  |
-|  Monthly price                   |
-|  $199                            |
-|  --------------------------------|
-|  Credits included                |
-|  50                              |
-|  --------------------------------|
-|  Scan depth                      |
-|  Deep scan (two-pass)            |
-|  --------------------------------|
-|  nLOC limit                      |
-|  3,000                           |
-|  --------------------------------|
-|  ...more rows...                 |
-|                                  |
-|  [  Subscribe / Upgrade  ]       |
-+----------------------------------+
+**Data Structure Update in `src/pages/Pricing.tsx`:**
+```typescript
+// Blaze (Pro) example
+{
+  id: 'pro',
+  // ...
+  specs: [
+    { label: 'Includes', value: 'Everything in Spark' },
+    { label: 'Scan depth', value: 'Deep scan' },
+    { label: 'Severity coverage', value: 'All (+ Low, Info, Gas)' },
+    { label: 'nLOC limit per audit', value: '3,000' },
+    // ... additions only
+  ]
+}
 ```
 
-### Specific changes:
-1. Replace `PricingFeature` interface with `PricingSpec` (`{ label: string; value: string }`)
-2. Replace `features` array in each plan with `specs` array
-3. Replace the feature list render (checkmarks/X) with label-value rows separated by `border-b border-border` dividers
-4. Add gradient banner div at top of each card with plan-specific gradient classes
-5. Move price into the first spec row ("Monthly price" / "$199") for consistency with the Netflix pattern
-6. Keep the Power Up section and both modals unchanged
+**UI Rendering Update:**
+Modify the spec row loop to check if `spec.label === 'Includes'` and apply `text-primary` to the value for visual emphasis.
 
-### Gradient classes:
-- Spark: `bg-gradient-to-br from-zinc-700 to-zinc-800`
-- Blaze: `bg-gradient-to-br from-orange-600 to-amber-500`
-- Inferno: `bg-gradient-to-br from-orange-700 via-red-600 to-purple-700`
-
-All existing business logic, modals, and the Power Up section remain untouched.
-
+**Global Constants in `src/lib/nlocCalculator.ts`:**
+```typescript
+export const PLAN_LIMITS = {
+  starter: { nlocPerScan: 500, ... },
+  pro: { nlocPerScan: 3000, ... },
+  business: { nlocPerScan: 12000, ... }
+};
+```
