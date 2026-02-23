@@ -23,6 +23,7 @@ const SubscriptionPage = () => {
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
   const {
+    createSubscription,
     cancelSubscription,
     reactivateSubscription,
     cancelPendingDowngrade,
@@ -86,6 +87,7 @@ const SubscriptionPage = () => {
             renewalDate={subscription?.current_period_end || null}
             onReactivate={() => reactivateSubscription()}
             isReactivating={isReactivating}
+            onRenew={(planId) => createSubscription({ plan: planId as "starter" | "pro" | "business", billingPeriod: "monthly" })}
           />
         </CardContent>
       </Card>

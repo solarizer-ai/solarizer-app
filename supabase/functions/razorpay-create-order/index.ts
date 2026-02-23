@@ -19,9 +19,9 @@ interface CreateOrderRequest {
 
 // Plan prices in cents (USD)
 const PLAN_PRICES: Record<string, number> = {
-  launch: 14900, // $149
-  pro: 19900, // $199
-  business: 49900, // $499
+  starter: 14900, // $149 — Spark plan
+  pro: 19900,     // $199 — Blaze plan
+  business: 49900, // $499 — Inferno plan
 };
 
 // Power-up prices per credit in cents based on plan

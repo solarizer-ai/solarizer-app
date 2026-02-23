@@ -48,6 +48,7 @@ const BillingPage = () => {
     pageSize: historyPageSize,
   });
   const {
+    createSubscription,
     cancelSubscription,
     reactivateSubscription,
     cancelPendingDowngrade,
@@ -159,6 +160,7 @@ const BillingPage = () => {
             renewalDate={subscription?.current_period_end || null}
             onReactivate={() => reactivateSubscription()}
             isReactivating={isReactivating}
+            onRenew={(planId) => createSubscription({ plan: planId as "starter" | "pro" | "business", billingPeriod: "monthly" })}
           />
         </CardContent>
       </Card>
