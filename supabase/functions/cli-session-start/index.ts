@@ -130,27 +130,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Deduct credits
-    const { data: deductResult, error: deductError } = await supabase.rpc('cli_deduct_credits', {
+    // Reserve credits (freeze, don't deduct)
+    const { data: reserveResult, error: reserveError } = await supabase.rpc('cli_reserve_credits', {
       p_user_id: userId,
       p_amount: estimated_cost,
       p_audit_id: null,
       p_description: `CLI Audit: ${project_name} (${scope_metadata.length} contracts, ${estimated_cost} credits)`,
     });
 
-    if (deductError) {
-      console.error('cli-session-start: Credit deduction error:', deductError);
+    if (reserveError) {
+      console.error('cli-session-start: Credit reservation error:', reserveError);
       return new Response(
         JSON.stringify({ error: 'Failed to process credits' }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    if (!deductResult?.success) {
+    if (!reserveResult?.success) {
       return new Response(
         JSON.stringify({
-          error: deductResult?.error || 'Insufficient credits',
-          credits_remaining: deductResult?.balance,
+          error: reserveResult?.error || 'Insufficient credits',
+          credits_remaining: reserveResult?.balance,
           credits_required: estimated_cost,
         }),
         { status: 402, headers: corsHeaders }
@@ -168,7 +168,8 @@ Deno.serve(async (req) => {
         status: 'analyzing',
         source: 'cli',
         nloc_count: totalNloc,
-        credits_deducted: estimated_cost,
+        credits_deducted: 0,
+        credits_reserved: estimated_cost,
         scope_metadata,
         context_metadata: context_metadata || [],
         contracts_total: scope_metadata.length,
@@ -180,11 +181,11 @@ Deno.serve(async (req) => {
 
     if (auditError || !audit) {
       console.error('cli-session-start: Failed to create audit:', auditError);
-      await supabase.rpc('cli_refund_credits', {
+      await supabase.rpc('cli_release_credits', {
         p_user_id: userId,
         p_amount: estimated_cost,
         p_audit_id: null,
-        p_description: `Refund: Audit creation failed for ${project_name}`,
+        p_description: `Release: Audit creation failed for ${project_name}`,
       });
       return new Response(
         JSON.stringify({ error: 'Failed to create audit session' }),
@@ -199,7 +200,7 @@ Deno.serve(async (req) => {
       .from('credit_txns')
       .update({ audit_id: auditId })
       .eq('user_id', userId)
-      .eq('type', 'deduction')
+      .eq('type', 'reservation')
       .is('audit_id', null)
       .order('created_at', { ascending: false })
       .limit(1);
@@ -253,7 +254,7 @@ Deno.serve(async (req) => {
         session_token: sessionToken,
         callback_token: callbackToken,
         proxy_url: proxyUrl,
-        remaining_credits: deductResult.balance,
+        remaining_credits: reserveResult.balance,
       }),
       { status: 200, headers: corsHeaders }
     );

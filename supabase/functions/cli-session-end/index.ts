@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
 
     const { data: audit, error: auditError } = await supabase
       .from('audits')
-      .select('id, user_id, is_locked, credits_deducted, contracts_completed, contracts_total')
+      .select('id, user_id, is_locked, credits_deducted, credits_reserved, contracts_completed, contracts_total')
       .eq('id', sessionId)
       .single();
 
@@ -183,6 +183,7 @@ Deno.serve(async (req) => {
     }
 
     let creditsRefunded = 0;
+    let creditsCommitted = 0;
 
     if (body.status === 'completed') {
       const { data: findings } = await supabase
@@ -200,8 +201,22 @@ Deno.serve(async (req) => {
         is_locked: true,
         contracts_completed: body.contracts_completed ?? audit.contracts_completed,
         contracts_total: body.contracts_total ?? audit.contracts_total,
+        last_heartbeat: null,
+        credits_reserved: 0,
         updated_at: new Date().toISOString(),
       };
+
+      // Credit settlement for completed audits
+      const creditsReserved = audit.credits_reserved || 0;
+      if (creditsReserved > 0) {
+        await supabase.rpc('cli_commit_credits', {
+          p_user_id: userId,
+          p_amount: creditsReserved,
+          p_audit_id: sessionId,
+          p_description: `Committed: audit completed`,
+        });
+        creditsCommitted = creditsReserved;
+      }
 
       if (body.coverage_data) {
         const { data: existingAudit } = await supabase
@@ -240,11 +255,48 @@ Deno.serve(async (req) => {
       await supabase.from('audits').update(updateData).eq('id', sessionId);
 
     } else {
+      const creditsReserved = audit.credits_reserved || 0;
       const creditsDeducted = audit.credits_deducted || 0;
       const contractsCompleted = body.contracts_completed ?? audit.contracts_completed ?? 0;
       const contractsTotal = body.contracts_total ?? audit.contracts_total ?? 1;
 
-      if (creditsDeducted > 0 && contractsTotal > 0) {
+      if (creditsReserved > 0) {
+        // New reserve+commit path
+        if (contractsTotal > 0 && contractsCompleted > 0) {
+          const commitRatio = contractsCompleted / contractsTotal;
+          const commitAmount = Math.round(creditsReserved * commitRatio * 100) / 100;
+          const releaseAmount = Math.round((creditsReserved - commitAmount) * 100) / 100;
+
+          if (commitAmount > 0) {
+            await supabase.rpc('cli_commit_credits', {
+              p_user_id: userId,
+              p_amount: commitAmount,
+              p_audit_id: sessionId,
+              p_description: `Committed (${body.status}): ${contractsCompleted}/${contractsTotal} contracts`,
+            });
+            creditsCommitted = commitAmount;
+          }
+          if (releaseAmount > 0) {
+            await supabase.rpc('cli_release_credits', {
+              p_user_id: userId,
+              p_amount: releaseAmount,
+              p_audit_id: sessionId,
+              p_description: `Released (${body.status}): ${contractsCompleted}/${contractsTotal} contracts`,
+            });
+            creditsRefunded = releaseAmount;
+          }
+        } else {
+          // No contracts completed — release everything
+          await supabase.rpc('cli_release_credits', {
+            p_user_id: userId,
+            p_amount: creditsReserved,
+            p_audit_id: sessionId,
+            p_description: `Full release (${body.status}): 0 contracts processed`,
+          });
+          creditsRefunded = creditsReserved;
+        }
+      } else if (creditsDeducted > 0 && contractsTotal > 0) {
+        // Backwards-compat: pre-migration audits using old deduct+refund path
         const unprocessedRatio = Math.max(0, contractsTotal - contractsCompleted) / contractsTotal;
         creditsRefunded = Math.round(creditsDeducted * unprocessedRatio * 100) / 100;
 
@@ -264,12 +316,14 @@ Deno.serve(async (req) => {
         error_message: body.error_message || `Audit ${body.status}`,
         contracts_completed: contractsCompleted,
         contracts_total: contractsTotal,
+        last_heartbeat: null,
+        credits_reserved: 0,
         updated_at: new Date().toISOString(),
       }).eq('id', sessionId);
     }
 
     return new Response(
-      JSON.stringify({ success: true, credits_refunded: creditsRefunded }),
+      JSON.stringify({ success: true, credits_refunded: creditsRefunded, credits_committed: creditsCommitted }),
       { status: 200, headers: corsHeaders }
     );
 

@@ -109,11 +109,13 @@ export type Database = {
           coverage_data: Json | null
           created_at: string
           credits_deducted: number | null
+          credits_reserved: number
           current_contract: string | null
           error_message: string | null
           grade: Database["public"]["Enums"]["security_grade"] | null
           id: string
           is_locked: boolean
+          last_heartbeat: string | null
           nloc_count: number | null
           project_name: string
           scope_metadata: Json | null
@@ -138,11 +140,13 @@ export type Database = {
           coverage_data?: Json | null
           created_at?: string
           credits_deducted?: number | null
+          credits_reserved?: number
           current_contract?: string | null
           error_message?: string | null
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
           is_locked?: boolean
+          last_heartbeat?: string | null
           nloc_count?: number | null
           project_name: string
           scope_metadata?: Json | null
@@ -167,11 +171,13 @@ export type Database = {
           coverage_data?: Json | null
           created_at?: string
           credits_deducted?: number | null
+          credits_reserved?: number
           current_contract?: string | null
           error_message?: string | null
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
           is_locked?: boolean
+          last_heartbeat?: string | null
           nloc_count?: number | null
           project_name?: string
           scope_metadata?: Json | null
@@ -499,6 +505,7 @@ export type Database = {
         Row: {
           created_at: string
           credits_remaining: number
+          credits_reserved: number
           credits_used_this_period: number
           id: string
           period_reset_at: string | null
@@ -509,6 +516,7 @@ export type Database = {
         Insert: {
           created_at?: string
           credits_remaining?: number
+          credits_reserved?: number
           credits_used_this_period?: number
           id?: string
           period_reset_at?: string | null
@@ -519,6 +527,7 @@ export type Database = {
         Update: {
           created_at?: string
           credits_remaining?: number
+          credits_reserved?: number
           credits_used_this_period?: number
           id?: string
           period_reset_at?: string | null
@@ -799,8 +808,18 @@ export type Database = {
     }
     Functions: {
       accept_share_invitation: { Args: { p_share_id: string }; Returns: Json }
+      auto_settle_stale_sessions: { Args: never; Returns: undefined }
       cancel_pending_downgrade: { Args: never; Returns: Json }
       cancel_subscription: { Args: never; Returns: Json }
+      cli_commit_credits: {
+        Args: {
+          p_amount: number
+          p_audit_id: string
+          p_description: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       cli_deduct_credits: {
         Args: {
           p_amount: number
@@ -811,6 +830,24 @@ export type Database = {
         Returns: Json
       }
       cli_refund_credits: {
+        Args: {
+          p_amount: number
+          p_audit_id: string
+          p_description: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      cli_release_credits: {
+        Args: {
+          p_amount: number
+          p_audit_id: string
+          p_description: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      cli_reserve_credits: {
         Args: {
           p_amount: number
           p_audit_id: string
