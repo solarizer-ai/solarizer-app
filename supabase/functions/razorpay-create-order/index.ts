@@ -33,7 +33,8 @@ const POWER_UP_RATES: Record<string, number> = {
 };
 
 // Frontend URL for callbacks
-const FRONTEND_URL = "https://solarizer-app.lovable.app";
+// M2: Use env var instead of hardcoded URL
+const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://solarizer-app.lovable.app";
 
 function getRazorpayAuth(): string {
   const keyId = Deno.env.get("RAZORPAY_KEY_ID");
@@ -163,8 +164,13 @@ Deno.serve(async (req) => {
       p_credits_amount: creditsAmount || null,
     });
 
+    // C2: Return error instead of silently continuing on DB failure
     if (orderError) {
       console.error("Failed to store order:", orderError);
+      return new Response(
+        JSON.stringify({ error: "Failed to store payment order" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Update the order with the Razorpay Payment Link ID
