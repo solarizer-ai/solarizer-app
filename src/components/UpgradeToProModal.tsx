@@ -23,8 +23,8 @@ export function UpgradeToProModal({
   currentNloc 
 }: UpgradeToProModalProps) {
   const features = [
-    { icon: Shield, text: "150 credits monthly allowance" },
-    { icon: Code2, text: "Multi-file analysis" },
+    { icon: Shield, text: "50 credits monthly allowance" },
+    { icon: Code2, text: "Multi-file analysis up to 3,000 nLOC per audit" },
     { icon: Zap, text: "Purchase Power-Ups for larger projects" },
   ];
 
@@ -39,14 +39,14 @@ export function UpgradeToProModal({
           <DialogDescription>
             {reason === 'file_limit' 
               ? "Spark plan only supports 1 file per scan. Upgrade to Blaze for multi-file analysis."
-              : `Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit for Spark.`
+              : `Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit limit for Spark.`
             }
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold">$19</span>
+            <span className="text-3xl font-bold">$199</span>
             <span className="text-muted-foreground">/month</span>
           </div>
 

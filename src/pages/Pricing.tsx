@@ -44,7 +44,7 @@ const pricingPlans: PricingPlan[] = [
       { label: 'Scan depth', value: 'Single-pass' },
       { label: 'Complexity levels', value: 'L1, L2, L3' },
       { label: 'Severity coverage', value: 'Critical, High, Medium' },
-      { label: 'nLOC limit', value: '500' },
+      { label: 'nLOC limit per audit', value: '500' },
       { label: 'Reports', value: 'Local markdown' },
       { label: 'Dashboard reports', value: '5 credits each' },
       { label: 'Power-up rate', value: '$2.80/credit' },
@@ -60,10 +60,10 @@ const pricingPlans: PricingPlan[] = [
     popular: true,
     gradient: 'bg-gradient-to-br from-orange-600 to-amber-500',
     specs: [
-      { label: 'Scan depth', value: 'Deep scan (two-pass)' },
-      { label: 'Complexity levels', value: 'L1, L2, L3' },
+      { label: 'Includes', value: 'Everything in Spark' },
+      { label: 'Scan depth', value: 'Deep scan' },
       { label: 'Severity coverage', value: 'All (+ Low, Info, Gas)' },
-      { label: 'nLOC limit', value: '3,000' },
+      { label: 'nLOC limit per audit', value: '3,000' },
       { label: 'Cross-contract', value: 'Included' },
       { label: 'AI validation', value: 'Included' },
       { label: 'Remediation guidance', value: 'Included' },
@@ -81,10 +81,8 @@ const pricingPlans: PricingPlan[] = [
     popular: false,
     gradient: 'bg-gradient-to-br from-orange-700 via-red-600 to-purple-700',
     specs: [
-      { label: 'Scan depth', value: 'Deep scan (two-pass)' },
-      { label: 'Complexity levels', value: 'L1, L2, L3' },
-      { label: 'Severity coverage', value: 'All (+ Low, Info, Gas)' },
-      { label: 'nLOC limit', value: '12,000' },
+      { label: 'Includes', value: 'Everything in Blaze' },
+      { label: 'nLOC limit per audit', value: '12,000' },
       { label: 'Report sharing', value: 'Up to 5 collaborators' },
       { label: 'Remediation tracking', value: 'Included' },
       { label: 'Dashboard reports', value: 'Free' },
@@ -293,7 +291,7 @@ const Pricing = () => {
                   {plan.specs.map((spec, specIdx) => (
                     <div key={specIdx} className={cn("py-3", specIdx < plan.specs.length - 1 && "border-b border-border")}>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{spec.label}</p>
-                      <p className="text-sm font-semibold text-foreground">{spec.value}</p>
+                      <p className={cn("text-sm font-semibold", spec.label === 'Includes' ? "text-primary" : "text-foreground")}>{spec.value}</p>
                     </div>
                   ))}
 
