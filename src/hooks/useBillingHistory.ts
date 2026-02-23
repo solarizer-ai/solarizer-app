@@ -88,25 +88,30 @@ export function useSubscriptionHistory(options: BillingHistoryOptions = {}) {
 }
 
 export function useBillingHistory(options: BillingHistoryOptions = {}) {
-  const { data: purchasesResult, isLoading: purchasesLoading } = usePowerUpPurchases(options);
-  const { data: changesResult, isLoading: changesLoading } = useSubscriptionHistory(options);
+  const { page = 1, pageSize = 5 } = options;
+  const fetchAllOptions = { startDate: options.startDate, endDate: options.endDate };
+  const { data: purchasesResult, isLoading: purchasesLoading } = usePowerUpPurchases(fetchAllOptions);
+  const { data: changesResult, isLoading: changesLoading } = useSubscriptionHistory(fetchAllOptions);
 
   const isLoading = purchasesLoading || changesLoading;
   const purchases = purchasesResult?.data || [];
   const subscriptionChanges = changesResult?.data || [];
-  const totalCount = (purchasesResult?.count || 0) + (changesResult?.count || 0);
 
-  const events: BillingEvent[] = [];
+  const allEvents: BillingEvent[] = [];
 
   purchases.forEach(purchase => {
-    events.push({ type: 'power_up', data: purchase, date: purchase.purchased_at });
+    allEvents.push({ type: 'power_up', data: purchase, date: purchase.purchased_at });
   });
 
   subscriptionChanges.forEach(change => {
-    events.push({ type: 'subscription_change', data: change, date: change.changed_at });
+    allEvents.push({ type: 'subscription_change', data: change, date: change.changed_at });
   });
 
-  events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  allEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const totalCount = allEvents.length;
+  const from = (page - 1) * pageSize;
+  const events = allEvents.slice(from, from + pageSize);
 
   return { events, isLoading, totalCount, purchases, subscriptionChanges };
 }
