@@ -1,39 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// Razorpay POSTs to this callback after payment on hosted checkout
-// We verify signature, process payment, and redirect user to success page
+import { verifyOrderSignature } from "../_shared/razorpaySignature.ts";
 
 const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://solarizer-app.lovable.app";
-
-async function verifySignature(
-  orderId: string,
-  paymentId: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  const encoder = new TextEncoder();
-  const data = `${orderId}|${paymentId}`;
-  
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(data)
-  );
-  
-  const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  
-  return expectedSignature === signature;
-}
 
 function parseFormData(body: string): Record<string, string> {
   const params = new URLSearchParams(body);
@@ -45,13 +13,11 @@ function parseFormData(body: string): Record<string, string> {
 }
 
 Deno.serve(async (req) => {
-  // Handle POST from Razorpay after payment
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
 
   try {
-    // Parse form-encoded body from Razorpay
     const bodyText = await req.text();
     const formData = parseFormData(bodyText);
     
@@ -66,12 +32,10 @@ Deno.serve(async (req) => {
       return Response.redirect(`${FRONTEND_URL}/pricing?error=missing_fields`, 302);
     }
 
-    // Initialize Supabase with service role for admin access
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find our internal order using the Razorpay order ID
     const { data: order, error: orderError } = await adminSupabase
       .from("payment_orders")
       .select("order_id, status, user_id")
@@ -83,20 +47,19 @@ Deno.serve(async (req) => {
       return Response.redirect(`${FRONTEND_URL}/pricing?error=order_not_found`, 302);
     }
 
-    // Idempotency: If already paid, just redirect to success
     if (order.status === "paid") {
       console.log("Order already processed, redirecting to success");
       return Response.redirect(`${FRONTEND_URL}/payment-success?order_id=${order.order_id}`, 302);
     }
 
-    // Verify the payment signature
     const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
     if (!keySecret) {
       console.error("RAZORPAY_KEY_SECRET not configured");
       return Response.redirect(`${FRONTEND_URL}/pricing?error=config_error`, 302);
     }
 
-    const isValid = await verifySignature(
+    // Timing-safe signature verification via shared module
+    const isValid = await verifyOrderSignature(
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
@@ -108,7 +71,6 @@ Deno.serve(async (req) => {
       return Response.redirect(`${FRONTEND_URL}/pricing?error=invalid_signature`, 302);
     }
 
-    // Update order with Razorpay payment details
     await adminSupabase
       .from("payment_orders")
       .update({
@@ -118,7 +80,6 @@ Deno.serve(async (req) => {
       })
       .eq("order_id", order.order_id);
 
-    // Process the payment (add credits, update subscription, etc.)
     const { error: processError } = await adminSupabase.rpc(
       "process_payment_success",
       {
@@ -133,8 +94,6 @@ Deno.serve(async (req) => {
     }
 
     console.log("Payment processed successfully, redirecting to success page");
-    
-    // Redirect user to success page
     return Response.redirect(`${FRONTEND_URL}/payment-success?order_id=${order.order_id}`, 302);
 
   } catch (error) {

@@ -1,38 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyWebhookSignature } from "../_shared/razorpaySignature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-razorpay-signature, x-razorpay-event-id",
 };
-
-async function verifyWebhookSignature(
-  rawBody: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  const encoder = new TextEncoder();
-  
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(rawBody)
-  );
-  
-  const computedSignature = Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  
-  return computedSignature === signature;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -56,7 +29,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify webhook signature
     const webhookSecret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET");
     if (!webhookSecret) {
       console.error("Webhook secret not configured");
@@ -100,10 +72,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Handle different event types
     switch (event) {
       case "payment.captured": {
-        // One-time payment captured
         const rzOrderId = entity?.order_id;
         const paymentId = entity?.id;
         const amountCents = entity?.amount;
@@ -111,7 +81,6 @@ Deno.serve(async (req) => {
 
         let order = null;
 
-        // Try finding by Razorpay order ID first (standard orders)
         if (rzOrderId) {
           const { data } = await supabase
             .from("payment_orders")
@@ -121,7 +90,6 @@ Deno.serve(async (req) => {
           order = data;
         }
 
-        // Fallback: Payment Link orders store our order_id in notes.reference_id
         if (!order && notes.reference_id) {
           const { data } = await supabase
             .from("payment_orders")
@@ -132,13 +100,11 @@ Deno.serve(async (req) => {
         }
 
         if (order) {
-          // Process payment success
           await supabase.rpc("process_payment_success", {
             p_order_id: order.order_id,
             p_cf_payment_id: paymentId,
           });
 
-          // For upgrade orders, update the subscription plan
           if (order.order_type === "upgrade" && order.plan) {
             const metadata = order.metadata as Record<string, string> | null;
             const fromPlan = metadata?.from_plan || "starter";
@@ -184,18 +150,36 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // M4: Store subscription ID on .authenticated using notes.user_id
       case "subscription.authenticated": {
-        // First auth payment done, subscription is being set up
         const subscriptionId = entity?.id;
+        const notes = entity?.notes || {};
         console.log("Subscription authenticated:", subscriptionId);
+
+        if (subscriptionId && notes.user_id) {
+          await supabase
+            .from("subscriptions")
+            .update({
+              rz_subscription_id: subscriptionId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", notes.user_id);
+        }
         break;
       }
 
       case "subscription.activated": {
-        // Subscription is now active
         const subscriptionId = entity?.id;
         const planId = entity?.plan_id;
         const notes = entity?.notes || {};
+
+        // H1: Read billing period dates from the Razorpay entity
+        const currentStart = entity?.current_start
+          ? new Date(entity.current_start * 1000).toISOString()
+          : new Date().toISOString();
+        const currentEnd = entity?.current_end
+          ? new Date(entity.current_end * 1000).toISOString()
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
         if (subscriptionId) {
           await supabase
@@ -204,16 +188,13 @@ Deno.serve(async (req) => {
               status: "active",
               rz_subscription_id: subscriptionId,
               rz_plan_id: planId,
-              current_period_start: new Date().toISOString(),
-              current_period_end: new Date(
-                Date.now() + 30 * 24 * 60 * 60 * 1000
-              ).toISOString(),
+              current_period_start: currentStart,
+              current_period_end: currentEnd,
               payment_method_saved: true,
               updated_at: new Date().toISOString(),
             })
             .eq("rz_subscription_id", subscriptionId);
 
-          // Determine plan from notes or plan_id
           const planName = notes.plan || "starter";
           if (notes.user_id) {
             await supabase
@@ -225,8 +206,8 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // C1: Inline renewal logic (process_subscription_renewal RPC was dropped)
       case "subscription.charged": {
-        // Renewal payment successful
         const subscriptionId = entity?.id;
         const paymentId = payload.payload?.payment?.entity?.id;
         const amountCents = payload.payload?.payment?.entity?.amount;
@@ -243,30 +224,75 @@ Deno.serve(async (req) => {
             raw_payload: payload,
           });
 
-          // Process renewal using existing RPC
+          // Look up subscription to get user_id
           const { data: subscription } = await supabase
             .from("subscriptions")
-            .select("cf_subscription_id")
+            .select("user_id, plan")
             .eq("rz_subscription_id", subscriptionId)
             .single();
 
           if (subscription) {
-            // Use the Razorpay subscription ID for the renewal
-            await supabase.rpc("process_subscription_renewal", {
-              p_cf_subscription_id: subscriptionId,
-              p_cf_payment_id: paymentId,
-              p_amount_inr: amountCents,
+            // Credit the user's account (50 credits for monthly renewal)
+            const creditsToAdd = 50;
+            
+            // Upsert credits
+            const { error: creditError } = await supabase
+              .from("nloc_credits")
+              .update({
+                credits_remaining: supabase.rpc ? undefined : 0, // handled below
+                updated_at: new Date().toISOString(),
+              })
+              .eq("user_id", subscription.user_id);
+
+            // Use raw SQL-style increment via direct update
+            // Since we can't do atomic increment via update, use the RPC pattern
+            const { data: currentCredits } = await supabase
+              .from("nloc_credits")
+              .select("credits_remaining")
+              .eq("user_id", subscription.user_id)
+              .single();
+
+            if (currentCredits) {
+              await supabase
+                .from("nloc_credits")
+                .update({
+                  credits_remaining: currentCredits.credits_remaining + creditsToAdd,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("user_id", subscription.user_id);
+            }
+
+            // Log the credit transaction
+            const { data: balanceAfter } = await supabase
+              .from("nloc_credits")
+              .select("credits_remaining")
+              .eq("user_id", subscription.user_id)
+              .single();
+
+            await supabase.from("credit_txns").insert({
+              user_id: subscription.user_id,
+              type: "subscription_grant",
+              amount: creditsToAdd,
+              balance_after: balanceAfter?.credits_remaining || 0,
+              description: `Monthly renewal (${subscription.plan} plan)`,
             });
           }
+
+          // H1: Read billing period dates from the Razorpay subscription entity
+          const subEntity = payload.payload?.subscription?.entity;
+          const currentStart = subEntity?.current_start
+            ? new Date(subEntity.current_start * 1000).toISOString()
+            : new Date().toISOString();
+          const currentEnd = subEntity?.current_end
+            ? new Date(subEntity.current_end * 1000).toISOString()
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
           // Extend period
           await supabase
             .from("subscriptions")
             .update({
-              current_period_start: new Date().toISOString(),
-              current_period_end: new Date(
-                Date.now() + 30 * 24 * 60 * 60 * 1000
-              ).toISOString(),
+              current_period_start: currentStart,
+              current_period_end: currentEnd,
               status: "active",
               updated_at: new Date().toISOString(),
             })
@@ -276,7 +302,6 @@ Deno.serve(async (req) => {
       }
 
       case "subscription.pending": {
-        // Payment retry in progress
         const subscriptionId = entity?.id;
         if (subscriptionId) {
           await supabase
@@ -291,7 +316,6 @@ Deno.serve(async (req) => {
       }
 
       case "subscription.halted": {
-        // All retries failed
         const subscriptionId = entity?.id;
         if (subscriptionId) {
           await supabase
@@ -362,8 +386,53 @@ Deno.serve(async (req) => {
         break;
       }
 
+      // M3: New handlers for subscription.completed and subscription.updated
+      case "subscription.completed": {
+        const subscriptionId = entity?.id;
+        if (subscriptionId) {
+          await supabase
+            .from("subscriptions")
+            .update({
+              status: "canceled",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("rz_subscription_id", subscriptionId);
+
+          await supabase.from("subscription_events").insert({
+            event_id: eventId,
+            subscription_id: subscriptionId,
+            event_type: event,
+            status: "completed",
+            raw_payload: payload,
+          });
+        }
+        break;
+      }
+
+      case "subscription.updated": {
+        const subscriptionId = entity?.id;
+        const planId = entity?.plan_id;
+        if (subscriptionId && planId) {
+          await supabase
+            .from("subscriptions")
+            .update({
+              rz_plan_id: planId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("rz_subscription_id", subscriptionId);
+        }
+
+        await supabase.from("subscription_events").insert({
+          event_id: eventId,
+          subscription_id: subscriptionId || "unknown",
+          event_type: event,
+          status: "updated",
+          raw_payload: payload,
+        });
+        break;
+      }
+
       case "order.paid": {
-        // Backup confirmation for order payment
         console.log("Order paid:", entity?.id);
         break;
       }

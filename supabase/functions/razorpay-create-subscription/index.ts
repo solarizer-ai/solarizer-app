@@ -68,6 +68,28 @@ Deno.serve(async (req) => {
 
     const rzPlanId = RAZORPAY_PLAN_IDS[plan];
 
+    // L1: Validate plan ID is not a placeholder
+    if (rzPlanId.startsWith("plan_") && (rzPlanId.includes("_monthly") || rzPlanId.includes("_launch"))) {
+      return new Response(
+        JSON.stringify({ error: "Plan not configured. Please contact support." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // H2: Prevent duplicate active subscriptions
+    const { data: existingSub } = await supabase
+      .from("subscriptions")
+      .select("rz_subscription_id, status")
+      .eq("user_id", user.id)
+      .single();
+
+    if (existingSub?.rz_subscription_id && existingSub.status !== "canceled") {
+      return new Response(
+        JSON.stringify({ error: "Active subscription already exists. Cancel it first to create a new one." }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Get user email for customer notification
     const { data: profile } = await supabase
       .from("profiles")

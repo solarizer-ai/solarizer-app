@@ -54,6 +54,13 @@ export default function PaymentSuccess() {
     };
   }, []);
 
+  // L2: Clear signature parameters from URL after extraction
+  useEffect(() => {
+    if (razorpaySignature) {
+      window.history.replaceState({}, "", "/payment-success");
+    }
+  }, [razorpaySignature]);
+
   useEffect(() => {
     // Prevent double verification
     if (verificationAttempted.current) return;

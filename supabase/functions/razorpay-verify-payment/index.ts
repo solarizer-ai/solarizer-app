@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyPaymentLinkSignature } from "../_shared/razorpaySignature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,43 +10,9 @@ const corsHeaders = {
 interface VerifyPaymentLinkRequest {
   razorpay_payment_id: string;
   razorpay_payment_link_id: string;
-  razorpay_payment_link_reference_id: string; // Our internal order_id
+  razorpay_payment_link_reference_id: string;
   razorpay_payment_link_status: string;
   razorpay_signature: string;
-}
-
-// Payment Links signature formula:
-// hmac_sha256(payment_link_id + "|" + reference_id + "|" + status + "|" + payment_id, secret)
-async function verifyPaymentLinkSignature(
-  paymentLinkId: string,
-  referenceId: string,
-  status: string,
-  paymentId: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  const encoder = new TextEncoder();
-  const data = `${paymentLinkId}|${referenceId}|${status}|${paymentId}`;
-  
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(data)
-  );
-  
-  const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  
-  return expectedSignature === signature;
 }
 
 Deno.serve(async (req) => {
@@ -85,7 +52,6 @@ Deno.serve(async (req) => {
       razorpay_signature 
     } = body;
 
-    // The reference_id is our internal order_id
     const orderId = razorpay_payment_link_reference_id;
 
     if (!orderId || !razorpay_payment_link_id || !razorpay_payment_id || !razorpay_signature) {
@@ -95,19 +61,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use service role to check order status and process
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if already processed (idempotency)
+    // Idempotency check
     const { data: existingOrder } = await adminSupabase
       .from("payment_orders")
-      .select("status, rz_payment_id, order_type, plan, billing_period, credits_amount, amount_cents")
+      .select("status, rz_payment_id, order_type, plan, billing_period, credits_amount, amount_cents, metadata")
       .eq("order_id", orderId)
       .single();
 
     if (existingOrder?.status === 'paid') {
-      // Already processed - but check if upgrade was actually applied
       if (existingOrder.order_type === 'upgrade' && existingOrder.plan) {
         const { data: currentSub } = await adminSupabase
           .from("subscriptions")
@@ -115,7 +79,6 @@ Deno.serve(async (req) => {
           .eq("user_id", user.id)
           .single();
 
-        // If the subscription still has the old plan, apply the upgrade now
         if (currentSub && currentSub.plan !== existingOrder.plan) {
           const metadata = existingOrder.metadata as Record<string, string> | null;
           const fromPlan = metadata?.from_plan || currentSub.plan;
@@ -163,7 +126,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the signature
+    // Verify the signature (timing-safe via shared module)
     const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
     if (!keySecret) {
       return new Response(
@@ -189,7 +152,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update order with Razorpay payment details
     await adminSupabase
       .from("payment_orders")
       .update({
@@ -199,14 +161,12 @@ Deno.serve(async (req) => {
       })
       .eq("order_id", orderId);
 
-    // Get order details to check type
     const { data: orderInfo } = await adminSupabase
       .from("payment_orders")
       .select("order_type, plan, metadata")
       .eq("order_id", orderId)
       .single();
 
-    // Process the payment success
     const { data: result, error: processError } = await adminSupabase.rpc(
       "process_payment_success",
       {
@@ -223,7 +183,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // For upgrade orders, update the subscription plan
     if (orderInfo?.order_type === "upgrade" && orderInfo?.plan) {
       const metadata = orderInfo.metadata as Record<string, string> | null;
       const fromPlan = metadata?.from_plan || "starter";
@@ -239,7 +198,6 @@ Deno.serve(async (req) => {
         })
         .eq("user_id", user.id);
 
-      // Log to subscription history
       await adminSupabase
         .from("subscription_history")
         .insert({
@@ -249,14 +207,12 @@ Deno.serve(async (req) => {
         });
     }
 
-    // Get updated credits
     const { data: credits } = await adminSupabase
       .from("nloc_credits")
       .select("credits_remaining")
       .eq("user_id", user.id)
       .single();
 
-    // Get order details for response
     const { data: orderDetails } = await adminSupabase
       .from("payment_orders")
       .select("order_type, plan, billing_period, credits_amount, amount_cents")

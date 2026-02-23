@@ -24,6 +24,9 @@ const PLAN_ORDER: Record<string, number> = {
   business: 2,
 };
 
+// M2: Use env var instead of hardcoded URL
+const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://solarizer-app.lovable.app";
+
 function getRazorpayAuth(): string {
   const keyId = Deno.env.get("RAZORPAY_KEY_ID");
   const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
@@ -123,9 +126,7 @@ Deno.serve(async (req) => {
 
     // Create a Payment Link (same approach as power-ups)
     const orderId = `upgrade_${Date.now()}_${user.id.slice(0, 8)}`;
-    const callbackUrl = Deno.env.get("SUPABASE_URL")?.includes("localhost")
-      ? "http://localhost:5173/payment-success"
-      : "https://solarizer-app.lovable.app/payment-success";
+    const callbackUrl = `${FRONTEND_URL}/payment-success`;
 
     const planDisplayName = toPlan.charAt(0).toUpperCase() + toPlan.slice(1);
 
