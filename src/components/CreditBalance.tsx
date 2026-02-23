@@ -51,7 +51,7 @@ export function CreditBalance() {
             <p>
               {isPaid 
                 ? "Credits remaining. Purchase Power-Ups for additional capacity." 
-                : `Launch plan: ${PLAN_LIMITS.starter.nlocPerScan} nLOC max per scan, 1 file per scan`}
+                : `Spark plan: ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit max, 1 file per scan`}
             </p>
           </TooltipContent>
         </Tooltip>

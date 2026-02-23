@@ -316,7 +316,7 @@ export default function PlansAndCostingPage() {
                 headers={["Feature", "Spark ($149/mo)", "Blaze ($199/mo)", "Inferno ($499/mo)"]}
                 rows={[
                   [<strong className="text-foreground">Monthly credits</strong>, "50", "50", "50"],
-                  [<strong className="text-foreground">Scope limit per audit</strong>, "500 nLOC", "3,000 nLOC", "12,000 nLOC"],
+                  [<strong className="text-foreground">nLOC limit per audit</strong>, "500 nLOC", "3,000 nLOC", "12,000 nLOC"],
                   [<strong className="text-foreground">Complexity levels</strong>, "L1, L2, L3", "L1, L2, L3", "L1, L2, L3"],
                   [
                     <span className="font-semibold text-foreground text-xs uppercase tracking-wider">Analysis depth</span>,
@@ -416,7 +416,7 @@ export default function PlansAndCostingPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <DocTable
-                headers={["Plan", "Max scope per audit"]}
+                headers={["Plan", "nLOC limit per audit"]}
                 rows={[
                   [<strong className="text-foreground">Spark</strong>, "500 nLOC"],
                   [<strong className="text-foreground">Blaze</strong>, "3,000 nLOC"],
