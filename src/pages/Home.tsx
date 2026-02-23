@@ -300,7 +300,7 @@ const Home = () => {
       {/* ── SECTION 5: CTA ───────────────────────────────────────────── */}
       <section className="py-12 md:py-24">
         <div className="max-w-2xl mx-auto text-center px-6">
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.15]">
+          <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
             <span className="block">One Command</span>
             <span className="block text-gradient mt-1 md:mt-2">Instant Security</span>
           </h2>
