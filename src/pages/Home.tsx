@@ -155,7 +155,7 @@ const Home = () => {
       <Header />
 
       {/* ── SECTION 1: Hero ─────────────────────────────────────────── */}
-      <section className="relative pt-[72px] pb-12 md:pt-40 md:pb-14">
+      <section className="relative pt-28 pb-12 md:pt-40 md:pb-14">
         <HeroBackground />
 
         <div className="relative max-w-4xl mx-auto text-center px-5 md:px-6">
