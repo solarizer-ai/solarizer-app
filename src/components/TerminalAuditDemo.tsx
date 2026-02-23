@@ -204,7 +204,7 @@ const TerminalAuditDemo = () => {
   };
 
   return (
-    <div className="rounded-2xl ring-1 ring-white/[0.05] overflow-hidden">
+    <div className="rounded-xl md:rounded-2xl ring-1 ring-white/[0.05] overflow-hidden">
       {/* Title bar */}
       <div className="h-8 bg-[#0f0f0f] flex items-center px-3 gap-2">
         <div className="flex gap-1.5">
@@ -218,7 +218,7 @@ const TerminalAuditDemo = () => {
       </div>
 
       {/* Body */}
-      <div className="bg-[#050505] p-3 sm:p-4 md:p-5 font-mono text-[9px] sm:text-[11px] md:text-[13px] leading-[1.7] text-muted-foreground/70 overflow-hidden select-none h-[300px] sm:h-[420px] md:h-[480px]">
+      <div className="bg-[#050505] p-4 md:p-5 font-mono text-[10.5px] sm:text-[11px] md:text-[13px] leading-[1.5] sm:leading-[1.7] text-muted-foreground/70 overflow-hidden select-none h-[300px] sm:h-[420px] md:h-[480px]">
         {/* Audit header */}
         <div className="text-muted-foreground/40">
           ── Security Audit: VaultProtocol ────────────────
