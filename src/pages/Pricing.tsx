@@ -60,7 +60,7 @@ const pricingPlans: PricingPlan[] = [
     popular: true,
     gradient: 'bg-gradient-to-br from-orange-600 to-amber-500',
     specs: [
-      { label: 'Includes', value: 'Everything in Spark' },
+      { label: 'Includes', value: 'Everything in Spark, plus:' },
       { label: 'Scan depth', value: 'Deep scan' },
       { label: 'Severity coverage', value: 'All (+ Low, Info, Gas)' },
       { label: 'nLOC limit per audit', value: '3,000' },
@@ -81,11 +81,10 @@ const pricingPlans: PricingPlan[] = [
     popular: false,
     gradient: 'bg-gradient-to-br from-orange-700 via-red-600 to-purple-700',
     specs: [
-      { label: 'Includes', value: 'Everything in Blaze' },
+      { label: 'Includes', value: 'Everything in Blaze, plus:' },
       { label: 'nLOC limit per audit', value: '12,000' },
       { label: 'Report sharing', value: 'Up to 5 collaborators' },
       { label: 'Remediation tracking', value: 'Included' },
-      { label: 'Dashboard reports', value: 'Free' },
       { label: 'Power-up rate', value: '$2.20/credit' },
     ],
   },
@@ -281,17 +280,25 @@ const Pricing = () => {
                     <p className="text-2xl font-bold">${plan.monthlyPrice}</p>
                   </div>
 
-                  {/* Credits row */}
-                  <div className="py-3 border-b border-border">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Credits included</p>
-                    <p className="text-sm font-semibold text-foreground">{plan.monthlyCredits}</p>
-                  </div>
+                  {/* Credits row - only for Spark */}
+                  {plan.id === 'starter' && (
+                    <div className="py-3 border-b border-border">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Credits included</p>
+                      <p className="text-sm font-semibold text-foreground">{plan.monthlyCredits}</p>
+                    </div>
+                  )}
 
                   {/* Feature spec rows */}
                   {plan.specs.map((spec, specIdx) => (
                     <div key={specIdx} className={cn("py-3", specIdx < plan.specs.length - 1 && "border-b border-border")}>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{spec.label}</p>
-                      <p className={cn("text-sm font-semibold", spec.label === 'Includes' ? "text-primary" : "text-foreground")}>{spec.value}</p>
+                      {spec.label === 'Includes' ? (
+                        <p className="text-sm font-semibold text-primary">{spec.value}</p>
+                      ) : (
+                        <>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{spec.label}</p>
+                          <p className="text-sm font-semibold text-foreground">{spec.value}</p>
+                        </>
+                      )}
                     </div>
                   ))}
 
