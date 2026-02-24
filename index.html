@@ -46,7 +46,7 @@
   
   
   <link href="https://fonts.googleapis.com/css2?family=Cascadia+Code&display=swap" rel="stylesheet" crossorigin="anonymous">
-  <meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; script-src 'self' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://storage.googleapis.com https://*.googleusercontent.com; connect-src 'self' https://xylfnqrtzqfduutdcxvu.supabase.co wss://xylfnqrtzqfduutdcxvu.supabase.co https://api.razorpay.com https://lux-chat.razorpay.com; frame-src https://api.razorpay.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://storage.googleapis.com https://*.googleusercontent.com; connect-src 'self' https://xylfnqrtzqfduutdcxvu.supabase.co wss://xylfnqrtzqfduutdcxvu.supabase.co https://api.razorpay.com https://lux-chat.razorpay.com; frame-src https://api.razorpay.com; frame-ancestors 'none';">
   <meta property="og:title" content="Agentic AI, Multi-Phase Smart Contract Security - Solarizer">
   <meta name="twitter:title" content="Agentic AI, Multi-Phase Smart Contract Security - Solarizer">
   <meta property="og:description" content="Smart contract security analysis platform for Solidity developers and blockchain protocols. Powered by multi=phase agentic AI.">
@@ -55,6 +55,9 @@
 
   <body>
     <div id="root"></div>
+    <!-- Razorpay checkout.js - SRI not feasible (script content changes without version bumps).
+         Risk accepted: If Razorpay CDN is compromised, this script could be tampered with.
+         Mitigation: CSP restricts script sources; Razorpay is a PCI-DSS compliant provider. -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

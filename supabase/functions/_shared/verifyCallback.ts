@@ -66,7 +66,18 @@ export async function verifyCallback(
     return { valid: false, error: 'Service temporarily unavailable', status: 503 };
   }
 
-  if (callbackSecret !== expectedSecret) {
+  // Constant-time comparison to prevent timing attacks
+  const enc = new TextEncoder();
+  const bufA = enc.encode(callbackSecret);
+  const bufB = enc.encode(expectedSecret);
+
+  if (bufA.byteLength !== bufB.byteLength) {
+    // Dummy comparison to maintain constant time on length mismatch
+    crypto.subtle.timingSafeEqual(bufA, bufA);
+    return { valid: false, error: 'Unauthorized', status: 401 };
+  }
+
+  if (!crypto.subtle.timingSafeEqual(bufA, bufB)) {
     return { valid: false, error: 'Unauthorized', status: 401 };
   }
 

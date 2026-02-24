@@ -55,19 +55,30 @@ Deno.serve(async (req) => {
 
     console.log(`Processing Razorpay webhook: ${event}`, { eventId });
 
-    // Idempotency check
+    // Atomic idempotency guard: INSERT first, catch unique violation
     if (eventId) {
-      const { data: existing } = await supabase
+      const { error: idempotencyError } = await supabase
         .from("subscription_events")
-        .select("id")
-        .eq("event_id", eventId)
-        .single();
+        .insert({
+          event_id: eventId,
+          event_type: event,
+          subscription_id: entity?.id || "unknown",
+          status: "processing",
+          raw_payload: payload,
+        });
 
-      if (existing) {
-        console.log("Event already processed:", eventId);
+      if (idempotencyError) {
+        if (idempotencyError.code === "23505") {
+          console.log("Webhook already processed:", eventId);
+          return new Response(
+            JSON.stringify({ success: true, already_processed: true }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        console.error("Failed to record webhook event:", idempotencyError.message);
         return new Response(
-          JSON.stringify({ success: true, already_processed: true }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Failed to record event" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
@@ -213,16 +224,15 @@ Deno.serve(async (req) => {
         const amountCents = payload.payload?.payment?.entity?.amount;
 
         if (subscriptionId) {
-          // Log the event
-          await supabase.from("subscription_events").insert({
-            event_id: eventId,
-            subscription_id: subscriptionId,
-            event_type: event,
-            payment_id: paymentId,
-            amount_cents: amountCents,
-            status: "processed",
-            raw_payload: payload,
-          });
+          // Update the event record with payment details
+          await supabase
+            .from("subscription_events")
+            .update({
+              payment_id: paymentId,
+              amount_cents: amountCents,
+              status: "processed",
+            })
+            .eq("event_id", eventId);
 
           // Look up subscription to get user_id
           const { data: subscription } = await supabase
@@ -234,48 +244,27 @@ Deno.serve(async (req) => {
           if (subscription) {
             // Credit the user's account (50 credits for monthly renewal)
             const creditsToAdd = 50;
-            
-            // Upsert credits
-            const { error: creditError } = await supabase
-              .from("nloc_credits")
-              .update({
-                credits_remaining: supabase.rpc ? undefined : 0, // handled below
-                updated_at: new Date().toISOString(),
-              })
-              .eq("user_id", subscription.user_id);
 
-            // Use raw SQL-style increment via direct update
-            // Since we can't do atomic increment via update, use the RPC pattern
-            const { data: currentCredits } = await supabase
-              .from("nloc_credits")
-              .select("credits_remaining")
-              .eq("user_id", subscription.user_id)
-              .single();
+            // Atomic credit increment via RPC
+            const { data: newTotal, error: creditError } = await supabase.rpc(
+              "add_renewal_credits",
+              { p_user_id: subscription.user_id, p_credits: creditsToAdd }
+            );
 
-            if (currentCredits) {
-              await supabase
-                .from("nloc_credits")
-                .update({
-                  credits_remaining: currentCredits.credits_remaining + creditsToAdd,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("user_id", subscription.user_id);
+            if (creditError) {
+              console.error("Failed to add renewal credits:", creditError.message);
+            } else {
+              console.log(`Credits added: ${creditsToAdd}, new total: ${newTotal}`);
+
+              // Log the credit transaction
+              await supabase.from("credit_txns").insert({
+                user_id: subscription.user_id,
+                type: "subscription_grant",
+                amount: creditsToAdd,
+                balance_after: newTotal,
+                description: `Monthly renewal (${subscription.plan} plan)`,
+              });
             }
-
-            // Log the credit transaction
-            const { data: balanceAfter } = await supabase
-              .from("nloc_credits")
-              .select("credits_remaining")
-              .eq("user_id", subscription.user_id)
-              .single();
-
-            await supabase.from("credit_txns").insert({
-              user_id: subscription.user_id,
-              type: "subscription_grant",
-              amount: creditsToAdd,
-              balance_after: balanceAfter?.credits_remaining || 0,
-              description: `Monthly renewal (${subscription.plan} plan)`,
-            });
           }
 
           // H1: Read billing period dates from the Razorpay subscription entity
@@ -326,13 +315,10 @@ Deno.serve(async (req) => {
             })
             .eq("rz_subscription_id", subscriptionId);
 
-          await supabase.from("subscription_events").insert({
-            event_id: eventId,
-            subscription_id: subscriptionId,
-            event_type: event,
-            status: "halted",
-            raw_payload: payload,
-          });
+          await supabase
+            .from("subscription_events")
+            .update({ status: "halted" })
+            .eq("event_id", eventId);
         }
         break;
       }
@@ -348,13 +334,10 @@ Deno.serve(async (req) => {
             })
             .eq("rz_subscription_id", subscriptionId);
 
-          await supabase.from("subscription_events").insert({
-            event_id: eventId,
-            subscription_id: subscriptionId,
-            event_type: event,
-            status: "cancelled",
-            raw_payload: payload,
-          });
+          await supabase
+            .from("subscription_events")
+            .update({ status: "cancelled" })
+            .eq("event_id", eventId);
         }
         break;
       }
@@ -362,13 +345,10 @@ Deno.serve(async (req) => {
       case "subscription.paused": {
         const subscriptionId = entity?.id;
         console.log("Subscription paused:", subscriptionId);
-        await supabase.from("subscription_events").insert({
-          event_id: eventId,
-          subscription_id: subscriptionId,
-          event_type: event,
-          status: "paused",
-          raw_payload: payload,
-        });
+        await supabase
+          .from("subscription_events")
+          .update({ status: "paused" })
+          .eq("event_id", eventId);
         break;
       }
 
@@ -398,13 +378,10 @@ Deno.serve(async (req) => {
             })
             .eq("rz_subscription_id", subscriptionId);
 
-          await supabase.from("subscription_events").insert({
-            event_id: eventId,
-            subscription_id: subscriptionId,
-            event_type: event,
-            status: "completed",
-            raw_payload: payload,
-          });
+          await supabase
+            .from("subscription_events")
+            .update({ status: "completed" })
+            .eq("event_id", eventId);
         }
         break;
       }
@@ -422,13 +399,10 @@ Deno.serve(async (req) => {
             .eq("rz_subscription_id", subscriptionId);
         }
 
-        await supabase.from("subscription_events").insert({
-          event_id: eventId,
-          subscription_id: subscriptionId || "unknown",
-          event_type: event,
-          status: "updated",
-          raw_payload: payload,
-        });
+        await supabase
+          .from("subscription_events")
+          .update({ status: "updated" })
+          .eq("event_id", eventId);
         break;
       }
 
@@ -441,17 +415,17 @@ Deno.serve(async (req) => {
         console.log("Unhandled event type:", event);
     }
 
-    // Log event for non-subscription events
-    if (!event.startsWith("subscription.") && eventId) {
-      await supabase.from("subscription_events").insert({
-        event_id: eventId,
-        subscription_id: entity?.id || "unknown",
-        event_type: event,
-        payment_id: entity?.id,
-        amount_cents: entity?.amount,
-        status: "logged",
-        raw_payload: payload,
-      });
+    // Update final status for events that don't set it in their handler
+    if (eventId) {
+      await supabase
+        .from("subscription_events")
+        .update({
+          status: "processed",
+          payment_id: entity?.id,
+          amount_cents: entity?.amount,
+        })
+        .eq("event_id", eventId)
+        .eq("status", "processing"); // Only update if still in initial state
     }
 
     return new Response(
