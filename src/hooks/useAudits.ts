@@ -166,6 +166,29 @@ export const useFindings = (auditId: string | null) => {
   });
 };
 
+// Fetch archived (false_positive) findings for an audit
+export const useArchivedFindings = (auditId: string | null) => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['archived-findings', auditId],
+    queryFn: async () => {
+      if (!auditId) return [];
+      
+      const { data, error } = await supabase
+        .from('findings')
+        .select('*')
+        .eq('audit_id', auditId)
+        .eq('verification_status', 'false_positive')
+        .order('severity', { ascending: true });
+      
+      if (error) throw error;
+      return data as Finding[];
+    },
+    enabled: !!user && !!auditId,
+  });
+};
+
 // Create a new audit
 export const useCreateAudit = () => {
   const queryClient = useQueryClient();
