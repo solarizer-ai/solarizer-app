@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Copy, Check, Layers, Fingerprint, Search, GitBranch, FileText, Shield, EyeOff, Workflow, KeyRound } from "lucide-react";
 import Header from "@/components/Header";
@@ -143,12 +143,38 @@ const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
 
 const Home = () => {
   const [copied, setCopied] = useState(false);
+  const [pipelineProgress, setPipelineProgress] = useState(0);
+  const pipelineRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText("npm install -g solarizer");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    const el = pipelineRef.current;
+    if (!el) return;
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const rect = el.getBoundingClientRect();
+        const viewH = window.innerHeight;
+        const start = viewH * 0.8;
+        const end = -rect.height * 0.3;
+        const raw = (start - rect.top) / (start - end);
+        setPipelineProgress(Math.min(1, Math.max(0, raw)));
+        ticking = false;
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -242,15 +268,23 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="relative mt-8 md:mt-12">
+          <div className="relative mt-8 md:mt-12" ref={pipelineRef}>
+            {/* Background dashed line */}
             <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
+            {/* Animated solid orange line */}
+            <div
+              className="absolute left-6 md:left-8 top-0 w-px bg-primary transition-none"
+              style={{ height: `${pipelineProgress * 100}%` }}
+            />
             <div className="space-y-5 md:space-y-8">
-              {phases.map((phase) => {
+              {phases.map((phase, index) => {
                 const Icon = phase.icon;
+                const threshold = index / phases.length;
+                const isActive = pipelineProgress >= threshold;
                 return (
                   <div key={phase.pill} className="relative flex items-start gap-4 md:gap-8">
-                    <div className="relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border border-border/30 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-primary" />
+                    <div className={`relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border flex items-center justify-center transition-colors duration-500 ${isActive ? "border-primary/50" : "border-border/20"}`}>
+                      <Icon className={`w-5 h-5 transition-colors duration-500 ${isActive ? "text-primary" : "text-muted-foreground/40"}`} />
                     </div>
                     <div className="flex-1 pt-1">
                       <span className="terminal-pill">{phase.pill}</span>
