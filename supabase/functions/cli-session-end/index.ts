@@ -189,7 +189,8 @@ Deno.serve(async (req) => {
       const { data: findings } = await supabase
         .from('findings')
         .select('severity')
-        .eq('audit_id', sessionId);
+        .eq('audit_id', sessionId)
+        .neq('verification_status', 'false_positive');
 
       const severities = (findings || []).map(f => f.severity as Severity);
       const calculatedGrade = calculateGradeFromFindings(severities);

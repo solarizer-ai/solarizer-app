@@ -431,6 +431,7 @@ export type Database = {
           resolved_by: string | null
           severity: Database["public"]["Enums"]["finding_severity"]
           title: string
+          verification_status: Database["public"]["Enums"]["finding_verification_status"]
         }
         Insert: {
           audit_id: string
@@ -447,6 +448,7 @@ export type Database = {
           resolved_by?: string | null
           severity: Database["public"]["Enums"]["finding_severity"]
           title: string
+          verification_status?: Database["public"]["Enums"]["finding_verification_status"]
         }
         Update: {
           audit_id?: string
@@ -463,6 +465,7 @@ export type Database = {
           resolved_by?: string | null
           severity?: Database["public"]["Enums"]["finding_severity"]
           title?: string
+          verification_status?: Database["public"]["Enums"]["finding_verification_status"]
         }
         Relationships: [
           {
@@ -962,6 +965,11 @@ export type Database = {
         | "cancelled"
         | "failed"
       finding_severity: "critical" | "high" | "medium" | "low" | "info"
+      finding_verification_status:
+        | "unverified"
+        | "verified"
+        | "downgraded"
+        | "false_positive"
       security_grade: "A" | "B" | "C" | "D" | "F"
       subscription_plan: "starter" | "pro" | "business"
       subscription_status: "active" | "canceled" | "past_due"
@@ -1102,6 +1110,12 @@ export const Constants = {
         "failed",
       ],
       finding_severity: ["critical", "high", "medium", "low", "info"],
+      finding_verification_status: [
+        "unverified",
+        "verified",
+        "downgraded",
+        "false_positive",
+      ],
       security_grade: ["A", "B", "C", "D", "F"],
       subscription_plan: ["starter", "pro", "business"],
       subscription_status: ["active", "canceled", "past_due"],
