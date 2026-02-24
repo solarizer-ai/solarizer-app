@@ -50,6 +50,54 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_orchestration: {
+        Row: {
+          aborted: boolean | null
+          error: string | null
+          findings: Json | null
+          findings_count: number | null
+          phase: string
+          progress: Json
+          report_markdown: string | null
+          request_payload: Json
+          session_id: string
+          started_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          aborted?: boolean | null
+          error?: string | null
+          findings?: Json | null
+          findings_count?: number | null
+          phase?: string
+          progress?: Json
+          report_markdown?: string | null
+          request_payload: Json
+          session_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          aborted?: boolean | null
+          error?: string | null
+          findings?: Json | null
+          findings_count?: number | null
+          phase?: string
+          progress?: Json
+          report_markdown?: string | null
+          request_payload?: Json
+          session_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_shares: {
         Row: {
           accepted_at: string | null

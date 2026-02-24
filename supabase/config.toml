@@ -70,3 +70,24 @@ verify_jwt = false
 
 [functions.cli-commit-contract]
 verify_jwt = false
+
+[functions.cli-audit-start]
+verify_jwt = false
+
+[functions.cli-audit-status]
+verify_jwt = false
+
+[functions.cli-audit-report]
+verify_jwt = false
+
+[functions.cli-audit-cancel]
+verify_jwt = false
+
+[functions.cli-audit-progress]
+verify_jwt = false
+
+[functions.cli-audit-complete]
+verify_jwt = false
+
+[functions.cli-audit-fail]
+verify_jwt = false
