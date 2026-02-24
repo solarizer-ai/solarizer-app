@@ -15,10 +15,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle } from "lucide-react";
+import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle, Archive } from "lucide-react";
 import { generateMarkdownReport, downloadMarkdown } from "@/lib/exportMarkdown";
 import { toast } from "sonner";
-import { useAudit, useFindings } from "@/hooks/useAudits";
+import { useAudit, useFindings, useArchivedFindings } from "@/hooks/useAudits";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
 import { useReportFeatureAccess } from "@/hooks/useReportFeatureAccess";
@@ -54,6 +54,7 @@ const Report = () => {
 
   const { data: currentAudit, isLoading: auditLoading } = useAudit(auditId || null);
   const { data: findings } = useFindings(auditId || null);
+  const { data: archivedFindings } = useArchivedFindings(auditId || null);
   const { data: shareCount } = useAuditShareCount(auditId || null);
 
   // Get owner info for shared audits (use isOwner from hook)
@@ -334,7 +335,7 @@ const Report = () => {
 
                   {/* Tabbed Interface: Scope, Coverage & Findings */}
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="scope" className="flex items-center gap-2">
                         <FileCode className="w-4 h-4" />
                         Scope
@@ -342,6 +343,10 @@ const Report = () => {
                       <TabsTrigger value="findings" className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4" />
                         Findings ({visibleFindings.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="archive" className="flex items-center gap-2">
+                        <Archive className="w-4 h-4" />
+                        Archive ({archivedFindings?.length || 0})
                       </TabsTrigger>
                     </TabsList>
 
@@ -411,6 +416,45 @@ const Report = () => {
                           </>
                         ) : (
                           <p className="text-muted-foreground text-center py-8">No findings for this audit.</p>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="archive" className="mt-4">
+                      <div className="space-y-4">
+                        {archivedFindings && archivedFindings.length > 0 ? (
+                          <div className="space-y-3">
+                            <p className="text-sm text-muted-foreground">
+                              These findings were marked as false positives during verification and excluded from the security score.
+                            </p>
+                            {archivedFindings.map((f) => (
+                              <FindingItem
+                                key={f.id}
+                                finding={{
+                                  id: f.id,
+                                  title: f.title,
+                                  severity: f.severity,
+                                  description: f.description,
+                                  location: (f.location || f.line_start) ? {
+                                    file: f.location || null,
+                                    lines: f.line_start && f.line_end
+                                      ? (f.line_start === f.line_end ? `${f.line_start}` : `${f.line_start}-${f.line_end}`)
+                                      : undefined,
+                                  } : undefined,
+                                  code: f.code_snippet || undefined,
+                                  startLine: f.line_start || 1,
+                                  remediation: f.remediation || undefined,
+                                  is_resolved: f.is_resolved,
+                                }}
+                                canViewRemediation={canViewRemediation}
+                                canCommentOnFindings={false}
+                                currentUserId={user?.id}
+                                onUpgradeClick={() => setUpgradeModalOpen(true)}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground text-center py-8">No archived findings.</p>
                         )}
                       </div>
                     </TabsContent>
