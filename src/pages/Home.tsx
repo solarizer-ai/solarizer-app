@@ -271,7 +271,7 @@ const Home = () => {
         <div className="max-w-4xl mx-auto px-5 md:px-6">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,5vw,5.5rem)] font-black tracking-tight leading-[1.15]">
-              <span className="text-gradient">Security Infrastructure</span>, Not a Wrapper
+              <span className="text-gradient">Security Infrastructure</span>
             </h2>
           </div>
 
