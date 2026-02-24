@@ -83,6 +83,31 @@ Deno.serve(async (req) => {
       project_name: a.project_name,
     }));
 
+    // Also check audit_orchestration for queued/running audits
+    const { data: orchestratedAudits } = await supabase
+      .from('audit_orchestration')
+      .select('session_id, status, phase')
+      .eq('user_id', userId)
+      .in('status', ['queued', 'running'])
+      .order('started_at', { ascending: false })
+      .limit(1);
+
+    // Build active_audit (singular) for CLI — prefer orchestrated audit
+    let activeAudit = null;
+
+    if (orchestratedAudits && orchestratedAudits.length > 0) {
+      const oa = orchestratedAudits[0];
+      activeAudit = {
+        audit_id: oa.session_id,
+        status: oa.status,
+        contracts_completed: 0,
+        contracts_total: 0,
+        project_name: '',
+      };
+    } else if (activeAuditsList.length > 0) {
+      activeAudit = activeAuditsList[0];
+    }
+
     const tier = subscription?.plan || 'free';
 
     console.log(`cli-auth: User ${userId} - tier: ${tier}, credits: ${credits?.credits_remaining || 0}`);
@@ -96,6 +121,7 @@ Deno.serve(async (req) => {
         credits_remaining: credits?.credits_remaining || 0,
         scans_remaining: credits?.scans_remaining || 0,
         active_audits: activeAuditsList,
+        active_audit: activeAudit,
       }),
       { status: 200, headers: corsHeaders }
     );
