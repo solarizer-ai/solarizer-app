@@ -1,106 +1,56 @@
 
 
-# Security Hardening (Pre-Launch)
+# Intelligence Engine: Animated Pipeline Line with Icon Color-Up Effect
 
-Five issues identified and verified against the current codebase. All are confirmed present and need fixing.
-
----
-
-## 1. P0-1: Atomic Credit Increment (CRITICAL)
-
-**Problem:** `razorpay-webhook/index.ts` lines 249-262 use a read-then-write pattern on `nloc_credits`, causing a race condition where concurrent `subscription.charged` webhooks can overwrite each other and lose paid credits.
-
-**Fix:**
-- Create a new DB function `add_renewal_credits(p_user_id UUID, p_credits INTEGER)` that atomically increments `nloc_credits.credits_remaining` and returns the new balance.
-- Replace the entire read-then-write block (lines 234-278) with a single RPC call + credit_txns insert using the returned balance.
+Add a scroll-triggered animation to the Intelligence Engine pipeline section where an orange line travels down through the icons, coloring them up as it passes.
 
 ---
 
-## 2. P0-2: Atomic Webhook Idempotency (CRITICAL)
+## How It Works
 
-**Problem:** Lines 58-73 use a check-then-insert pattern on `subscription_events.event_id`. Two concurrent webhooks with the same `event_id` can both pass the check.
-
-**Fix:**
-- Add a `UNIQUE` constraint on `subscription_events.event_id` (no duplicates exist currently -- verified).
-- Replace the check-then-insert with an immediate INSERT. If the insert fails with error code `23505` (unique violation), return "already processed". Move this guard to the top of the handler, before the switch statement, so ALL event types are covered.
-
----
-
-## 3. P0-3: Timing Attack on Legacy Callback (CRITICAL)
-
-**Problem:** `verifyCallback.ts` line 69 uses `!==` for comparing `callbackSecret` to `expectedSecret`, which is vulnerable to timing attacks.
-
-**Fix:** Replace the direct string comparison with `crypto.subtle.timingSafeEqual` (same pattern already used for per-audit tokens earlier in the same file). Encode both strings, compare lengths first (with a dummy comparison to maintain constant time), then use `timingSafeEqual`.
+1. The dashed vertical connector line is replaced with a solid orange "progress" line that grows from 0% to 100% height as the section scrolls into view.
+2. Each icon circle starts greyed out (muted border, grey icon color).
+3. As the orange line reaches each icon's vertical position, the icon transitions from grey to the orange primary color with a smooth fade.
+4. Uses `IntersectionObserver` to trigger the animation when the section enters the viewport, and a CSS transition on the line height + icon colors.
 
 ---
 
-## 4. P0-5: Enforce CSP (HIGH)
+## Visual Behavior
 
-**Problem:** `index.html` line 49 uses `Content-Security-Policy-Report-Only`, which logs but does not block XSS.
+```text
+Before scroll:          After animation:
 
-**Fix:** Change `Content-Security-Policy-Report-Only` to `Content-Security-Policy` and append `; frame-ancestors 'none'` to prevent clickjacking.
-
----
-
-## 5. P1-4: Razorpay Script SRI (MEDIUM -- Accepted Risk)
-
-**Problem:** Razorpay `checkout.js` has no `integrity` attribute.
-
-**Assessment:** Razorpay does not support SRI (script content changes without URL versioning). Adding SRI would break the integration.
-
-**Fix:** Add a comment documenting the accepted risk. No code change to the script tag itself.
+  (grey) Layers           (orange) Layers
+    |                        |  <-- solid orange
+  (grey) Fingerprint      (orange) Fingerprint
+    |                        |
+  (grey) Search           (orange) Search
+    |                        |
+  (grey) GitBranch        (orange) GitBranch
+    |                        |
+  (grey) FileText         (orange) FileText
+```
 
 ---
 
 ## Technical Details
 
-### Migration SQL
+### File: `src/pages/Home.tsx`
 
-```sql
--- Atomic credit increment for subscription renewals
-CREATE OR REPLACE FUNCTION public.add_renewal_credits(
-  p_user_id UUID,
-  p_credits INTEGER
-)
-RETURNS INTEGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-  v_new_total INTEGER;
-BEGIN
-  UPDATE nloc_credits
-  SET credits_remaining = credits_remaining + p_credits,
-      updated_at = now()
-  WHERE user_id = p_user_id
-  RETURNING credits_remaining INTO v_new_total;
+1. Add `useEffect` and `useRef` imports (already has `useState`).
+2. Create a ref for the pipeline container and a state `progress` (0 to 1).
+3. Use `IntersectionObserver` + scroll listener: when the section is in view, map scroll position to a 0-1 progress value based on how far through the section the user has scrolled.
+4. Replace the static dashed line div with two layers:
+   - A dashed grey line (full height, background).
+   - A solid orange line (`height: ${progress * 100}%`, foreground) that grows.
+5. For each phase icon, compute a threshold (e.g., phase index / total phases). If `progress >= threshold`, apply orange styling; otherwise grey styling. Use CSS `transition` for smooth color change.
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'No credit record for user %', p_user_id;
-  END IF;
+### Changes Summary
 
-  RETURN v_new_total;
-END;
-$$;
+| Element | Before | After |
+|---------|--------|-------|
+| Vertical line | Static dashed grey | Dashed grey background + growing solid orange overlay |
+| Icon circles | Always orange (`text-primary`, `border-border/30`) | Start grey (`text-muted-foreground/40`, `border-border/20`), transition to orange when line reaches them |
+| Icon transition | None | `transition-colors duration-500` for smooth color-up |
 
--- Unique constraint for idempotent webhook processing
-ALTER TABLE subscription_events
-  ADD CONSTRAINT subscription_events_event_id_unique UNIQUE (event_id);
-```
-
-### Files Modified
-
-| File | Change |
-|------|--------|
-| DB migration | `add_renewal_credits` RPC + UNIQUE constraint |
-| `supabase/functions/razorpay-webhook/index.ts` | Replace read-then-write with RPC call; replace check-then-insert with insert-on-conflict |
-| `supabase/functions/_shared/verifyCallback.ts` | Replace `!==` with `crypto.subtle.timingSafeEqual` |
-| `index.html` | Enforce CSP + add `frame-ancestors 'none'` + Razorpay SRI comment |
-
-### Order of Operations
-
-1. Run migration (creates RPC + adds UNIQUE constraint)
-2. Update edge functions (webhook + verifyCallback)
-3. Update index.html (CSP)
-4. Deploy edge functions
+No new files or dependencies needed -- uses native `IntersectionObserver` and existing Tailwind classes.
