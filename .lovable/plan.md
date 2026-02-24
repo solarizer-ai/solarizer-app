@@ -1,108 +1,106 @@
 
 
-# Findings Sync and Per-Contract Credit Commit
+# Security Hardening (Pre-Launch)
 
-This plan adds `verification_status` tracking to findings, enables the CLI to enrich duplicate findings, introduces batch updates for post-validation status changes, adds per-contract credit commits, and filters false positives from the web UI.
+Five issues identified and verified against the current codebase. All are confirmed present and need fixing.
 
 ---
 
-## A1. Migration: Add `verification_status` Column
+## 1. P0-1: Atomic Credit Increment (CRITICAL)
 
-Create a new enum type and add the column to the `findings` table.
+**Problem:** `razorpay-webhook/index.ts` lines 249-262 use a read-then-write pattern on `nloc_credits`, causing a race condition where concurrent `subscription.charged` webhooks can overwrite each other and lose paid credits.
+
+**Fix:**
+- Create a new DB function `add_renewal_credits(p_user_id UUID, p_credits INTEGER)` that atomically increments `nloc_credits.credits_remaining` and returns the new balance.
+- Replace the entire read-then-write block (lines 234-278) with a single RPC call + credit_txns insert using the returned balance.
+
+---
+
+## 2. P0-2: Atomic Webhook Idempotency (CRITICAL)
+
+**Problem:** Lines 58-73 use a check-then-insert pattern on `subscription_events.event_id`. Two concurrent webhooks with the same `event_id` can both pass the check.
+
+**Fix:**
+- Add a `UNIQUE` constraint on `subscription_events.event_id` (no duplicates exist currently -- verified).
+- Replace the check-then-insert with an immediate INSERT. If the insert fails with error code `23505` (unique violation), return "already processed". Move this guard to the top of the handler, before the switch statement, so ALL event types are covered.
+
+---
+
+## 3. P0-3: Timing Attack on Legacy Callback (CRITICAL)
+
+**Problem:** `verifyCallback.ts` line 69 uses `!==` for comparing `callbackSecret` to `expectedSecret`, which is vulnerable to timing attacks.
+
+**Fix:** Replace the direct string comparison with `crypto.subtle.timingSafeEqual` (same pattern already used for per-audit tokens earlier in the same file). Encode both strings, compare lengths first (with a dummy comparison to maintain constant time), then use `timingSafeEqual`.
+
+---
+
+## 4. P0-5: Enforce CSP (HIGH)
+
+**Problem:** `index.html` line 49 uses `Content-Security-Policy-Report-Only`, which logs but does not block XSS.
+
+**Fix:** Change `Content-Security-Policy-Report-Only` to `Content-Security-Policy` and append `; frame-ancestors 'none'` to prevent clickjacking.
+
+---
+
+## 5. P1-4: Razorpay Script SRI (MEDIUM -- Accepted Risk)
+
+**Problem:** Razorpay `checkout.js` has no `integrity` attribute.
+
+**Assessment:** Razorpay does not support SRI (script content changes without URL versioning). Adding SRI would break the integration.
+
+**Fix:** Add a comment documenting the accepted risk. No code change to the script tag itself.
+
+---
+
+## Technical Details
+
+### Migration SQL
 
 ```sql
-CREATE TYPE public.finding_verification_status
-  AS ENUM ('unverified', 'verified', 'downgraded', 'false_positive');
+-- Atomic credit increment for subscription renewals
+CREATE OR REPLACE FUNCTION public.add_renewal_credits(
+  p_user_id UUID,
+  p_credits INTEGER
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_new_total INTEGER;
+BEGIN
+  UPDATE nloc_credits
+  SET credits_remaining = credits_remaining + p_credits,
+      updated_at = now()
+  WHERE user_id = p_user_id
+  RETURNING credits_remaining INTO v_new_total;
 
-ALTER TABLE public.findings
-  ADD COLUMN verification_status public.finding_verification_status
-  NOT NULL DEFAULT 'unverified';
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'No credit record for user %', p_user_id;
+  END IF;
+
+  RETURN v_new_total;
+END;
+$$;
+
+-- Unique constraint for idempotent webhook processing
+ALTER TABLE subscription_events
+  ADD CONSTRAINT subscription_events_event_id_unique UNIQUE (event_id);
 ```
 
----
-
-## A2. Update `save-finding` Edge Function
-
-**File:** `supabase/functions/save-finding/index.ts`
-
-1. Add `verification_status` to the `FindingInput` interface (optional, defaults to `'unverified'`).
-2. Validate `verification_status` against the four allowed values if provided.
-3. Include `verification_status` in the INSERT statement.
-4. Change duplicate handling: instead of skipping, UPDATE the existing finding with any non-null fields from the new request (title match still uses `title + severity` for lookup, but now enriches with `line_start`, `line_end`, `code_snippet`, `remediation`, `location`, `verification_status`, `description`).
-5. Return `was_duplicate` and `was_updated` flags in the response.
-
----
-
-## A3. New Edge Function: `update-findings-batch`
-
-**File:** `supabase/functions/update-findings-batch/index.ts`
-
-- Server-to-server only (no CORS, reject OPTIONS with 403)
-- Authenticates via `x-callback-token` using the shared `verifyCallback` helper
-- Accepts `{ audit_id, updates: [{ finding_id, verification_status?, severity?, line_start?, line_end?, code_snippet? }] }`
-- Checks audit is not locked
-- For each update entry, applies only non-null/non-undefined fields to the matching finding row (using service role client)
-- Returns `{ success: true, updated_count: number }`
-
-**Config:** Add to `supabase/config.toml`:
-```toml
-[functions.update-findings-batch]
-verify_jwt = false
-```
-
----
-
-## A4. New Edge Function: `cli-commit-contract`
-
-**File:** `supabase/functions/cli-commit-contract/index.ts`
-
-- Uses same session JWT verification as `cli-session-end` (copy `verifySessionJWT` helper)
-- Accepts `{ session_id, contract_path, credit_amount }`
-- Validates `session_id` matches JWT's `sessionId`
-- Fetches audit record, confirms ownership via JWT `userId`, confirms audit is not locked
-- Clamps `credit_amount` to `credits_reserved` (never commit more than reserved)
-- Calls `cli_commit_credits(userId, clampedAmount, auditId, description)` RPC
-- Updates audit: `SET credits_reserved = credits_reserved - clampedAmount, contracts_completed = contracts_completed + 1, current_contract = contract_path, last_heartbeat = now()`
-- Returns `{ success: true, committed, remaining_reserved }`
-
-**Config:** Add to `supabase/config.toml`:
-```toml
-[functions.cli-commit-contract]
-verify_jwt = false
-```
-
----
-
-## A5. Web App: Filter `false_positive` Findings
-
-**File:** `src/hooks/useAudits.ts`
-
-- Add `verification_status` field to the `Finding` interface (type: `'unverified' | 'verified' | 'downgraded' | 'false_positive'`)
-- In `useFindings`, add `.neq('verification_status', 'false_positive')` to the Supabase query so false positives are excluded by default
-
-**File:** `src/pages/Report.tsx`
-
-- No changes needed; filtering at the query level means the UI automatically hides false positives
-
----
-
-## A6. Update `complete-audit` Grade Calculation
-
-**File:** `supabase/functions/complete-audit/index.ts`
-
-- When fetching findings for grade calculation, exclude `false_positive` findings: add `.neq('verification_status', 'false_positive')` to the findings query so false positives don't affect the security grade.
-
----
-
-## Summary of Files Changed
+### Files Modified
 
 | File | Change |
 |------|--------|
-| Migration SQL | New enum type + column on `findings` |
-| `supabase/functions/save-finding/index.ts` | Add `verification_status`, change duplicate logic to UPDATE |
-| `supabase/functions/update-findings-batch/index.ts` | New edge function |
-| `supabase/functions/cli-commit-contract/index.ts` | New edge function |
-| `supabase/config.toml` | Add two new function entries |
-| `src/hooks/useAudits.ts` | Add `verification_status` to `Finding`, filter query |
-| `supabase/functions/complete-audit/index.ts` | Exclude false positives from grade calc |
+| DB migration | `add_renewal_credits` RPC + UNIQUE constraint |
+| `supabase/functions/razorpay-webhook/index.ts` | Replace read-then-write with RPC call; replace check-then-insert with insert-on-conflict |
+| `supabase/functions/_shared/verifyCallback.ts` | Replace `!==` with `crypto.subtle.timingSafeEqual` |
+| `index.html` | Enforce CSP + add `frame-ancestors 'none'` + Razorpay SRI comment |
 
+### Order of Operations
+
+1. Run migration (creates RPC + adds UNIQUE constraint)
+2. Update edge functions (webhook + verifyCallback)
+3. Update index.html (CSP)
+4. Deploy edge functions
