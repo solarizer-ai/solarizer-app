@@ -1,56 +1,115 @@
 
 
-# Intelligence Engine: Animated Pipeline Line with Icon Color-Up Effect
+# Remote Audit Orchestration Implementation Plan
 
-Add a scroll-triggered animation to the Intelligence Engine pipeline section where an orange line travels down through the icons, coloring them up as it passes.
+## Overview
+Move audit orchestration from CLI to Cloud Run proxy, using Supabase as the sole communication layer between CLI and proxy. This adds 1 new table, 1 shared utility, 7 new edge functions, and 1 edge function update.
 
----
+## Step 1: Database Migration
 
-## How It Works
+Create the `audit_orchestration` table with:
+- `session_id` (TEXT PRIMARY KEY) -- matches `audits.id`
+- `user_id`, `status`, `phase`, `progress` (JSONB), `request_payload` (JSONB)
+- `findings` (JSONB), `report_markdown` (TEXT), `findings_count` (INT)
+- `error` (TEXT), `aborted` (BOOLEAN), `started_at`, `updated_at`
+- Index on `(user_id, status)` for active audit lookups
+- RLS enabled with no policies (all access via service role edge functions)
+- Status constrained to: `queued`, `running`, `completed`, `failed`, `cancelled`
 
-1. The dashed vertical connector line is replaced with a solid orange "progress" line that grows from 0% to 100% height as the section scrolls into view.
-2. Each icon circle starts greyed out (muted border, grey icon color).
-3. As the orange line reaches each icon's vertical position, the icon transitions from grey to the orange primary color with a smooth fade.
-4. Uses `IntersectionObserver` to trigger the animation when the section enters the viewport, and a CSS transition on the line height + icon colors.
+Note: Will use a validation trigger instead of a CHECK constraint for the status field, per project guidelines.
 
----
+## Step 2: Shared Utility
 
-## Visual Behavior
+Create `supabase/functions/_shared/verifyServiceSecret.ts`:
+- Reads `x-service-secret` header and compares against `SESSION_SECRET` env var
+- Uses `crypto.subtle.timingSafeEqual` for constant-time comparison
+- Handles length mismatch with dummy comparison to prevent timing leaks
+
+## Step 3: CLI-Facing Edge Functions (4 functions)
+
+### cli-audit-start
+- Auth: `x-api-key` via `validateApiKey()`
+- Validates scope files, checks for existing running audit (prevents duplicates)
+- Calculates estimated cost (scope nLOC + 15% context nLOC)
+- Reserves credits via `cli_reserve_credits` RPC
+- Creates `audits` row (for billing) and `audit_orchestration` row (for status)
+- Fires request to Cloud Run proxy `/audit/run` (non-blocking, failure tolerant)
+- Returns `{ sessionId }`
+
+### cli-audit-status
+- Auth: `x-api-key`
+- Takes `{ sessionId }`, returns `{ status, phase, progress, findings_count, error }`
+- Scoped to authenticated user's audits only
+
+### cli-audit-report
+- Auth: `x-api-key`
+- Takes `{ sessionId }`, returns `{ findings, report_markdown, findings_count }`
+- Only returns data when status is `completed`
+
+### cli-audit-cancel
+- Auth: `x-api-key`
+- Sets `aborted=true`, `status='cancelled'` on orchestration row
+- Releases reserved credits via `cli_release_credits` RPC
+- Marks audit as failed/locked in `audits` table
+
+## Step 4: Proxy-Facing Edge Functions (3 functions)
+
+### cli-audit-progress
+- Auth: `x-service-secret`
+- Updates `phase`, `progress` JSONB, `findings_count`, sets status to `running`
+- Returns `{ aborted }` flag so proxy can stop if user cancelled
+
+### cli-audit-complete
+- Auth: `x-service-secret`
+- Saves `findings` array, `report_markdown`, sets status to `completed`
+
+### cli-audit-fail
+- Auth: `x-service-secret`
+- Sets status to `failed`, saves error message
+- Releases reserved credits and locks the audit
+
+## Step 5: Update cli-auth
+
+Add a query to `audit_orchestration` for `queued`/`running` audits. Include an `active_audit` field (singular) in the response that prefers orchestrated audits over legacy active audits. The existing `active_audits` array remains for backward compatibility.
+
+## Step 6: Config Updates
+
+Add all 7 new functions to `supabase/config.toml` with `verify_jwt = false`:
 
 ```text
-Before scroll:          After animation:
-
-  (grey) Layers           (orange) Layers
-    |                        |  <-- solid orange
-  (grey) Fingerprint      (orange) Fingerprint
-    |                        |
-  (grey) Search           (orange) Search
-    |                        |
-  (grey) GitBranch        (orange) GitBranch
-    |                        |
-  (grey) FileText         (orange) FileText
+cli-audit-start, cli-audit-status, cli-audit-report, cli-audit-cancel
+cli-audit-progress, cli-audit-complete, cli-audit-fail
 ```
+
+## Step 7: Verification
+
+Test endpoints with curl after deployment to confirm:
+- CLI-facing functions reject missing/invalid API keys (401)
+- Proxy-facing functions reject missing service secret (401)
+- `cli-auth` response includes the new `active_audit` field
 
 ---
 
-## Technical Details
+## Technical Notes
 
-### File: `src/pages/Home.tsx`
+- No new secrets needed -- `SESSION_SECRET` and `CLOUD_RUN_PROXY_URL` already exist
+- CLI-facing CORS allows `x-api-key`; proxy-facing CORS allows `x-service-secret`
+- Proxy-facing functions reject OPTIONS preflight (server-to-server only)
+- All edge function code follows the existing patterns in the codebase (same error handling, logging, response structure)
 
-1. Add `useEffect` and `useRef` imports (already has `useState`).
-2. Create a ref for the pipeline container and a state `progress` (0 to 1).
-3. Use `IntersectionObserver` + scroll listener: when the section is in view, map scroll position to a 0-1 progress value based on how far through the section the user has scrolled.
-4. Replace the static dashed line div with two layers:
-   - A dashed grey line (full height, background).
-   - A solid orange line (`height: ${progress * 100}%`, foreground) that grows.
-5. For each phase icon, compute a threshold (e.g., phase index / total phases). If `progress >= threshold`, apply orange styling; otherwise grey styling. Use CSS `transition` for smooth color change.
+## Files Created/Modified
 
-### Changes Summary
+| File | Action |
+|------|--------|
+| Migration SQL | Create `audit_orchestration` table + index |
+| `supabase/functions/_shared/verifyServiceSecret.ts` | Create |
+| `supabase/functions/cli-audit-start/index.ts` | Create |
+| `supabase/functions/cli-audit-status/index.ts` | Create |
+| `supabase/functions/cli-audit-report/index.ts` | Create |
+| `supabase/functions/cli-audit-cancel/index.ts` | Create |
+| `supabase/functions/cli-audit-progress/index.ts` | Create |
+| `supabase/functions/cli-audit-complete/index.ts` | Create |
+| `supabase/functions/cli-audit-fail/index.ts` | Create |
+| `supabase/functions/cli-auth/index.ts` | Modify |
+| `supabase/config.toml` | Modify (add 7 function entries) |
 
-| Element | Before | After |
-|---------|--------|-------|
-| Vertical line | Static dashed grey | Dashed grey background + growing solid orange overlay |
-| Icon circles | Always orange (`text-primary`, `border-border/30`) | Start grey (`text-muted-foreground/40`, `border-border/20`), transition to orange when line reaches them |
-| Icon transition | None | `transition-colors duration-500` for smooth color-up |
-
-No new files or dependencies needed -- uses native `IntersectionObserver` and existing Tailwind classes.
