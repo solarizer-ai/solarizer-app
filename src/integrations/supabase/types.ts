@@ -817,6 +817,10 @@ export type Database = {
     }
     Functions: {
       accept_share_invitation: { Args: { p_share_id: string }; Returns: Json }
+      add_renewal_credits: {
+        Args: { p_credits: number; p_user_id: string }
+        Returns: number
+      }
       auto_settle_stale_sessions: { Args: never; Returns: undefined }
       cancel_pending_downgrade: { Args: never; Returns: Json }
       cancel_subscription: { Args: never; Returns: Json }
