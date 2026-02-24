@@ -6,6 +6,8 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
+type VerificationStatus = 'unverified' | 'verified' | 'downgraded' | 'false_positive';
+
 interface FindingInput {
   audit_id: string;
   title: string;
@@ -16,6 +18,7 @@ interface FindingInput {
   line_end?: number;
   code_snippet?: string;
   remediation?: string;
+  verification_status?: VerificationStatus;
 }
 
 interface CoverageTestDetail {
@@ -38,8 +41,9 @@ interface SaveFindingRequest {
   coverage_data?: CoverageData;
 }
 
+const validVerificationStatuses: VerificationStatus[] = ['unverified', 'verified', 'downgraded', 'false_positive'];
+
 Deno.serve(async (req) => {
-  // Reject CORS preflight - this is server-to-server only
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 403 });
   }
@@ -47,7 +51,6 @@ Deno.serve(async (req) => {
   console.log('save-finding: Request received');
 
   try {
-    // Parse request body first to get audit_id for per-audit auth
     let body: SaveFindingRequest;
     try {
       body = await req.json();
@@ -61,7 +64,6 @@ Deno.serve(async (req) => {
 
     const { finding, coverage_data } = body;
 
-    // Validate finding object exists and has audit_id before auth check
     if (!finding || typeof finding !== 'object' || !finding.audit_id || typeof finding.audit_id !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Invalid request parameters' }),
@@ -69,12 +71,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client with service role (needed for verifyCallback)
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify per-audit callback token (with legacy fallback)
     const authResult = await verifyCallback(req, finding.audit_id, supabase);
     if (!authResult.valid) {
       console.error('save-finding: Auth failed:', authResult.error);
@@ -84,7 +84,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate remaining finding fields
     if (!finding.title || typeof finding.title !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Invalid request parameters' }),
@@ -107,6 +106,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate verification_status if provided
+    const verificationStatus: VerificationStatus = finding.verification_status || 'unverified';
+    if (!validVerificationStatuses.includes(verificationStatus)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request parameters' }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
     // Validate coverage_data if provided
     if (coverage_data !== undefined) {
       if (typeof coverage_data !== 'object' || coverage_data === null) {
@@ -115,7 +123,6 @@ Deno.serve(async (req) => {
           { status: 400, headers: corsHeaders }
         );
       }
-      
       if (typeof coverage_data.total_tests !== 'number' ||
           typeof coverage_data.passed !== 'number' ||
           typeof coverage_data.failed !== 'number') {
@@ -124,7 +131,6 @@ Deno.serve(async (req) => {
           { status: 400, headers: corsHeaders }
         );
       }
-      
       if (!Array.isArray(coverage_data.details)) {
         return new Response(
           JSON.stringify({ error: 'Invalid request parameters' }),
@@ -133,9 +139,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // supabase client already initialized above
-
-    // Check if audit is locked before saving
+    // Check if audit is locked
     const { data: auditLockCheck, error: lockCheckError } = await supabase
       .from('audits')
       .select('is_locked')
@@ -156,7 +160,7 @@ Deno.serve(async (req) => {
 
     console.log(`save-finding: Checking for duplicate finding "${finding.title}" for audit ${finding.audit_id}`);
 
-    // Check for duplicate finding - match by title, severity, description, and location
+    // Check for duplicate finding by title + severity
     const { data: existingFindings, error: checkError } = await supabase
       .from('findings')
       .select('id, title, severity, description, location, code_snippet')
@@ -168,21 +172,41 @@ Deno.serve(async (req) => {
       console.error('save-finding: Error checking for duplicates:', checkError);
     }
 
-    // Check if an exact match exists (compare all relevant fields)
-    const isDuplicate = existingFindings?.some((existing) => {
-      const descMatch = existing.description === finding.description;
-      const locMatch = (existing.location || null) === (finding.location || null);
-      const snippetMatch = (existing.code_snippet || null) === (finding.code_snippet || null);
-      return descMatch && locMatch && snippetMatch;
-    });
-
     let findingId: string;
+    let wasDuplicate = false;
+    let wasUpdated = false;
 
-    if (isDuplicate) {
-      console.log(`save-finding: Duplicate finding detected, skipping insert for "${finding.title}"`);
-      findingId = existingFindings![0].id;
+    if (existingFindings && existingFindings.length > 0) {
+      // Duplicate detected — UPDATE the existing finding with non-null fields
+      wasDuplicate = true;
+      findingId = existingFindings[0].id;
+
+      const updateFields: Record<string, unknown> = {};
+      if (finding.description) updateFields.description = finding.description;
+      if (finding.location !== undefined) updateFields.location = finding.location || null;
+      if (finding.line_start !== undefined) updateFields.line_start = finding.line_start;
+      if (finding.line_end !== undefined) updateFields.line_end = finding.line_end;
+      if (finding.code_snippet !== undefined) updateFields.code_snippet = finding.code_snippet || null;
+      if (finding.remediation !== undefined) updateFields.remediation = finding.remediation || null;
+      if (finding.verification_status) updateFields.verification_status = verificationStatus;
+
+      if (Object.keys(updateFields).length > 0) {
+        const { error: updateError } = await supabase
+          .from('findings')
+          .update(updateFields)
+          .eq('id', findingId);
+
+        if (updateError) {
+          console.error('save-finding: Failed to update duplicate finding:', updateError);
+        } else {
+          wasUpdated = true;
+          console.log(`save-finding: Updated existing finding ${findingId} with ${Object.keys(updateFields).join(', ')}`);
+        }
+      } else {
+        console.log(`save-finding: Duplicate finding detected, no new fields to update for "${finding.title}"`);
+      }
     } else {
-      // Insert the finding
+      // Insert new finding
       const { data, error } = await supabase
         .from('findings')
         .insert({
@@ -195,6 +219,7 @@ Deno.serve(async (req) => {
           line_end: finding.line_end || null,
           code_snippet: finding.code_snippet || null,
           remediation: finding.remediation || null,
+          verification_status: verificationStatus,
           is_resolved: false,
         })
         .select('id')
@@ -212,13 +237,10 @@ Deno.serve(async (req) => {
       console.log(`save-finding: Successfully saved new finding with id ${findingId}`);
     }
 
-    
-
     // Update audit with coverage_data if provided - MERGE instead of overwrite
     if (coverage_data) {
       console.log(`save-finding: Merging coverage_data for audit ${finding.audit_id}`);
-      
-      // First, fetch existing coverage_data
+
       const { data: auditData, error: fetchError } = await supabase
         .from('audits')
         .select('coverage_data')
@@ -229,41 +251,37 @@ Deno.serve(async (req) => {
         console.error('save-finding: Failed to fetch existing coverage_data:', fetchError);
       }
 
-      // Merge coverage data
       let mergedCoverage = coverage_data;
-      
+
       if (auditData?.coverage_data && typeof auditData.coverage_data === 'object') {
         const existingData = auditData.coverage_data as CoverageData;
         const existingDetails = existingData.details || [];
         const newDetails = coverage_data.details || [];
-        
-        // Create a map of existing tests by test_name + file to avoid duplicates
+
         const testMap = new Map<string, CoverageTestDetail>();
         existingDetails.forEach((test: CoverageTestDetail) => {
           const key = `${test.file}::${test.test_name}`;
           testMap.set(key, test);
         });
-        
-        // Add/update with new tests
         newDetails.forEach((test: CoverageTestDetail) => {
           const key = `${test.file}::${test.test_name}`;
-          testMap.set(key, test); // Overwrites if same test, adds if new
+          testMap.set(key, test);
         });
-        
+
         const mergedDetails = Array.from(testMap.values());
         const passed = mergedDetails.filter((t: CoverageTestDetail) => t.status === 'PASSED').length;
         const failed = mergedDetails.filter((t: CoverageTestDetail) => t.status === 'FAILED').length;
-        
+
         mergedCoverage = {
           total_tests: mergedDetails.length,
           passed,
           failed,
           details: mergedDetails,
         };
-        
+
         console.log(`save-finding: Merged ${existingDetails.length} existing + ${newDetails.length} new = ${mergedDetails.length} total tests`);
       }
-      
+
       const { error: coverageError } = await supabase
         .from('audits')
         .update({
@@ -275,24 +293,27 @@ Deno.serve(async (req) => {
       if (coverageError) {
         console.error('save-finding: Failed to update coverage_data:', coverageError);
         return new Response(
-          JSON.stringify({ 
-            success: true, 
+          JSON.stringify({
+            success: true,
             finding_id: findingId,
             coverage_updated: false,
+            was_duplicate: wasDuplicate,
+            was_updated: wasUpdated,
           }),
           { status: 200, headers: corsHeaders }
         );
       }
-      
+
       console.log(`save-finding: Coverage data merged and updated successfully`);
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         finding_id: findingId,
         coverage_updated: coverage_data ? true : false,
-        was_duplicate: isDuplicate ? true : false
+        was_duplicate: wasDuplicate,
+        was_updated: wasUpdated,
       }),
       { status: 200, headers: corsHeaders }
     );

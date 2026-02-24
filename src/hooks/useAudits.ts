@@ -39,6 +39,8 @@ export interface Audit {
   share_count?: number;
 }
 
+export type FindingVerificationStatus = 'unverified' | 'verified' | 'downgraded' | 'false_positive';
+
 export interface Finding {
   id: string;
   audit_id: string;
@@ -50,6 +52,7 @@ export interface Finding {
   line_end: number | null;
   code_snippet: string | null;
   remediation: string | null;
+  verification_status: FindingVerificationStatus;
   is_resolved: boolean;
   created_at: string;
 }
@@ -153,6 +156,7 @@ export const useFindings = (auditId: string | null) => {
         .from('findings')
         .select('*')
         .eq('audit_id', auditId)
+        .neq('verification_status', 'false_positive')
         .order('severity', { ascending: true });
       
       if (error) throw error;

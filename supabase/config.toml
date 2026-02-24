@@ -64,3 +64,9 @@ verify_jwt = false
 
 [functions.cli-session-progress]
 verify_jwt = false
+
+[functions.update-findings-batch]
+verify_jwt = false
+
+[functions.cli-commit-contract]
+verify_jwt = false

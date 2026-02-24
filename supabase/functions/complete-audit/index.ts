@@ -148,11 +148,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Query all findings for this audit to calculate grade
+    // Query all findings for this audit to calculate grade (exclude false positives)
     const { data: findings, error: findingsError } = await supabase
       .from('findings')
       .select('severity')
-      .eq('audit_id', audit_id);
+      .eq('audit_id', audit_id)
+      .neq('verification_status', 'false_positive');
 
     if (findingsError) {
       console.error('complete-audit: Failed to fetch findings:', findingsError);
