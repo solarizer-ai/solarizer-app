@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
     if (body.query) {
       const { data: audit, error: fetchError } = await supabase
         .from('audits')
-        .select('status, credits_reserved, credits_deducted, is_locked, error_message')
+        .select('status, credits_deducted, is_locked, error_message')
         .eq('id', auditId)
         .eq('user_id', userId)
         .single();
@@ -130,12 +130,11 @@ Deno.serve(async (req) => {
       }
 
       const resumable = audit.status === 'analyzing' && !audit.is_locked &&
-        ((audit.credits_reserved || 0) > 0 || (audit.credits_deducted || 0) > 0);
+        (audit.credits_deducted || 0) > 0;
 
       return new Response(
         JSON.stringify({
           status: audit.status,
-          credits_reserved: audit.credits_reserved,
           credits_deducted: audit.credits_deducted,
           is_locked: audit.is_locked,
           error_message: audit.error_message,

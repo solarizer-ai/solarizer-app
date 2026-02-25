@@ -205,12 +205,18 @@ Deno.serve(async (req) => {
     if (auditError || !audit) {
       console.error('cli-audit-start: Failed to create audit:', auditError);
       // Refund credits on failure
-      await supabase.rpc('cli_refund_credits', {
+      const { error: refundError } = await supabase.rpc('cli_refund_credits', {
         p_user_id: userId,
         p_amount: estimatedCost,
         p_audit_id: null,
         p_description: `Refund: Audit creation failed for ${projectName}`,
       });
+      if (refundError) {
+        console.error(
+          `cli-audit-start: CRITICAL — refund of ${estimatedCost} credits failed for user ${userId}:`,
+          refundError
+        );
+      }
       creditsDeducted = false;
       return new Response(
         JSON.stringify({ error: 'Failed to create audit session' }),
@@ -250,12 +256,18 @@ Deno.serve(async (req) => {
       console.error('cli-audit-start: Failed to create orchestration row:', orchError);
 
       // Refund credits on failure
-      await supabase.rpc('cli_refund_credits', {
+      const { error: orchRefundError } = await supabase.rpc('cli_refund_credits', {
         p_user_id: userId,
         p_amount: estimatedCost,
         p_audit_id: sessionId,
         p_description: `Refund: Orchestration setup failed for ${projectName}`,
       });
+      if (orchRefundError) {
+        console.error(
+          `cli-audit-start: CRITICAL — refund of ${estimatedCost} credits failed for user ${userId} (audit ${sessionId}):`,
+          orchRefundError
+        );
+      }
       creditsDeducted = false;
 
       // Delete orphaned audit row
