@@ -89,5 +89,3 @@ verify_jwt = false
 [functions.cli-audit-complete]
 verify_jwt = false
 
-[functions.cli-audit-fail]
-verify_jwt = false
