@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { verifyCallback } from '../_shared/verifyCallback.ts';
+import { verifyServiceSecret } from '../_shared/verifyServiceSecret.ts';
 
 // No CORS headers - this is a server-to-server callback only
 const corsHeaders = {
@@ -75,13 +76,16 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const authResult = await verifyCallback(req, finding.audit_id, supabase);
-    if (!authResult.valid) {
-      console.error('save-finding: Auth failed:', authResult.error);
-      return new Response(
-        JSON.stringify({ error: authResult.error }),
-        { status: authResult.status || 401, headers: corsHeaders }
-      );
+    const serviceAuth = verifyServiceSecret(req);
+    if (!serviceAuth) {
+      const authResult = await verifyCallback(req, finding.audit_id, supabase);
+      if (!authResult.valid) {
+        console.error('save-finding: Auth failed:', authResult.error);
+        return new Response(
+          JSON.stringify({ error: authResult.error }),
+          { status: authResult.status || 401, headers: corsHeaders }
+        );
+      }
     }
 
     if (!finding.title || typeof finding.title !== 'string') {
