@@ -120,12 +120,26 @@ Deno.serve(async (req) => {
 
     // 4. Commit all reserved credits
     if (audit.credits_reserved > 0) {
-      await supabase.rpc('cli_commit_credits', {
+      const { error: commitError } = await supabase.rpc('cli_commit_credits', {
         p_user_id: audit.user_id,
         p_amount: audit.credits_reserved,
         p_audit_id: body.sessionId,
         p_description: `Audit completed: ${body.findingsCount} findings`,
       });
+
+      if (commitError) {
+        console.error('cli-audit-complete: Credit commit failed, releasing lock:', commitError);
+        // Roll back the lock so a retry can try again
+        await supabase
+          .from('audits')
+          .update({ is_locked: false, updated_at: new Date().toISOString() })
+          .eq('id', body.sessionId);
+
+        return new Response(
+          JSON.stringify({ error: 'Credit settlement failed, please retry' }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
     }
 
     // 5. Finalize audit status

@@ -74,32 +74,38 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Also release credits for the audit
-    const { data: audit } = await supabase
+    // Read credits_reserved BEFORE the atomic update
+    const { data: auditRow } = await supabase
       .from('audits')
-      .select('credits_reserved, is_locked')
+      .select('credits_reserved')
       .eq('id', body.sessionId)
       .eq('user_id', authResult.userId)
       .single();
 
-    if (audit && !audit.is_locked && audit.credits_reserved > 0) {
+    const creditsToRelease = auditRow?.credits_reserved ?? 0;
+
+    // Atomic lock — only succeeds if is_locked is still false
+    const { data: locked } = await supabase
+      .from('audits')
+      .update({
+        is_locked: true,
+        status: 'cancelled',
+        credits_reserved: 0,
+        error_message: 'Cancelled by user',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', body.sessionId)
+      .eq('user_id', authResult.userId)
+      .eq('is_locked', false)
+      .select('user_id');
+
+    if (locked && locked.length > 0 && creditsToRelease > 0) {
       await supabase.rpc('cli_release_credits', {
         p_user_id: authResult.userId,
-        p_amount: audit.credits_reserved,
+        p_amount: creditsToRelease,
         p_audit_id: body.sessionId,
         p_description: 'Release: Audit cancelled by user',
       });
-
-      await supabase
-        .from('audits')
-        .update({
-          status: 'cancelled',
-          is_locked: true,
-          credits_reserved: 0,
-          error_message: 'Cancelled by user',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', body.sessionId);
     }
 
     return new Response(
