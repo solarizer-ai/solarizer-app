@@ -1,49 +1,31 @@
 
 
-# Fix `verifyServiceSecret` — Replace Unsupported `timingSafeEqual`
+# Fix: Auto-transition UI when audit is cancelled or failed
 
 ## Problem
-The `crypto.subtle.timingSafeEqual` method is not available in the Supabase Edge Functions Deno runtime, causing all functions that use `verifyServiceSecret` (like `cli-audit-progress`, `fail-audit`) to crash with:
-```
-crypto.subtle.timingSafeEqual is not a function
-```
-
-This is why audits get stuck in "queued" — the proxy's progress updates are rejected.
+In `Report.tsx`, the effect that invalidates queries when orchestration completes only checks for `'completed'` status. When an audit is cancelled (or fails), the orchestration status changes to `'cancelled'`/`'failed'`, but the UI never picks up the change — so the progress panel stays stuck showing "queued".
 
 ## Fix
-Replace the `crypto.subtle` call with a manual constant-time byte comparison using XOR, which works in any JavaScript runtime.
 
-**File:** `supabase/functions/_shared/verifyServiceSecret.ts`
+### `src/pages/Report.tsx` (lines 198-203)
+Expand the auto-transition effect to also trigger on `cancelled` and `failed` orchestration statuses:
 
 ```typescript
-export function verifyServiceSecret(req: Request): boolean {
-  const secret = req.headers.get('x-service-secret');
-  const expected = Deno.env.get('SESSION_SECRET');
-
-  if (!secret || !expected) return false;
-
-  const enc = new TextEncoder();
-  const a = enc.encode(secret);
-  const b = enc.encode(expected);
-
-  if (a.byteLength !== b.byteLength) return false;
-
-  // Constant-time comparison via XOR
-  let mismatch = 0;
-  for (let i = 0; i < a.byteLength; i++) {
-    mismatch |= a[i] ^ b[i];
+useEffect(() => {
+  if (
+    orchestration?.status === 'completed' ||
+    orchestration?.status === 'cancelled' ||
+    orchestration?.status === 'failed'
+  ) {
+    queryClient.invalidateQueries({ queryKey: ['audit', auditId] });
+    queryClient.invalidateQueries({ queryKey: ['findings', auditId] });
   }
-  return mismatch === 0;
-}
+}, [orchestration?.status, auditId, queryClient]);
 ```
 
-## Affected Functions (redeploy all)
-All functions that import `verifyServiceSecret`:
-- `cli-audit-progress`
-- `fail-audit`
-- `chat-budget-check`
-- `chat-token-update`
+Once the `audits` row is re-fetched with `status = 'cancelled'`, `isLive` becomes `false`, the progress panel disappears, and the existing cancelled/failed UI (lines 306-333) takes over — showing the "Analysis Cancelled" message with the refund notice.
 
-## After Fix
-The stuck "Test One" audit should be retried (or failed/refunded) since its orchestration row is already in a broken state.
-
+## Files Modified
+| File | Change |
+|------|--------|
+| `src/pages/Report.tsx` | Expand orchestration status check to include `cancelled` and `failed` |
