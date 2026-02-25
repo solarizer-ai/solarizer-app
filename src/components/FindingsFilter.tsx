@@ -33,6 +33,7 @@ const severityOrder: Record<FindingSeverity, number> = {
   medium: 2,
   low: 3,
   info: 4,
+  gas: 5,
 };
 
 const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: FindingsFilterProps) => {
@@ -40,7 +41,7 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
   const [selectedSeverities, setSelectedSeverities] = useState<FindingSeverity[]>([]);
   const [showResolved, setShowResolved] = useState(true);
 
-  const allSeverities: FindingSeverity[] = ["critical", "high", "medium", "low", "info"];
+  const allSeverities: FindingSeverity[] = ["critical", "high", "medium", "low", "info", "gas"];
   const availableSeverities = allSeverities.filter(s => !hiddenSeverities.includes(s));
 
   const filteredFindings = useMemo(() => {
@@ -113,6 +114,8 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
         return "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20";
       case "info":
         return "bg-slate-400/10 text-slate-400 border-slate-400/30 hover:bg-slate-400/20";
+      case "gas":
+        return "bg-green-500/10 text-green-500 border-green-500/30 hover:bg-green-500/20";
       default:
         return "bg-muted text-muted-foreground border-border hover:bg-muted/80";
     }

@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 export type AuditStatus = 'pending' | 'analyzing' | 'secured' | 'issues' | 'cancelled' | 'failed';
 export type SecurityGrade = 'A' | 'B' | 'C' | 'D' | 'F';
-export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info'; // 'info' kept for DB compatibility but filtered in UI
+export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info' | 'gas';
 
 export interface CoverageTestDetail {
   test_name: string;

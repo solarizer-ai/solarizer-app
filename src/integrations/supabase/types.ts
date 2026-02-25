@@ -995,7 +995,7 @@ export type Database = {
         | "issues"
         | "cancelled"
         | "failed"
-      finding_severity: "critical" | "high" | "medium" | "low" | "info"
+      finding_severity: "critical" | "high" | "medium" | "low" | "info" | "gas"
       finding_verification_status:
         | "unverified"
         | "verified"
@@ -1140,7 +1140,7 @@ export const Constants = {
         "cancelled",
         "failed",
       ],
-      finding_severity: ["critical", "high", "medium", "low", "info"],
+      finding_severity: ["critical", "high", "medium", "low", "info", "gas"],
       finding_verification_status: [
         "unverified",
         "verified",
