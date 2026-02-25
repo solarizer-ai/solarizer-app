@@ -1,33 +1,40 @@
 
+# Post-Simplification Edge Function Fixes — 4 Changes
 
-# Simplify Credit Architecture — Deduct-Upfront Model ✅ IMPLEMENTED
+## C1. Fix logging bug in `cli-audit-complete`
+**File:** `supabase/functions/cli-audit-complete/index.ts`, line 134
 
-## Status: Complete
+Change `audit.credits_reserved` to `audit.credits_deducted` in the log statement. The SELECT on line 87 returns `credits_deducted`, so `credits_reserved` is `undefined`.
 
-All changes deployed. The 3-phase reserve-commit-release pattern has been replaced with a simpler deduct-at-start model.
+## C2. Clean up dead `credits_reserved` in `cli-session-progress`
+**File:** `supabase/functions/cli-session-progress/index.ts`
 
-```text
-OLD:  start → reserve  |  complete → commit  |  fail/cancel → release
-NEW:  start → deduct   |  complete → nothing  |  fail/cancel → refund
-```
+Three changes:
+1. **Line 120:** Remove `credits_reserved` from the SELECT query
+2. **Lines 132-133:** Simplify resumable check to only use `credits_deducted`
+3. **Lines 138-139:** Remove `credits_reserved` from JSON response
 
-## What was done
+## C3. Add error logging on refund in `cli-session-start`
+**File:** `supabase/functions/cli-session-start/index.ts`, lines 184-189
 
-### Database Migration
-- ✅ Updated `cli_deduct_credits` RPC (adds `credits_used_this_period` tracking)
-- ✅ Replaced `cli_refund_credits` RPC (clamped to prevent negative `credits_used_this_period`)
-- ✅ Updated `auto_settle_stale_sessions` (full refund instead of proportional settlement)
-- ✅ Migrated in-flight data (returned reserved credits, failed stale audits)
-- ✅ Dropped `cli_reserve_credits`, `cli_commit_credits`, `cli_release_credits`
+Capture the refund RPC result and log CRITICAL error if it fails, enabling manual reconciliation.
 
-### Edge Functions Updated
-- ✅ `cli-audit-start` — deduct upfront, refund on error
-- ✅ `cli-audit-complete` — removed commit block, keep CAS + grade
-- ✅ `cli-audit-fail` — refund `credits_deducted`
-- ✅ `cli-audit-cancel` — refund `credits_deducted`
-- ✅ `cli-session-start` — deduct upfront, refund on error
-- ✅ `cli-session-end` — simplified to refund-only on failure
-- ✅ `fail-audit` — refund `credits_deducted`
+## C4. Add error logging on refunds in `cli-audit-start`
+**File:** `supabase/functions/cli-audit-start/index.ts`
 
-### Deleted
-- ✅ `cli-commit-contract` edge function removed
+Same pattern at two locations:
+1. **Lines 207-213:** Audit creation failure refund
+2. **Lines 252-258:** Orchestration setup failure refund
+
+Both get error capture with CRITICAL-level logging.
+
+## Files Modified
+
+| File | Fix |
+|------|-----|
+| `cli-audit-complete/index.ts` | Fix `credits_reserved` -> `credits_deducted` in log |
+| `cli-session-progress/index.ts` | Remove 3 dead `credits_reserved` references |
+| `cli-session-start/index.ts` | Add error logging on refund call |
+| `cli-audit-start/index.ts` | Add error logging on 2 refund calls |
+
+All 4 functions will be redeployed.
