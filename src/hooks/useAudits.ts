@@ -37,6 +37,7 @@ export interface Audit {
   created_at: string;
   updated_at: string;
   scope_metadata: Array<{ path: string; nLOC: number; complexity: string }> | null;
+  context_metadata: Array<{ path: string }> | null;
   share_count?: number;
 }
 

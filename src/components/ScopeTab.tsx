@@ -23,6 +23,8 @@ interface ScopeTabProps {
     scope?: string[];
     all_files?: string[];
   } | null;
+  scopeMetadata?: Array<{ path: string; nLOC: number; complexity: string }> | null;
+  contextMetadata?: Array<{ path: string }> | null;
 }
 
 // Build a hierarchical tree from flat file paths
@@ -161,17 +163,36 @@ const ScopeTab = ({
   readOnly = false,
   auditStatus,
   systemHologram,
+  scopeMetadata,
+  contextMetadata,
 }: ScopeTabProps) => {
   // Track expanded folders - auto-expand root folders initially
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
 
+  // Derive scope and all files from system_hologram or fallback to metadata
+  const { derivedScopeFiles, derivedAllFiles } = useMemo(() => {
+    const hologramScope = systemHologram?.scope;
+    const hologramAll = systemHologram?.all_files;
+
+    const scopeFiles = (hologramScope && hologramScope.length > 0)
+      ? hologramScope
+      : (scopeMetadata?.map(f => f.path) || []);
+
+    const contextFiles = contextMetadata?.map(f => f.path) || [];
+
+    const allFiles = (hologramAll && hologramAll.length > 0)
+      ? hologramAll
+      : [...scopeFiles, ...contextFiles.filter(cf => !scopeFiles.includes(cf))];
+
+    return { derivedScopeFiles: scopeFiles, derivedAllFiles: allFiles };
+  }, [systemHologram?.scope, systemHologram?.all_files, scopeMetadata, contextMetadata]);
+
   // Determine file status based on scope and analysis progress
   const getFileStatus = useMemo(() => {
-    const scopeFiles = systemHologram?.scope || [];
     const isComplete = auditStatus === 'secured' || auditStatus === 'issues';
     
     return (filePath: string): 'context' | 'pending' | 'analysed' => {
-      const isInScope = scopeFiles.some(s => 
+      const isInScope = derivedScopeFiles.some(s => 
         s && filePath && (s === filePath || filePath.endsWith(s) || s.endsWith(filePath))
       );
       
@@ -179,17 +200,14 @@ const ScopeTab = ({
         return 'context';
       }
       
-      // If audit is complete, all in-scope files are analysed
       if (isComplete) {
         return 'analysed';
       }
       
-      // Check if we have coverage results for this file
       const hasResults = coverageData?.details?.some(d => 
         d?.file && filePath && (d.file === filePath || filePath.includes(d.file) || d.file.includes(filePath))
       );
       
-      // Check if any findings reference this file
       const hasFindings = findings.some(f => 
         f?.location && filePath && (f.location.includes(filePath) || filePath.includes(f.location))
       );
@@ -200,19 +218,16 @@ const ScopeTab = ({
       
       return 'pending';
     };
-  }, [systemHologram?.scope, coverageData?.details, findings, auditStatus]);
+  }, [derivedScopeFiles, coverageData?.details, findings, auditStatus]);
 
-  // Build the file tree from system_hologram data
+  // Build the file tree
   const fileTree = useMemo(() => {
-    const allFiles = systemHologram?.all_files || [];
-    const scopeFiles = systemHologram?.scope || [];
-    
-    if (allFiles.length === 0) {
+    if (derivedAllFiles.length === 0) {
       return [];
     }
     
-    return buildFileTree(allFiles, scopeFiles, getFileStatus);
-  }, [systemHologram?.all_files, systemHologram?.scope, getFileStatus]);
+    return buildFileTree(derivedAllFiles, derivedScopeFiles, getFileStatus);
+  }, [derivedAllFiles, derivedScopeFiles, getFileStatus]);
 
   // Auto-expand root folders on first render
   useMemo(() => {
@@ -226,7 +241,7 @@ const ScopeTab = ({
 
   // Count files by status
   const statusCounts = useMemo(() => {
-    const allFiles = systemHologram?.all_files || [];
+    const allFiles = derivedAllFiles;
     const counts = { context: 0, pending: 0, analysed: 0 };
     
     allFiles.forEach(f => {
@@ -235,7 +250,7 @@ const ScopeTab = ({
     });
     
     return counts;
-  }, [systemHologram?.all_files, getFileStatus]);
+  }, [derivedAllFiles, getFileStatus]);
 
   const hasTreeData = fileTree.length > 0;
 
