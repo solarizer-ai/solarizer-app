@@ -203,7 +203,6 @@ Deno.serve(async (req) => {
         contracts_completed: body.contracts_completed ?? audit.contracts_completed,
         contracts_total: body.contracts_total ?? audit.contracts_total,
         last_heartbeat: null,
-        credits_reserved: 0,
         updated_at: new Date().toISOString(),
       };
 
@@ -265,7 +264,6 @@ Deno.serve(async (req) => {
         contracts_total: body.contracts_total ?? audit.contracts_total,
         last_heartbeat: null,
         credits_deducted: 0,
-        credits_reserved: 0,
         updated_at: new Date().toISOString(),
       }).eq('id', sessionId);
     }

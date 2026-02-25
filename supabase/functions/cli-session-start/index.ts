@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { project_name, scope_metadata, context_metadata, estimated_cost } = body;
+    const { project_name, scope_metadata, context_metadata, estimated_cost, idempotency_key } = body;
 
     if (!project_name || typeof project_name !== 'string') {
       return new Response(
@@ -128,6 +128,26 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'estimated_cost must be a positive number' }),
         { status: 400, headers: corsHeaders }
       );
+    }
+
+    // B4: Idempotency check
+    if (idempotency_key) {
+      const { data: existing } = await supabase
+        .from('audits')
+        .select('id, status')
+        .eq('idempotency_key', idempotency_key)
+        .maybeSingle();
+
+      if (existing) {
+        return new Response(
+          JSON.stringify({
+            session_id: existing.id,
+            status: existing.status,
+            duplicate: true,
+          }),
+          { status: 200, headers: corsHeaders },
+        );
+      }
     }
 
     // Deduct credits upfront
@@ -163,13 +183,13 @@ Deno.serve(async (req) => {
     const { data: audit, error: auditError } = await supabase
       .from('audits')
       .insert({
+        idempotency_key: idempotency_key || null,
         user_id: userId,
         project_name,
         status: 'analyzing',
         source: 'cli',
         nloc_count: totalNloc,
         credits_deducted: estimated_cost,
-        credits_reserved: 0,
         scope_metadata,
         context_metadata: context_metadata || [],
         contracts_total: scope_metadata.length,

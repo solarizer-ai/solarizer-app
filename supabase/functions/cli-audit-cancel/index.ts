@@ -100,12 +100,19 @@ Deno.serve(async (req) => {
       .select('user_id');
 
     if (locked && locked.length > 0 && creditsToRefund > 0) {
-      await supabase.rpc('cli_refund_credits', {
+      const { error: refundError } = await supabase.rpc('cli_refund_credits', {
         p_user_id: authResult.userId,
         p_amount: creditsToRefund,
         p_audit_id: body.sessionId,
         p_description: 'Refund: Audit cancelled by user',
       });
+      if (refundError) {
+        console.error(
+          `cli-audit-cancel: CRITICAL — refund of ${creditsToRefund} credits ` +
+            `failed for user ${authResult.userId}, audit ${body.sessionId}:`,
+          refundError,
+        );
+      }
     }
 
     return new Response(

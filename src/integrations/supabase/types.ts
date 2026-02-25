@@ -157,13 +157,13 @@ export type Database = {
           coverage_data: Json | null
           created_at: string
           credits_deducted: number | null
-          credits_reserved: number
           current_contract: string | null
           current_phase: string | null
           error_message: string | null
           findings_count: number | null
           grade: Database["public"]["Enums"]["security_grade"] | null
           id: string
+          idempotency_key: string | null
           is_locked: boolean
           last_heartbeat: string | null
           nloc_count: number | null
@@ -190,13 +190,13 @@ export type Database = {
           coverage_data?: Json | null
           created_at?: string
           credits_deducted?: number | null
-          credits_reserved?: number
           current_contract?: string | null
           current_phase?: string | null
           error_message?: string | null
           findings_count?: number | null
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
+          idempotency_key?: string | null
           is_locked?: boolean
           last_heartbeat?: string | null
           nloc_count?: number | null
@@ -223,13 +223,13 @@ export type Database = {
           coverage_data?: Json | null
           created_at?: string
           credits_deducted?: number | null
-          credits_reserved?: number
           current_contract?: string | null
           current_phase?: string | null
           error_message?: string | null
           findings_count?: number | null
           grade?: Database["public"]["Enums"]["security_grade"] | null
           id?: string
+          idempotency_key?: string | null
           is_locked?: boolean
           last_heartbeat?: string | null
           nloc_count?: number | null
@@ -562,7 +562,6 @@ export type Database = {
         Row: {
           created_at: string
           credits_remaining: number
-          credits_reserved: number
           credits_used_this_period: number
           id: string
           period_reset_at: string | null
@@ -573,7 +572,6 @@ export type Database = {
         Insert: {
           created_at?: string
           credits_remaining?: number
-          credits_reserved?: number
           credits_used_this_period?: number
           id?: string
           period_reset_at?: string | null
@@ -584,7 +582,6 @@ export type Database = {
         Update: {
           created_at?: string
           credits_remaining?: number
-          credits_reserved?: number
           credits_used_this_period?: number
           id?: string
           period_reset_at?: string | null
@@ -880,6 +877,15 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      cli_reconcile_credits: {
+        Args: never
+        Returns: {
+          computed_balance: number
+          drift: number
+          ledger_balance: number
+          user_id: string
+        }[]
       }
       cli_refund_credits: {
         Args: {

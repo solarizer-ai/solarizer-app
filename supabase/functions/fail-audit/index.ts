@@ -1,18 +1,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { verifyCallback } from '../_shared/verifyCallback.ts';
+import { verifyServiceSecret } from '../_shared/verifyServiceSecret.ts';
 
-// No CORS headers - this is a server-to-server callback only
-const corsHeaders = {
-  'Content-Type': 'application/json',
-};
+const corsHeaders = { 'Content-Type': 'application/json' };
 
-interface FailAuditRequest {
-  audit_id: string;
+interface FailRequest {
+  audit_id?: string;
+  sessionId?: string;
+  error?: string;
   error_message?: string;
 }
 
 Deno.serve(async (req) => {
-  // Reject CORS preflight - this is server-to-server only
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 403 });
   }
@@ -20,126 +19,110 @@ Deno.serve(async (req) => {
   console.log('fail-audit: Request received');
 
   try {
-    // Parse request body first to get audit_id for per-audit auth
-    let body: FailAuditRequest;
+    // Parse body first to get audit ID for per-audit auth fallback
+    let body: FailRequest;
     try {
       body = await req.json();
-    } catch (e) {
-      console.error('fail-audit: Failed to parse request body', e);
+    } catch {
       return new Response(
-        JSON.stringify({ error: 'Invalid request body' }),
+        JSON.stringify({ success: false, error: 'Invalid request body' }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    const { audit_id, error_message } = body;
-
-    if (!audit_id || typeof audit_id !== 'string') {
+    const auditId = body.audit_id || body.sessionId;
+    if (!auditId) {
       return new Response(
-        JSON.stringify({ error: 'audit_id is required' }),
+        JSON.stringify({ success: false, error: 'Missing audit_id or sessionId' }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // Initialize Supabase client with service role
+    // Dual auth: try service secret first, fall back to per-audit callback token
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify per-audit callback token (with legacy fallback)
-    const authResult = await verifyCallback(req, audit_id, supabase);
-    if (!authResult.valid) {
-      console.error('fail-audit: Auth failed:', authResult.error);
-      return new Response(
-        JSON.stringify({ error: authResult.error }),
-        { status: authResult.status || 401, headers: corsHeaders }
-      );
-    }
-
-    console.log(`fail-audit: Processing failure for audit ${audit_id}${error_message ? `: ${error_message}` : ''}`);
-
-    // Fetch audit to get user_id and credit info for refund
-    const { data: audit, error: fetchError } = await supabase
-      .from('audits')
-      .select('id, user_id, credits_deducted, is_locked, status')
-      .eq('id', audit_id)
-      .single();
-
-    if (fetchError || !audit) {
-      console.error('fail-audit: Audit not found:', fetchError);
-      return new Response(
-        JSON.stringify({ error: 'Audit not found' }),
-        { status: 404, headers: corsHeaders }
-      );
-    }
-
-    // Check if already locked (idempotency)
-    if (audit.is_locked) {
-      console.log(`fail-audit: Audit ${audit_id} is already locked, skipping`);
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          audit_id,
-          already_locked: true,
-          credits_refunded: 0
-        }),
-        { status: 200, headers: corsHeaders }
-      );
-    }
-
-    // Refund deducted credits
-    const amountToRefund = audit.credits_deducted || 0;
-    let creditsRefunded = 0;
-
-    if (amountToRefund > 0) {
-      console.log(`fail-audit: Refunding ${amountToRefund} credits to user ${audit.user_id}`);
-      
-      const { data: refundResult, error: refundError } = await supabase
-        .rpc('cli_refund_credits', {
-          p_user_id: audit.user_id,
-          p_amount: amountToRefund,
-          p_audit_id: audit_id,
-          p_description: 'Refund: proxy failure',
-        });
-
-      if (refundError) {
-        console.error('fail-audit: Failed to refund credits:', refundError);
-        // Continue with status update even if refund fails
-      } else if (refundResult?.success) {
-        creditsRefunded = refundResult.refunded || amountToRefund;
-        console.log(`fail-audit: Successfully refunded ${creditsRefunded} credits`);
+    const serviceAuth = verifyServiceSecret(req);
+    if (!serviceAuth) {
+      const callbackAuth = await verifyCallback(req, auditId, supabase);
+      if (!callbackAuth.valid) {
+        console.error('fail-audit: Auth failed:', callbackAuth.error);
+        return new Response(
+          JSON.stringify({ success: false, error: callbackAuth.error }),
+          { status: callbackAuth.status || 401, headers: corsHeaders }
+        );
       }
     }
 
-    // Update audit status to failed and lock it
-    const { error: updateError } = await supabase
+    const errorMsg = body.error || body.error_message || 'Audit failed';
+    console.log(`fail-audit: Processing failure for audit ${auditId}: ${errorMsg}`);
+
+    // Update audit_orchestration (idempotent — ignores zero-row result)
+    await supabase
+      .from('audit_orchestration')
+      .update({
+        status: 'failed',
+        error: errorMsg,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('session_id', auditId)
+      .in('status', ['queued', 'running']);
+
+    // Atomic CAS lock — only one caller (fail, cancel, or complete) gets through
+    const { data: locked, error: lockError } = await supabase
       .from('audits')
       .update({
         status: 'failed',
         is_locked: true,
         credits_deducted: 0,
-        credits_reserved: 0,
-        error_message: error_message || 'Proxy failure',
+        error_message: errorMsg,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', audit_id);
+      .eq('id', auditId)
+      .eq('is_locked', false)
+      .select('id, user_id, credits_deducted');
 
-    if (updateError) {
-      console.error('fail-audit: Failed to update audit status:', updateError);
+    if (lockError) {
+      console.error('fail-audit: Lock update failed:', lockError);
       return new Response(
-        JSON.stringify({ error: 'Failed to update audit status' }),
+        JSON.stringify({ success: false, error: 'Failed to update audit status' }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    console.log(`fail-audit: Successfully marked audit ${audit_id} as failed and locked`);
+    let creditsRefunded = 0;
+
+    if (locked && locked.length > 0) {
+      const audit = locked[0];
+      const creditsToRefund = audit.credits_deducted || 0;
+
+      if (audit.user_id && creditsToRefund > 0) {
+        const { error: refundError } = await supabase.rpc('cli_refund_credits', {
+          p_user_id: audit.user_id,
+          p_amount: creditsToRefund,
+          p_audit_id: auditId,
+          p_description: `Refund: Audit failed — ${errorMsg}`,
+        });
+        if (refundError) {
+          console.error(
+            `fail-audit: CRITICAL — refund of ${creditsToRefund} credits ` +
+              `failed for user ${audit.user_id}, audit ${auditId}:`,
+            refundError,
+          );
+        } else {
+          creditsRefunded = creditsToRefund;
+        }
+      }
+
+      console.log(`fail-audit: Audit ${auditId} locked and marked as failed`);
+    } else {
+      // Already locked (idempotent call)
+      console.log(`fail-audit: Audit ${auditId} already locked, skipping`);
+    }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        audit_id,
-        credits_refunded: creditsRefunded
-      }),
+      JSON.stringify({ success: true, audit_id: auditId, credits_refunded: creditsRefunded }),
       { status: 200, headers: corsHeaders }
     );
 
@@ -147,7 +130,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('fail-audit: Unexpected error:', errorMessage);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ success: false, error: 'Internal server error' }),
       { status: 500, headers: corsHeaders }
     );
   }

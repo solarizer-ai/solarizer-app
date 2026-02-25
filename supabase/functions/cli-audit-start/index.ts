@@ -72,13 +72,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { projectName, scopeFiles, contextFiles, additionalContext } = body;
+    const { projectName, scopeFiles, contextFiles, additionalContext, idempotency_key } = body;
 
     if (!Array.isArray(scopeFiles) || scopeFiles.length === 0) {
       return new Response(
         JSON.stringify({ error: 'scopeFiles must be a non-empty array' }),
         { status: 400, headers: corsHeaders }
       );
+    }
+
+    // B4: Idempotency check
+    if (idempotency_key) {
+      const { data: existing } = await supabase
+        .from('audits')
+        .select('id, status')
+        .eq('idempotency_key', idempotency_key)
+        .maybeSingle();
+
+      if (existing) {
+        return new Response(
+          JSON.stringify({
+            sessionId: existing.id,
+            status: existing.status,
+            duplicate: true,
+          }),
+          { status: 200, headers: corsHeaders },
+        );
+      }
     }
 
     // A8: Input bounds validation
@@ -179,13 +199,13 @@ Deno.serve(async (req) => {
     const { data: audit, error: auditError } = await supabase
       .from('audits')
       .insert({
+        idempotency_key: idempotency_key || null,
         user_id: userId,
         project_name: projectName,
         status: 'analyzing',
         source: 'cli',
         nloc_count: scopeNloc,
         credits_deducted: estimatedCost,
-        credits_reserved: 0,
         scope_metadata: scopeFiles.map((f: ScopeFile) => ({
           path: f.path,
           nLOC: f.nLOC,

@@ -124,7 +124,6 @@ Deno.serve(async (req) => {
       .update({
         status: finalStatus,
         grade,
-        credits_reserved: 0,
         contracts_completed: audit.contracts_total,
         updated_at: new Date().toISOString(),
       })
