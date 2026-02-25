@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
         error: body.error || 'Unknown error',
         updated_at: new Date().toISOString(),
       })
-      .eq('session_id', body.sessionId);
+      .eq('session_id', body.sessionId)
+      .in('status', ['queued', 'running']);
 
     if (updateError) {
       console.error('cli-audit-fail: Update failed:', updateError);

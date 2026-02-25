@@ -209,6 +209,18 @@ Deno.serve(async (req) => {
 
     if (orchError) {
       console.error('cli-audit-start: Failed to create orchestration row:', orchError);
+
+      // Release reserved credits
+      await supabase.rpc('cli_release_credits', {
+        p_user_id: userId,
+        p_amount: estimatedCost,
+        p_audit_id: sessionId,
+        p_description: `Release: Orchestration setup failed for ${projectName}`,
+      });
+
+      // Delete orphaned audit row
+      await supabase.from('audits').delete().eq('id', sessionId);
+
       return new Response(
         JSON.stringify({ error: 'Failed to initialize audit orchestration' }),
         { status: 500, headers: corsHeaders }

@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
 
     const supabase = createServiceClient();
 
-    // Update progress and status
-    const { error: updateError } = await supabase
+    // Atomic update + return aborted flag in a single operation
+    const { data: updated, error: updateError } = await supabase
       .from('audit_orchestration')
       .update({
         status: 'running',
@@ -52,7 +52,9 @@ Deno.serve(async (req) => {
         findings_count: body.findingsCount || 0,
         updated_at: new Date().toISOString(),
       })
-      .eq('session_id', body.sessionId);
+      .eq('session_id', body.sessionId)
+      .select('aborted')
+      .single();
 
     if (updateError) {
       console.error('cli-audit-progress: Update failed:', updateError);
@@ -62,17 +64,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Return current aborted flag
-    const { data: orch } = await supabase
-      .from('audit_orchestration')
-      .select('aborted')
-      .eq('session_id', body.sessionId)
-      .single();
-
     return new Response(
       JSON.stringify({
         success: true,
-        aborted: orch?.aborted || false,
+        aborted: updated?.aborted || false,
       }),
       { status: 200, headers: corsHeaders }
     );
