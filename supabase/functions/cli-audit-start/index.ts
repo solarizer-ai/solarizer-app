@@ -33,9 +33,14 @@ Deno.serve(async (req) => {
 
   console.log('cli-audit-start: Request received');
 
-  try {
-    const supabase = createServiceClient();
+  // A3: Tracking variables for outer catch cleanup
+  let creditsReserved = false;
+  let reservedAmount = 0;
+  let reservedUserId: string | null = null;
+  let createdSessionId: string | null = null;
+  const supabase = createServiceClient();
 
+  try {
     // 1. Validate API key
     const apiKey = req.headers.get('x-api-key');
     if (!apiKey) {
@@ -72,6 +77,25 @@ Deno.serve(async (req) => {
     if (!Array.isArray(scopeFiles) || scopeFiles.length === 0) {
       return new Response(
         JSON.stringify({ error: 'scopeFiles must be a non-empty array' }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // A8: Input bounds validation
+    const MAX_SCOPE_FILES = 50;
+    const MAX_TOTAL_NLOC = 50000;
+
+    if (scopeFiles.length > MAX_SCOPE_FILES) {
+      return new Response(
+        JSON.stringify({ error: `Maximum ${MAX_SCOPE_FILES} scope files allowed` }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    const totalNloc = scopeFiles.reduce((s: number, f: ScopeFile) => s + f.nLOC, 0);
+    if (totalNloc > MAX_TOTAL_NLOC) {
+      return new Response(
+        JSON.stringify({ error: `Total nLOC exceeds maximum of ${MAX_TOTAL_NLOC}` }),
         { status: 400, headers: corsHeaders }
       );
     }
@@ -146,6 +170,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    // A3: Track reservation for cleanup
+    creditsReserved = true;
+    reservedAmount = estimatedCost;
+    reservedUserId = userId;
+
     // 6. Create audit record (reuse existing audits table for billing)
     const { data: audit, error: auditError } = await supabase
       .from('audits')
@@ -182,6 +211,7 @@ Deno.serve(async (req) => {
         p_audit_id: null,
         p_description: `Release: Audit creation failed for ${projectName}`,
       });
+      creditsReserved = false;
       return new Response(
         JSON.stringify({ error: 'Failed to create audit session' }),
         { status: 500, headers: corsHeaders }
@@ -189,6 +219,7 @@ Deno.serve(async (req) => {
     }
 
     const sessionId = audit.id;
+    createdSessionId = sessionId;
 
     // 7. Create audit_orchestration row
     const { error: orchError } = await supabase
@@ -199,12 +230,19 @@ Deno.serve(async (req) => {
         status: 'queued',
         phase: 'queued',
         progress: {},
+        // A9: Strip file content from stored payload
         request_payload: {
           projectName,
           tier,
-          scopeFiles,
-          contextFiles: contextFiles || [],
-          additionalContext: additionalContext || '',
+          scopeFiles: scopeFiles.map(
+            ({ path, nLOC, complexity }: ScopeFile) => ({ path, nLOC, complexity })
+          ),
+          contextFiles: (contextFiles || []).map(
+            ({ path, nLOC }: ContextFile) => ({ path, nLOC })
+          ),
+          additionalContext: additionalContext
+            ? `[${additionalContext.length} chars]`
+            : '',
         },
       });
 
@@ -218,9 +256,11 @@ Deno.serve(async (req) => {
         p_audit_id: sessionId,
         p_description: `Release: Orchestration setup failed for ${projectName}`,
       });
+      creditsReserved = false;
 
       // Delete orphaned audit row
       await supabase.from('audits').delete().eq('id', sessionId);
+      createdSessionId = null;
 
       return new Response(
         JSON.stringify({ error: 'Failed to initialize audit orchestration' }),
@@ -271,8 +311,33 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
+    // A3: Outer catch cleanup
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('cli-audit-start: Unexpected error:', errorMessage);
+
+    // Clean up any reserved credits
+    if (creditsReserved && reservedUserId) {
+      try {
+        await supabase.rpc('cli_release_credits', {
+          p_user_id: reservedUserId,
+          p_amount: reservedAmount,
+          p_audit_id: createdSessionId,
+          p_description: 'Release: Unexpected error in audit start',
+        });
+      } catch (cleanupErr) {
+        console.error('cli-audit-start: Failed to release credits:', cleanupErr);
+      }
+    }
+
+    // Clean up orphaned audit row
+    if (createdSessionId) {
+      try {
+        await supabase.from('audits').delete().eq('id', createdSessionId);
+      } catch (cleanupErr) {
+        console.error('cli-audit-start: Failed to delete orphan audit:', cleanupErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: corsHeaders }

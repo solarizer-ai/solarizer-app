@@ -87,7 +87,8 @@ Deno.serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const fullKey = `sol_live_${randomHex}`;
-    const keyPrefix = 'sol_live';
+    // Store 16-char prefix for narrower DB lookups
+    const keyPrefix = fullKey.substring(0, 16);
 
     const keyHash = bcrypt.hashSync(fullKey);
 

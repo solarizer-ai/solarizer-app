@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
 
     const supabase = createServiceClient();
 
-    // Update orchestration row
-    const { error: updateError } = await supabase
+    // Update orchestration row with zero-row detection
+    const { data: updated, error: updateError } = await supabase
       .from('audit_orchestration')
       .update({
         status: 'failed',
@@ -49,13 +49,23 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       })
       .eq('session_id', body.sessionId)
-      .in('status', ['queued', 'running']);
+      .in('status', ['queued', 'running'])
+      .select('session_id');
 
     if (updateError) {
       console.error('cli-audit-fail: Update failed:', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to mark audit as failed' }),
         { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // If zero rows matched, audit already in terminal state — skip credit release
+    if (!updated || updated.length === 0) {
+      console.log(`cli-audit-fail: Audit ${body.sessionId} already terminal, skipping credit release`);
+      return new Response(
+        JSON.stringify({ success: true, skipped: true }),
+        { status: 200, headers: corsHeaders }
       );
     }
 
