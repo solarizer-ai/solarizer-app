@@ -872,15 +872,6 @@ export type Database = {
       auto_settle_stale_sessions: { Args: never; Returns: undefined }
       cancel_pending_downgrade: { Args: never; Returns: Json }
       cancel_subscription: { Args: never; Returns: Json }
-      cli_commit_credits: {
-        Args: {
-          p_amount: number
-          p_audit_id: string
-          p_description: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
       cli_deduct_credits: {
         Args: {
           p_amount: number
@@ -891,24 +882,6 @@ export type Database = {
         Returns: Json
       }
       cli_refund_credits: {
-        Args: {
-          p_amount: number
-          p_audit_id: string
-          p_description: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
-      cli_release_credits: {
-        Args: {
-          p_amount: number
-          p_audit_id: string
-          p_description: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
-      cli_reserve_credits: {
         Args: {
           p_amount: number
           p_audit_id: string

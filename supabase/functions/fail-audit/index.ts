@@ -58,10 +58,10 @@ Deno.serve(async (req) => {
 
     console.log(`fail-audit: Processing failure for audit ${audit_id}${error_message ? `: ${error_message}` : ''}`);
 
-    // Fetch audit to get user_id and credit info for release
+    // Fetch audit to get user_id and credit info for refund
     const { data: audit, error: fetchError } = await supabase
       .from('audits')
-      .select('id, user_id, credits_reserved, credits_deducted, is_locked, status')
+      .select('id, user_id, credits_deducted, is_locked, status')
       .eq('id', audit_id)
       .single();
 
@@ -87,27 +87,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Release reserved credits (backwards-compat: fall back to credits_deducted)
-    const amountToRelease = audit.credits_reserved || audit.credits_deducted || 0;
-    let creditsReleased = 0;
+    // Refund deducted credits
+    const amountToRefund = audit.credits_deducted || 0;
+    let creditsRefunded = 0;
 
-    if (amountToRelease > 0) {
-      console.log(`fail-audit: Releasing ${amountToRelease} credits to user ${audit.user_id}`);
+    if (amountToRefund > 0) {
+      console.log(`fail-audit: Refunding ${amountToRefund} credits to user ${audit.user_id}`);
       
-      const { data: releaseResult, error: releaseError } = await supabase
-        .rpc('cli_release_credits', {
+      const { data: refundResult, error: refundError } = await supabase
+        .rpc('cli_refund_credits', {
           p_user_id: audit.user_id,
-          p_amount: amountToRelease,
+          p_amount: amountToRefund,
           p_audit_id: audit_id,
-          p_description: 'Full release: proxy failure',
+          p_description: 'Refund: proxy failure',
         });
 
-      if (releaseError) {
-        console.error('fail-audit: Failed to release credits:', releaseError);
-        // Continue with status update even if release fails
-      } else if (releaseResult?.success) {
-        creditsReleased = amountToRelease;
-        console.log(`fail-audit: Successfully released ${creditsReleased} credits`);
+      if (refundError) {
+        console.error('fail-audit: Failed to refund credits:', refundError);
+        // Continue with status update even if refund fails
+      } else if (refundResult?.success) {
+        creditsRefunded = refundResult.refunded || amountToRefund;
+        console.log(`fail-audit: Successfully refunded ${creditsRefunded} credits`);
       }
     }
 
@@ -117,6 +117,7 @@ Deno.serve(async (req) => {
       .update({
         status: 'failed',
         is_locked: true,
+        credits_deducted: 0,
         credits_reserved: 0,
         error_message: error_message || 'Proxy failure',
         updated_at: new Date().toISOString(),
@@ -137,7 +138,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         audit_id,
-        credits_refunded: creditsReleased
+        credits_refunded: creditsRefunded
       }),
       { status: 200, headers: corsHeaders }
     );

@@ -74,15 +74,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Read credits_reserved BEFORE the atomic update
+    // Read credits_deducted BEFORE the atomic update
     const { data: auditRow } = await supabase
       .from('audits')
-      .select('credits_reserved')
+      .select('credits_deducted')
       .eq('id', body.sessionId)
       .eq('user_id', authResult.userId)
       .single();
 
-    const creditsToRelease = auditRow?.credits_reserved ?? 0;
+    const creditsToRefund = auditRow?.credits_deducted ?? 0;
 
     // Atomic lock — only succeeds if is_locked is still false
     const { data: locked } = await supabase
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
       .update({
         is_locked: true,
         status: 'cancelled',
-        credits_reserved: 0,
+        credits_deducted: 0,
         error_message: 'Cancelled by user',
         updated_at: new Date().toISOString(),
       })
@@ -99,12 +99,12 @@ Deno.serve(async (req) => {
       .eq('is_locked', false)
       .select('user_id');
 
-    if (locked && locked.length > 0 && creditsToRelease > 0) {
-      await supabase.rpc('cli_release_credits', {
+    if (locked && locked.length > 0 && creditsToRefund > 0) {
+      await supabase.rpc('cli_refund_credits', {
         p_user_id: authResult.userId,
-        p_amount: creditsToRelease,
+        p_amount: creditsToRefund,
         p_audit_id: body.sessionId,
-        p_description: 'Release: Audit cancelled by user',
+        p_description: 'Refund: Audit cancelled by user',
       });
     }
 
