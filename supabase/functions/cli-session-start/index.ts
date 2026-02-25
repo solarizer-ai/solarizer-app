@@ -181,12 +181,18 @@ Deno.serve(async (req) => {
 
     if (auditError || !audit) {
       console.error('cli-session-start: Failed to create audit:', auditError);
-      await supabase.rpc('cli_refund_credits', {
+      const { error: refundError } = await supabase.rpc('cli_refund_credits', {
         p_user_id: userId,
         p_amount: estimated_cost,
         p_audit_id: null,
         p_description: `Refund: Audit creation failed for ${project_name}`,
       });
+      if (refundError) {
+        console.error(
+          `cli-session-start: CRITICAL — refund of ${estimated_cost} credits failed for user ${userId}:`,
+          refundError
+        );
+      }
       return new Response(
         JSON.stringify({ error: 'Failed to create audit session' }),
         { status: 500, headers: corsHeaders }

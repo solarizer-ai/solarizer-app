@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       .eq('id', body.sessionId);
 
     console.log(
-      `cli-audit-complete: Settled ${audit.credits_reserved} credits, ` +
+      `cli-audit-complete: Settled ${audit.credits_deducted} credits, ` +
       `grade=${grade}, status=${finalStatus}`
     );
 
