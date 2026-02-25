@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
 
     // Calculate estimated cost with per-contract complexity multipliers
     const COMPLEXITY_RATES: Record<string, number> = { L1: 0.8, L2: 1.0, L3: 1.2 };
+    const scopeNloc = scopeFiles.reduce((sum: number, f: ScopeFile) => sum + f.nLOC, 0);
     const scopeCost = scopeFiles.reduce((sum: number, f: ScopeFile) => {
       const rate = COMPLEXITY_RATES[f.complexity] ?? 1.0;
       return sum + f.nLOC * rate;
