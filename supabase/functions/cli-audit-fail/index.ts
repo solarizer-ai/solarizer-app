@@ -72,11 +72,11 @@ Deno.serve(async (req) => {
     // Read credits before atomic lock
     const { data: auditRow } = await supabase
       .from('audits')
-      .select('user_id, credits_reserved')
+      .select('user_id, credits_deducted')
       .eq('id', body.sessionId)
       .single();
 
-    const creditsToRelease = auditRow?.credits_reserved ?? 0;
+    const creditsToRefund = auditRow?.credits_deducted ?? 0;
     const auditUserId = auditRow?.user_id;
 
     // Atomic lock — only one caller (fail, cancel, or complete) gets through
@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       .update({
         is_locked: true,
         status: 'failed',
-        credits_reserved: 0,
+        credits_deducted: 0,
         error_message: body.error,
         updated_at: new Date().toISOString(),
       })
@@ -93,12 +93,12 @@ Deno.serve(async (req) => {
       .eq('is_locked', false)
       .select('user_id');
 
-    if (locked && locked.length > 0 && auditUserId && creditsToRelease > 0) {
-      await supabase.rpc('cli_release_credits', {
+    if (locked && locked.length > 0 && auditUserId && creditsToRefund > 0) {
+      await supabase.rpc('cli_refund_credits', {
         p_user_id: auditUserId,
-        p_amount: creditsToRelease,
+        p_amount: creditsToRefund,
         p_audit_id: body.sessionId,
-        p_description: `Release: Audit failed — ${body.error}`,
+        p_description: `Refund: Audit failed — ${body.error}`,
       });
     }
 

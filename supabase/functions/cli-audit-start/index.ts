@@ -34,9 +34,9 @@ Deno.serve(async (req) => {
   console.log('cli-audit-start: Request received');
 
   // A3: Tracking variables for outer catch cleanup
-  let creditsReserved = false;
-  let reservedAmount = 0;
-  let reservedUserId: string | null = null;
+  let creditsDeducted = false;
+  let deductedAmount = 0;
+  let deductedUserId: string | null = null;
   let createdSessionId: string | null = null;
   const supabase = createServiceClient();
 
@@ -155,25 +155,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 5. Reserve credits
-    const { data: reserveResult, error: reserveError } = await supabase.rpc('cli_reserve_credits', {
+    // 5. Deduct credits upfront
+    const { data: deductResult, error: deductError } = await supabase.rpc('cli_deduct_credits', {
       p_user_id: userId,
       p_amount: estimatedCost,
       p_audit_id: null,
-      p_description: `Remote Audit: ${projectName} (${scopeFiles.length} contracts)`,
+      p_description: `Deduct: ${projectName} (${scopeFiles.length} contracts)`,
     });
 
-    if (reserveError || !reserveResult?.success) {
+    if (deductError || !deductResult?.success) {
       return new Response(
-        JSON.stringify({ error: reserveResult?.error || 'Failed to reserve credits' }),
+        JSON.stringify({ error: deductResult?.error || 'Failed to deduct credits' }),
         { status: 402, headers: corsHeaders }
       );
     }
 
-    // A3: Track reservation for cleanup
-    creditsReserved = true;
-    reservedAmount = estimatedCost;
-    reservedUserId = userId;
+    // A3: Track deduction for cleanup
+    creditsDeducted = true;
+    deductedAmount = estimatedCost;
+    deductedUserId = userId;
 
     // 6. Create audit record (reuse existing audits table for billing)
     const { data: audit, error: auditError } = await supabase
@@ -184,8 +184,8 @@ Deno.serve(async (req) => {
         status: 'analyzing',
         source: 'cli',
         nloc_count: scopeNloc,
-        credits_deducted: 0,
-        credits_reserved: estimatedCost,
+        credits_deducted: estimatedCost,
+        credits_reserved: 0,
         scope_metadata: scopeFiles.map((f: ScopeFile) => ({
           path: f.path,
           nLOC: f.nLOC,
@@ -204,14 +204,14 @@ Deno.serve(async (req) => {
 
     if (auditError || !audit) {
       console.error('cli-audit-start: Failed to create audit:', auditError);
-      // Release credits on failure
-      await supabase.rpc('cli_release_credits', {
+      // Refund credits on failure
+      await supabase.rpc('cli_refund_credits', {
         p_user_id: userId,
         p_amount: estimatedCost,
         p_audit_id: null,
-        p_description: `Release: Audit creation failed for ${projectName}`,
+        p_description: `Refund: Audit creation failed for ${projectName}`,
       });
-      creditsReserved = false;
+      creditsDeducted = false;
       return new Response(
         JSON.stringify({ error: 'Failed to create audit session' }),
         { status: 500, headers: corsHeaders }
@@ -249,14 +249,14 @@ Deno.serve(async (req) => {
     if (orchError) {
       console.error('cli-audit-start: Failed to create orchestration row:', orchError);
 
-      // Release reserved credits
-      await supabase.rpc('cli_release_credits', {
+      // Refund credits on failure
+      await supabase.rpc('cli_refund_credits', {
         p_user_id: userId,
         p_amount: estimatedCost,
         p_audit_id: sessionId,
-        p_description: `Release: Orchestration setup failed for ${projectName}`,
+        p_description: `Refund: Orchestration setup failed for ${projectName}`,
       });
-      creditsReserved = false;
+      creditsDeducted = false;
 
       // Delete orphaned audit row
       await supabase.from('audits').delete().eq('id', sessionId);
@@ -315,17 +315,17 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('cli-audit-start: Unexpected error:', errorMessage);
 
-    // Clean up any reserved credits
-    if (creditsReserved && reservedUserId) {
+    // Clean up any deducted credits
+    if (creditsDeducted && deductedUserId) {
       try {
-        await supabase.rpc('cli_release_credits', {
-          p_user_id: reservedUserId,
-          p_amount: reservedAmount,
+        await supabase.rpc('cli_refund_credits', {
+          p_user_id: deductedUserId,
+          p_amount: deductedAmount,
           p_audit_id: createdSessionId,
-          p_description: 'Release: Unexpected error in audit start',
+          p_description: 'Refund: Unexpected error in audit start',
         });
       } catch (cleanupErr) {
-        console.error('cli-audit-start: Failed to release credits:', cleanupErr);
+        console.error('cli-audit-start: Failed to refund credits:', cleanupErr);
       }
     }
 
