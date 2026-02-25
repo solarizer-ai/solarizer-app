@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { error: updateError } = await supabase
+    const { data: updated, error: updateError } = await supabase
       .from('audit_orchestration')
       .update({
         aborted: true,
@@ -56,13 +56,21 @@ Deno.serve(async (req) => {
       })
       .eq('session_id', body.sessionId)
       .eq('user_id', authResult.userId)
-      .in('status', ['queued', 'running']);
+      .in('status', ['queued', 'running'])
+      .select('session_id');
 
     if (updateError) {
       console.error('cli-audit-cancel: Update failed:', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to cancel audit' }),
         { status: 500, headers: corsHeaders }
+      );
+    }
+
+    if (!updated || updated.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Audit already completed or cancelled' }),
+        { status: 409, headers: corsHeaders }
       );
     }
 

@@ -65,6 +65,60 @@ Deno.serve(async (req) => {
 
     console.log(`cli-audit-complete: Audit ${body.sessionId} completed with ${body.findingsCount} findings`);
 
+    // ── Credit settlement & audit finalization ──────────────────────
+
+    const { data: audit } = await supabase
+      .from('audits')
+      .select('user_id, credits_reserved, is_locked, contracts_total')
+      .eq('id', body.sessionId)
+      .single();
+
+    if (audit && !audit.is_locked) {
+      const severities = (body.findings || []).map(
+        (f: Record<string, unknown>) =>
+          typeof f.severity === 'string' ? f.severity.toLowerCase() : ''
+      );
+
+      function calculateGrade(sevs: string[]): string {
+        if (sevs.includes('critical')) return 'F';
+        if (sevs.includes('high')) return 'D';
+        if (sevs.includes('medium')) return 'C';
+        if (sevs.includes('low')) return 'B';
+        return 'A';
+      }
+
+      const grade = calculateGrade(severities);
+      const finalStatus = severities.some(
+        (s: string) => s === 'critical' || s === 'high' || s === 'medium'
+      )
+        ? 'issues'
+        : 'secured';
+
+      if (audit.credits_reserved > 0) {
+        await supabase.rpc('cli_commit_credits', {
+          p_user_id: audit.user_id,
+          p_amount: audit.credits_reserved,
+          p_audit_id: body.sessionId,
+          p_description: `Audit completed: ${body.findingsCount} findings`,
+        });
+      }
+
+      await supabase.from('audits').update({
+        status: finalStatus,
+        grade,
+        is_locked: true,
+        credits_deducted: audit.credits_reserved,
+        credits_reserved: 0,
+        contracts_completed: audit.contracts_total,
+        updated_at: new Date().toISOString(),
+      }).eq('id', body.sessionId);
+
+      console.log(
+        `cli-audit-complete: Settled ${audit.credits_reserved} credits, ` +
+        `grade=${grade}, status=${finalStatus}`
+      );
+    }
+
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: corsHeaders }
