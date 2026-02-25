@@ -196,7 +196,11 @@ const Report = () => {
 
   // Auto-transition when orchestration completes
   useEffect(() => {
-    if (orchestration?.status === 'completed') {
+    if (
+      orchestration?.status === 'completed' ||
+      orchestration?.status === 'cancelled' ||
+      orchestration?.status === 'failed'
+    ) {
       queryClient.invalidateQueries({ queryKey: ['audit', auditId] });
       queryClient.invalidateQueries({ queryKey: ['findings', auditId] });
     }
