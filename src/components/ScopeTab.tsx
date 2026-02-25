@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { FileCode, FileText, FolderOpen, Folder, Info, CheckCircle2, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CoverageData } from "@/components/SecurityCoverageTab";
@@ -23,8 +23,58 @@ interface ScopeTabProps {
     scope?: string[];
     all_files?: string[];
   } | null;
-  scopeMetadata?: Array<{ path: string; nLOC: number; complexity: string }> | null;
-  contextMetadata?: Array<{ path: string }> | null;
+  scopeMetadata?: unknown;
+  contextMetadata?: unknown;
+  orchestrationScopeFiles?: unknown;
+  orchestrationContextFiles?: unknown;
+}
+
+/**
+ * Normalize unknown input into a deduplicated array of file path strings.
+ * Handles: null, undefined, string[], object[], JSON-string, single object.
+ */
+function normalizePaths(data: unknown): string[] {
+  if (!data) return [];
+
+  // If it's a JSON string, parse it first
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data);
+      return normalizePaths(parsed);
+    } catch {
+      const trimmed = data.trim();
+      return trimmed ? [trimmed] : [];
+    }
+  }
+
+  if (Array.isArray(data)) {
+    const paths: string[] = [];
+    for (const item of data) {
+      if (typeof item === 'string') {
+        const t = item.trim();
+        if (t) paths.push(t);
+      } else if (typeof item === 'object' && item !== null) {
+        const obj = item as Record<string, unknown>;
+        const p = obj.path ?? obj.file ?? obj.filePath ?? obj.filename;
+        if (typeof p === 'string') {
+          const t = p.trim();
+          if (t) paths.push(t);
+        }
+      }
+    }
+    return Array.from(new Set(paths));
+  }
+
+  if (typeof data === 'object' && data !== null) {
+    const obj = data as Record<string, unknown>;
+    const p = obj.path ?? obj.file ?? obj.filePath ?? obj.filename;
+    if (typeof p === 'string') {
+      const t = p.trim();
+      return t ? [t] : [];
+    }
+  }
+
+  return [];
 }
 
 // Build a hierarchical tree from flat file paths
@@ -89,7 +139,6 @@ const FileTreeNode = ({ node, depth = 0, expandedFolders, onToggleExpand }: File
   const paddingLeft = depth * 16;
   
   if (!node.isFile) {
-    // Folder node
     const isExpanded = expandedFolders.has(node.path);
     
     return (
@@ -127,7 +176,6 @@ const FileTreeNode = ({ node, depth = 0, expandedFolders, onToggleExpand }: File
     );
   }
   
-  // File node
   return (
     <div 
       className="flex items-center justify-between gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors"
@@ -165,44 +213,62 @@ const ScopeTab = ({
   systemHologram,
   scopeMetadata,
   contextMetadata,
+  orchestrationScopeFiles,
+  orchestrationContextFiles,
 }: ScopeTabProps) => {
-  // Track expanded folders - auto-expand root folders initially
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
 
-  // Derive scope and all files from system_hologram or fallback to metadata
+  // Derive scope and all files with multi-source fallback + normalization
   const { derivedScopeFiles, derivedAllFiles } = useMemo(() => {
-    const hologramScope = systemHologram?.scope;
-    const hologramAll = systemHologram?.all_files;
+    // Source 1: system_hologram
+    const holoScope = normalizePaths(systemHologram?.scope);
+    const holoAll = normalizePaths(systemHologram?.all_files);
 
-    const scopeFiles = (hologramScope && hologramScope.length > 0)
-      ? hologramScope
-      : (scopeMetadata?.map(f => f.path) || []);
+    // Source 2: audit row metadata
+    const metaScope = normalizePaths(scopeMetadata);
+    const metaContext = normalizePaths(contextMetadata);
 
-    const contextFiles = contextMetadata?.map(f => f.path) || [];
+    // Source 3: orchestration payload
+    const orchScope = normalizePaths(orchestrationScopeFiles);
+    const orchContext = normalizePaths(orchestrationContextFiles);
 
-    const allFiles = (hologramAll && hologramAll.length > 0)
-      ? hologramAll
-      : [...scopeFiles, ...contextFiles.filter(cf => !scopeFiles.includes(cf))];
+    // Pick scope files by precedence
+    const scopeFiles = holoScope.length > 0
+      ? holoScope
+      : metaScope.length > 0
+        ? metaScope
+        : orchScope;
+
+    // Pick context files
+    const contextFiles = metaContext.length > 0 ? metaContext : orchContext;
+
+    // Pick all files
+    const allFiles = holoAll.length > 0
+      ? holoAll
+      : Array.from(new Set([...scopeFiles, ...contextFiles]));
+
+    if (import.meta.env.DEV && allFiles.length === 0) {
+      console.debug('[ScopeTab] All sources empty', {
+        holoScope: holoScope.length, metaScope: metaScope.length, orchScope: orchScope.length,
+      });
+    }
 
     return { derivedScopeFiles: scopeFiles, derivedAllFiles: allFiles };
-  }, [systemHologram?.scope, systemHologram?.all_files, scopeMetadata, contextMetadata]);
+  }, [systemHologram?.scope, systemHologram?.all_files, scopeMetadata, contextMetadata, orchestrationScopeFiles, orchestrationContextFiles]);
 
   // Determine file status based on scope and analysis progress
   const getFileStatus = useMemo(() => {
     const isComplete = auditStatus === 'secured' || auditStatus === 'issues';
+    const scopeSet = new Set(derivedScopeFiles);
     
     return (filePath: string): 'context' | 'pending' | 'analysed' => {
-      const isInScope = derivedScopeFiles.some(s => 
-        s && filePath && (s === filePath || filePath.endsWith(s) || s.endsWith(filePath))
+      // Check if file is in scope using exact match or suffix matching
+      const isInScope = scopeSet.has(filePath) || derivedScopeFiles.some(s => 
+        s && filePath && (filePath.endsWith(s) || s.endsWith(filePath))
       );
       
-      if (!isInScope) {
-        return 'context';
-      }
-      
-      if (isComplete) {
-        return 'analysed';
-      }
+      if (!isInScope) return 'context';
+      if (isComplete) return 'analysed';
       
       const hasResults = coverageData?.details?.some(d => 
         d?.file && filePath && (d.file === filePath || filePath.includes(d.file) || d.file.includes(filePath))
@@ -212,25 +278,18 @@ const ScopeTab = ({
         f?.location && filePath && (f.location.includes(filePath) || filePath.includes(f.location))
       );
       
-      if (hasResults || hasFindings) {
-        return 'analysed';
-      }
-      
-      return 'pending';
+      return (hasResults || hasFindings) ? 'analysed' : 'pending';
     };
   }, [derivedScopeFiles, coverageData?.details, findings, auditStatus]);
 
   // Build the file tree
   const fileTree = useMemo(() => {
-    if (derivedAllFiles.length === 0) {
-      return [];
-    }
-    
+    if (derivedAllFiles.length === 0) return [];
     return buildFileTree(derivedAllFiles, derivedScopeFiles, getFileStatus);
   }, [derivedAllFiles, derivedScopeFiles, getFileStatus]);
 
-  // Auto-expand root folders on first render
-  useMemo(() => {
+  // Auto-expand root folders (useEffect instead of useMemo for side effects)
+  useEffect(() => {
     if (fileTree.length > 0 && expandedFolders.size === 0) {
       const rootFolders = fileTree.filter(n => !n.isFile).map(n => n.path);
       if (rootFolders.length > 0) {
@@ -241,18 +300,21 @@ const ScopeTab = ({
 
   // Count files by status
   const statusCounts = useMemo(() => {
-    const allFiles = derivedAllFiles;
     const counts = { context: 0, pending: 0, analysed: 0 };
-    
-    allFiles.forEach(f => {
-      const status = getFileStatus(f);
-      counts[status]++;
+    derivedAllFiles.forEach(f => {
+      counts[getFileStatus(f)]++;
     });
-    
     return counts;
   }, [derivedAllFiles, getFileStatus]);
 
   const hasTreeData = fileTree.length > 0;
+
+  // Resilient contract count
+  const displayContractCount = contractCount > 0
+    ? contractCount
+    : derivedScopeFiles.length > 0
+      ? derivedScopeFiles.length
+      : 0;
 
   const handleToggleExpand = (path: string) => {
     setExpandedFolders(prev => {
@@ -285,7 +347,7 @@ const ScopeTab = ({
         <div className="flex flex-wrap gap-4 mt-4">
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50">
             <FileText className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{contractCount} Contracts</span>
+            <span className="text-sm font-medium text-foreground">{displayContractCount} Contracts</span>
           </div>
           {nlocCount !== null && (
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50">
