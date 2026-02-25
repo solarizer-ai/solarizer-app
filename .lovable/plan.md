@@ -1,31 +1,25 @@
 
 
-# Fix: Auto-transition UI when audit is cancelled or failed
+# Edge Function Dual Auth and Config Cleanup
 
-## Problem
-In `Report.tsx`, the effect that invalidates queries when orchestration completes only checks for `'completed'` status. When an audit is cancelled (or fails), the orchestration status changes to `'cancelled'`/`'failed'`, but the UI never picks up the change — so the progress panel stays stuck showing "queued".
+## Changes
 
-## Fix
+### 1. `supabase/functions/save-finding/index.ts`
+- Add `import { verifyServiceSecret } from '../_shared/verifyServiceSecret.ts';`
+- Wrap the existing `verifyCallback` block so `verifyServiceSecret` is checked first; only fall back to `verifyCallback` if the service secret check fails
 
-### `src/pages/Report.tsx` (lines 198-203)
-Expand the auto-transition effect to also trigger on `cancelled` and `failed` orchestration statuses:
+### 2. `supabase/functions/update-findings-batch/index.ts`
+- Add `import { verifyServiceSecret } from '../_shared/verifyServiceSecret.ts';`
+- Same dual-auth wrapper around the existing `verifyCallback` block
 
-```typescript
-useEffect(() => {
-  if (
-    orchestration?.status === 'completed' ||
-    orchestration?.status === 'cancelled' ||
-    orchestration?.status === 'failed'
-  ) {
-    queryClient.invalidateQueries({ queryKey: ['audit', auditId] });
-    queryClient.invalidateQueries({ queryKey: ['findings', auditId] });
-  }
-}, [orchestration?.status, auditId, queryClient]);
-```
+### 3. `supabase/config.toml`
+Remove three stale entries:
+- `[functions.generate-report]` (no matching function directory)
+- Duplicate `[functions.razorpay-create-order]` (keep the one with `verify_jwt = false`)
+- `[functions.cli-commit-contract]` (function was deleted)
 
-Once the `audits` row is re-fetched with `status = 'cancelled'`, `isLive` becomes `false`, the progress panel disappears, and the existing cancelled/failed UI (lines 306-333) takes over — showing the "Analysis Cancelled" message with the refund notice.
+### 4. Deploy
+Redeploy `save-finding` and `update-findings-batch`.
 
-## Files Modified
-| File | Change |
-|------|--------|
-| `src/pages/Report.tsx` | Expand orchestration status check to include `cancelled` and `failed` |
+No other files are modified. The `verifyServiceSecret` helper and `fail-audit` (which already has dual auth) remain unchanged.
+
