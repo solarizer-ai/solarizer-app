@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FindingItem from "@/components/FindingItem";
@@ -24,6 +25,9 @@ import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
 import { useReportFeatureAccess } from "@/hooks/useReportFeatureAccess";
 import { formatDistanceToNow } from "date-fns";
 import type { CoverageData, Finding } from "@/hooks/useAudits";
+import { useAuditProgress } from "@/hooks/useAuditProgress";
+import AuditProgressPanel from "@/components/AuditProgressPanel";
+import { PHASE_LABELS } from "@/components/AuditProgressPanel";
 
 const Report = () => {
   const { auditId } = useParams<{ auditId: string }>();
@@ -187,6 +191,16 @@ const Report = () => {
   };
 
   const isLive = currentAudit?.status === 'analyzing';
+  const { data: orchestration } = useAuditProgress(auditId || null, isLive);
+  const queryClient = useQueryClient();
+
+  // Auto-transition when orchestration completes
+  useEffect(() => {
+    if (orchestration?.status === 'completed') {
+      queryClient.invalidateQueries({ queryKey: ['audit', auditId] });
+      queryClient.invalidateQueries({ queryKey: ['findings', auditId] });
+    }
+  }, [orchestration?.status, auditId, queryClient]);
 
   if (!auditId) {
     navigate("/dashboard");
@@ -272,7 +286,9 @@ const Report = () => {
             </div>
             {isLive ? (
               <p className="text-sm text-muted-foreground animate-pulse">
-                Analysing...
+                {orchestration?.phase
+                  ? `Analysing · ${PHASE_LABELS[orchestration.phase] || orchestration.phase}`
+                  : 'Analysing...'}
               </p>
             ) : currentAudit ? (
               <p className="text-sm text-muted-foreground">
@@ -318,15 +334,25 @@ const Report = () => {
               ) : (
                 /* Normal audit: Show all content */
                 <>
-                  {/* Security Score Card with Vulnerability Matrix */}
-                  <SecurityScoreCard
-                    grade={currentAudit.grade || null}
-                    score={currentAudit.security_score || 0}
-                    projectName={currentAudit.project_name}
-                    timestamp={formatTimestamp(currentAudit.created_at)}
-                    auditId={currentAudit.id}
-                    counts={getVulnerabilityCounts()}
-                  />
+                  {/* Live Progress Panel - shown during analysis */}
+                  {isLive && orchestration && (
+                    <AuditProgressPanel
+                      orchestration={orchestration}
+                      scopeMetadata={currentAudit.scope_metadata as any[] | null}
+                    />
+                  )}
+
+                  {/* Security Score Card - hidden during analysis */}
+                  {!isLive && (
+                    <SecurityScoreCard
+                      grade={currentAudit.grade || null}
+                      score={currentAudit.security_score || 0}
+                      projectName={currentAudit.project_name}
+                      timestamp={formatTimestamp(currentAudit.created_at)}
+                      auditId={currentAudit.id}
+                      counts={getVulnerabilityCounts()}
+                    />
+                  )}
                   
                   {/* Remediation Progress - Business only */}
                   {canCommentOnFindings && (
