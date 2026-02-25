@@ -1,11 +1,12 @@
 import type { Audit, Finding } from "@/hooks/useAudits";
 
-interface VulnerabilityCounts {
+export interface VulnerabilityCounts {
   critical: number;
   high: number;
   medium: number;
   low: number;
   info: number;
+  gas: number;
 }
 
 interface ExportOptions {
@@ -14,273 +15,219 @@ interface ExportOptions {
   vulnerabilityCounts: VulnerabilityCounts;
 }
 
+function generateReportId(dateStr: string): string {
+  const d = new Date(dateStr);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `SOL-${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}-${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`;
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  const month = d.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+  const day = d.getUTCDate();
+  const year = d.getUTCFullYear();
+  const hours = String(d.getUTCHours()).padStart(2, '0');
+  const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${month} ${day}, ${year} at ${hours}:${minutes} UTC`;
+}
+
+function computeOverallRisk(counts: VulnerabilityCounts): string {
+  if (counts.critical > 0 || counts.high > 0) {
+    return '**Overall Risk: HIGH** — Critical issues require immediate attention before deployment.';
+  }
+  if (counts.medium > 0) {
+    return '**Overall Risk: MODERATE** — Issues identified that should be addressed before production use.';
+  }
+  if (counts.low + counts.info + counts.gas > 0) {
+    return '**Overall Risk: LOW** — No critical issues found. Consider addressing low-severity items for hardening.';
+  }
+  return '**Overall Risk: MINIMAL** — No issues identified within the scope of this analysis.';
+}
+
+const SEVERITY_CONFIG: Array<{
+  key: keyof VulnerabilityCounts;
+  emoji: string;
+  label: string;
+  heading: string;
+  prefix: string;
+}> = [
+  { key: 'critical', emoji: '🔴', label: 'Critical', heading: '🔴 Critical Findings', prefix: 'CRIT' },
+  { key: 'high', emoji: '🟠', label: 'High', heading: '🟠 High Severity Findings', prefix: 'HIGH' },
+  { key: 'medium', emoji: '🟡', label: 'Medium', heading: '🟡 Medium Severity Findings', prefix: 'MED' },
+  { key: 'low', emoji: '🔵', label: 'Low', heading: '🔵 Low Severity Findings', prefix: 'LOW' },
+  { key: 'info', emoji: 'ℹ️', label: 'Informational', heading: 'ℹ️ Informational Findings', prefix: 'INFO' },
+  { key: 'gas', emoji: '⛽', label: 'Gas Optimization', heading: '⛽ Gas Optimization Findings', prefix: 'GAS' },
+];
+
 export const generateMarkdownReport = (options: ExportOptions): string => {
   const { audit, findings, vulnerabilityCounts } = options;
-  const date = new Date(audit.created_at).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  const totalFindings = Object.values(vulnerabilityCounts).reduce((a, b) => a + b, 0);
-
-  // Calculate pass rate if coverage data exists
+  const counts = { ...vulnerabilityCounts, gas: vulnerabilityCounts.gas ?? findings.filter(f => f.severity === 'gas').length };
+  const totalFindings = Object.values(counts).reduce((a, b) => a + b, 0);
+  const overallRisk = computeOverallRisk(counts);
   const passRate = audit.coverage_data?.total_tests
     ? ((audit.coverage_data.passed / audit.coverage_data.total_tests) * 100).toFixed(1)
     : null;
 
-  let markdown = `# Solarizer Security Analysis
+  let md = '';
 
-> **Smart Contract Security Analysis Report**
+  // 1. Title + metadata
+  md += `# Solarizer Security Audit Report\n\n`;
+  md += `**Project:** ${audit.project_name}\n`;
+  md += `**Report ID:** ${generateReportId(audit.created_at)}\n`;
+  md += `**Generated:** ${formatDate(audit.created_at)}\n`;
+  md += `**Lines Analyzed:** ${audit.nloc_count?.toLocaleString() ?? 'N/A'} nLOC\n`;
+  md += `**Engine Version:** 1.0\n\n`;
 
----
+  // 2. Table of Contents
+  let tocNum = 0;
+  md += `## Table of Contents\n\n`;
+  md += `${++tocNum}. [Executive Summary](#executive-summary)\n`;
+  md += `${++tocNum}. [Audit Scope](#audit-scope)\n`;
+  md += `${++tocNum}. [Methodology](#methodology)\n`;
+  md += `${++tocNum}. [Risk Summary](#risk-summary)\n`;
+  for (const s of SEVERITY_CONFIG) {
+    if (counts[s.key] > 0) {
+      const anchor = s.heading.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+      md += `${++tocNum}. [${s.heading}](#${anchor})\n`;
+    }
+  }
+  if (audit.coverage_data && audit.coverage_data.total_tests > 0) {
+    md += `${++tocNum}. [Verification Coverage](#verification-coverage)\n`;
+  }
+  md += `${++tocNum}. [Disclaimer](#disclaimer)\n`;
+  md += `\n`;
 
-## 📋 Executive Summary
+  // 3. Executive Summary
+  md += `## Executive Summary\n\n`;
+  md += `| Severity | Count |\n`;
+  md += `|----------|-------|\n`;
+  for (const s of SEVERITY_CONFIG) {
+    md += `| ${s.emoji} ${s.label} | ${counts[s.key]} |\n`;
+  }
+  md += `| **Total** | **${totalFindings}** |\n`;
+  if (audit.grade) md += `| Security Grade | ${audit.grade} |\n`;
+  if (audit.security_score != null) md += `| Security Score | ${audit.security_score}% |\n`;
+  md += `\n${overallRisk}\n\n`;
 
-<div align="center">
-
-### Security Grade: **${audit.grade || "N/A"}** | Security Score: **${audit.security_score ?? "--"}%**
-
-</div>
-
-| Metric | Value |
-|--------|-------|
-| **Project Name** | ${audit.project_name} |
-| **Assessment Date** | ${date} |
-| **Contracts Analyzed** | ${audit.contract_count} |
-| **Lines of Code** | ${audit.nloc_count?.toLocaleString() ?? "N/A"} |
-${audit.coverage_data?.total_tests ? `| **Verification Tests** | ${audit.coverage_data.total_tests} |` : ""}
-${passRate ? `| **Test Pass Rate** | ${passRate}% |` : ""}
-
----
-
-## 🎯 Assessment Scope
-
-This comprehensive security assessment analyzed **${audit.contract_count}** smart contract${audit.contract_count !== 1 ? "s" : ""} containing ${audit.nloc_count ? `**${audit.nloc_count.toLocaleString()}**` : "an undisclosed number of"} lines of Solidity code.
-
-### Methodology
-
-The assessment utilized Solarizer's proprietary AI-powered verification engine, combining:
-
-- ✅ **Structural Dependency Mapping** – Analysis of contract interactions and call graphs
-- ✅ **Automated State Verification** – Formal verification of state transitions
-- ✅ **Pattern Matching** – Cross-referencing against 20,000+ historical vulnerabilities
-- ✅ **Contextual Logic Analysis** – Protocol-specific business logic validation
-- ✅ **Manual Review** – Expert examination of security-critical code paths
-
----
-
-## 📊 Findings Overview
-
-`;
-
-  // Findings breakdown table
-  if (totalFindings > 0) {
-    markdown += `| Severity | Count | Status |\n`;
-    markdown += `|----------|-------|--------|\n`;
-
-    const severityData = [
-      { level: "Critical", key: "critical", emoji: "🔴", count: vulnerabilityCounts.critical },
-      { level: "High", key: "high", emoji: "🟠", count: vulnerabilityCounts.high },
-      { level: "Medium", key: "medium", emoji: "🟡", count: vulnerabilityCounts.medium },
-      { level: "Low", key: "low", emoji: "🔵", count: vulnerabilityCounts.low },
-      { level: "Info", key: "info", emoji: "⚪", count: vulnerabilityCounts.info },
-    ];
-
-    severityData.forEach(({ level, emoji, count }) => {
-      const bar = count > 0 ? "█".repeat(Math.min(count, 10)) : "—";
-      markdown += `| ${emoji} **${level}** | **${count}** | ${bar} |\n`;
-    });
-
-    markdown += `| **Total Issues** | **${totalFindings}** | |\n\n`;
-  } else {
-    markdown += `### ✅ No Security Issues Detected
-
-All security verification tests passed successfully. The analyzed contracts demonstrate strong security posture with no identified vulnerabilities.
-
-`;
+  // 4. Audit Scope
+  md += `## Audit Scope\n\n`;
+  md += `**Contracts in scope:** ${audit.contract_count}\n\n`;
+  const scopeMeta = audit.scope_metadata as Array<{ path: string; nLOC: number; complexity?: string | number }> | null;
+  if (scopeMeta && scopeMeta.length > 0) {
+    for (const file of scopeMeta) {
+      md += `- ${file.path} (${file.nLOC} nLOC)\n`;
+    }
+    md += `\n`;
   }
 
-  markdown += `---
+  // 5. Methodology + Severity Classification
+  md += `## Methodology\n\n`;
+  md += `This report was generated by the Solarizer Security Engine, an AI-powered multi-phase analysis pipeline. The audit process includes:\n\n`;
+  md += `1. **Static Analysis** — Pattern-based detection of known vulnerability classes\n`;
+  md += `2. **Semantic Analysis** — Deep understanding of contract logic, state transitions, and access control patterns\n`;
+  md += `3. **Cross-Contract Analysis** — Interaction analysis across contract boundaries and external dependencies\n`;
+  md += `4. **Validation** — Independent re-analysis of all findings to filter false positives and confirm exploitability\n\n`;
 
-## 🔍 Detailed Analysis
+  md += `### Severity Classification\n\n`;
+  md += `| Level | Description |\n`;
+  md += `|-------|-------------|\n`;
+  md += `| 🔴 **Critical** | Directly exploitable vulnerabilities that can lead to loss of funds, unauthorized access, or protocol manipulation. Immediate remediation required. |\n`;
+  md += `| 🟠 **High** | Significant vulnerabilities that pose substantial risk under specific conditions. Should be fixed before deployment. |\n`;
+  md += `| 🟡 **Medium** | Issues that could lead to unexpected behavior or become exploitable in combination with other factors. Recommended to fix. |\n`;
+  md += `| 🔵 **Low** | Minor issues with limited direct impact. Best practice violations or edge cases. Consider fixing. |\n`;
+  md += `| ℹ️ **Informational** | Code quality observations, style suggestions, and best practice recommendations. No direct security impact. |\n`;
+  md += `| ⛽ **Gas** | Opportunities to reduce gas consumption without affecting functionality. |\n\n`;
 
-`;
+  // 6. Risk Summary
+  md += `## Risk Summary\n\n`;
+  md += `${overallRisk}\n\n`;
+  const fPlural = totalFindings === 1 ? 'finding' : 'findings';
+  const cPlural = audit.contract_count === 1 ? 'contract' : 'contracts';
+  md += `The analysis identified **${totalFindings}** ${fPlural} across **${audit.contract_count}** ${cPlural}.\n\n`;
 
-  // Group findings by severity
-  const severityOrder: Array<"critical" | "high" | "medium" | "low" | "info"> = [
-    "critical",
-    "high",
-    "medium",
-    "low",
-    "info",
-  ];
-  const severityEmoji: Record<string, string> = {
-    critical: "🔴",
-    high: "🟠",
-    medium: "🟡",
-    low: "🔵",
-    info: "⚪",
-  };
+  // 7. Findings by severity
+  if (totalFindings === 0) {
+    md += `No issues were identified within the scope of this analysis.\n\n`;
+  } else {
+    for (const s of SEVERITY_CONFIG) {
+      const sevFindings = findings.filter(f => f.severity === s.key);
+      if (sevFindings.length === 0) continue;
 
-  const severityDescriptions: Record<string, string> = {
-    critical: "Immediate action required - Funds or contract integrity at risk",
-    high: "Urgent attention needed - Significant security implications",
-    medium: "Should be addressed - Moderate security impact",
-    low: "Recommended fix - Minor security concerns",
-    info: "Informational - Best practice improvements",
-  };
+      md += `## ${s.heading}\n\n`;
 
-  let findingNumber = 0;
+      sevFindings.forEach((finding, idx) => {
+        md += `### ${s.prefix}-${idx + 1}: ${finding.title}\n\n`;
 
-  severityOrder.forEach((severity) => {
-    const severityFindings = findings.filter((f) => f.severity === severity);
-    if (severityFindings.length > 0) {
-      markdown += `### ${severityEmoji[severity]} ${severity.charAt(0).toUpperCase() + severity.slice(1)} Severity\n\n`;
-      markdown += `> *${severityDescriptions[severity]}*\n\n`;
-      markdown += `**${severityFindings.length} issue${severityFindings.length !== 1 ? "s" : ""} identified**\n\n`;
-      markdown += `---\n\n`;
-
-      severityFindings.forEach((finding) => {
-        findingNumber++;
-
-        // Finding header
-        markdown += `#### Finding #${findingNumber}: ${finding.title}\n\n`;
-
-        // Location badge
         if (finding.location) {
-          const lines =
-            finding.line_start && finding.line_end
-              ? finding.line_start === finding.line_end
-                ? ` · Line ${finding.line_start}`
-                : ` · Lines ${finding.line_start}–${finding.line_end}`
-              : "";
-          markdown += `> 📁 **Location:** \`${finding.location}\`${lines}\n\n`;
+          md += `**Contract:** \`${finding.location}\`\n\n`;
         }
 
-        // Description
-        markdown += `**Description:**\n\n${finding.description}\n\n`;
+        md += `**Description**\n\n${finding.description}\n\n`;
 
-        // Code snippet
         if (finding.code_snippet) {
-          markdown += `<details>\n<summary><strong>📝 View Affected Code</strong></summary>\n\n`;
-          markdown += `\`\`\`solidity\n${finding.code_snippet}\n\`\`\`\n\n`;
-          markdown += `</details>\n\n`;
+          md += `**Code Snippet**\n\n\`\`\`solidity\n`;
+          const lines = finding.code_snippet.split('\n');
+          const startLine = finding.line_start || 1;
+          lines.forEach((line, i) => {
+            md += `${startLine + i} | ${line}\n`;
+          });
+          md += `\`\`\`\n\n`;
         }
 
-        // Remediation
         if (finding.remediation) {
-          markdown += `**✅ Recommended Fix:**\n\n`;
-          markdown += `${finding.remediation}\n\n`;
+          md += `**Remediation**\n\n${finding.remediation}\n\n`;
         }
 
-        markdown += `---\n\n`;
+        md += `---\n\n`;
       });
     }
-  });
-
-  if (findings.length === 0) {
-    markdown += `### ✅ Clean Security Assessment
-
-No security vulnerabilities, bugs, or issues were identified during the analysis of the provided smart contracts. The codebase demonstrates:
-
-- ✓ Proper implementation of security best practices
-- ✓ No critical or high-severity vulnerabilities detected  
-- ✓ Secure handling of state transitions and external calls
-- ✓ Appropriate access control mechanisms
-
-**Note:** This represents a point-in-time analysis. Continuous security monitoring is recommended.
-
----
-
-`;
   }
 
-  // Test Coverage Section (if available)
+  // 8. Verification Coverage
   if (audit.coverage_data && audit.coverage_data.total_tests > 0) {
-    markdown += `## 🧪 Verification Coverage\n\n`;
-    markdown += `The assessment included **${audit.coverage_data.total_tests}** automated security verification tests:\n\n`;
-    markdown += `| Status | Count | Percentage |\n`;
-    markdown += `|--------|-------|------------|\n`;
-    markdown += `| ✅ Passed | ${audit.coverage_data.passed} | ${passRate}% |\n`;
-    markdown += `| ❌ Failed | ${audit.coverage_data.failed} | ${((audit.coverage_data.failed / audit.coverage_data.total_tests) * 100).toFixed(1)}% |\n\n`;
+    md += `## Verification Coverage\n\n`;
+    md += `The assessment included **${audit.coverage_data.total_tests}** automated security verification tests:\n\n`;
+    md += `| Status | Count | Percentage |\n`;
+    md += `|--------|-------|------------|\n`;
+    md += `| ✅ Passed | ${audit.coverage_data.passed} | ${passRate}% |\n`;
+    md += `| ❌ Failed | ${audit.coverage_data.failed} | ${((audit.coverage_data.failed / audit.coverage_data.total_tests) * 100).toFixed(1)}% |\n\n`;
 
-    // Per-contract breakdown (if available)
     if (audit.coverage_data.details && audit.coverage_data.details.length > 0) {
       const fileGroups: { [key: string]: any[] } = {};
-      audit.coverage_data.details.forEach((detail) => {
-        if (!fileGroups[detail.file]) {
-          fileGroups[detail.file] = [];
-        }
+      audit.coverage_data.details.forEach((detail: any) => {
+        if (!fileGroups[detail.file]) fileGroups[detail.file] = [];
         fileGroups[detail.file].push(detail);
       });
 
       if (Object.keys(fileGroups).length > 0) {
-        markdown += `### Per-Contract Results\n\n`;
-
+        md += `### Per-Contract Results\n\n`;
         Object.keys(fileGroups).forEach((fileName) => {
           const tests = fileGroups[fileName];
-          const passed = tests.filter((t: any) => t.status === "PASSED").length;
+          const passed = tests.filter((t: any) => t.status === 'PASSED').length;
           const total = tests.length;
-          const rate = ((passed / total) * 100).toFixed(0);
-
-          markdown += `- **${fileName}**: ${passed}/${total} tests passed (${rate}%)\n`;
+          md += `- **${fileName}**: ${passed}/${total} tests passed (${((passed / total) * 100).toFixed(0)}%)\n`;
         });
-
-        markdown += `\n`;
+        md += `\n`;
       }
     }
-
-    markdown += `---\n\n`;
   }
 
-  // Footer
-  const generatedDate = new Date().toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+  // 9. Disclaimer
+  md += `## Disclaimer\n\n`;
+  md += `This report is provided by Solarizer, a product of Eryonix Techlabs, for informational purposes only. The analysis was performed using automated AI-powered tools and does not constitute a formal security audit, legal advice, or a guarantee of security.\n\n`;
+  md += `**Important limitations:**\n\n`;
+  md += `- **No automated analysis can guarantee 100% security.** This report identifies potential vulnerabilities within the scope of the contracts analyzed but may not detect all possible issues, including novel attack vectors, economic exploits, or vulnerabilities arising from deployment configuration or off-chain components.\n`;
+  md += `- **This report is not a substitute for a comprehensive manual security audit** by qualified security professionals. Critical protocols should undergo independent manual review in addition to automated analysis.\n`;
+  md += `- **Solarizer does not guarantee that audited contracts are free from exploits.** The absence of findings does not imply the absence of vulnerabilities.\n`;
+  md += `- **Findings reflect the state of the code at the time of analysis.** Any subsequent modifications to the contracts may introduce new vulnerabilities not covered by this report.\n`;
+  md += `- **Deployment decisions remain the sole responsibility of the contract developers and deployers.** Solarizer expressly disclaims liability for any losses, damages, or exploits arising from the use or deployment of analyzed contracts.\n\n`;
+  md += `For the full terms governing the use of this report, see our [Terms of Service](https://solarizer.io/terms).\n\n`;
 
-  markdown += `## ⚖️ Legal Disclaimer
+  // 10. Footer
+  md += `---\n\n`;
+  md += `*Report generated by Solarizer Security Engine — solarizer.io*\n`;
 
-This security assessment represents a point-in-time analysis of the smart contract source code provided. While Solarizer utilizes advanced AI-powered verification pipelines and industry-standard security patterns, no audit can guarantee the complete absence of vulnerabilities.
-
-**Key Points:**
-
-- 🔒 Security is an evolving field; new attack vectors may emerge
-- 📋 This report does not constitute financial or legal advice
-- 🛡️ The project team retains full responsibility for security implementation
-- ⚠️ Solarizer is not liable for post-audit security incidents
-
-**Recommendation:** Conduct ongoing security monitoring and consider periodic re-assessments as the protocol evolves.
-
----
-
-## 📞 Contact & Support
-
-For questions about this report or to request additional security services:
-
-- 🌐 **Website:** [solarizer.io](https://solarizer.io)
-- 📧 **Email:** hello@solarizer.io
-
-
----
-
-<div align="center">
-
-**Solarizer** | AI-Powered Smart Contract Security
-
-*Report generated on ${generatedDate}*
-
-© ${new Date().getFullYear()} Solarizer Security Intelligence
-
-</div>
-`;
-
-  return markdown;
+  return md;
 };
 
 export const downloadMarkdown = (content: string, filename: string) => {
