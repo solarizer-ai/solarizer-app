@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, AlertCircle, Info, ShieldAlert, ShieldCheck } from "lucide-react";
+import { AlertTriangle, AlertCircle, Info, ShieldAlert, ShieldCheck, Fuel } from "lucide-react";
 
 interface SeverityBarProps {
   label: string;
@@ -97,6 +97,13 @@ export const SeverityBreakdown = () => {
       count: severityBreakdown.info, 
       color: 'bg-slate-400 text-slate-400',
       icon: <ShieldCheck className="w-4 h-4" />
+    },
+    { 
+      key: 'gas', 
+      label: 'Gas', 
+      count: severityBreakdown.gas, 
+      color: 'bg-green-500 text-green-500',
+      icon: <Fuel className="w-4 h-4" />
     },
   ];
 

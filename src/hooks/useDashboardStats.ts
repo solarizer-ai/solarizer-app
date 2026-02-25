@@ -15,6 +15,7 @@ export interface DashboardStats {
     medium: number;
     low: number;
     info: number;
+    gas: number;
   };
   recentActivity: {
     id: string;
@@ -61,7 +62,7 @@ export const useDashboardStats = (): { stats: DashboardStats; isLoading: boolean
         totalVulnerabilitiesFound: 0,
         totalNlocAnalyzed: 0,
         averageSecurityScore: 0,
-        severityBreakdown: { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
+        severityBreakdown: { critical: 0, high: 0, medium: 0, low: 0, info: 0, gas: 0 },
         recentActivity: [],
         securityScoreTrend: [],
       };
@@ -85,6 +86,7 @@ export const useDashboardStats = (): { stats: DashboardStats; isLoading: boolean
       medium: allFindings?.filter(f => f.severity === 'medium').length || 0,
       low: allFindings?.filter(f => f.severity === 'low').length || 0,
       info: allFindings?.filter(f => f.severity === 'info').length || 0,
+      gas: allFindings?.filter(f => f.severity === 'gas').length || 0,
     };
     
     // Recent activity (last 5 audits)

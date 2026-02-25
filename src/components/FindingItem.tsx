@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb, Lock, Zap } from "lucide-react";
+import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb, Lock, Zap, Fuel } from "lucide-react";
 import CodeBlock from "@/components/CodeBlock";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { FindingComments } from "@/components/FindingComments";
 import { RemediationStatusToggle } from "@/components/RemediationStatusToggle";
 import { FeatureLockedOverlay } from "@/components/FeatureLockedOverlay";
 
-type Severity = "critical" | "high" | "medium" | "low" | "info";
+type Severity = "critical" | "high" | "medium" | "low" | "info" | "gas";
 
 interface Finding {
   id: string;
@@ -63,6 +63,11 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
     icon: Info,
     label: "Info",
     className: "text-slate-400 bg-slate-400/10 border-slate-400/20",
+  },
+  gas: {
+    icon: Fuel,
+    label: "Gas",
+    className: "text-green-500 bg-green-500/10 border-green-500/20",
   },
 };
 
