@@ -8,11 +8,14 @@ export function verifyServiceSecret(req: Request): boolean {
   const a = enc.encode(secret);
   const b = enc.encode(expected);
 
-  if (a.byteLength !== b.byteLength) {
-    // Dummy comparison to maintain constant time
-    crypto.subtle.timingSafeEqual(a, a);
-    return false;
-  }
+  // Pad to same length for constant-time comparison
+  const len = Math.max(a.byteLength, b.byteLength);
+  const aPadded = new Uint8Array(len);
+  const bPadded = new Uint8Array(len);
+  aPadded.set(a);
+  bPadded.set(b);
 
-  return crypto.subtle.timingSafeEqual(a, b);
+  const equal = crypto.subtle.timingSafeEqual(aPadded, bPadded);
+  // Must also check original lengths match
+  return equal && a.byteLength === b.byteLength;
 }

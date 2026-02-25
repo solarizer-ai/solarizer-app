@@ -19,7 +19,8 @@ export async function validateApiKey(
     return { valid: false, error: 'Invalid API key format' };
   }
 
-  const keyPrefix = apiKey.substring(0, 8);
+  // Use 16-char prefix for narrower DB lookup
+  const keyPrefix = apiKey.substring(0, 16);
 
   const { data: keys, error: queryError } = await supabase
     .from('api_keys')
@@ -32,11 +33,28 @@ export async function validateApiKey(
     return { valid: false, error: 'Authentication service error' };
   }
 
-  if (!keys || keys.length === 0) {
+  // Fallback: if no keys matched with 16-char prefix, retry with legacy 8-char prefix
+  let matchKeys = keys;
+  if (!matchKeys || matchKeys.length === 0) {
+    const legacyPrefix = apiKey.substring(0, 8);
+    const { data: legacyKeys, error: legacyError } = await supabase
+      .from('api_keys')
+      .select('id, user_id, key_hash')
+      .eq('key_prefix', legacyPrefix)
+      .is('revoked_at', null);
+
+    if (legacyError) {
+      console.error('apiKeyAuth: Legacy prefix query error:', legacyError);
+      return { valid: false, error: 'Authentication service error' };
+    }
+    matchKeys = legacyKeys;
+  }
+
+  if (!matchKeys || matchKeys.length === 0) {
     return { valid: false, error: 'Invalid API key' };
   }
 
-  for (const key of keys) {
+  for (const key of matchKeys) {
     try {
       const matches = bcrypt.compareSync(apiKey, key.key_hash);
       if (matches) {

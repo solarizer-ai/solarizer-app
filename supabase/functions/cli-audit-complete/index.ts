@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
 
     const supabase = createServiceClient();
 
-    // Update orchestration row with results
-    const { error: updateError } = await supabase
+    // 1. Guard: only update orchestration if still in non-terminal state
+    const { data: orchUpdated, error: updateError } = await supabase
       .from('audit_orchestration')
       .update({
         status: 'completed',
@@ -53,7 +53,9 @@ Deno.serve(async (req) => {
         findings_count: body.findingsCount || 0,
         updated_at: new Date().toISOString(),
       })
-      .eq('session_id', body.sessionId);
+      .eq('session_id', body.sessionId)
+      .in('status', ['queued', 'running'])
+      .select('session_id');
 
     if (updateError) {
       console.error('cli-audit-complete: Update failed:', updateError);
@@ -63,61 +65,86 @@ Deno.serve(async (req) => {
       );
     }
 
+    // If zero rows matched, orchestration already in terminal state
+    if (!orchUpdated || orchUpdated.length === 0) {
+      console.log(`cli-audit-complete: Audit ${body.sessionId} already in terminal state`);
+      return new Response(
+        JSON.stringify({ success: true, already_completed: true }),
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
     console.log(`cli-audit-complete: Audit ${body.sessionId} completed with ${body.findingsCount} findings`);
 
-    // ── Credit settlement & audit finalization ──────────────────────
+    // ── Atomic credit settlement ──────────────────────
 
-    const { data: audit } = await supabase
+    // 2. Atomic lock acquisition — prevents double settlement
+    const { data: locked } = await supabase
       .from('audits')
-      .select('user_id, credits_reserved, is_locked, contracts_total')
+      .update({ is_locked: true, updated_at: new Date().toISOString() })
       .eq('id', body.sessionId)
-      .single();
+      .eq('is_locked', false)
+      .select('user_id, credits_reserved, contracts_total');
 
-    if (audit && !audit.is_locked) {
-      const severities = (body.findings || []).map(
-        (f: Record<string, unknown>) =>
-          typeof f.severity === 'string' ? f.severity.toLowerCase() : ''
+    if (!locked || locked.length === 0) {
+      // Already settled (duplicate call) — skip credit operations
+      console.log(`cli-audit-complete: Audit ${body.sessionId} already settled`);
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: corsHeaders }
       );
+    }
 
-      function calculateGrade(sevs: string[]): string {
-        if (sevs.includes('critical')) return 'F';
-        if (sevs.includes('high')) return 'D';
-        if (sevs.includes('medium')) return 'C';
-        if (sevs.includes('low')) return 'B';
-        return 'A';
-      }
+    const audit = locked[0];
 
-      const grade = calculateGrade(severities);
-      const finalStatus = severities.some(
-        (s: string) => s === 'critical' || s === 'high' || s === 'medium'
-      )
-        ? 'issues'
-        : 'secured';
+    // 3. Calculate grade from findings
+    const severities = (body.findings || []).map(
+      (f: Record<string, unknown>) =>
+        typeof f.severity === 'string' ? f.severity.toLowerCase() : ''
+    );
 
-      if (audit.credits_reserved > 0) {
-        await supabase.rpc('cli_commit_credits', {
-          p_user_id: audit.user_id,
-          p_amount: audit.credits_reserved,
-          p_audit_id: body.sessionId,
-          p_description: `Audit completed: ${body.findingsCount} findings`,
-        });
-      }
+    function calculateGrade(sevs: string[]): string {
+      if (sevs.includes('critical')) return 'F';
+      if (sevs.includes('high')) return 'D';
+      if (sevs.includes('medium')) return 'C';
+      if (sevs.includes('low')) return 'B';
+      return 'A';
+    }
 
-      await supabase.from('audits').update({
+    const grade = calculateGrade(severities);
+    const finalStatus = severities.some(
+      (s: string) => s === 'critical' || s === 'high' || s === 'medium'
+    )
+      ? 'issues'
+      : 'secured';
+
+    // 4. Commit all reserved credits
+    if (audit.credits_reserved > 0) {
+      await supabase.rpc('cli_commit_credits', {
+        p_user_id: audit.user_id,
+        p_amount: audit.credits_reserved,
+        p_audit_id: body.sessionId,
+        p_description: `Audit completed: ${body.findingsCount} findings`,
+      });
+    }
+
+    // 5. Finalize audit status
+    await supabase
+      .from('audits')
+      .update({
         status: finalStatus,
         grade,
-        is_locked: true,
         credits_deducted: audit.credits_reserved,
         credits_reserved: 0,
         contracts_completed: audit.contracts_total,
         updated_at: new Date().toISOString(),
-      }).eq('id', body.sessionId);
+      })
+      .eq('id', body.sessionId);
 
-      console.log(
-        `cli-audit-complete: Settled ${audit.credits_reserved} credits, ` +
-        `grade=${grade}, status=${finalStatus}`
-      );
-    }
+    console.log(
+      `cli-audit-complete: Settled ${audit.credits_reserved} credits, ` +
+      `grade=${grade}, status=${finalStatus}`
+    );
 
     return new Response(
       JSON.stringify({ success: true }),

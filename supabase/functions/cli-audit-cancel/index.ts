@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
       .from('audits')
       .select('credits_reserved, is_locked')
       .eq('id', body.sessionId)
+      .eq('user_id', authResult.userId)
       .single();
 
     if (audit && !audit.is_locked && audit.credits_reserved > 0) {
@@ -92,7 +93,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('audits')
         .update({
-          status: 'failed',
+          status: 'cancelled',
           is_locked: true,
           credits_reserved: 0,
           error_message: 'Cancelled by user',

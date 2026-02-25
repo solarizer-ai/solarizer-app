@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     const supabase = createServiceClient();
 
-    // Atomic update + return aborted flag in a single operation
+    // Status-guarded update: only update if still queued/running
     const { data: updated, error: updateError } = await supabase
       .from('audit_orchestration')
       .update({
@@ -53,14 +53,25 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       })
       .eq('session_id', body.sessionId)
+      .in('status', ['queued', 'running'])
       .select('aborted')
       .single();
 
     if (updateError) {
-      console.error('cli-audit-progress: Update failed:', updateError);
+      // Update matched zero rows (already cancelled/completed) —
+      // still return current aborted flag so proxy stops
+      const { data: current } = await supabase
+        .from('audit_orchestration')
+        .select('aborted')
+        .eq('session_id', body.sessionId)
+        .single();
+
       return new Response(
-        JSON.stringify({ error: 'Failed to update progress' }),
-        { status: 500, headers: corsHeaders }
+        JSON.stringify({
+          success: true,
+          aborted: current?.aborted ?? true,
+        }),
+        { status: 200, headers: corsHeaders }
       );
     }
 
