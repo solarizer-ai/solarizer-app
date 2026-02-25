@@ -1,28 +1,62 @@
 
 
-# Add enrichment fields to `update-findings-batch`
+# Add GAS as a first-class severity level
 
-## Problem
-The edge function only persists 5 fields (`verification_status`, `severity`, `line_start`, `line_end`, `code_snippet`). Enrichment fields (`description`, `impact`, `remediation`, `function`) sent by the proxy after Phase 6 are silently dropped.
+## Overview
+Add `gas` to the finding severity enum in the database and update all frontend components to display a distinct green "Gas" badge for gas optimization findings.
 
 ## Changes
 
-### `supabase/functions/update-findings-batch/index.ts`
+### 1. Database migration
+Add the new enum value to `finding_severity`:
+```sql
+ALTER TYPE finding_severity ADD VALUE 'gas';
+```
 
-1. **Extend the `UpdateEntry` interface** (lines 12-19) to include the 4 new optional fields:
-   - `description?: string`
-   - `impact?: string`
-   - `remediation?: string`
-   - `function?: string`
+### 2. `src/hooks/useAudits.ts` (line 7)
+Add `'gas'` to the `FindingSeverity` union type:
+```ts
+export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info' | 'gas';
+```
 
-2. **Add 4 field checks** after line 119 (the `code_snippet` check), following the same pattern:
-   ```typescript
-   if (entry.description !== undefined) fields.description = entry.description;
-   if (entry.impact !== undefined) fields.impact = entry.impact;
-   if (entry.remediation !== undefined) fields.remediation = entry.remediation;
-   if (entry.function !== undefined) fields.function = entry.function;
-   ```
+### 3. `src/components/FindingItem.tsx`
+- Update `Severity` type (line 10) to include `'gas'`
+- Import `Fuel` icon from lucide-react (line 2)
+- Add `gas` entry to `severityConfig` (after `info`, line 66):
+```ts
+gas: {
+  icon: Fuel,
+  label: "Gas",
+  className: "text-green-500 bg-green-500/10 border-green-500/20",
+},
+```
 
-3. **Deploy** the updated function.
+### 4. `src/components/FindingsFilter.tsx`
+- Add `'gas'` to `severityOrder` (line 35): `gas: 5`
+- Add `'gas'` to `allSeverities` array (line 43)
+- Add `gas` case to `getSeverityColor` (line 115):
+```ts
+case "gas":
+  return "bg-green-500/10 text-green-500 border-green-500/30 hover:bg-green-500/20";
+```
 
-No other files change. No database migration needed -- these columns already exist in the `findings` table.
+### 5. `src/components/SeverityBreakdown.tsx`
+- Import `Fuel` from lucide-react
+- Add `gas` row to the severities array (after info):
+```ts
+{ key: 'gas', label: 'Gas', count: severityBreakdown.gas, color: 'bg-green-500 text-green-500', icon: <Fuel className="w-4 h-4" /> }
+```
+
+### 6. `src/hooks/useDashboardStats.ts`
+- Add `gas: number` to the `severityBreakdown` interface (line 17)
+- Add `gas: 0` to the default empty stats (line 64)
+- Add `gas` filter to the breakdown computation (line 87):
+```ts
+gas: allFindings?.filter(f => f.severity === 'gas').length || 0,
+```
+
+## Notes
+- The `src/integrations/supabase/types.ts` file will auto-update after the migration runs -- no manual edit needed.
+- No backend function changes required.
+- The green color scheme distinguishes Gas from Info (slate) and Low (blue).
+
