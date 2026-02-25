@@ -36,6 +36,7 @@ export interface Audit {
   is_locked: boolean;
   created_at: string;
   updated_at: string;
+  scope_metadata: Array<{ path: string; nLOC: number; complexity: string }> | null;
   share_count?: number;
 }
 

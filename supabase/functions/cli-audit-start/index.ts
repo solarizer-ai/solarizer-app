@@ -109,10 +109,14 @@ Deno.serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
-    // Calculate estimated cost (1 nLOC = 1 credit base, context at 15%)
-    const scopeNloc = scopeFiles.reduce((sum: number, f: ScopeFile) => sum + f.nLOC, 0);
+    // Calculate estimated cost with per-contract complexity multipliers
+    const COMPLEXITY_RATES: Record<string, number> = { L1: 0.8, L2: 1.0, L3: 1.2 };
+    const scopeCost = scopeFiles.reduce((sum: number, f: ScopeFile) => {
+      const rate = COMPLEXITY_RATES[f.complexity] ?? 1.0;
+      return sum + f.nLOC * rate;
+    }, 0);
     const contextNloc = (contextFiles || []).reduce((sum: number, f: ContextFile) => sum + f.nLOC, 0);
-    const estimatedCost = Math.ceil(scopeNloc + contextNloc * 0.15);
+    const estimatedCost = Math.ceil(scopeCost + contextNloc * 0.15);
 
     const creditsRemaining = credits?.credits_remaining || 0;
     if (creditsRemaining < estimatedCost) {

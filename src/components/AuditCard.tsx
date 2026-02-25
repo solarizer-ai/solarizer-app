@@ -13,6 +13,7 @@ interface AuditCardProps {
   onClick?: () => void;
   isShared?: boolean;
   hasShares?: boolean;
+  phase?: string;
 }
 
 const gradeColors: Record<SecurityGrade, string> = {
@@ -56,7 +57,18 @@ const statusConfig: Record<AuditStatus, { label: string; icon: React.ReactNode; 
   },
 };
 
-const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onClick, isShared, hasShares }: AuditCardProps) => {
+const PHASE_LABELS: Record<string, string> = {
+  complexity_estimation: "Complexity Analysis",
+  session_start: "Session Start",
+  hunting: "Hunting",
+  cross_contract: "Cross-Contract",
+  validation: "Validation",
+  qa: "QA Scan",
+  formatting: "Formatting",
+  reporting: "Report Generation",
+};
+
+const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onClick, isShared, hasShares, phase }: AuditCardProps) => {
   const statusInfo = statusConfig[status];
 
   return (
@@ -112,14 +124,21 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
         )}
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className={cn(
-          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
-          statusInfo.className
-        )}>
-          {statusInfo.icon}
-          {statusInfo.label}
-        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <div className={cn(
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+              statusInfo.className
+            )}>
+              {statusInfo.icon}
+              {statusInfo.label}
+            </div>
+            {status === 'analyzing' && phase && (
+              <p className="text-[11px] text-muted-foreground pl-1">
+                {PHASE_LABELS[phase] || phase}
+              </p>
+            )}
+          </div>
 
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="w-3 h-3" />
