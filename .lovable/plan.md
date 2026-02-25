@@ -1,95 +1,63 @@
 
 
-# Credit Calculation Fix + Live Audit Progress Panel
+# Credit Settlement, State Transitions, and Safety Fixes
 
-## Part 1: Fix Credit Calculation in cli-audit-start
+## Overview
+7 targeted fixes to Supabase edge functions that close gaps in the audit completion path. These prevent credits from being stuck in "reserved" forever, enable the web dashboard to show final grades/status, and fix race conditions.
 
-**File:** `supabase/functions/cli-audit-start/index.ts` (lines 112-115)
+## Changes
 
-Replace the flat 1:1 nLOC cost with per-contract complexity multipliers:
-- L1 (simple): 0.8x
-- L2 (moderate): 1.0x
-- L3 (complex): 1.2x
+### A1. cli-audit-complete -- Add credit settlement and audit finalization
+**File:** `supabase/functions/cli-audit-complete/index.ts`
 
-Context files remain at 15% of their nLOC. This is a 4-line replacement.
+After the orchestration row is updated (line 64), add logic to:
+1. Fetch the audit record for credit info
+2. Calculate grade from findings severities (Critical=F, High=D, Medium=C, Low=B, None=A)
+3. Determine final status (`issues` or `secured`)
+4. Commit all reserved credits via `cli_commit_credits` RPC
+5. Update the `audits` table with final status, grade, lock the record, and zero out reserved credits
 
----
+This is idempotent -- if `is_locked` is already true, the block is skipped entirely.
 
-## Part 2: Live Audit Progress on Report Page
+### A2. cli-audit-start -- Clean up on orchestration insert failure
+**File:** `supabase/functions/cli-audit-start/index.ts` (lines 210-216)
 
-### Step 1: Database -- Add RLS SELECT policy on audit_orchestration
+When the orchestration row insert fails, the current code returns an error but leaves reserved credits and an orphaned audit row behind. Add cleanup:
+- Release reserved credits via `cli_release_credits` RPC
+- Delete the orphaned audit row
 
-Add a SELECT policy so authenticated users can read their own orchestration rows. INSERT/UPDATE/DELETE remain service-role only (no policies = denied).
+### A3. Credit calculation fix -- Already applied
+The complexity multiplier fix (L1: 0.8x, L2: 1.0x, L3: 1.2x) was already applied in the previous implementation. No changes needed.
 
-```text
-Policy: "Users can view own audit orchestration"
-Table: audit_orchestration
-Command: SELECT
-Using: user_id = auth.uid()
-```
+### A4. cli-audit-fail -- Add status guard
+**File:** `supabase/functions/cli-audit-fail/index.ts` (line 51)
 
-### Step 2: Create useAuditProgress hook
+Add `.in('status', ['queued', 'running'])` to the orchestration UPDATE query to prevent a late-arriving failure notification from overwriting a completed audit.
 
-**New file:** `src/hooks/useAuditProgress.ts`
+### A5. cli-audit-progress -- Atomic abort check
+**File:** `supabase/functions/cli-audit-progress/index.ts` (lines 45-78)
 
-- Queries `audit_orchestration` by `session_id` (= auditId)
-- Polls every 2 seconds when `enabled` is true (active audit)
-- Returns typed progress data: status, phase, progress JSONB, findings_count, error, timestamps
+Replace the separate UPDATE + SELECT with a single UPDATE that uses `.select('aborted')` to atomically return the aborted flag, preventing a cancellation from slipping between the two operations.
 
-### Step 3: Create AuditProgressPanel component
+### A6. cli-audit-cancel -- Return match info
+**File:** `supabase/functions/cli-audit-cancel/index.ts` (lines 50-67)
 
-**New file:** `src/components/AuditProgressPanel.tsx`
+Add `.select('session_id')` to the UPDATE to check if any rows matched. If no rows were updated (audit already in a terminal state), return 409 instead of a misleading `success: true`.
 
-A card component showing live audit progress with three sections:
-
-**Header**: "Audit in Progress" + elapsed timer (updates every second via setInterval)
-
-**Phases section**: Shows all 8 pipeline phases in order with status indicators:
-- Completed phases: green checkmark
-- Active phase: spinning loader with contract counter for hunting/qa phases
-- Pending phases: gray circle
-- Hides cross_contract phase when only 1 contract
-
-Phase labels: Complexity Analysis, Session Start, Hunting, Cross-Contract, Validation, QA Scan, Formatting, Report Generation
-
-**Contracts section**: Built from progress.contractProgress and scope_metadata:
-- Completed: green check + filename + complexity badge
-- Active: expanded with sub-phases (DNA Matching, Initial Scan, Deep Scan for L2/L3)
-- Pending: grayed out
-
-**Findings section**: Shows total findings count from orchestration data. When past hunting phase, queries findings table for severity breakdown.
-
-Uses existing design tokens (text-success, text-primary, text-muted-foreground, text-critical, text-warning).
-
-### Step 4: Integrate into Report page
-
-**Modified file:** `src/pages/Report.tsx`
-
-Changes:
-1. Import `useAuditProgress` and `AuditProgressPanel`
-2. Call `useAuditProgress(auditId, isLive)` after existing hooks
-3. Update the "Analysing..." text (line 273-276) to show current phase name when available
-4. Insert `AuditProgressPanel` above the SecurityScoreCard when `isLive && orchestration` exists; hide SecurityScoreCard during analysis
-5. Add `useEffect` to invalidate audit + findings queries when orchestration status becomes `completed`, enabling automatic transition to the final report view
-
-### Step 5 (Optional): AuditCard phase display
-
-**Modified file:** `src/components/AuditCard.tsx`
-
-Add optional `phase` prop to show current phase label under "Analyzing" status on dashboard cards.
+### A7. No changes needed
+The `cli-commit-contract` function remains as-is. Per-contract commits from the proxy are unnecessary now that A1 settles all credits atomically at completion.
 
 ---
 
-## Files Summary
+## Files Modified
 
-| File | Action |
-|------|--------|
-| `supabase/functions/cli-audit-start/index.ts` | Modify lines 112-115 (credit calc) |
-| Migration SQL | Add SELECT RLS policy on `audit_orchestration` |
-| `src/hooks/useAuditProgress.ts` | Create |
-| `src/components/AuditProgressPanel.tsx` | Create |
-| `src/pages/Report.tsx` | Modify (add progress panel integration) |
-| `src/components/AuditCard.tsx` | Modify (optional phase prop) |
+| File | Fix |
+|------|-----|
+| `supabase/functions/cli-audit-complete/index.ts` | A1: Credit settlement, grade calc, audit finalization |
+| `supabase/functions/cli-audit-start/index.ts` | A2: Orchestration failure cleanup |
+| `supabase/functions/cli-audit-fail/index.ts` | A4: Status guard on UPDATE |
+| `supabase/functions/cli-audit-progress/index.ts` | A5: Atomic UPDATE+SELECT |
+| `supabase/functions/cli-audit-cancel/index.ts` | A6: 409 when already terminal |
 
-No new secrets or environment variables needed.
+No new tables, columns, RLS policies, migrations, or environment variables needed.
 
