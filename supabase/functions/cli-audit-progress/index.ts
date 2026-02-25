@@ -54,12 +54,20 @@ Deno.serve(async (req) => {
       })
       .eq('session_id', body.sessionId)
       .in('status', ['queued', 'running'])
-      .select('aborted')
-      .single();
+      .select('aborted');
 
     if (updateError) {
-      // Update matched zero rows (already cancelled/completed) —
-      // still return current aborted flag so proxy stops
+      // Genuine DB error — report it
+      console.error('cli-audit-progress: Update failed:', updateError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to update progress' }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    if (!updated || updated.length === 0) {
+      // Zero rows matched — audit already in terminal state
+      // Read current aborted flag so proxy knows to stop
       const { data: current } = await supabase
         .from('audit_orchestration')
         .select('aborted')
@@ -78,7 +86,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        aborted: updated?.aborted || false,
+        aborted: updated[0]?.aborted ?? false,
       }),
       { status: 200, headers: corsHeaders }
     );
