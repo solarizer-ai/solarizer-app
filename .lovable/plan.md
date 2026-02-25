@@ -1,43 +1,89 @@
 
 
-# Safety Hardening Round 2 — 4 Fixes
+# Simplify Credit Architecture — Deduct-Upfront Model
 
 ## Overview
-4 targeted fixes to close TOCTOU race conditions in credit operations and improve error handling in progress updates and credit settlement.
+Replace the 3-phase reserve-commit-release credit pattern with a simpler deduct-at-start model. On success, zero credit operations happen after the initial deduction. Only failure/cancellation triggers a refund.
 
-## Fix 3: `cli-audit-progress` — Distinguish zero-rows from DB errors (HIGH)
-**File:** `supabase/functions/cli-audit-progress/index.ts` (lines 46-84)
+```text
+CURRENT:  start -> reserve  |  complete -> commit  |  fail/cancel -> release
+NEW:      start -> deduct   |  complete -> nothing  |  fail/cancel -> refund
+```
 
-Remove `.single()` from the update query so zero-row matches return an empty array instead of throwing PGRST116. This lets us distinguish "audit already terminal" (empty array, fall back to reading aborted flag) from genuine DB errors (updateError is set, return 500).
+## Database Changes (Migration)
 
-## Fix 4: `cli-audit-complete` — Check `cli_commit_credits` RPC failure (HIGH)
-**File:** `supabase/functions/cli-audit-complete/index.ts` (lines 122-129)
+### 1. Replace `cli_refund_credits` RPC
+The existing `cli_refund_credits` doesn't clamp refunds to `credits_used_this_period`. Replace it with the spec version that uses `LEAST(p_amount, credits_used_this_period)` to prevent negative values, and logs a `type='refund'` transaction.
 
-Wrap the `cli_commit_credits` RPC call with error checking. If the RPC fails, roll back `is_locked` to `false` so a retry can re-acquire the lock, and return 500.
+### 2. Data migration for in-flight audits
+- Return any reserved credits (`credits_reserved > 0`) back to users' `credits_remaining`
+- Mark in-flight audits with reserved credits as failed
 
-## Fix 1: `cli-audit-cancel` — Atomic credit release (CRITICAL)
-**File:** `supabase/functions/cli-audit-cancel/index.ts` (lines 77-103)
+### 3. Drop old RPCs (after verification)
+- `cli_reserve_credits`
+- `cli_commit_credits`  
+- `cli_release_credits`
 
-Replace the read-then-act pattern (SELECT `is_locked` then conditionally release) with:
-1. Read `credits_reserved` before the CAS
-2. Atomic `UPDATE ... WHERE is_locked = false` to acquire lock and set status to `cancelled`
-3. Only release credits if the CAS succeeded and credits were reserved
+### 4. Update `auto_settle_stale_sessions`
+Replace proportional commit+release logic with a full refund using `cli_refund_credits`. Under the deduct-upfront model, stale sessions get a full refund since there's no partial commit concept.
 
-## Fix 2: `cli-audit-fail` — Atomic credit release (CRITICAL)
-**File:** `supabase/functions/cli-audit-fail/index.ts` (lines 72-97)
+## Edge Function Changes
 
-Same pattern as Fix 1:
-1. Read `user_id` and `credits_reserved` before the CAS
-2. Atomic `UPDATE ... WHERE is_locked = false` to acquire lock and set status to `failed`
-3. Only release credits if the CAS succeeded
+### A3. `cli-audit-start` (supabase/functions/cli-audit-start/index.ts)
+- Replace `cli_reserve_credits` call with `cli_deduct_credits`
+- Rename tracking variables: `creditsReserved` -> `creditsDeducted`
+- Update audit INSERT: `credits_deducted: estimatedCost, credits_reserved: 0`
+- Replace all `cli_release_credits` cleanup calls with `cli_refund_credits`
+
+### A4. `cli-audit-complete` (supabase/functions/cli-audit-complete/index.ts)
+- Remove the entire `cli_commit_credits` RPC block (lines 121-143) and its lock rollback logic
+- Keep the `is_locked` CAS and grade calculation
+- Update final audit UPDATE to preserve existing `credits_deducted` value
+
+### A5. `cli-audit-fail` (supabase/functions/cli-audit-fail/index.ts)
+- Change SELECT from `credits_reserved` to `credits_deducted`
+- Replace `cli_release_credits` with `cli_refund_credits`
+- Update CAS to zero out `credits_deducted` instead of `credits_reserved`
+
+### A6. `cli-audit-cancel` (supabase/functions/cli-audit-cancel/index.ts)
+- Change SELECT from `credits_reserved` to `credits_deducted`
+- Replace `cli_release_credits` with `cli_refund_credits`
+
+### A7. Delete `cli-commit-contract` edge function
+- Delete `supabase/functions/cli-commit-contract/index.ts`
+
+### Additional: `cli-session-start` (supabase/functions/cli-session-start/index.ts)
+- Replace `cli_reserve_credits` with `cli_deduct_credits`
+- Replace `cli_release_credits` with `cli_refund_credits`
+- Update audit INSERT: `credits_deducted: estimated_cost, credits_reserved: 0`
+- Update `credit_txns` link from `type: 'reservation'` to `type: 'deduction'`
+
+### Additional: `cli-session-end` (supabase/functions/cli-session-end/index.ts)
+- Remove the completed path's `cli_commit_credits` call (credits already deducted)
+- Replace the failed/cancelled path's `cli_commit_credits` and `cli_release_credits` with a full `cli_refund_credits`
+- Simplify: on failure/cancellation, refund `credits_deducted` fully
+
+### Additional: `fail-audit` (supabase/functions/fail-audit/index.ts)
+- Replace `cli_release_credits` with `cli_refund_credits`
+- Use `credits_deducted` instead of `credits_reserved` for the refund amount
 
 ## Files Modified
 
-| File | Fix |
-|------|-----|
-| `supabase/functions/cli-audit-progress/index.ts` | Remove `.single()`, distinguish zero-rows from errors |
-| `supabase/functions/cli-audit-complete/index.ts` | Check RPC failure, roll back lock on error |
-| `supabase/functions/cli-audit-cancel/index.ts` | Atomic CAS for credit release |
-| `supabase/functions/cli-audit-fail/index.ts` | Atomic CAS for credit release |
+| File | Change |
+|------|--------|
+| Migration SQL | Replace `cli_refund_credits`, update `auto_settle_stale_sessions`, migrate in-flight data, drop old RPCs |
+| `cli-audit-start/index.ts` | Deduct upfront, refund on error |
+| `cli-audit-complete/index.ts` | Remove commit block, keep CAS + grade |
+| `cli-audit-fail/index.ts` | Refund `credits_deducted` |
+| `cli-audit-cancel/index.ts` | Refund `credits_deducted` |
+| `cli-session-start/index.ts` | Deduct upfront, refund on error |
+| `cli-session-end/index.ts` | Simplify to refund-only on failure |
+| `fail-audit/index.ts` | Refund `credits_deducted` |
+| `cli-commit-contract/index.ts` | **DELETE** |
 
-No new tables, migrations, secrets, or environment variables needed. All 4 functions will be redeployed.
+## Deployment Order
+1. Run migration (new RPC + data cleanup + updated `auto_settle_stale_sessions`)
+2. Deploy all edge functions simultaneously
+3. Delete `cli-commit-contract` function
+4. Verify with test scenarios
+5. Drop old RPCs after confirmation
