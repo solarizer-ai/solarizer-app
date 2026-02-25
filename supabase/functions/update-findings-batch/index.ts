@@ -16,6 +16,10 @@ interface UpdateEntry {
   line_start?: number;
   line_end?: number;
   code_snippet?: string;
+  description?: string;
+  impact?: string;
+  remediation?: string;
+  function?: string;
 }
 
 interface UpdateRequest {
@@ -117,6 +121,10 @@ Deno.serve(async (req) => {
       if (entry.line_start !== undefined) fields.line_start = entry.line_start;
       if (entry.line_end !== undefined) fields.line_end = entry.line_end;
       if (entry.code_snippet !== undefined) fields.code_snippet = entry.code_snippet;
+      if (entry.description !== undefined) fields.description = entry.description;
+      if (entry.impact !== undefined) fields.impact = entry.impact;
+      if (entry.remediation !== undefined) fields.remediation = entry.remediation;
+      if (entry.function !== undefined) fields.function = entry.function;
 
       if (Object.keys(fields).length === 0) continue;
 
