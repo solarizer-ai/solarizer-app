@@ -18,6 +18,11 @@ export interface AuditOrchestrationProgress {
   error: string | null;
   started_at: string;
   updated_at: string;
+  request_payload?: {
+    scopeFiles?: unknown;
+    contextFiles?: unknown;
+    [key: string]: unknown;
+  };
 }
 
 export function useAuditProgress(auditId: string | null, enabled: boolean) {
@@ -28,7 +33,7 @@ export function useAuditProgress(auditId: string | null, enabled: boolean) {
 
       const { data, error } = await supabase
         .from("audit_orchestration")
-        .select("session_id, status, phase, progress, findings_count, error, started_at, updated_at")
+        .select("session_id, status, phase, progress, findings_count, error, started_at, updated_at, request_payload")
         .eq("session_id", auditId)
         .maybeSingle();
 

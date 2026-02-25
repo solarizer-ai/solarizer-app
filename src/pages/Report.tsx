@@ -389,8 +389,10 @@ const Report = () => {
                         readOnly={!canEditCode}
                         auditStatus={currentAudit?.status}
                         systemHologram={currentAudit?.system_hologram as { scope?: string[]; all_files?: string[] } | null}
-                        scopeMetadata={currentAudit?.scope_metadata as Array<{ path: string; nLOC: number; complexity: string }> | null}
-                        contextMetadata={currentAudit?.context_metadata as Array<{ path: string }> | null}
+                        scopeMetadata={currentAudit?.scope_metadata}
+                        contextMetadata={currentAudit?.context_metadata}
+                        orchestrationScopeFiles={(orchestration?.request_payload as any)?.scopeFiles}
+                        orchestrationContextFiles={(orchestration?.request_payload as any)?.contextFiles}
                       />
                     </TabsContent>
 
