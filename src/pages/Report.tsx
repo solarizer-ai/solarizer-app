@@ -71,7 +71,7 @@ const Report = () => {
   };
 
   const getVulnerabilityCounts = () => {
-    if (!findings) return { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    if (!findings) return { critical: 0, high: 0, medium: 0, low: 0, info: 0, gas: 0 };
     
     return {
       critical: findings.filter(f => f.severity === "critical").length,
@@ -79,6 +79,7 @@ const Report = () => {
       medium: findings.filter(f => f.severity === "medium").length,
       low: findings.filter(f => f.severity === "low").length,
       info: findings.filter(f => f.severity === "info").length,
+      gas: findings.filter(f => f.severity === "gas").length,
     };
   };
 
