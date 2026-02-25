@@ -22,6 +22,7 @@ export interface RemediationStats {
     medium: { total: number; resolved: number };
     low: { total: number; resolved: number };
     info: { total: number; resolved: number };
+    gas: { total: number; resolved: number };
   };
 }
 
@@ -145,20 +146,24 @@ export function useRemediationStats(auditId: string | undefined) {
             medium: { total: 0, resolved: 0 },
             low: { total: 0, resolved: 0 },
             info: { total: 0, resolved: 0 },
+            gas: { total: 0, resolved: 0 },
           },
         };
       }
       
       const { data: findings, error } = await supabase
         .from('findings')
-        .select('id, severity, is_resolved')
+        .select('id, severity, is_resolved, verification_status')
         .eq('audit_id', auditId);
       
       if (error) throw error;
+
+      // Exclude archived (false_positive) findings from remediation tracking
+      const activeFindings = findings.filter(f => f.verification_status !== 'false_positive');
       
       const stats: RemediationStats = {
-        total: findings.length,
-        resolved: findings.filter(f => f.is_resolved).length,
+        total: activeFindings.length,
+        resolved: activeFindings.filter(f => f.is_resolved).length,
         percentage: 0,
         bySeverity: {
           critical: { total: 0, resolved: 0 },
@@ -166,6 +171,7 @@ export function useRemediationStats(auditId: string | undefined) {
           medium: { total: 0, resolved: 0 },
           low: { total: 0, resolved: 0 },
           info: { total: 0, resolved: 0 },
+          gas: { total: 0, resolved: 0 },
         },
       };
       
@@ -173,7 +179,7 @@ export function useRemediationStats(auditId: string | undefined) {
         ? Math.round((stats.resolved / stats.total) * 100) 
         : 0;
       
-      for (const finding of findings) {
+      for (const finding of activeFindings) {
         const severity = finding.severity as keyof typeof stats.bySeverity;
         if (stats.bySeverity[severity]) {
           stats.bySeverity[severity].total++;

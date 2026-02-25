@@ -41,6 +41,12 @@ const severityConfig = {
     border: "border-slate-400/30",
     text: "text-slate-400",
   },
+  gas: {
+    dot: "bg-green-500",
+    bg: "bg-green-500/10",
+    border: "border-green-500/30",
+    text: "text-green-500",
+  },
 };
 
 export function RemediationProgressWidget({ auditId, className }: RemediationProgressWidgetProps) {
@@ -104,7 +110,7 @@ export function RemediationProgressWidget({ auditId, className }: RemediationPro
 
         {/* Breakdown by Severity */}
         <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-          {(['critical', 'high', 'medium', 'low', 'info'] as const).map((severity) => {
+          {(['critical', 'high', 'medium', 'low', 'info', 'gas'] as const).map((severity) => {
             const severityStats = stats.bySeverity[severity];
             if (severityStats.total === 0) return null;
             
