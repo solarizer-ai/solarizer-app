@@ -16,7 +16,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle, Archive } from "lucide-react";
+import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle, Archive, Lightbulb, ShieldCheck } from "lucide-react";
+import InvariantsTab from "@/components/InvariantsTab";
+import InsightsTab from "@/components/InsightsTab";
 import { generateMarkdownReport, downloadMarkdown } from "@/lib/exportMarkdown";
 import { toast } from "sonner";
 import { useAudit, useFindings, useArchivedFindings } from "@/hooks/useAudits";
@@ -24,7 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
 import { useReportFeatureAccess } from "@/hooks/useReportFeatureAccess";
 import { formatDistanceToNow } from "date-fns";
-import type { CoverageData, Finding } from "@/hooks/useAudits";
+import type { CoverageData, Finding, Invariant, ArchitectureInsight } from "@/hooks/useAudits";
 import { useAuditProgress } from "@/hooks/useAuditProgress";
 import AuditProgressPanel from "@/components/AuditProgressPanel";
 import { PHASE_LABELS } from "@/components/AuditProgressPanel";
@@ -366,7 +368,7 @@ const Report = () => {
 
                   {/* Tabbed Interface: Scope, Coverage & Findings */}
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="flex w-full overflow-x-auto">
                       <TabsTrigger value="scope" className="flex items-center gap-2">
                         <FileCode className="w-4 h-4" />
                         Scope
@@ -378,6 +380,18 @@ const Report = () => {
                       <TabsTrigger value="archive" className="flex items-center gap-2">
                         <Archive className="w-4 h-4" />
                         Archive ({archivedFindings?.length || 0})
+                      </TabsTrigger>
+                      <TabsTrigger value="invariants" className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Invariants
+                      </TabsTrigger>
+                      <TabsTrigger value="coverage" className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4" />
+                        Coverage
+                      </TabsTrigger>
+                      <TabsTrigger value="insights" className="flex items-center gap-2">
+                        <Lightbulb className="w-4 h-4" />
+                        Insights
                       </TabsTrigger>
                     </TabsList>
 
@@ -492,6 +506,29 @@ const Report = () => {
                           <p className="text-muted-foreground text-center py-8">No archived findings.</p>
                         )}
                       </div>
+                    </TabsContent>
+
+                    <TabsContent value="invariants" className="mt-4">
+                      <InvariantsTab
+                        invariants={
+                          (currentAudit?.system_hologram as Record<string, unknown> | null)?.invariants as Invariant[] | undefined ?? null
+                        }
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="coverage" className="mt-4">
+                      <SecurityCoverageTab
+                        coverageData={currentAudit?.coverage_data as CoverageData | null}
+                        onViewIssue={handleViewIssue}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="insights" className="mt-4">
+                      <InsightsTab
+                        insights={
+                          (currentAudit?.system_hologram as Record<string, unknown> | null)?.insights as ArchitectureInsight[] | undefined ?? null
+                        }
+                      />
                     </TabsContent>
                   </Tabs>
                 </>
