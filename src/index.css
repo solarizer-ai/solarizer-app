@@ -185,6 +185,10 @@
     box-shadow: 0 0 12px hsla(var(--solar-orange) / 0.25);
   }
 
+  /* Hide scrollbar utility */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
   /* Monospace phase label pill */
   .terminal-pill {
     font-family: 'JetBrains Mono', monospace;

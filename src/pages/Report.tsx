@@ -221,7 +221,7 @@ const Report = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="container mx-auto px-6 py-8 flex-1">
+      <main className="container mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8 flex-1">
         <div className="space-y-6">
           {/* Results Header */}
           <div className="flex flex-col gap-2">
@@ -368,30 +368,30 @@ const Report = () => {
 
                   {/* Tabbed Interface: Scope, Coverage & Findings */}
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className="flex w-full overflow-x-auto">
-                      <TabsTrigger value="scope" className="flex items-center gap-2">
-                        <FileCode className="w-4 h-4" />
-                        Scope
+                    <TabsList className="flex w-full overflow-x-auto no-scrollbar gap-1">
+                      <TabsTrigger value="scope" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <FileCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Scope</span>
                       </TabsTrigger>
-                      <TabsTrigger value="findings" className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4" />
-                        Findings ({visibleFindings.length})
+                      <TabsTrigger value="findings" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Findings</span> ({visibleFindings.length})
                       </TabsTrigger>
-                      <TabsTrigger value="archive" className="flex items-center gap-2">
-                        <Archive className="w-4 h-4" />
-                        Archive ({archivedFindings?.length || 0})
+                      <TabsTrigger value="archive" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <Archive className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Archive</span> ({archivedFindings?.length || 0})
                       </TabsTrigger>
-                      <TabsTrigger value="invariants" className="flex items-center gap-2">
-                        <Shield className="w-4 h-4" />
-                        Invariants
+                      <TabsTrigger value="invariants" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Invariants</span>
                       </TabsTrigger>
-                      <TabsTrigger value="coverage" className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4" />
-                        Coverage
+                      <TabsTrigger value="coverage" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Coverage</span>
                       </TabsTrigger>
-                      <TabsTrigger value="insights" className="flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4" />
-                        Insights
+                      <TabsTrigger value="insights" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Insights</span>
                       </TabsTrigger>
                     </TabsList>
 

@@ -199,7 +199,7 @@ export function SubscriptionPlanSelector({
             <div
               key={plan.id}
               className={cn(
-                "flex items-center justify-between p-4 rounded-lg border transition-all",
+                "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg border transition-all",
                 isCurrent && "border-l-4 border-l-primary border-t border-r border-b border-border bg-primary/5",
                 isPending && "border-l-4 border-l-amber-400 border-t border-r border-b border-amber-300 bg-amber-50/50 dark:bg-amber-900/10",
                 !isCurrent && !isPending && "border-l-4 border-l-transparent hover:border-l-muted-foreground/30"
@@ -227,7 +227,7 @@ export function SubscriptionPlanSelector({
                   </Badge>
                 )}
               </div>
-              <div className="w-32 flex-shrink-0 ml-4">
+              <div className="w-full sm:w-32 flex-shrink-0 sm:ml-4">
                 {renderActionButton(plan)}
               </div>
             </div>

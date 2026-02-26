@@ -50,10 +50,10 @@ export function CreditActivityLog() {
       <CardHeader>
         <CardTitle>Credit Activity</CardTitle>
         <CardDescription>Recent credit movements</CardDescription>
-        <div className="flex items-center gap-2 pt-2 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 flex-wrap">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className={cn("h-8 w-[160px] justify-start text-left text-xs font-normal", !startDate && "text-muted-foreground")}>
+              <Button variant="outline" size="sm" className={cn("h-8 w-full sm:w-[160px] justify-start text-left text-xs font-normal", !startDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                 {startDate ? format(startDate, "dd-MM-yyyy") : "Pick a date"}
               </Button>
@@ -65,7 +65,7 @@ export function CreditActivityLog() {
           <span className="text-xs text-muted-foreground">to</span>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className={cn("h-8 w-[160px] justify-start text-left text-xs font-normal", !endDate && "text-muted-foreground")}>
+              <Button variant="outline" size="sm" className={cn("h-8 w-full sm:w-[160px] justify-start text-left text-xs font-normal", !endDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                 {endDate ? format(endDate, "dd-MM-yyyy") : "Pick a date"}
               </Button>
@@ -101,6 +101,7 @@ export function CreditActivityLog() {
           </div>
         ) : (
           <>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -108,7 +109,7 @@ export function CreditActivityLog() {
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Type</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Description</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right">Amount</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right">Balance</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right hidden sm:table-cell">Balance</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -118,7 +119,8 @@ export function CreditActivityLog() {
                   return (
                     <TableRow key={txn.id}>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {txn.created_at ? format(new Date(txn.created_at), "dd-MM-yyyy HH:mm:ss") : "—"}
+                        <span className="hidden sm:inline">{txn.created_at ? format(new Date(txn.created_at), "dd-MM-yyyy HH:mm:ss") : "—"}</span>
+                        <span className="sm:hidden">{txn.created_at ? format(new Date(txn.created_at), "dd-MM-yy") : "—"}</span>
                       </TableCell>
                       <TableCell>
                         <Badge variant={config.badgeVariant} className="text-[10px] font-medium">
@@ -133,7 +135,7 @@ export function CreditActivityLog() {
                       <TableCell className={cn("text-xs font-semibold text-right whitespace-nowrap", isPositive ? "text-success" : "text-destructive")}>
                         {Math.abs(txn.amount).toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-xs text-foreground text-right whitespace-nowrap">
+                      <TableCell className="text-xs text-foreground text-right whitespace-nowrap hidden sm:table-cell">
                         {txn.balance_after !== null ? txn.balance_after.toLocaleString() : "—"}
                       </TableCell>
                     </TableRow>
@@ -141,6 +143,7 @@ export function CreditActivityLog() {
                 })}
               </TableBody>
             </Table>
+            </div>
             {/* Pagination */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
               <div className="flex items-center gap-1">

@@ -518,7 +518,7 @@ const FindingItem = ({
               </h4>
               <div className="flex items-center gap-2 text-sm">
                 <FileCode className="w-4 h-4 text-muted-foreground" />
-                <span className="font-mono text-primary truncate max-w-[200px] sm:max-w-[400px]" title={finding.location.file}>
+                <span className="font-mono text-primary truncate max-w-[calc(100vw-120px)] sm:max-w-[400px]" title={finding.location.file}>
                   {finding.location.file}
                 </span>
               </div>
@@ -539,7 +539,7 @@ const FindingItem = ({
 
         {/* Affected Code */}
         {finding.code && (
-          <div>
+          <div className="overflow-x-auto">
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               Affected Code
             </h4>

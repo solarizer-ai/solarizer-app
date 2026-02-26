@@ -160,7 +160,7 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
                       >
                         <Lock className="w-3 h-3" />
                         <span className="hidden sm:inline">{severity}</span>
-                        <span className="sm:hidden">{severity.slice(0, 4)}</span>
+                        <span className="sm:hidden">{severity.slice(0, 3)}</span>
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -183,7 +183,7 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
                 )}
               >
                 <span className="hidden sm:inline">{severity}</span>
-                <span className="sm:hidden">{severity.slice(0, 4)}</span>
+                <span className="sm:hidden">{severity.slice(0, 3)}</span>
               </button>
             );
           })}
