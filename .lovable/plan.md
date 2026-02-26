@@ -1,77 +1,96 @@
 
 
-# Server-Side Batch Estimation + Audit Progress Sync
+# Homepage Redesign: Report-Accurate Dashboard Mockup
 
 ## Overview
-Two improvements: (1) Replace the client-side credit estimator with a server call to Cloud Run `/estimate/batch`, and (2) subscribe to `audit_orchestration` Realtime updates so the scan progress widget shows live phase labels like "Hunting: Vault.sol -- initial scan (1/3)".
+Redesign the homepage per the spec, but replace the generic "DashboardAuditDemo" with a component that visually replicates the **actual Report page** layout -- SecurityScoreCard with circular grade, vulnerability matrix bar, AuditProgressPanel phase stepper with contract sub-phases, tab bar, and finding items.
 
 ## Changes
 
-### Part A: SQL Migration
-Enable Realtime on `audit_orchestration` so UPDATE events stream to the frontend.
+### 1. Create `src/components/DashboardAuditDemo.tsx` (NEW)
 
-```sql
-ALTER TABLE public.audit_orchestration REPLICA IDENTITY FULL;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.audit_orchestration;
-```
+A miniature animated replica of the real Report page (`src/pages/Report.tsx`), including:
 
-### Part B: New Edge Function -- `web-estimate`
-Create `supabase/functions/web-estimate/index.ts`:
-- Authenticates via JWT
-- Validates file payload (max 100 files, 1MB per file)
-- Proxies to Cloud Run `/estimate/batch` with `x-service-secret`
-- Returns proxy response unchanged (no credit deduction -- read-only)
-- Uses existing secrets: `CLOUD_RUN_PROXY_URL`, `SESSION_SECRET`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+**Header area** (mirrors Report page header):
+- Project name "VaultProtocol" with back arrow and elapsed timer
+- Subtitle: "4 contracts . 2,847 nLOC"
 
-### Part C: Replace `EstimatorStep.tsx`
-Full rewrite of `src/components/wizard/EstimatorStep.tsx`:
-- Remove `useMemo` + `calculateNLOC` client-side logic
-- Add `useState` + `useEffect` that calls `invokeWithRefresh('web-estimate', { body: { scopeFiles, contextFiles } })`
-- Three states: loading (spinner + "Analyzing contracts..."), error (retry button), success (per-file table)
-- Success view shows per-file rows: filename, nLOC, L1/L2/L3 complexity badge, credit cost
-- Context files section with 15% rate
-- No "~" prefix on any values -- server numbers are exact
-- Validation messages also drop "~" prefix
-- `ComplexityBadge` component: L1=muted, L2=amber, L3=orange
-- `buildLanguageMap()` helper derives `scopeLanguages`/`contextLanguages` from server response for `CombinedClocResult` back-compat
-- Complexity rates: L1=0.8, L2=1.0, L3=1.2
+**SecurityScoreCard replica** (mirrors `SecurityScoreCard.tsx`):
+- SVG circular progress ring with grade letter (animates from "--" through C+, B, B+)
+- Score label (e.g. "74/100") and rating text ("Good", "Fair", etc.)
+- Vulnerability matrix bar (colored segments: red/orange/yellow/blue/slate)
+- Category pills below the bar (Crit/High/Med/Low/Info counts)
 
-### Part D: Update `ScanContext.tsx`
-Modify `src/contexts/ScanContext.tsx`:
-- Add `orchestrationPhase` and `orchestrationProgress` state
-- Add `OrchestrationProgress` interface (currentContract, contractIndex, contractTotal, subPhase)
-- Add 3rd Realtime channel subscribing to `audit_orchestration` UPDATE events filtered by `session_id=eq.{currentAuditId}`
-- Expose both new fields via context value
-- Reset them in `startScan`, `cancelScan`, `closeWidget`
-- Clean up the orchestration channel ref in `cleanupChannels`
+**AuditProgressPanel replica** (mirrors `AuditProgressPanel.tsx`):
+- "Phases" section: 8-phase vertical list with checkmark/spinner/circle icons
+  - Complexity Analysis, Session Start, Hunting (2/4), Cross-Contract, Validation, QA Scan, Formatting, Report Generation
+- "Contracts" section: per-contract rows with complexity badges (L1/L2/L3)
+  - Active contract shows sub-phases: DNA Matching, Initial Scan, Deep Scan
+  - Completed contracts show green checkmarks
 
-### Part E: Update `ScanProgressWidget.tsx`
-Modify `src/components/ScanProgressWidget.tsx`:
-- Add `orchestrationPhase` and `orchestrationProgress` optional props
-- Add `getPhaseLabel(phase, progress)` helper that maps phases to human labels:
-  - `queued` -> "Queued -- waiting to start..."
-  - `context_compression` -> "Compressing context..."
-  - `hunting` -> "Hunting: {contract} -- {subPhase} ({i}/{n})"
-  - `cross_contract` -> "Cross-contract analysis..."
-  - `validation` -> "Validating findings..."
-  - `qa` -> "QA: {contract} ({i}/{n})"
-  - `formatting` -> "Enriching findings..."
-  - default -> "Analyzing..."
-- Replace static "Analyzing..." text in the header with `phaseLabel`
+**Tab bar** (mirrors Report page tabs):
+- 6 tabs: Scope, Insights, Invariants, Findings (4), Coverage, Archive
+- "Findings" tab shown as active
 
-### Part F: Update `DashboardHome.tsx`
-Modify `src/pages/dashboard/DashboardHome.tsx`:
-- Destructure `orchestrationPhase` and `orchestrationProgress` from `useScan()`
-- Pass them as props to `ScanProgressWidget`
+**Findings preview** (mirrors FindingItem cards):
+- 2-3 finding cards with severity badge, title, file location, and a code snippet block
+- Styled identically to the real FindingItem component
+
+**Animation sequence** (9 frames, auto-restart):
+1. Empty state -- phases all pending, no score
+2. Complexity Analysis completes, Hunting starts
+3. First finding appears (CRITICAL), score jumps to 28
+4. Second finding (HIGH), score to 44, contract sub-phase advances
+5. Third finding (HIGH), score to 61
+6. Fourth finding (MEDIUM), score to 67, Hunting completes
+7. Validation phase active, score to 71
+8. Reporting phase, score to 74
+9. Complete state -- all phases checked, "Audit complete" banner, hold 5s then restart
+
+The component uses the same Tailwind classes and color tokens as the real components (e.g. `text-success`, `text-critical`, `stroke-success`, `bg-warning/10`, `border-primary/20`).
+
+### 2. Replace `src/pages/Home.tsx` (FULL REPLACEMENT)
+
+Same 7-section structure from the spec:
+1. **Hero**: "Enterprise-Grade Security / Accessible To All", dual CTAs, trust line, `DashboardAuditDemo` below
+2. **Paradigm Shift**: Pull quote, editorial paragraphs, 3 stats
+3. **Comparison**: Traditional Audit vs Solarizer (6 rows)
+4. **Findings**: Same 3 known + 2 protocol-specific cards (unchanged content)
+5. **Intelligence Engine**: Sanitized phase names (Smart Scoping, Pattern Intelligence, Vulnerability Hunting, Protocol-Wide Reasoning, Structured Reporting), scroll animation
+6. **Built For Enterprise**: 4 feature cards with CSS illustrations
+7. **CTA**: "Enterprise Security / Without The Enterprise Price Tag"
+
+No `TerminalAuditDemo` import. No `npm install` command. No CLI-first copy.
+
+### 3. Update `src/components/Header.tsx` (TWO TEXT CHANGES)
+
+- Line 106: `Get Started` --> `Start Auditing`
+- Line 161: `Get Started` --> `Start Auditing`
+
+No other changes to Header.
+
+## DashboardAuditDemo Technical Details
+
+The mockup replicates these specific visual elements from the real codebase:
+
+| Real Component | Mockup Element |
+|---|---|
+| `SecurityScoreCard` circular SVG (r=45, strokeWidth=6, -rotate-90) | Identical SVG with animated strokeDashoffset |
+| `SecurityScoreCard` vulnerability matrix bar (h-2.5, rounded-full) | Same bar with animated segment widths |
+| `SecurityScoreCard` category pills (grid + flex, colored borders) | Same pill layout with animated counts |
+| `AuditProgressPanel` phase list (CheckCircle2/Loader2/Circle icons) | Same icon progression per frame |
+| `AuditProgressPanel` contract rows with L1/L2/L3 badges | Same layout with sub-phase nesting |
+| `AuditProgressPanel` sub-phases (DNA Matching, Initial Scan, Deep Scan) | Shown for active contract |
+| Report page tab bar (TabsList with 6 triggers, justify-evenly) | Static tab bar, "Findings" active |
+| FindingItem severity badges + code blocks | 2-3 static finding cards |
+
+Frame timing: 1.6s-5s per frame (same delays as spec). macOS-style title bar retained. `min-h` on findings area prevents layout shift.
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Migration | Enable Realtime on `audit_orchestration` |
-| Create | `supabase/functions/web-estimate/index.ts` |
-| Replace | `src/components/wizard/EstimatorStep.tsx` |
-| Modify | `src/contexts/ScanContext.tsx` |
-| Modify | `src/components/ScanProgressWidget.tsx` |
-| Modify | `src/pages/dashboard/DashboardHome.tsx` |
+| Create | `src/components/DashboardAuditDemo.tsx` |
+| Replace | `src/pages/Home.tsx` |
+| Modify | `src/components/Header.tsx` (2 text changes) |
 
