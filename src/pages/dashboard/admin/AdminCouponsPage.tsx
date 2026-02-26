@@ -68,11 +68,11 @@ export default function AdminCouponsPage() {
       if (!selectedCoupon) return [];
       const { data, error } = await supabase
         .from("coupon_redemptions")
-        .select("*, profiles(display_name)")
+        .select("*")
         .eq("coupon_id", selectedCoupon.id)
         .order("redeemed_at", { ascending: false });
       if (error) throw error;
-      return data as Redemption[];
+      return (data ?? []).map((r) => ({ ...r, profiles: null })) as Redemption[];
     },
     enabled: !!selectedCoupon,
   });
