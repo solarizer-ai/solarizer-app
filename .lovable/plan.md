@@ -1,96 +1,104 @@
 
 
-# Homepage Redesign: Report-Accurate Dashboard Mockup
+# Apply 3 Admin Migrations + Wire Up Admin Dashboard
 
 ## Overview
-Redesign the homepage per the spec, but replace the generic "DashboardAuditDemo" with a component that visually replicates the **actual Report page** layout -- SecurityScoreCard with circular grade, vulnerability matrix bar, AuditProgressPanel phase stepper with contract sub-phases, tab bar, and finding items.
+The 3 uploaded SQL files need to be applied as database migrations, and the corresponding frontend (admin routes, pages, sidebar, and components) needs to be created.
 
-## Changes
+## Current State
+- **Database**: No `coupons`, `coupon_redemptions` tables. No admin RPC functions (`admin_get_users`, `admin_get_audits`, `admin_get_stats`, `admin_adjust_credits`, `validate_coupon`). No admin RLS policies on existing tables.
+- **Frontend**: No admin routes in `App.tsx`. No admin pages exist on disk (`AdminOverviewPage`, `AdminAuditsPage`, `AdminUsersPage`, `AdminCouponsPage`, `AdminCreditsPage`, `AdminUserDetailPage`, `AdminAuditDetailPage`). No `AdminRoute` guard component. No `useAdminRole` hook. No admin section in `DashboardSidebar`.
 
-### 1. Create `src/components/DashboardAuditDemo.tsx` (NEW)
+## Part A: Database Migrations (3 migrations)
 
-A miniature animated replica of the real Report page (`src/pages/Report.tsx`), including:
+### Migration 1 — Coupons Tables (`01_admin_coupons.sql`)
+- Create `coupons` table with RLS
+- Create `coupon_redemptions` table with RLS
+- Admin-only management policy + public read of active coupons
+- **One issue to fix**: The `CHECK` constraints on `discount_type` and `discount_value` should use a validation trigger instead per project guidelines. However, these are immutable checks (not time-based), so CHECK constraints are acceptable here.
 
-**Header area** (mirrors Report page header):
-- Project name "VaultProtocol" with back arrow and elapsed timer
-- Subtitle: "4 contracts . 2,847 nLOC"
+### Migration 2 — Admin RLS Policies (`02_admin_rls.sql`)
+- Add `admins_select_all_*` SELECT policies on 7 tables: audits, audit_orchestration, credit_txns, subscriptions, nloc_credits, payment_orders, profiles, findings
+- Uses direct `user_roles` lookup (consistent pattern, though `has_role()` function exists and would be slightly better)
 
-**SecurityScoreCard replica** (mirrors `SecurityScoreCard.tsx`):
-- SVG circular progress ring with grade letter (animates from "--" through C+, B, B+)
-- Score label (e.g. "74/100") and rating text ("Good", "Fair", etc.)
-- Vulnerability matrix bar (colored segments: red/orange/yellow/blue/slate)
-- Category pills below the bar (Crit/High/Med/Low/Info counts)
+### Migration 3 — Admin RPCs (`03_admin_rpcs.sql`)
+- `admin_get_users()` — paginated user list with search, joins profiles/subscriptions/credits/audits
+- `admin_get_audits()` — paginated audit list with status/user/search filters, joins orchestration
+- `admin_get_stats()` — dashboard overview stats (total users, audits, revenue, etc.)
+- `admin_adjust_credits()` — add/deduct credits for any user with audit trail
+- `validate_coupon()` — user-callable, validates coupon code before checkout
+- `increment_coupon_used_count()` — called by payment edge functions after redemption
 
-**AuditProgressPanel replica** (mirrors `AuditProgressPanel.tsx`):
-- "Phases" section: 8-phase vertical list with checkmark/spinner/circle icons
-  - Complexity Analysis, Session Start, Hunting (2/4), Cross-Contract, Validation, QA Scan, Formatting, Report Generation
-- "Contracts" section: per-contract rows with complexity badges (L1/L2/L3)
-  - Active contract shows sub-phases: DNA Matching, Initial Scan, Deep Scan
-  - Completed contracts show green checkmarks
+## Part B: Frontend Implementation
 
-**Tab bar** (mirrors Report page tabs):
-- 6 tabs: Scope, Insights, Invariants, Findings (4), Coverage, Archive
-- "Findings" tab shown as active
+### 1. Create `src/hooks/useAdminRole.ts`
+- Queries `user_roles` table for current user
+- Returns `{ isAdmin, isLoading }`
 
-**Findings preview** (mirrors FindingItem cards):
-- 2-3 finding cards with severity badge, title, file location, and a code snippet block
-- Styled identically to the real FindingItem component
+### 2. Create `src/components/AdminRoute.tsx`
+- Route guard that checks `useAdminRole()`
+- Shows nothing while loading, redirects to `/` if not admin
 
-**Animation sequence** (9 frames, auto-restart):
-1. Empty state -- phases all pending, no score
-2. Complexity Analysis completes, Hunting starts
-3. First finding appears (CRITICAL), score jumps to 28
-4. Second finding (HIGH), score to 44, contract sub-phase advances
-5. Third finding (HIGH), score to 61
-6. Fourth finding (MEDIUM), score to 67, Hunting completes
-7. Validation phase active, score to 71
-8. Reporting phase, score to 74
-9. Complete state -- all phases checked, "Audit complete" banner, hold 5s then restart
+### 3. Create Admin Pages
 
-The component uses the same Tailwind classes and color tokens as the real components (e.g. `text-success`, `text-critical`, `stroke-success`, `bg-warning/10`, `border-primary/20`).
+| Page | Path | Description |
+|------|------|-------------|
+| `AdminOverviewPage` | `/dashboard/admin` | Calls `admin_get_stats()`, displays cards for total users, audits, revenue, active audits |
+| `AdminUsersPage` | `/dashboard/admin/users` | Calls `admin_get_users()`, searchable table with credit adjust dialog |
+| `AdminUserDetailPage` | `/dashboard/admin/users/:userId` | Detailed view of a single user (subscription, credits, audits, txn history) |
+| `AdminAuditsPage` | `/dashboard/admin/audits` | Calls `admin_get_audits()`, filterable table with status/orchestration columns |
+| `AdminAuditDetailPage` | `/dashboard/admin/audits/:auditId` | Detailed view of a single audit (orchestration state, findings) |
+| `AdminCouponsPage` | `/dashboard/admin/coupons` | CRUD for coupons, redemptions drawer |
+| `AdminCreditsPage` | `/dashboard/admin/credits` | Credit reconciliation view using `cli_reconcile_credits()` |
 
-### 2. Replace `src/pages/Home.tsx` (FULL REPLACEMENT)
+### 4. Update `src/App.tsx`
+Add admin routes under `/dashboard/admin/*` wrapped in `AdminRoute`:
+```text
+/dashboard/admin          -> AdminOverviewPage
+/dashboard/admin/users    -> AdminUsersPage
+/dashboard/admin/users/:userId -> AdminUserDetailPage
+/dashboard/admin/audits   -> AdminAuditsPage
+/dashboard/admin/audits/:auditId -> AdminAuditDetailPage
+/dashboard/admin/coupons  -> AdminCouponsPage
+/dashboard/admin/credits  -> AdminCreditsPage
+```
 
-Same 7-section structure from the spec:
-1. **Hero**: "Enterprise-Grade Security / Accessible To All", dual CTAs, trust line, `DashboardAuditDemo` below
-2. **Paradigm Shift**: Pull quote, editorial paragraphs, 3 stats
-3. **Comparison**: Traditional Audit vs Solarizer (6 rows)
-4. **Findings**: Same 3 known + 2 protocol-specific cards (unchanged content)
-5. **Intelligence Engine**: Sanitized phase names (Smart Scoping, Pattern Intelligence, Vulnerability Hunting, Protocol-Wide Reasoning, Structured Reporting), scroll animation
-6. **Built For Enterprise**: 4 feature cards with CSS illustrations
-7. **CTA**: "Enterprise Security / Without The Enterprise Price Tag"
+### 5. Update `src/components/DashboardSidebar.tsx`
+- Add an "ADMIN" nav group (conditionally rendered when `useAdminRole().isAdmin` is true)
+- Links: Overview, Users, Audits, Coupons, Credits
 
-No `TerminalAuditDemo` import. No `npm install` command. No CLI-first copy.
+### 6. Create `src/components/CouponInput.tsx`
+- Reusable input component for checkout flows
+- Calls `validate_coupon()` RPC, shows discount preview
+- Used by subscription/power-up purchase flows
 
-### 3. Update `src/components/Header.tsx` (TWO TEXT CHANGES)
+## Part C: Migration Adjustments Needed
 
-- Line 106: `Get Started` --> `Start Auditing`
-- Line 161: `Get Started` --> `Start Auditing`
+A few improvements to the uploaded SQL before applying:
 
-No other changes to Header.
+1. **Use `has_role()` instead of direct queries** in admin RLS policies (Migration 2). The project already has a `has_role()` SECURITY DEFINER function that avoids recursive RLS. The uploaded policies query `user_roles` directly which works but is inconsistent.
 
-## DashboardAuditDemo Technical Details
+2. **Add `search_path` to RPCs** (Migration 3). The existing project functions all use `SET search_path TO 'public'` but some of the uploaded RPCs lack this.
 
-The mockup replicates these specific visual elements from the real codebase:
-
-| Real Component | Mockup Element |
-|---|---|
-| `SecurityScoreCard` circular SVG (r=45, strokeWidth=6, -rotate-90) | Identical SVG with animated strokeDashoffset |
-| `SecurityScoreCard` vulnerability matrix bar (h-2.5, rounded-full) | Same bar with animated segment widths |
-| `SecurityScoreCard` category pills (grid + flex, colored borders) | Same pill layout with animated counts |
-| `AuditProgressPanel` phase list (CheckCircle2/Loader2/Circle icons) | Same icon progression per frame |
-| `AuditProgressPanel` contract rows with L1/L2/L3 badges | Same layout with sub-phase nesting |
-| `AuditProgressPanel` sub-phases (DNA Matching, Initial Scan, Deep Scan) | Shown for active contract |
-| Report page tab bar (TabsList with 6 triggers, justify-evenly) | Static tab bar, "Findings" active |
-| FindingItem severity badges + code blocks | 2-3 static finding cards |
-
-Frame timing: 1.6s-5s per frame (same delays as spec). macOS-style title bar retained. `min-h` on findings area prevents layout shift.
+3. **`admin_get_audits` column ambiguity**: The function returns columns named `status`, `findings_count` etc. that also exist in the joined `audit_orchestration` table — these need explicit table prefixes (some are already there but `ao.status` conflicts with the return column name).
 
 ## File Summary
 
 | Action | File |
 |--------|------|
-| Create | `src/components/DashboardAuditDemo.tsx` |
-| Replace | `src/pages/Home.tsx` |
-| Modify | `src/components/Header.tsx` (2 text changes) |
+| Migration | Create coupons + coupon_redemptions tables with RLS |
+| Migration | Add admin SELECT policies on 8 existing tables |
+| Migration | Create 6 admin/coupon RPC functions |
+| Create | `src/hooks/useAdminRole.ts` |
+| Create | `src/components/AdminRoute.tsx` |
+| Create | `src/pages/dashboard/admin/AdminOverviewPage.tsx` |
+| Create | `src/pages/dashboard/admin/AdminUsersPage.tsx` |
+| Create | `src/pages/dashboard/admin/AdminUserDetailPage.tsx` |
+| Create | `src/pages/dashboard/admin/AdminAuditsPage.tsx` |
+| Create | `src/pages/dashboard/admin/AdminAuditDetailPage.tsx` |
+| Create | `src/pages/dashboard/admin/AdminCouponsPage.tsx` |
+| Create | `src/pages/dashboard/admin/AdminCreditsPage.tsx` |
+| Create | `src/components/CouponInput.tsx` |
+| Modify | `src/App.tsx` (add admin routes) |
+| Modify | `src/components/DashboardSidebar.tsx` (add admin nav group) |
 
