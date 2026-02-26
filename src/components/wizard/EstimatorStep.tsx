@@ -3,7 +3,7 @@ import { ArrowLeft, Play, AlertTriangle, Zap, Check, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateNLOC, PLAN_LIMITS } from "@/lib/nlocCalculator";
 
-const CONTEXT_CREDIT_RATE = 0.35;
+const CONTEXT_CREDIT_RATE = 0.15;
 
 interface FileInput { name: string; content: string; }
 
@@ -81,7 +81,7 @@ const EstimatorStep = ({ scopeFiles, contextFiles, onBack, onProceed, onUpgradeN
           {contextFiles.length > 0 && (
             <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
               <div><span className="text-sm font-medium text-muted-foreground">Context Files</span><span className="text-xs text-muted-foreground ml-2">({contextFiles.length} files)</span></div>
-              <div className="text-right"><span className="text-lg font-semibold text-muted-foreground">~{combinedResult.contextNloc.toLocaleString()}</span><span className="text-xs text-muted-foreground ml-1">nLOC</span><span className="text-xs text-muted-foreground ml-2">→ ~{Math.floor(combinedResult.contextNloc * CONTEXT_CREDIT_RATE).toLocaleString()} credits (35%)</span></div>
+              <div className="text-right"><span className="text-lg font-semibold text-muted-foreground">~{combinedResult.contextNloc.toLocaleString()}</span><span className="text-xs text-muted-foreground ml-1">nLOC</span><span className="text-xs text-muted-foreground ml-2">→ ~{Math.floor(combinedResult.contextNloc * CONTEXT_CREDIT_RATE).toLocaleString()} credits (15%)</span></div>
             </div>
           )}
           <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg border border-primary/20">
