@@ -29,6 +29,16 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
   const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
   const shouldIncludeFile = (name: string): boolean => {
     const ext = name.substring(name.lastIndexOf('.')).toLowerCase();
     return ALLOWED_EXTENSIONS.includes(ext);
@@ -196,7 +206,8 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
   if (uploadedFiles.length > 0) {
     return (
       <div className="border border-border rounded-lg p-4 bg-card">
-        <input ref={inputRef} type="file" {...{ webkitdirectory: "", directory: "" } as any} multiple className="hidden" onChange={handleFolderSelect} />
+        {/* @ts-ignore */}
+        <input ref={inputRef} type="file" webkitdirectory="" directory="" multiple className="hidden" onChange={handleFolderSelect} />
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"><FolderUp className="w-5 h-5 text-success" /></div>
@@ -218,12 +229,13 @@ const FolderUploader = ({ onFilesUploaded, uploadedFiles, onClear }: FolderUploa
   return (
     <div
       onDrop={handleDrop}
-      onDragOver={useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, [])}
-      onDragLeave={useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); }, [])}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       className={cn("border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer", isDragging ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50 hover:bg-muted/30")}
       onClick={() => inputRef.current?.click()}
     >
-      <input ref={inputRef} type="file" {...{ webkitdirectory: "", directory: "" } as any} multiple className="hidden" onChange={handleFolderSelect} />
+      {/* @ts-ignore */}
+      <input ref={inputRef} type="file" webkitdirectory="" directory="" multiple className="hidden" onChange={handleFolderSelect} />
       {isLoading ? (
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
