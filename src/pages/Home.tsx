@@ -299,14 +299,6 @@ const Home = () => {
             Trusted by teams auditing 50+ protocols · 2M+ nLOC analyzed
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 md:mt-8">
-            <Button asChild variant="solarGlow" size="lg">
-              <Link to="/signup">Start Auditing</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link to="/pricing">View Pricing</Link>
-            </Button>
-          </div>
         </div>
 
         <div className="relative mt-10 sm:mt-16 max-w-5xl mx-auto px-5 md:px-6">
