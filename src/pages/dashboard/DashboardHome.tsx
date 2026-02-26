@@ -1,21 +1,27 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AuditCard from "@/components/AuditCard";
+import AuditWizard from "@/components/AuditWizard";
 import { CreditBalance } from "@/components/CreditBalance";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { LowCreditPrompt } from "@/components/LowCreditPrompt";
 import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
+import ScanProgressWidget from "@/components/ScanProgressWidget";
 import { Button } from "@/components/ui/button";
-import { FileCode, Loader2, Trash2, ChevronRight, Zap, Terminal } from "lucide-react";
+import { FileCode, Loader2, Trash2, ChevronRight, Zap, Plus, X } from "lucide-react";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
+import { useRunAudit } from "@/hooks/useRunAudit";
+import { useScan } from "@/contexts/ScanContext";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getAllFiles } from "@/types/files";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,8 +45,14 @@ const DashboardHome = () => {
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<string>("");
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardProjectName, setWizardProjectName] = useState("");
 
   const { user } = useAuth();
+  const runAudit = useRunAudit();
+  const { startScan, showWidget, projectName: scanProjectName, realtimeFindings, realtimeAuditStatus, cancelScan, closeWidget, currentAuditId } = useScan();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -76,12 +88,64 @@ const DashboardHome = () => {
     }
   };
 
+  const handleWizardComplete = async (data: { projectName: string; files: any[]; additionalContext?: string; scope: string[] }) => {
+    const allFiles = getAllFiles(data.files);
+    const flatFiles = allFiles.map(f => ({ name: f.path, content: f.content || '' }));
+
+    try {
+      const result = await runAudit.mutateAsync({
+        projectName: data.projectName,
+        files: flatFiles,
+        scope: data.scope,
+        additionalContext: data.additionalContext,
+      });
+      setShowWizard(false);
+      startScan(result.sessionId, data.projectName);
+    } catch (error: any) {
+      const msg = error?.message || 'Failed to start audit';
+      toast.error("Audit failed to start", { description: msg });
+    }
+  };
+
+  const handleUpgradeNeeded = (reason: 'nloc_limit' | 'file_limit', nloc: number) => {
+    setUpgradeReason(reason === 'nloc_limit' ? `Your scope (~${nloc} nLOC) exceeds your plan limit.` : 'Your file count exceeds the plan limit.');
+    setShowUpgradeModal(true);
+  };
+
+  const handlePowerUpNeeded = (nloc: number) => {
+    setShowPowerUpModal(true);
+  };
+
   const formatTimestamp = (timestamp: string) => {
     return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
   };
 
   return (
     <div className="space-y-6">
+      {/* Wizard Overlay */}
+      {showWizard && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto">
+          <div className="container max-w-3xl mx-auto py-8 px-4">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-foreground">New Security Analysis</h1>
+              <Button variant="ghost" size="icon" onClick={() => setShowWizard(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <AuditWizard
+              onComplete={handleWizardComplete}
+              onCancel={() => setShowWizard(false)}
+              isSubmitting={runAudit.isPending}
+              subscription={subscription ? { plan: subscription.plan as 'starter' | 'pro' | 'business' } : null}
+              credits={credits ? { credits_remaining: credits.credits_remaining, scans_remaining: credits.scans_remaining } : null}
+              onUpgradeNeeded={handleUpgradeNeeded}
+              onPowerUpNeeded={handlePowerUpNeeded}
+              onProjectNameChange={setWizardProjectName}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Dashboard Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -93,6 +157,12 @@ const DashboardHome = () => {
           </p>
         </div>
         <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+          {subscription && (
+            <Button onClick={() => setShowWizard(true)} className="gap-1.5">
+              <Plus className="w-4 h-4" />
+              New Audit
+            </Button>
+          )}
           <CreditBalance />
         </div>
       </div>
@@ -185,12 +255,19 @@ const DashboardHome = () => {
               <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">No assessments yet</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Use the Solarizer CLI to run your first security analysis
+                {subscription ? "Start a new audit to analyze your smart contracts" : "Subscribe to start running security analyses"}
               </p>
-              <Button onClick={() => navigate("/docs")} variant="outline" className="gap-2">
-                <Terminal className="w-4 h-4" />
-                Get Started
-              </Button>
+              {subscription ? (
+                <Button onClick={() => setShowWizard(true)} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  New Audit
+                </Button>
+              ) : (
+                <Button onClick={() => navigate("/pricing")} variant="outline" className="gap-2">
+                  <Zap className="w-4 h-4" />
+                  View Plans
+                </Button>
+              )}
             </div>
           )}
 
@@ -235,6 +312,23 @@ const DashboardHome = () => {
         onOpenChange={setShowPowerUpModal}
         requiredCredits={0}
         currentCredits={credits?.credits_remaining || 0}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeToProModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+      />
+
+      {/* Scan Progress Widget */}
+      <ScanProgressWidget
+        isVisible={showWidget}
+        projectName={scanProjectName}
+        findings={realtimeFindings}
+        auditStatus={realtimeAuditStatus}
+        onCancel={cancelScan}
+        onViewResults={() => currentAuditId && navigate(`/reports/${currentAuditId}`)}
+        onClose={closeWidget}
       />
     </div>
   );
