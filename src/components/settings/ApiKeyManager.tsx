@@ -195,7 +195,7 @@ export function ApiKeyManager() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <code className="text-xs text-muted-foreground font-mono">{k.key_prefix}_••••••••</code>
+                      <code className="text-xs text-muted-foreground font-mono max-w-[200px] sm:max-w-none truncate">{k.key_prefix}_••••••••</code>
                       <Button
                         size="sm"
                         variant="outline"

@@ -54,16 +54,16 @@ export const DashboardStats = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         <StatCardSkeleton />
         <StatCardSkeleton />
-        <StatCardSkeleton />
+        <div className="col-span-2 sm:col-span-1"><StatCardSkeleton /></div>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
       <StatCard
         icon={<Shield className="w-5 h-5" />}
         label="Total Contracts"
@@ -77,13 +77,15 @@ export const DashboardStats = () => {
         subValue="issues found"
         iconColor="text-destructive"
       />
-      <StatCard
-        icon={<TrendingUp className="w-5 h-5" />}
-        label="Avg. Score"
-        value={stats.averageSecurityScore > 0 ? `${stats.averageSecurityScore}%` : '--'}
-        subValue="security rating"
-        iconColor="text-success"
-      />
+      <div className="col-span-2 sm:col-span-1">
+        <StatCard
+          icon={<TrendingUp className="w-5 h-5" />}
+          label="Avg. Score"
+          value={stats.averageSecurityScore > 0 ? `${stats.averageSecurityScore}%` : '--'}
+          subValue="security rating"
+          iconColor="text-success"
+        />
+      </div>
     </div>
   );
 };

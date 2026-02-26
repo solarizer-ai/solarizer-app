@@ -137,7 +137,7 @@ const BillingPage = () => {
       <div className="flex items-center gap-3">
         <div className="p-3 rounded-xl bg-primary/10"><Receipt className="h-6 w-6 text-primary" /></div>
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Billing & Subscription</h1>
+          <h1 className="text-lg sm:text-2xl font-semibold text-foreground">Billing & Subscription</h1>
           <p className="text-sm text-muted-foreground">Manage your plan, credits, and view transaction history</p>
         </div>
       </div>
@@ -212,10 +212,10 @@ const BillingPage = () => {
         <CardHeader>
           <CardTitle>Transaction History</CardTitle>
           <CardDescription>All your power-up purchases and plan changes</CardDescription>
-          <div className="flex items-center gap-2 pt-2 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 flex-wrap">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-8 w-[160px] justify-start text-left text-xs font-normal", !historyStartDate && "text-muted-foreground")}>
+                <Button variant="outline" size="sm" className={cn("h-8 w-full sm:w-[160px] justify-start text-left text-xs font-normal", !historyStartDate && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                   {historyStartDate ? format(historyStartDate, "dd-MM-yyyy") : "Pick a date"}
                 </Button>
@@ -227,7 +227,7 @@ const BillingPage = () => {
             <span className="text-xs text-muted-foreground">to</span>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-8 w-[160px] justify-start text-left text-xs font-normal", !historyEndDate && "text-muted-foreground")}>
+                <Button variant="outline" size="sm" className={cn("h-8 w-full sm:w-[160px] justify-start text-left text-xs font-normal", !historyEndDate && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                   {historyEndDate ? format(historyEndDate, "dd-MM-yyyy") : "Pick a date"}
                 </Button>

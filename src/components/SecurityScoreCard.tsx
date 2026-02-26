@@ -123,7 +123,7 @@ const SecurityScoreCard = ({
     <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
         {/* Circular Progress */}
-        <div className="relative w-28 h-28 lg:w-32 lg:h-32 shrink-0">
+        <div className="relative w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 shrink-0">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
             {/* Background circle */}
             <circle
@@ -153,7 +153,7 @@ const SecurityScoreCard = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={cn("text-3xl lg:text-4xl font-bold", config.color)}>
+            <span className={cn("text-2xl sm:text-3xl lg:text-4xl font-bold", config.color)}>
               {isPending ? "--" : grade}
             </span>
             <span className="text-xs text-muted-foreground">
@@ -213,7 +213,7 @@ const SecurityScoreCard = ({
                   <cat.icon className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5", cat.textColor)} />
                   <span className={cn("text-xs sm:text-sm font-medium", cat.textColor)}>{cat.count}</span>
                   <span className="text-xs text-muted-foreground hidden sm:inline">{cat.label}</span>
-                  <span className="text-[10px] text-muted-foreground sm:hidden">{cat.label.slice(0, 4)}</span>
+                  <span className="text-[11px] text-muted-foreground sm:hidden">{cat.label.slice(0, 3)}</span>
                 </div>
               ))}
             </div>
