@@ -1,3 +1,11 @@
+// Full replacement for supabase/functions/razorpay-create-order/index.ts
+// Changes from original:
+//   - Added optional `coupon_code` to CreateOrderRequest
+//   - After calculating amountCents, calls validate_coupon RPC
+//   - Creates Razorpay Payment Link with discounted amount
+//   - Stores coupon_id + original_amount_cents in payment_orders.metadata
+//   - Returns discountApplied + originalAmountCents in response
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -11,37 +19,31 @@ interface CreateOrderRequest {
   plan?: "starter" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
-  // For upgrades
   fromPlan?: string;
   toPlan?: string;
   prorationAmount?: number;
+  coupon_code?: string; // NEW
 }
 
-// Plan prices in cents (USD)
 const PLAN_PRICES: Record<string, number> = {
-  starter: 14900, // $149 — Spark plan
-  pro: 19900,     // $199 — Blaze plan
-  business: 49900, // $499 — Inferno plan
+  starter: 14900,
+  pro: 19900,
+  business: 49900,
 };
 
-// Power-up prices per credit in cents based on plan
 const POWER_UP_RATES: Record<string, number> = {
-  starter: 280, // $2.80
-  launch: 280, // $2.80
-  pro: 250, // $2.50
-  business: 220, // $2.20
+  starter: 280,
+  launch: 280,
+  pro: 250,
+  business: 220,
 };
 
-// Frontend URL for callbacks
-// M2: Use env var instead of hardcoded URL
 const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://solarizer-app.lovable.app";
 
 function getRazorpayAuth(): string {
   const keyId = Deno.env.get("RAZORPAY_KEY_ID");
   const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
-  if (!keyId || !keySecret) {
-    throw new Error("Razorpay credentials not configured");
-  }
+  if (!keyId || !keySecret) throw new Error("Razorpay credentials not configured");
   return "Basic " + btoa(`${keyId}:${keySecret}`);
 }
 
@@ -76,7 +78,7 @@ Deno.serve(async (req) => {
     const body: CreateOrderRequest = await req.json();
     const { orderType, plan, creditsAmount, prorationAmount } = body;
 
-    // Calculate amount based on order type
+    // Calculate base amount
     let amountCents: number;
     let description: string;
 
@@ -84,13 +86,11 @@ Deno.serve(async (req) => {
       amountCents = PLAN_PRICES[plan];
       description = `Solarizer ${plan.charAt(0).toUpperCase() + plan.slice(1)} Monthly Subscription`;
     } else if (orderType === "power_up" && creditsAmount) {
-      // Get user's current plan for pricing
       const { data: subscription } = await supabase
         .from("subscriptions")
         .select("plan")
         .eq("user_id", user.id)
         .single();
-      
       const userPlan = subscription?.plan || "starter";
       const ratePerCredit = POWER_UP_RATES[userPlan] || POWER_UP_RATES.starter;
       amountCents = creditsAmount * ratePerCredit;
@@ -105,13 +105,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate internal order ID (used as reference_id in Payment Link)
-    const orderId = `order_${Date.now()}_${user.id.slice(0, 8)}`;
+    // Apply coupon discount if provided
+    let couponId: string | undefined;
+    let finalAmountCents = amountCents;
 
-    // Callback URL - Razorpay will redirect here after payment
+    if (body.coupon_code) {
+      const { data: couponResult, error: couponError } = await supabase.rpc("validate_coupon", {
+        p_code: body.coupon_code.toUpperCase().trim(),
+        p_order_type: orderType,
+        p_amount_cents: amountCents,
+      });
+
+      if (!couponError && couponResult?.valid) {
+        couponId = couponResult.coupon_id;
+        finalAmountCents = couponResult.final_amount_cents;
+        console.log("Coupon applied:", body.coupon_code, "discount:", amountCents - finalAmountCents);
+      } else {
+        // Invalid coupon — proceed without discount (don't block checkout)
+        console.warn("Invalid coupon provided, ignoring:", body.coupon_code);
+      }
+    }
+
+    const orderId = `order_${Date.now()}_${user.id.slice(0, 8)}`;
     const callbackUrl = `${FRONTEND_URL}/payment-success`;
 
-    // Create Razorpay Payment Link (full-page redirect checkout)
     const rzResponse = await fetch("https://api.razorpay.com/v1/payment_links", {
       method: "POST",
       headers: {
@@ -119,13 +136,13 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: amountCents, // Razorpay uses smallest currency unit
+        amount: finalAmountCents, // discounted amount
         currency: "USD",
         accept_partial: false,
         description: description,
-        reference_id: orderId, // Our internal order ID for lookup
+        reference_id: orderId,
         callback_url: callbackUrl,
-        callback_method: "get", // GET is easier to handle on frontend
+        callback_method: "get",
         customer: {
           name: user.user_metadata?.display_name || user.email?.split("@")[0] || "",
           email: user.email,
@@ -136,7 +153,7 @@ Deno.serve(async (req) => {
           plan: plan || "",
           credits_amount: String(creditsAmount || 0),
         },
-        expire_by: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiry
+        expire_by: Math.floor(Date.now() / 1000) + 3600,
       }),
     });
 
@@ -150,21 +167,18 @@ Deno.serve(async (req) => {
     }
 
     const paymentLink = await rzResponse.json();
-    console.log("Payment link created:", paymentLink.id);
 
-    // Store order in database using RPC
     const { error: orderError } = await supabase.rpc("create_payment_order", {
       p_user_id: user.id,
       p_order_id: orderId,
       p_order_type: orderType,
-      p_amount_cents: amountCents,
-      p_payment_session_id: paymentLink.id, // Store Payment Link ID here
+      p_amount_cents: finalAmountCents,
+      p_payment_session_id: paymentLink.id,
       p_plan: plan || null,
       p_billing_period: "monthly",
       p_credits_amount: creditsAmount || null,
     });
 
-    // C2: Return error instead of silently continuing on DB failure
     if (orderError) {
       console.error("Failed to store order:", orderError);
       return new Response(
@@ -173,13 +187,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update the order with the Razorpay Payment Link ID
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
-    
+
+    // Store coupon info in metadata if coupon was applied
+    const metadata: Record<string, any> = {};
+    if (body.fromPlan) metadata.from_plan = body.fromPlan;
+    if (couponId) {
+      metadata.coupon_id = couponId;
+      metadata.original_amount_cents = amountCents;
+    }
+
     await adminSupabase
       .from("payment_orders")
-      .update({ rz_payment_link_id: paymentLink.id })
+      .update({
+        rz_payment_link_id: paymentLink.id,
+        ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+      })
       .eq("order_id", orderId);
 
     return new Response(
@@ -187,8 +211,10 @@ Deno.serve(async (req) => {
         success: true,
         orderId,
         paymentLinkId: paymentLink.id,
-        paymentUrl: paymentLink.short_url, // Full-page checkout URL
-        amountCents,
+        paymentUrl: paymentLink.short_url,
+        amountCents: finalAmountCents,
+        originalAmountCents: amountCents,
+        discountApplied: amountCents - finalAmountCents,
         currency: "USD",
         description,
       }),

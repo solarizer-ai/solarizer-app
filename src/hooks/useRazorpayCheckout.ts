@@ -12,6 +12,7 @@ interface CreateOrderParams {
   fromPlan?: string;
   toPlan?: string;
   prorationAmount?: number;
+  coupon_code?: string;
 }
 
 interface CreateOrderResponse {

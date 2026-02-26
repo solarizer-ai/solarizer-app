@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Zap, Percent } from "lucide-react";
+import { CouponInput } from "@/components/CouponInput";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ export function PurchasePowerUpModal({
 }: PurchasePowerUpModalProps) {
   const [customCredits, setCustomCredits] = useState<number>(1000);
   const [inputValue, setInputValue] = useState<string>("1000");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; final_amount_cents: number; discount_applied_cents: number } | null>(null);
   const { data: subscription } = useSubscription();
   const { initiateCheckout, isLoading: checkoutLoading } = useRazorpayCheckout();
 
@@ -94,6 +96,7 @@ export function PurchasePowerUpModal({
     await initiateCheckout({
       orderType: "power_up",
       creditsAmount: customCredits,
+      coupon_code: appliedCoupon?.code,
     });
   };
 
@@ -184,12 +187,30 @@ export function PurchasePowerUpModal({
                   <span className="font-medium">~{discountPercent}% off</span>
                 </div>
               )}
+              {appliedCoupon && (
+                <div className="flex items-center justify-between text-success text-sm">
+                  <span>Coupon ({appliedCoupon.code})</span>
+                  <span className="font-medium">−${(appliedCoupon.discount_applied_cents / 100).toFixed(2)}</span>
+                </div>
+              )}
               <div className="border-t border-border pt-3 flex items-center justify-between">
                 <span className="text-sm font-medium">Total</span>
                 <span className="text-lg font-bold text-primary">
-                  ${totalPriceDollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${((appliedCoupon?.final_amount_cents ?? totalPriceCents) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
+            </div>
+
+            {/* Coupon Code */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Have a coupon?</p>
+              <CouponInput
+                orderType="power_up"
+                amountCents={totalPriceCents}
+                onApply={(r) => setAppliedCoupon(
+                  r?.valid ? { code: r.code!, final_amount_cents: r.final_amount_cents!, discount_applied_cents: r.discount_applied_cents! } : null
+                )}
+              />
             </div>
 
             {/* Action Buttons */}

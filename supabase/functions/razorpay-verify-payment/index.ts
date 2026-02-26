@@ -1,3 +1,9 @@
+// Full replacement for supabase/functions/razorpay-verify-payment/index.ts
+// Changes from original:
+//   - After successful process_payment_success RPC, checks payment_orders.metadata for coupon_id
+//   - If coupon_id found: inserts coupon_redemptions row + calls increment_coupon_used_count RPC
+//   - Coupon recording is non-fatal (logged but doesn't fail the payment response)
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyPaymentLinkSignature } from "../_shared/razorpaySignature.ts";
 
@@ -44,12 +50,12 @@ Deno.serve(async (req) => {
     }
 
     const body: VerifyPaymentLinkRequest = await req.json();
-    const { 
-      razorpay_payment_id, 
-      razorpay_payment_link_id, 
+    const {
+      razorpay_payment_id,
+      razorpay_payment_link_id,
       razorpay_payment_link_reference_id,
       razorpay_payment_link_status,
-      razorpay_signature 
+      razorpay_signature,
     } = body;
 
     const orderId = razorpay_payment_link_reference_id;
@@ -71,8 +77,8 @@ Deno.serve(async (req) => {
       .eq("order_id", orderId)
       .single();
 
-    if (existingOrder?.status === 'paid') {
-      if (existingOrder.order_type === 'upgrade' && existingOrder.plan) {
+    if (existingOrder?.status === "paid") {
+      if (existingOrder.order_type === "upgrade" && existingOrder.plan) {
         const { data: currentSub } = await adminSupabase
           .from("subscriptions")
           .select("plan")
@@ -96,11 +102,7 @@ Deno.serve(async (req) => {
 
           await adminSupabase
             .from("subscription_history")
-            .insert({
-              user_id: user.id,
-              previous_plan: fromPlan,
-              new_plan: existingOrder.plan,
-            });
+            .insert({ user_id: user.id, previous_plan: fromPlan, new_plan: existingOrder.plan });
         }
       }
 
@@ -126,7 +128,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the signature (timing-safe via shared module)
+    // Verify signature
     const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
     if (!keySecret) {
       return new Response(
@@ -163,16 +165,13 @@ Deno.serve(async (req) => {
 
     const { data: orderInfo } = await adminSupabase
       .from("payment_orders")
-      .select("order_type, plan, metadata")
+      .select("order_type, plan, metadata, amount_cents, id")
       .eq("order_id", orderId)
       .single();
 
     const { data: result, error: processError } = await adminSupabase.rpc(
       "process_payment_success",
-      {
-        p_order_id: orderId,
-        p_cf_payment_id: razorpay_payment_id,
-      }
+      { p_order_id: orderId, p_cf_payment_id: razorpay_payment_id }
     );
 
     if (processError) {
@@ -200,11 +199,29 @@ Deno.serve(async (req) => {
 
       await adminSupabase
         .from("subscription_history")
-        .insert({
+        .insert({ user_id: user.id, previous_plan: fromPlan, new_plan: orderInfo.plan });
+    }
+
+    // Record coupon redemption if coupon was applied
+    const orderMetadata = orderInfo?.metadata as Record<string, any> | null;
+    if (orderMetadata?.coupon_id) {
+      try {
+        await adminSupabase.from("coupon_redemptions").insert({
+          coupon_id: orderMetadata.coupon_id,
           user_id: user.id,
-          previous_plan: fromPlan,
-          new_plan: orderInfo.plan,
+          payment_order_id: orderInfo?.id ?? null,
+          original_amount_cents: orderMetadata.original_amount_cents ?? 0,
+          discounted_amount_cents: orderInfo?.amount_cents ?? 0,
+          discount_applied_cents: (orderMetadata.original_amount_cents ?? 0) - (orderInfo?.amount_cents ?? 0),
         });
+
+        await adminSupabase.rpc("increment_coupon_used_count", {
+          p_coupon_id: orderMetadata.coupon_id,
+        });
+      } catch (couponErr) {
+        // Non-fatal: log but don't fail the payment response
+        console.error("Failed to record coupon redemption:", couponErr);
+      }
     }
 
     const { data: credits } = await adminSupabase

@@ -32,6 +32,16 @@ import SharingPage from "./pages/dashboard/SharingPage";
 import IntegrationsPage from "./pages/dashboard/IntegrationsPage";
 import NewAuditPage from "./pages/dashboard/NewAuditPage";
 
+// Admin pages
+import { AdminRoute } from "./components/AdminRoute";
+import AdminOverviewPage from "./pages/dashboard/admin/AdminOverviewPage";
+import AdminUsersPage from "./pages/dashboard/admin/AdminUsersPage";
+import AdminUserDetailPage from "./pages/dashboard/admin/AdminUserDetailPage";
+import AdminAuditsPage from "./pages/dashboard/admin/AdminAuditsPage";
+import AdminAuditDetailPage from "./pages/dashboard/admin/AdminAuditDetailPage";
+import AdminCouponsPage from "./pages/dashboard/admin/AdminCouponsPage";
+import AdminCreditsPage from "./pages/dashboard/admin/AdminCreditsPage";
+
 // Docs pages
 import SetupPage from "./pages/docs/SetupPage";
 import AuditsDocsPage from "./pages/docs/AuditsPage";
@@ -86,6 +96,13 @@ const App = () => (
                   <Route path="sharing" element={<SharingPage />} />
                   <Route path="integrations" element={<IntegrationsPage />} />
                   <Route path="new-audit" element={<NewAuditPage />} />
+                  <Route path="admin" element={<AdminRoute><AdminOverviewPage /></AdminRoute>} />
+                  <Route path="admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+                  <Route path="admin/users/:id" element={<AdminRoute><AdminUserDetailPage /></AdminRoute>} />
+                  <Route path="admin/audits" element={<AdminRoute><AdminAuditsPage /></AdminRoute>} />
+                  <Route path="admin/audits/:id" element={<AdminRoute><AdminAuditDetailPage /></AdminRoute>} />
+                  <Route path="admin/coupons" element={<AdminRoute><AdminCouponsPage /></AdminRoute>} />
+                  <Route path="admin/credits" element={<AdminRoute><AdminCreditsPage /></AdminRoute>} />
                   <Route path="docs" element={<Navigate to="/docs/setup" replace />} />
                   <Route path="subscription" element={<Navigate to="/dashboard/billing" replace />} />
                 </Route>
