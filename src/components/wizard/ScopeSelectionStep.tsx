@@ -86,7 +86,7 @@ const ScopeSelectionStep = ({ fileTree, selectedScope, onScopeChange, onBack, on
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
         <Info className="w-5 h-5 text-primary mt-0.5 shrink-0" />
         <div className="text-sm text-muted-foreground">
-          <p><span className="font-medium text-foreground">In-scope files</span> are fully analyzed (100% credits). <span className="font-medium text-foreground">Out-of-scope files</span> are sent as context only (35% credits).</p>
+          <p><span className="font-medium text-foreground">In-scope files</span> are fully analyzed (100% credits). <span className="font-medium text-foreground">Out-of-scope files</span> are sent as context only (15% credits).</p>
         </div>
       </div>
       <div className="bg-card border border-border rounded-lg overflow-hidden">
