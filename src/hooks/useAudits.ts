@@ -21,6 +21,21 @@ export interface CoverageData {
   details: CoverageTestDetail[];
 }
 
+export interface Invariant {
+  description: string;
+  scope: 'contract' | 'cross-contract';
+  contracts: string[];
+  severity_if_broken: 'CRITICAL' | 'HIGH';
+}
+
+export interface ArchitectureInsight {
+  category: 'weak_point' | 'feature_suggestion' | 'architecture_improvement';
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  affected_contracts?: string[];
+}
+
 export interface Audit {
   id: string;
   user_id: string;

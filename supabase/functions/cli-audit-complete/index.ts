@@ -3,11 +3,28 @@ import { verifyServiceSecret } from '../_shared/verifyServiceSecret.ts';
 
 const corsHeaders = { 'Content-Type': 'application/json' };
 
+interface CoverageTestDetail {
+  test_name: string;
+  status: 'PASSED' | 'FAILED';
+  proof: string | null;
+  file: string;
+  related_finding_title: string | null;
+}
+
+interface CoverageData {
+  total_tests: number;
+  passed: number;
+  failed: number;
+  details: CoverageTestDetail[];
+}
+
 interface CompleteRequest {
   sessionId: string;
   findings: unknown[];
   reportMarkdown: string;
   findingsCount: number;
+  coverage_data?: CoverageData;
+  system_hologram?: Record<string, unknown>;
 }
 
 Deno.serve(async (req) => {
@@ -128,6 +145,58 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       })
       .eq('id', body.sessionId);
+
+    // 5. Merge coverage_data and system_hologram metadata
+    const metadataUpdate: Record<string, unknown> = {};
+
+    if (body.coverage_data) {
+      const { data: existingAudit } = await supabase
+        .from('audits')
+        .select('coverage_data')
+        .eq('id', body.sessionId)
+        .single();
+
+      if (existingAudit?.coverage_data &&
+          typeof existingAudit.coverage_data === 'object' &&
+          (existingAudit.coverage_data as CoverageData).details) {
+        const existingData = existingAudit.coverage_data as CoverageData;
+        const testMap = new Map<string, CoverageTestDetail>();
+        (existingData.details || []).forEach(
+          (t: CoverageTestDetail) => testMap.set(`${t.file}::${t.test_name}`, t)
+        );
+        (body.coverage_data.details || []).forEach(
+          (t: CoverageTestDetail) => testMap.set(`${t.file}::${t.test_name}`, t)
+        );
+        const merged = Array.from(testMap.values());
+        metadataUpdate.coverage_data = {
+          total_tests: merged.length,
+          passed: merged.filter((t) => t.status === 'PASSED').length,
+          failed: merged.filter((t) => t.status === 'FAILED').length,
+          details: merged,
+        };
+      } else {
+        metadataUpdate.coverage_data = body.coverage_data;
+      }
+    }
+
+    if (body.system_hologram) {
+      const { data: hologramAudit } = await supabase
+        .from('audits')
+        .select('system_hologram')
+        .eq('id', body.sessionId)
+        .single();
+      const existing =
+        (hologramAudit?.system_hologram as Record<string, unknown>) || {};
+      metadataUpdate.system_hologram = { ...existing, ...body.system_hologram };
+    }
+
+    if (Object.keys(metadataUpdate).length > 0) {
+      await supabase
+        .from('audits')
+        .update(metadataUpdate)
+        .eq('id', body.sessionId);
+      console.log(`cli-audit-complete: Merged metadata keys: ${Object.keys(metadataUpdate).join(', ')}`);
+    }
 
     console.log(
       `cli-audit-complete: Settled ${audit.credits_deducted} credits, ` +
