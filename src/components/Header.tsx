@@ -103,7 +103,7 @@ const Header = () => {
                     to="/signup"
                     className="rounded-full bg-primary text-primary-foreground text-xs px-4 py-1.5 font-medium hover:bg-primary/90 transition-colors"
                   >
-                    Get Started
+                    Start Auditing
                   </Link>
                 )
               )}
@@ -158,7 +158,7 @@ const Header = () => {
                         <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
                       </Button>
                       <Button asChild variant="solarGlow" className="w-full">
-                        <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
+                        <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>Start Auditing</Link>
                       </Button>
                     </div>
                   )}
