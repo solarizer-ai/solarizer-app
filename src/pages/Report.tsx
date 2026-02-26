@@ -373,25 +373,25 @@ const Report = () => {
                         <FileCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span className="hidden sm:inline">Scope</span>
                       </TabsTrigger>
-                      <TabsTrigger value="findings" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
-                        <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Findings</span> ({visibleFindings.length})
-                      </TabsTrigger>
-                      <TabsTrigger value="archive" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
-                        <Archive className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Archive</span> ({archivedFindings?.length || 0})
+                      <TabsTrigger value="insights" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Insights</span>
                       </TabsTrigger>
                       <TabsTrigger value="invariants" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
                         <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span className="hidden sm:inline">Invariants</span>
                       </TabsTrigger>
+                      <TabsTrigger value="findings" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Findings</span> ({visibleFindings.length})
+                      </TabsTrigger>
                       <TabsTrigger value="coverage" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
                         <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span className="hidden sm:inline">Coverage</span>
                       </TabsTrigger>
-                      <TabsTrigger value="insights" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
-                        <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Insights</span>
+                      <TabsTrigger value="archive" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                        <Archive className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Archive</span> ({archivedFindings?.length || 0})
                       </TabsTrigger>
                     </TabsList>
 
