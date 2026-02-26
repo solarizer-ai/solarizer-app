@@ -12,7 +12,7 @@ type VerificationStatus = 'unverified' | 'verified' | 'downgraded' | 'false_posi
 interface FindingInput {
   audit_id: string;
   title: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info' | 'gas';
   description: string;
   location?: string;
   line_start?: number;
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const validSeverities = ['critical', 'high', 'medium', 'low', 'info'];
+    const validSeverities = ['critical', 'high', 'medium', 'low', 'info', 'gas'];
     if (!validSeverities.includes(finding.severity)) {
       return new Response(
         JSON.stringify({ error: 'Invalid request parameters' }),
