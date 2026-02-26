@@ -75,16 +75,16 @@ const AuditWizard = ({ onComplete, onCancel, isSubmitting = false, subscription,
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-1 sm:gap-2">
         {[1, 2, 3, 4, 5, 6].map((num) => (
-          <div key={num} className="flex items-center gap-2">
-            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors", getStepNumber() >= num ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>{num}</div>
-            {num < 6 && <div className={cn("w-12 h-0.5 transition-colors", getStepNumber() > num ? "bg-primary" : "bg-muted")} />}
+          <div key={num} className="flex items-center gap-1 sm:gap-2">
+            <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors", getStepNumber() >= num ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>{num}</div>
+            {num < 6 && <div className={cn("w-6 sm:w-12 h-0.5 transition-colors", getStepNumber() > num ? "bg-primary" : "bg-muted")} />}
           </div>
         ))}
       </div>
 
-      <div className="min-h-[400px]">
+      <div className="min-h-[300px] sm:min-h-[400px]">
         {step === 'name' && <ProjectNameStep projectName={projectName} onProjectNameChange={handleProjectNameChange} onContinue={() => setStep('method')} />}
         {step === 'method' && <UploadMethodStep onSelectMethod={handleMethodSelect} onBack={handleBack} isStarterPlan={subscription?.plan === 'starter' || !subscription} />}
         {step === 'input' && uploadMethod === 'folder' && (
