@@ -330,33 +330,6 @@ const ScopeTab = ({
 
   return (
     <div className="space-y-6">
-      {/* Summary Header */}
-      <div className="p-6 rounded-lg border border-border bg-card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-            <FileCode className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-foreground">Audit Scope</h3>
-            <p className="text-sm text-muted-foreground">
-              Contracts and files included in this security audit
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex flex-wrap gap-4 mt-4">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50">
-            <FileText className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{displayContractCount} Contracts</span>
-          </div>
-          {nlocCount !== null && (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50">
-              <FileCode className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">{nlocCount.toLocaleString()} Lines of Code</span>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* File Tree */}
       <div className="space-y-3">
