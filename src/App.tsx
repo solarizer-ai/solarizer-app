@@ -30,6 +30,7 @@ import ProfilePage from "./pages/dashboard/ProfilePage";
 import SecurityPage from "./pages/dashboard/SecurityPage";
 import SharingPage from "./pages/dashboard/SharingPage";
 import IntegrationsPage from "./pages/dashboard/IntegrationsPage";
+import NewAuditPage from "./pages/dashboard/NewAuditPage";
 
 // Docs pages
 import SetupPage from "./pages/docs/SetupPage";
@@ -84,6 +85,7 @@ const App = () => (
                   <Route path="security" element={<SecurityPage />} />
                   <Route path="sharing" element={<SharingPage />} />
                   <Route path="integrations" element={<IntegrationsPage />} />
+                  <Route path="new-audit" element={<NewAuditPage />} />
                   <Route path="docs" element={<Navigate to="/docs/setup" replace />} />
                   <Route path="subscription" element={<Navigate to="/dashboard/billing" replace />} />
                 </Route>
