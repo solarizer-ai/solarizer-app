@@ -2,22 +2,28 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import AuditCard from "@/components/AuditCard";
+import AuditWizard from "@/components/AuditWizard";
 import { CreditBalance } from "@/components/CreditBalance";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { LowCreditPrompt } from "@/components/LowCreditPrompt";
 import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
+import ScanProgressWidget from "@/components/ScanProgressWidget";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { FileCode, Loader2, Trash2, ChevronRight, Zap, Terminal } from "lucide-react";
+import { FileCode, Loader2, Trash2, ChevronRight, Zap, Plus, X } from "lucide-react";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
+import { useRunAudit } from "@/hooks/useRunAudit";
+import { useScan } from "@/contexts/ScanContext";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getAllFiles } from "@/types/files";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,9 +47,12 @@ const Index = () => {
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
-  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
 
   const { user } = useAuth();
+  const runAudit = useRunAudit();
+  const { startScan, showWidget, projectName: scanProjectName, realtimeFindings, realtimeAuditStatus, cancelScan, closeWidget, currentAuditId } = useScan();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -79,6 +88,25 @@ const Index = () => {
     }
   };
 
+  const handleWizardComplete = async (data: { projectName: string; files: any[]; additionalContext?: string; scope: string[] }) => {
+    const allFiles = getAllFiles(data.files);
+    const flatFiles = allFiles.map(f => ({ name: f.path, content: f.content || '' }));
+
+    try {
+      const result = await runAudit.mutateAsync({
+        projectName: data.projectName,
+        files: flatFiles,
+        scope: data.scope,
+        additionalContext: data.additionalContext,
+      });
+      setShowWizard(false);
+      startScan(result.sessionId, data.projectName);
+    } catch (error: any) {
+      const msg = error?.message || 'Failed to start audit';
+      toast.error("Audit failed to start", { description: msg });
+    }
+  };
+
   const formatTimestamp = (timestamp: string) => {
     return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
   };
@@ -86,6 +114,29 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
+
+      {/* Wizard Overlay */}
+      {showWizard && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto">
+          <div className="container max-w-3xl mx-auto py-8 px-4">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-foreground">New Security Analysis</h1>
+              <Button variant="ghost" size="icon" onClick={() => setShowWizard(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <AuditWizard
+              onComplete={handleWizardComplete}
+              onCancel={() => setShowWizard(false)}
+              isSubmitting={runAudit.isPending}
+              subscription={subscription ? { plan: subscription.plan as 'starter' | 'pro' | 'business' } : null}
+              credits={credits ? { credits_remaining: credits.credits_remaining, scans_remaining: credits.scans_remaining } : null}
+              onUpgradeNeeded={(reason, nloc) => setShowUpgradeModal(true)}
+              onPowerUpNeeded={() => setShowPowerUpModal(true)}
+            />
+          </div>
+        </div>
+      )}
 
       <main className="container mx-auto px-6 py-8 flex-1">
         <div className="space-y-6">
@@ -100,6 +151,12 @@ const Index = () => {
               </p>
             </div>
             <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+              {subscription && (
+                <Button onClick={() => setShowWizard(true)} className="gap-1.5">
+                  <Plus className="w-4 h-4" />
+                  New Audit
+                </Button>
+              )}
               <CreditBalance />
             </div>
           </div>
@@ -117,24 +174,6 @@ const Index = () => {
               <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
                 <Zap className="w-3.5 h-3.5" />
                 View Plans
-              </Button>
-            </div>
-          )}
-
-          {/* CLI Prompt */}
-          {subscription && (
-            <div className="p-4 rounded-lg border border-border bg-muted/30 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Terminal className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Run analyses via CLI</p>
-                  <p className="text-xs text-muted-foreground">
-                    Use the Solarizer CLI to start new security analyses
-                  </p>
-                </div>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => navigate("/docs")} className="gap-1.5">
-                View Docs
               </Button>
             </div>
           )}
@@ -210,12 +249,19 @@ const Index = () => {
                   <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium text-foreground mb-2">No assessments yet</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Use the Solarizer CLI to run your first security analysis
+                    {subscription ? "Start a new audit to analyze your smart contracts" : "Subscribe to start running security analyses"}
                   </p>
-                  <Button onClick={() => navigate("/docs")} variant="outline" className="gap-2">
-                    <Terminal className="w-4 h-4" />
-                    Get Started
-                  </Button>
+                  {subscription ? (
+                    <Button onClick={() => setShowWizard(true)} className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      New Audit
+                    </Button>
+                  ) : (
+                    <Button onClick={() => navigate("/pricing")} variant="outline" className="gap-2">
+                      <Zap className="w-4 h-4" />
+                      View Plans
+                    </Button>
+                  )}
                 </div>
               )}
               
@@ -264,49 +310,22 @@ const Index = () => {
         currentCredits={credits?.credits_remaining || 0}
       />
 
-      {/* Subscribe Modal */}
-      <AlertDialog open={showSubscribeModal} onOpenChange={setShowSubscribeModal}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-primary" />
-              Subscribe to Run Analysis
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>You need an active plan to run security analyses. Choose a plan that fits your needs:</p>
-                <div className="grid gap-2 pt-2">
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Spark</p>
-                    <p className="text-xs text-muted-foreground">1 file per scan · 500 nLOC</p>
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">$149/mo</p>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border border-primary/40 bg-primary/5">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Blaze</p>
-                    <p className="text-xs text-muted-foreground">Deep scan · 3,000 nLOC · 50 credits</p>
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">$199/mo</p>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Inferno</p>
-                    <p className="text-xs text-muted-foreground">12,000 nLOC · 50 credits · Sharing</p>
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">$499/mo</p>
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate("/pricing")}>
-              View Plans
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Upgrade Modal */}
+      <UpgradeToProModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+      />
+
+      {/* Scan Progress Widget */}
+      <ScanProgressWidget
+        isVisible={showWidget}
+        projectName={scanProjectName}
+        findings={realtimeFindings}
+        auditStatus={realtimeAuditStatus}
+        onCancel={cancelScan}
+        onViewResults={() => currentAuditId && navigate(`/reports/${currentAuditId}`)}
+        onClose={closeWidget}
+      />
 
       <Footer />
     </div>

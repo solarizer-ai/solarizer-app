@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { ScanProvider } from "@/contexts/ScanContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import DocsLayout from "@/layouts/DocsLayout";
@@ -44,58 +45,60 @@ const App = () => (
     <ThemeProvider>
       <TooltipProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/login" element={<Auth />} />
-              <Route path="/signup" element={<Auth />} />
-              <Route path="/coming-soon" element={<ComingSoon />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
-              <Route path="/subscription-success" element={<ProtectedRoute><SubscriptionSuccess /></ProtectedRoute>} />
+          <ScanProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/login" element={<Auth />} />
+                <Route path="/signup" element={<Auth />} />
+                <Route path="/coming-soon" element={<ComingSoon />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+                <Route path="/subscription-success" element={<ProtectedRoute><SubscriptionSuccess /></ProtectedRoute>} />
 
-              {/* Docs (sidebar layout, public) */}
-              <Route path="/docs" element={<DocsLayout />}>
-                <Route index element={<Navigate to="/docs/setup" replace />} />
-                <Route path="setup" element={<SetupPage />} />
-                <Route path="audits" element={<AuditsDocsPage />} />
-                <Route path="grades" element={<GradesPage />} />
-                <Route path="reference" element={<ReferencePage />} />
-                <Route path="faq" element={<FaqPage />} />
-                <Route path="plans-and-costing" element={<PlansAndCostingPage />} />
-              </Route>
+                {/* Docs (sidebar layout, public) */}
+                <Route path="/docs" element={<DocsLayout />}>
+                  <Route index element={<Navigate to="/docs/setup" replace />} />
+                  <Route path="setup" element={<SetupPage />} />
+                  <Route path="audits" element={<AuditsDocsPage />} />
+                  <Route path="grades" element={<GradesPage />} />
+                  <Route path="reference" element={<ReferencePage />} />
+                  <Route path="faq" element={<FaqPage />} />
+                  <Route path="plans-and-costing" element={<PlansAndCostingPage />} />
+                </Route>
 
-              {/* Dashboard (sidebar layout) */}
-              <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                <Route index element={<DashboardHome />} />
-                <Route path="analyses" element={<AnalysesPage />} />
-                <Route path="credits" element={<CreditActivityPage />} />
-                <Route path="api-keys" element={<ApiKeysPage />} />
-                <Route path="billing" element={<BillingPage />} />
-                <Route path="profile" element={<ProfilePage />} />
-                <Route path="security" element={<SecurityPage />} />
-                <Route path="sharing" element={<SharingPage />} />
-                <Route path="docs" element={<Navigate to="/docs/setup" replace />} />
-                <Route path="subscription" element={<Navigate to="/dashboard/billing" replace />} />
-              </Route>
+                {/* Dashboard (sidebar layout) */}
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                  <Route index element={<DashboardHome />} />
+                  <Route path="analyses" element={<AnalysesPage />} />
+                  <Route path="credits" element={<CreditActivityPage />} />
+                  <Route path="api-keys" element={<ApiKeysPage />} />
+                  <Route path="billing" element={<BillingPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="security" element={<SecurityPage />} />
+                  <Route path="sharing" element={<SharingPage />} />
+                  <Route path="docs" element={<Navigate to="/docs/setup" replace />} />
+                  <Route path="subscription" element={<Navigate to="/dashboard/billing" replace />} />
+                </Route>
 
-              {/* Report stays standalone (full-width) */}
-              <Route path="/reports/:auditId" element={<ProtectedRoute><Report /></ProtectedRoute>} />
+                {/* Report stays standalone (full-width) */}
+                <Route path="/reports/:auditId" element={<ProtectedRoute><Report /></ProtectedRoute>} />
 
-              {/* Legacy redirects */}
-              <Route path="/settings" element={<Navigate to="/dashboard/profile" replace />} />
-              <Route path="/audits" element={<Navigate to="/dashboard/analyses" replace />} />
-              <Route path="/billing" element={<Navigate to="/dashboard/billing" replace />} />
+                {/* Legacy redirects */}
+                <Route path="/settings" element={<Navigate to="/dashboard/profile" replace />} />
+                <Route path="/audits" element={<Navigate to="/dashboard/analyses" replace />} />
+                <Route path="/billing" element={<Navigate to="/dashboard/billing" replace />} />
 
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ScanProvider>
         </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>

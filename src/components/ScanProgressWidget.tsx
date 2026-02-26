@@ -9,7 +9,7 @@ interface Finding { id: string; title: string; severity: 'critical' | 'high' | '
 
 interface ScanProgressWidgetProps {
   isVisible: boolean; projectName: string; findings: Finding[];
-  auditStatus: 'pending' | 'analyzing' | 'secured' | 'issues' | null;
+  auditStatus: 'pending' | 'analyzing' | 'secured' | 'issues' | 'failed' | null;
   onCancel: () => void; onViewResults: () => void; onClose: () => void;
 }
 
@@ -30,7 +30,7 @@ const ScanProgressWidget = ({ isVisible, projectName, findings, auditStatus, onC
 
   const findingCounts = { critical: findings.filter(f => f.severity === 'critical').length, high: findings.filter(f => f.severity === 'high').length, medium: findings.filter(f => f.severity === 'medium').length, low: findings.filter(f => f.severity === 'low').length, info: findings.filter(f => f.severity === 'info').length };
   const totalFindings = findings.length;
-  const isComplete = auditStatus === 'secured' || auditStatus === 'issues';
+  const isComplete = auditStatus === 'secured' || auditStatus === 'issues' || auditStatus === 'failed';
   const isScanning = auditStatus === 'analyzing' || auditStatus === 'pending';
 
   useEffect(() => {
