@@ -43,7 +43,7 @@ const DashboardHome = () => {
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
 
   const { user } = useAuth();
-  const { showWidget, projectName: scanProjectName, realtimeFindings, realtimeAuditStatus, cancelScan, closeWidget, currentAuditId } = useScan();
+  const { showWidget, projectName: scanProjectName, realtimeFindings, realtimeAuditStatus, cancelScan, closeWidget, currentAuditId, orchestrationPhase, orchestrationProgress } = useScan();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -259,6 +259,8 @@ const DashboardHome = () => {
         projectName={scanProjectName}
         findings={realtimeFindings}
         auditStatus={realtimeAuditStatus}
+        orchestrationPhase={orchestrationPhase}
+        orchestrationProgress={orchestrationProgress}
         onCancel={cancelScan}
         onViewResults={() => currentAuditId && navigate(`/reports/${currentAuditId}`)}
         onClose={closeWidget}
