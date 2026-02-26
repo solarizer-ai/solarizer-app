@@ -37,7 +37,7 @@ export function CouponInput({ orderType, amountCents, onApply }: CouponInputProp
         p_amount_cents: amountCents,
       });
       if (error) throw error;
-      const r = data as CouponResult;
+      const r = data as unknown as CouponResult;
       setResult(r);
       onApply(r.valid ? r : null);
     } catch {

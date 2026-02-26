@@ -77,6 +77,14 @@ const navGroups = [
   },
 ];
 
+const adminNavItems = [
+  { title: "Overview", url: "/dashboard/admin", icon: BarChart3, end: true },
+  { title: "Users", url: "/dashboard/admin/users", icon: Users },
+  { title: "Audits", url: "/dashboard/admin/audits", icon: FileSearch },
+  { title: "Coupons", url: "/dashboard/admin/coupons", icon: Tag },
+  { title: "Credits", url: "/dashboard/admin/credits", icon: CreditCard },
+];
+
 export function DashboardSidebar() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -160,6 +168,36 @@ export function DashboardSidebar() {
           </SidebarGroup>
         ))}
 
+        {/* Admin Group (conditional) */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-semibold px-3">
+              <Shield className="w-3 h-3 inline mr-1" />
+              Admin
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminNavItems.map((item) => (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <NavLink
+                        to={item.url}
+                        end={item.end}
+                        onClick={handleNavClick}
+                        className="text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                        activeClassName="bg-primary/10 text-foreground font-medium border-l-2 border-l-primary"
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Docs Link */}
         <SidebarGroup>
           <SidebarGroupContent>
@@ -182,45 +220,6 @@ export function DashboardSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Admin Nav Group — only visible to admins */}
-      {isAdmin && (
-        <>
-          <SidebarSeparator />
-          <SidebarContent className="px-1">
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-semibold px-3">
-                ADMIN
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {[
-                    { title: "Overview", url: "/dashboard/admin", icon: BarChart3, end: true },
-                    { title: "Users", url: "/dashboard/admin/users", icon: UserCheck },
-                    { title: "Audits", url: "/dashboard/admin/audits", icon: FileSearch },
-                    { title: "Coupons", url: "/dashboard/admin/coupons", icon: Tag },
-                    { title: "Credits", url: "/dashboard/admin/credits", icon: CreditCard },
-                  ].map((item) => (
-                    <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton asChild tooltip={item.title}>
-                        <NavLink
-                          to={item.url}
-                          end={item.end}
-                          onClick={handleNavClick}
-                          className="text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent transition-colors"
-                          activeClassName="bg-primary/10 text-foreground font-medium border-l-2 border-l-primary"
-                        >
-                          <item.icon className="w-4 h-4" />
-                          <span>{item.title}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </>
-      )}
 
       {/* User Footer */}
       <SidebarFooter>

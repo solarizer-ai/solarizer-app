@@ -349,6 +349,105 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_redemptions: {
+        Row: {
+          coupon_id: string
+          discount_applied_cents: number
+          discounted_amount_cents: number
+          id: string
+          original_amount_cents: number
+          payment_order_id: string | null
+          redeemed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          discount_applied_cents: number
+          discounted_amount_cents: number
+          id?: string
+          original_amount_cents: number
+          payment_order_id?: string | null
+          redeemed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          discount_applied_cents?: number
+          discounted_amount_cents?: number
+          id?: string
+          original_amount_cents?: number
+          payment_order_id?: string | null
+          redeemed_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_payment_order_id_fkey"
+            columns: ["payment_order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupons: {
+        Row: {
+          applicable_to: string[]
+          code: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          min_amount_cents: number | null
+          updated_at: string | null
+          used_count: number
+        }
+        Insert: {
+          applicable_to?: string[]
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_amount_cents?: number | null
+          updated_at?: string | null
+          used_count?: number
+        }
+        Update: {
+          applicable_to?: string[]
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_amount_cents?: number | null
+          updated_at?: string | null
+          used_count?: number
+        }
+        Relationships: []
+      }
       credit_txns: {
         Row: {
           amount: number
@@ -866,6 +965,50 @@ export type Database = {
         Args: { p_credits: number; p_user_id: string }
         Returns: number
       }
+      admin_adjust_credits: {
+        Args: { p_amount: number; p_reason: string; p_target_user_id: string }
+        Returns: undefined
+      }
+      admin_get_audits: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_status?: string
+          p_user_id?: string
+        }
+        Returns: {
+          audit_id: string
+          audit_status: string
+          created_at: string
+          credits_deducted: number
+          findings_count: number
+          grade: string
+          nloc_count: number
+          orch_error: string
+          orch_phase: string
+          orch_status: string
+          project_name: string
+          source: string
+          user_email: string
+        }[]
+      }
+      admin_get_stats: { Args: never; Returns: Json }
+      admin_get_users: {
+        Args: { p_limit?: number; p_offset?: number; p_search?: string }
+        Returns: {
+          audits_count: number
+          created_at: string
+          credits_remaining: number
+          display_name: string
+          email: string
+          last_audit_at: string
+          plan: string
+          subscription_status: string
+          total_credits_spent: number
+          user_id: string
+        }[]
+      }
       auto_settle_stale_sessions: { Args: never; Returns: undefined }
       cancel_pending_downgrade: { Args: never; Returns: Json }
       cancel_subscription: { Args: never; Returns: Json }
@@ -955,6 +1098,10 @@ export type Database = {
         Args: { p_session_id: string; p_tokens: number }
         Returns: number
       }
+      increment_coupon_used_count: {
+        Args: { p_coupon_id: string }
+        Returns: undefined
+      }
       mark_payment_failed: { Args: { p_order_id: string }; Returns: Json }
       process_payment_success: {
         Args: { p_cf_payment_id: string; p_order_id: string }
@@ -984,6 +1131,10 @@ export type Database = {
           display_name: string
           user_id: string
         }[]
+      }
+      validate_coupon: {
+        Args: { p_amount_cents: number; p_code: string; p_order_type: string }
+        Returns: Json
       }
     }
     Enums: {
