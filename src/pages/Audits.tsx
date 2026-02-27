@@ -179,7 +179,7 @@ const Audits = () => {
                       grade={audit.grade || undefined}
                       status={audit.status}
                       timestamp={formatTimestamp(audit.created_at)}
-                      onClick={() => navigate(`/reports/${audit.id}`)}
+                      onClick={() => navigate(`/dashboard/reports/${audit.id}`)}
                       isShared={!isOwned}
                       hasShares={isOwned && (audit.share_count || 0) > 0}
                     />

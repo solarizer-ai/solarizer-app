@@ -62,7 +62,7 @@ const DashboardHome = () => {
   const { data: credits } = useCredits();
 
   const handleViewResults = (auditId: string) => {
-    navigate(`/reports/${auditId}`);
+    navigate(`/dashboard/reports/${auditId}`);
   };
 
   const handleDeleteAudit = async () => {
