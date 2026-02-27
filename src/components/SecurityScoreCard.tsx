@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Shield, AlertTriangle, AlertCircle, Info } from "lucide-react";
+import { Shield, AlertTriangle, AlertCircle, Info, Fuel } from "lucide-react";
 
 type Grade = "A" | "B" | "C" | "D" | "F" | null;
 
@@ -9,6 +9,7 @@ interface VulnerabilityCount {
   medium: number;
   low: number;
   info: number;
+  gas?: number;
 }
 
 interface SecurityScoreCardProps {
@@ -39,7 +40,7 @@ const SecurityScoreCard = ({
   projectName, 
   timestamp, 
   auditId,
-  counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
+  counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0, gas: 0 },
   onSeverityClick,
 }: SecurityScoreCardProps) => {
   const isPending = grade === null;
@@ -51,6 +52,7 @@ const SecurityScoreCard = ({
     { label: "Medium", count: counts.medium, icon: AlertCircle, bgColor: "bg-warning/10", textColor: "text-warning", borderColor: "border-warning/30", barColor: "bg-warning" },
     { label: "Low", count: counts.low, icon: Info, bgColor: "bg-low/10", textColor: "text-low", borderColor: "border-low/30", barColor: "bg-low" },
     { label: "Info", count: counts.info, icon: Info, bgColor: "bg-slate-400/10", textColor: "text-slate-400", borderColor: "border-slate-400/30", barColor: "bg-slate-400" },
+    { label: "Gas", count: counts.gas ?? 0, icon: Fuel, bgColor: "bg-green-500/10", textColor: "text-green-500", borderColor: "border-green-500/30", barColor: "bg-green-500" },
   ];
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
