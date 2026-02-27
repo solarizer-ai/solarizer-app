@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import solarizerLogo from "@/assets/solarizer-logo.png";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ScanProvider } from "@/contexts/ScanContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -66,6 +67,8 @@ const App = () => (
           <ScanProvider>
             <Toaster />
             <Sonner />
+            {/* Persistent hidden logo keeps decoded bitmap in memory across route changes */}
+            <img src={solarizerLogo} alt="" aria-hidden className="hidden" decoding="sync" />
             <BrowserRouter>
               <Routes>
                 {/* Public Routes */}

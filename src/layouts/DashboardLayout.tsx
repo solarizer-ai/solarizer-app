@@ -11,7 +11,7 @@ export default function DashboardLayout() {
         <main className="flex-1 overflow-auto">
           <div className="sticky top-0 z-10 flex items-center gap-3 h-11 px-4 bg-background/80 backdrop-blur-sm border-b border-border md:hidden">
             <SidebarTrigger />
-            <img src={solarizerLogo} alt="Solarizer" className="h-5 w-auto" />
+            <img src={solarizerLogo} alt="Solarizer" className="h-5 w-auto" decoding="sync" />
           </div>
           <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-6xl mx-auto">
             <Outlet />

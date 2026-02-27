@@ -64,7 +64,7 @@ const Header = () => {
         <div className="rounded-2xl bg-black/70 backdrop-blur-2xl border border-primary/40 shadow-[0_0_30px_rgba(0,0,0,0.3)] px-6 h-14 flex items-center justify-between">
           {/* Left: Logo + Brand */}
           <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
-            <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg object-cover" />
+            <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg object-cover" decoding="sync" />
           </Link>
 
           {/* Center: Nav links (desktop) */}
