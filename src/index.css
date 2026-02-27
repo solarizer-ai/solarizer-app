@@ -189,6 +189,34 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+  /* Solarizer minimal scrollbars — global */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(24 95% 53% / 0.25) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(24 95% 53% / 0.25);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(24 95% 53% / 0.45);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   /* Monospace phase label pill */
   .terminal-pill {
     font-family: 'JetBrains Mono', monospace;
