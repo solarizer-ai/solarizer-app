@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { CheckCircle2, Loader2, Circle, AlertCircle } from "lucide-react";
+import { CheckCircle2, Loader2, Circle, AlertCircle, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -83,6 +83,9 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
   const contractTotal = orchestration.progress.contractTotal || scopeMetadata?.length || 0;
   const hideCC = contractTotal <= 1;
 
+  const skippedPhases = useMemo(() => new Set(orchestration.progress.skippedPhases ?? []), [orchestration.progress.skippedPhases]);
+  const isSkipped = (key: string) => skippedPhases.has(key);
+
   const scopeMap = useMemo(() => {
     const map = new Map<string, ScopeMetaItem>();
     (scopeMetadata || []).forEach((s) => map.set(s.path, s));
@@ -129,9 +132,11 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Phases</h4>
           {PHASES.map((phase, idx) => {
             if (phase.key === "cross_contract" && hideCC) return null;
-            const isCompleted = activePhaseIdx > idx;
-            const isActive = activePhaseIdx === idx;
-            const isPending = activePhaseIdx < idx;
+
+            const isLocked = isSkipped(phase.key);
+            const isCompleted = !isLocked && activePhaseIdx > idx;
+            const isActive = !isLocked && activePhaseIdx === idx;
+            const isPending = !isLocked && activePhaseIdx < idx;
 
             let suffix = "";
             if (isActive && (phase.key === "hunting" || phase.key === "qa")) {
@@ -149,14 +154,23 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
                 {isCompleted && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
                 {isActive && <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />}
                 {isPending && <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
-                <span className={cn(
-                  "text-sm",
-                  isCompleted && "text-success",
-                  isActive && "text-primary font-medium",
-                  isPending && "text-muted-foreground"
-                )}>
-                  {phase.label}{suffix}
-                </span>
+                {isLocked && <Lock className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
+                <div className="flex flex-col">
+                  <span className={cn(
+                    "text-sm",
+                    isCompleted && "text-success",
+                    isActive && "text-primary font-medium",
+                    isPending && "text-muted-foreground",
+                    isLocked && "text-muted-foreground/50"
+                  )}>
+                    {phase.label}{suffix}
+                  </span>
+                  {isLocked && (
+                    <span className="text-[10px] text-muted-foreground/40">
+                      Not included on this plan
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
