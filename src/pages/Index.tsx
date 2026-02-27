@@ -14,7 +14,8 @@ import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
 
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { FileCode, Loader2, Trash2, ChevronRight, Zap, Plus, X } from "lucide-react";
+import { FileCode, Trash2, ChevronRight, Zap, Plus, X } from "lucide-react";
+import { AuditListSkeleton } from "@/components/AuditCardSkeleton";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRunAudit } from "@/hooks/useRunAudit";
@@ -210,9 +211,7 @@ const Index = () => {
               </div>
 
               {auditsLoading ? (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                </div>
+                <AuditListSkeleton count={4} />
               ) : audits && audits.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {audits.slice(0, 4).map((audit) => {

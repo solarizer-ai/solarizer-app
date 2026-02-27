@@ -9,6 +9,7 @@ import {
   Info, Zap, Fuel, CheckCircle2, XCircle, ChevronDown, FileCode, Lightbulb,
   Calendar, Code2, Bug, CircleCheckBig,
 } from "lucide-react";
+import { ReportSkeleton } from "@/components/AuditCardSkeleton";
 import { format } from "date-fns";
 import solarLogo from "@/assets/solarizer-logo.png";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -316,10 +317,9 @@ const PublicReport = () => {
 
   if (auditLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Loading report…</span>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-6 py-8">
+          <ReportSkeleton />
         </div>
       </div>
     );

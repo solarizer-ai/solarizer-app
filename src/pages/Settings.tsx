@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { User, Shield, Loader2, Check, CreditCard, Zap, Calendar, ArrowUpRight, Users, Lock, Link2, LogOut, AlertCircle, Clock, XCircle } from "lucide-react";
+import { SettingsPageSkeleton, SubscriptionSkeleton } from "@/components/AuditCardSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -196,9 +197,7 @@ const Settings = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+        <SettingsPageSkeleton />
       </div>
     );
   }
@@ -297,9 +296,7 @@ const Settings = () => {
 
             <TabsContent value="subscription">
               {subscriptionLoading || creditsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
+                <SubscriptionSkeleton />
               ) : (
                 <div className="space-y-4">
                   {/* Current Plan Card */}

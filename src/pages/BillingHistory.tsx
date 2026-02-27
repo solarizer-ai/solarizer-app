@@ -3,7 +3,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Zap, ArrowUpRight, CreditCard, Loader2, Receipt, ArrowLeft } from "lucide-react";
+import { Zap, ArrowUpRight, CreditCard, Receipt, ArrowLeft } from "lucide-react";
+import { BillingHistorySkeleton } from "@/components/AuditCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useBillingHistory, BillingEvent } from "@/hooks/useBillingHistory";
@@ -152,9 +153,7 @@ const BillingHistory = () => {
             </CardHeader>
             <CardContent className="p-0">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
+                <BillingHistorySkeleton />
               ) : events.length === 0 ? (
                 <div className="text-center py-12">
                   <Receipt className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
