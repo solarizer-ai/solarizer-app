@@ -24,7 +24,16 @@ export const useRunAudit = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Try to parse JSON error body for specific messages (e.g. 403 subscription errors)
+        try {
+          const parsed = JSON.parse(error.message);
+          if (parsed?.error) throw new Error(parsed.error);
+        } catch (parseErr) {
+          if (parseErr instanceof SyntaxError) throw error;
+          throw parseErr;
+        }
+      }
       if (!data?.sessionId) throw new Error('No sessionId returned from server');
       return data;
     },

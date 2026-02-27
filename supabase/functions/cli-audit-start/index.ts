@@ -140,12 +140,30 @@ Deno.serve(async (req) => {
     // 4. Get user tier and check credits
     const { data: subscription } = await supabase
       .from('subscriptions')
-      .select('plan')
+      .select('plan, status, current_period_end')
       .eq('user_id', userId)
       .eq('status', 'active')
       .maybeSingle();
 
-    const tier = subscription?.plan || 'free';
+    if (!subscription) {
+      return new Response(
+        JSON.stringify({ error: 'No active subscription. Please subscribe to start an audit.' }),
+        { status: 403, headers: corsHeaders }
+      );
+    }
+
+    const isExpired =
+      subscription.current_period_end !== null &&
+      new Date(subscription.current_period_end) < new Date();
+
+    if (isExpired) {
+      return new Response(
+        JSON.stringify({ error: 'Your subscription has expired. Please renew to continue.' }),
+        { status: 403, headers: corsHeaders }
+      );
+    }
+
+    const tier = subscription.plan;
 
     const { data: credits } = await supabase
       .from('nloc_credits')

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import AuditWizard from "@/components/AuditWizard";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
@@ -21,8 +22,63 @@ const NewAuditPage = () => {
 
   const runAudit = useRunAudit();
   const { startScan } = useScan();
-  const { data: subscription } = useSubscription();
+  const { data: subscription, isExpired } = useSubscription();
   const { data: credits } = useCredits();
+
+  const hasActivePlan = subscription?.status === 'active' && !isExpired;
+  const hasCredits = credits && credits.credits_remaining > 0;
+
+  // Gate: no active subscription
+  if (!hasActivePlan) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Security Analysis</h1>
+        </div>
+        <Card className="max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center text-center py-10 space-y-4">
+            <Lock className="w-10 h-10 text-muted-foreground" />
+            <h2 className="text-xl font-semibold">Subscription Required</h2>
+            <p className="text-sm text-muted-foreground">
+              A Spark, Blaze, or Inferno plan is required to run security audits.
+            </p>
+            <Button onClick={() => navigate("/pricing")}>View Plans</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Gate: zero credits
+  if (!hasCredits) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Security Analysis</h1>
+        </div>
+        <Card className="max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center text-center py-10 space-y-4">
+            <Zap className="w-10 h-10 text-muted-foreground" />
+            <h2 className="text-xl font-semibold">Insufficient Credits</h2>
+            <p className="text-sm text-muted-foreground">
+              You need credits to run security audits. Purchase credits to get started.
+            </p>
+            <Button onClick={() => setShowPowerUpModal(true)}>Purchase Credits</Button>
+          </CardContent>
+        </Card>
+        <PurchasePowerUpModal
+          open={showPowerUpModal}
+          onOpenChange={setShowPowerUpModal}
+        />
+      </div>
+    );
+  }
 
   const handleWizardComplete = async (data: { projectName: string; files: any[]; additionalContext?: string; scope: string[] }) => {
     const allFiles = getAllFiles(data.files);

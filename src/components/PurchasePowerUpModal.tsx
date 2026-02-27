@@ -21,8 +21,8 @@ interface PurchasePowerUpModalProps {
   currentCredits?: number;
 }
 
-const QUICK_OPTIONS = [500, 1000, 2500, 5000];
-const MIN_CREDITS = 100;
+const QUICK_OPTIONS = [25, 100, 500, 1000];
+const MIN_CREDITS = 25;
 const MAX_CREDITS = 100000;
 
 export function PurchasePowerUpModal({

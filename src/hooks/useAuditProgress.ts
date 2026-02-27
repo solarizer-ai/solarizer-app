@@ -13,6 +13,7 @@ export interface AuditOrchestrationProgress {
     subPhase?: string;
     crossContractPass?: number;
     crossContractTotal?: number;
+    skippedPhases?: string[];
   };
   findings_count: number;
   error: string | null;
