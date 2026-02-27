@@ -273,17 +273,21 @@ export function useRazorpaySubscription() {
     }
   };
 
-  // Reactivate subscription
+  // Reactivate subscription (re-purchase flow — no RPC needed, user just renews)
   const reactivateSubscription = useMutation({
-    mutationFn: async (): Promise<{ success: boolean; error?: string }> => {
-      const { data, error } = await supabase.rpc("reactivate_subscription");
+    mutationFn: async (): Promise<{ success: boolean }> => {
+      // With one-time payments, "reactivate" simply means undo the cancel_at_period_end flag
+      const { error } = await supabase
+        .from("subscriptions")
+        .update({ cancel_at_period_end: false, updated_at: new Date().toISOString() })
+        .eq("user_id", user?.id);
       if (error) throw error;
-      return data as unknown as { success: boolean; error?: string };
+      return { success: true };
     },
     onSuccess: () => {
       toast({
-        title: "Subscription Reactivated",
-        description: "Your subscription will continue as normal.",
+        title: "Cancellation Reversed",
+        description: "Your plan will no longer expire at period end.",
       });
       queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
     },

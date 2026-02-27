@@ -888,12 +888,9 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string
           id: string
-          payment_method_saved: boolean | null
           pending_plan: Database["public"]["Enums"]["subscription_plan"] | null
           pending_plan_effective_date: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
-          rz_plan_id: string | null
-          rz_subscription_id: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string
           user_id: string
@@ -905,12 +902,9 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string
           id?: string
-          payment_method_saved?: boolean | null
           pending_plan?: Database["public"]["Enums"]["subscription_plan"] | null
           pending_plan_effective_date?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
-          rz_plan_id?: string | null
-          rz_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           user_id: string
@@ -922,12 +916,9 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string
           id?: string
-          payment_method_saved?: boolean | null
           pending_plan?: Database["public"]["Enums"]["subscription_plan"] | null
           pending_plan_effective_date?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
-          rz_plan_id?: string | null
-          rz_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           user_id?: string
@@ -1115,7 +1106,6 @@ export type Database = {
         Args: { p_billing_period: string; p_plan: string }
         Returns: Json
       }
-      reactivate_subscription: { Args: never; Returns: Json }
       refund_credits: {
         Args: {
           p_is_starter?: boolean
