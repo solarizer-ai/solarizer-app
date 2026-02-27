@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Zap, ArrowRight, Check } from "lucide-react";
 import {
   Dialog,
@@ -7,7 +8,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { CouponInput } from "@/components/CouponInput";
 import { formatPlanName } from "@/lib/planNames";
+
+interface CouponResult {
+  valid: boolean;
+  coupon_id?: string;
+  code?: string;
+  discount_type?: string;
+  discount_value?: number;
+  discount_applied_cents?: number;
+  final_amount_cents?: number;
+}
 
 interface UpgradeConfirmationModalProps {
   open: boolean;
@@ -15,7 +27,7 @@ interface UpgradeConfirmationModalProps {
   fromPlan: string;
   toPlan: string;
   prorationAmount: number; // in cents
-  onConfirm: () => void;
+  onConfirm: (couponCode?: string) => void;
   isLoading?: boolean;
 }
 
@@ -48,8 +60,11 @@ export function UpgradeConfirmationModal({
   onConfirm,
   isLoading = false,
 }: UpgradeConfirmationModalProps) {
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponResult | null>(null);
 
+  const finalCents = appliedCoupon?.final_amount_cents ?? prorationAmount;
   const prorationDollars = (prorationAmount / 100).toFixed(2);
+  const finalDollars = (finalCents / 100).toFixed(2);
   const features = PLAN_FEATURES[toPlan] || [];
 
   return (
@@ -79,15 +94,28 @@ export function UpgradeConfirmationModal({
 
           {/* Proration Info */}
           <div className="p-4 rounded-lg bg-muted/50 border">
-            <div className="flex items-baseline justify-between mb-2">
+            <div className="flex items-baseline justify-between mb-1">
               <span className="text-sm text-muted-foreground">Proration (due today)</span>
-              <span className="text-2xl font-bold">${prorationDollars}</span>
+              <span className={`text-2xl font-bold ${appliedCoupon ? "line-through text-muted-foreground text-lg" : ""}`}>${prorationDollars}</span>
             </div>
+            {appliedCoupon && (
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-sm text-success font-medium">After discount</span>
+                <span className="text-2xl font-bold">${finalDollars}</span>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               This is the difference between your current plan and the new plan price.
               Your next monthly renewal will be at the full {formatPlanName(toPlan)} rate.
             </p>
           </div>
+
+          {/* Coupon Input */}
+          <CouponInput
+            orderType="subscription"
+            amountCents={prorationAmount}
+            onApply={(result) => setAppliedCoupon(result as CouponResult | null)}
+          />
 
           {/* Features */}
           {features.length > 0 && (
@@ -109,10 +137,10 @@ export function UpgradeConfirmationModal({
             <Button
               className="w-full"
               size="lg"
-              onClick={onConfirm}
+              onClick={() => onConfirm(appliedCoupon?.code)}
               disabled={isLoading}
             >
-              {isLoading ? "Processing..." : `Pay $${prorationDollars} & Upgrade`}
+              {isLoading ? "Processing..." : `Pay $${finalDollars} & Upgrade`}
             </Button>
             <Button
               variant="ghost"
