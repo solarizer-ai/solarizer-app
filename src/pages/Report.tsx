@@ -450,10 +450,12 @@ const Report = () => {
                       <TabsTrigger value="insights" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
                         <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span className="hidden sm:inline">Insights</span>
+                        {effectivePlan === 'starter' && <Lock className="w-3 h-3 text-muted-foreground" />}
                       </TabsTrigger>
                       <TabsTrigger value="invariants" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
                         <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span className="hidden sm:inline">Invariants</span>
+                        {effectivePlan === 'starter' && <Lock className="w-3 h-3 text-muted-foreground" />}
                       </TabsTrigger>
                       <TabsTrigger value="findings" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
                         <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -583,11 +585,20 @@ const Report = () => {
                     </TabsContent>
 
                     <TabsContent value="invariants" className="mt-4">
-                      <InvariantsTab
-                        invariants={
-                          (currentAudit?.system_hologram as Record<string, unknown> | null)?.invariants as Invariant[] | undefined ?? null
-                        }
-                      />
+                      {effectivePlan === 'starter' ? (
+                        <FeatureLockedOverlay
+                          featureName="System Invariants"
+                          requiredPlan="pro"
+                          description="Invariant analysis identifies protocol-level assumptions that must always hold."
+                          onUpgrade={() => setUpgradeModalOpen(true)}
+                        />
+                      ) : (
+                        <InvariantsTab
+                          invariants={
+                            (currentAudit?.system_hologram as Record<string, unknown> | null)?.invariants as Invariant[] | undefined ?? null
+                          }
+                        />
+                      )}
                     </TabsContent>
 
                     <TabsContent value="coverage" className="mt-4">
@@ -598,11 +609,20 @@ const Report = () => {
                     </TabsContent>
 
                     <TabsContent value="insights" className="mt-4">
-                      <InsightsTab
-                        insights={
-                          (currentAudit?.system_hologram as Record<string, unknown> | null)?.insights as ArchitectureInsight[] | undefined ?? null
-                        }
-                      />
+                      {effectivePlan === 'starter' ? (
+                        <FeatureLockedOverlay
+                          featureName="Architecture Insights"
+                          requiredPlan="pro"
+                          description="Architecture insights provide a high-level review of protocol design and composability risks."
+                          onUpgrade={() => setUpgradeModalOpen(true)}
+                        />
+                      ) : (
+                        <InsightsTab
+                          insights={
+                            (currentAudit?.system_hologram as Record<string, unknown> | null)?.insights as ArchitectureInsight[] | undefined ?? null
+                          }
+                        />
+                      )}
                     </TabsContent>
                   </Tabs>
                 </>

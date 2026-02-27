@@ -7,8 +7,6 @@ import { formatDistanceToNow } from "date-fns";
 import type { AuditOrchestrationProgress } from "@/hooks/useAuditProgress";
 
 const PHASES = [
-  { key: "complexity_estimation", label: "Complexity Analysis" },
-  { key: "session_start", label: "Session Start" },
   { key: "hunting", label: "Hunting" },
   { key: "cross_contract", label: "Cross-Contract" },
   { key: "validation", label: "Validation" },
@@ -70,8 +68,8 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
   useEffect(() => {
     const check = () => {
       const secondsSince = Math.floor((Date.now() - new Date(lastUpdatedRef.current).getTime()) / 1000);
-      if (secondsSince >= 1200) setStaleness('stuck');
-      else if (secondsSince >= 600) setStaleness('warn');
+      if (secondsSince >= 3600) setStaleness('stuck');
+      else if (secondsSince >= 1800) setStaleness('warn');
       else setStaleness('fresh');
     };
     check();

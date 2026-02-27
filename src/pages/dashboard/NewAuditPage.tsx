@@ -91,8 +91,8 @@ const NewAuditPage = () => {
         scope: data.scope,
         additionalContext: data.additionalContext,
       });
-      navigate("/dashboard");
       startScan(result.sessionId, data.projectName);
+      navigate("/dashboard");
     } catch (error: any) {
       const msg = error?.message || 'Failed to start audit';
       toast.error("Audit failed to start", { description: msg });

@@ -8,12 +8,10 @@ import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
-import ScanProgressWidget from "@/components/ScanProgressWidget";
 import { Button } from "@/components/ui/button";
 import { FileCode, Loader2, Trash2, ChevronRight, Zap, Plus } from "lucide-react";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
-import { useScan } from "@/contexts/ScanContext";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +41,6 @@ const DashboardHome = () => {
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
 
   const { user } = useAuth();
-  const { showWidget, projectName: scanProjectName, realtimeFindings, realtimeAuditStatus, closeWidget, currentAuditId, orchestrationPhase, orchestrationProgress } = useScan();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -251,18 +248,6 @@ const DashboardHome = () => {
         onOpenChange={setShowPowerUpModal}
         requiredCredits={0}
         currentCredits={credits?.credits_remaining || 0}
-      />
-
-      {/* Scan Progress Widget */}
-      <ScanProgressWidget
-        isVisible={showWidget}
-        projectName={scanProjectName}
-        findings={realtimeFindings}
-        auditStatus={realtimeAuditStatus}
-        orchestrationPhase={orchestrationPhase}
-        orchestrationProgress={orchestrationProgress}
-        onViewResults={() => currentAuditId && navigate(`/reports/${currentAuditId}`)}
-        onClose={closeWidget}
       />
     </div>
   );

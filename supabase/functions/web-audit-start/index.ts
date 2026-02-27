@@ -149,12 +149,12 @@ Deno.serve(async (req) => {
     console.log(`web-audit-start: Authenticated user ${userId}`);
 
     // 2. Parse and validate request body
-    let body: WebAuditRequest;
+    let body: WebAuditRequest & { idempotency_key?: string };
     try { body = await req.json(); } catch {
       return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: corsHeaders });
     }
 
-    const { projectName, files, scope, additionalContext } = body;
+    const { projectName, files, scope, additionalContext, idempotency_key } = body;
 
     if (!projectName || typeof projectName !== 'string' || projectName.trim().length < 2) {
       return new Response(JSON.stringify({ error: 'projectName must be at least 2 characters' }), { status: 400, headers: corsHeaders });
@@ -268,6 +268,32 @@ Deno.serve(async (req) => {
 
     const tier = subscription.plan;
 
+    // Plan nLOC limit check
+    const PLAN_NLOC_LIMITS: Record<string, number> = { starter: 500, pro: 3000, business: 9999 };
+    const totalNloc = scopeNloc + contextNloc;
+    const planNlocLimit = PLAN_NLOC_LIMITS[tier] ?? 500;
+    if (totalNloc > planNlocLimit) {
+      return new Response(
+        JSON.stringify({ error: `Total nLOC (${totalNloc}) exceeds ${tier} plan limit of ${planNlocLimit} nLOC` }),
+        { status: 402, headers: corsHeaders }
+      );
+    }
+
+    // Idempotency check
+    if (idempotency_key) {
+      const { data: existing } = await supabase
+        .from('audits')
+        .select('id, status')
+        .eq('idempotency_key', idempotency_key)
+        .maybeSingle();
+      if (existing) {
+        return new Response(
+          JSON.stringify({ sessionId: existing.id, duplicate: true }),
+          { status: 200, headers: corsHeaders }
+        );
+      }
+    }
+
     const { data: credits } = await supabase
       .from('nloc_credits').select('credits_remaining').eq('user_id', userId).maybeSingle();
     const creditsRemaining = credits?.credits_remaining || 0;
@@ -296,6 +322,7 @@ Deno.serve(async (req) => {
       .insert({
         user_id: userId, project_name: projectName, status: 'analyzing', source: 'web',
         nloc_count: scopeNloc, credits_deducted: estimatedCost,
+        idempotency_key: idempotency_key || null,
         scope_metadata: scopeFileStats.map(f => ({ path: f.path, nLOC: f.nLOC, complexity: f.complexity })),
         context_metadata: contextFileStats.map(f => ({ path: f.path, nLOC: f.nLOC })),
         contracts_total: scopeFileStats.length, contracts_completed: 0, is_locked: false,
@@ -334,29 +361,24 @@ Deno.serve(async (req) => {
 
     // 12. Call Cloud Run proxy /audit/run
     const sessionSecret = Deno.env.get('SESSION_SECRET');
-    if (proxyUrl && sessionSecret) {
-      try {
-        const proxyResponse = await fetch(`${proxyUrl}/audit/run`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-service-secret': sessionSecret },
-          body: JSON.stringify({
-            sessionId, userId, tier, projectName,
-            scopeFiles: scopeFileStats.map(f => ({ path: f.path, nLOC: f.nLOC, complexity: f.complexity, content: f.content })),
-            contextFiles: contextFileStats.map(f => ({ path: f.path, nLOC: f.nLOC, content: f.content })),
-            additionalContext: additionalContext || '',
-          }),
-        });
-        if (!proxyResponse.ok) {
-          const errorText = await proxyResponse.text().catch(() => '');
-          console.error(`web-audit-start: Proxy returned ${proxyResponse.status}: ${errorText}`);
-        } else {
-          console.log(`web-audit-start: Proxy accepted audit ${sessionId}`);
-        }
-      } catch (proxyError) {
-        console.error('web-audit-start: Failed to call proxy:', proxyError);
-      }
-    } else {
-      console.warn('web-audit-start: CLOUD_RUN_PROXY_URL or SESSION_SECRET not set');
+    if (!proxyUrl || !sessionSecret) {
+      throw new Error('CLOUD_RUN_PROXY_URL or SESSION_SECRET not configured');
+    }
+
+    const proxyResponse = await fetch(`${proxyUrl}/audit/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-service-secret': sessionSecret },
+      body: JSON.stringify({
+        sessionId, userId, tier, projectName,
+        scopeFiles: scopeFileStats.map(f => ({ path: f.path, nLOC: f.nLOC, complexity: f.complexity, content: f.content })),
+        contextFiles: contextFileStats.map(f => ({ path: f.path, nLOC: f.nLOC, content: f.content })),
+        additionalContext: additionalContext || '',
+      }),
+    });
+
+    if (!proxyResponse.ok) {
+      const errorText = await proxyResponse.text().catch(() => '');
+      throw new Error(`Proxy rejected audit (${proxyResponse.status}): ${errorText}`);
     }
 
     return new Response(JSON.stringify({ sessionId }), { status: 200, headers: corsHeaders });

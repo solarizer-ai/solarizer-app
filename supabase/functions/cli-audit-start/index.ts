@@ -6,6 +6,54 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
+// --- Server-side nLOC calculation ---
+function removeComments(content: string): { cleaned: string } {
+  if (!content) return { cleaned: '' };
+  const result: string[] = [];
+  let i = 0;
+  let inString = false;
+  let stringChar: string | null = null;
+  const len = content.length;
+  while (i < len) {
+    if (!inString && (content[i] === '"' || content[i] === "'")) { inString = true; stringChar = content[i]; result.push(content[i]); i++; continue; }
+    if (inString) { if (content[i] === '\\' && i + 1 < len) { result.push(content[i] + content[i + 1]); i += 2; continue; } if (content[i] === stringChar) { inString = false; stringChar = null; } result.push(content[i]); i++; continue; }
+    if (i + 1 < len && content[i] === '/' && content[i + 1] === '*') { i += 2; while (i < len) { if (i + 1 < len && content[i] === '*' && content[i + 1] === '/') { i += 2; break; } i++; } continue; }
+    if (i + 1 < len && content[i] === '/' && content[i + 1] === '/') { while (i < len && content[i] !== '\n') i++; if (i < len) { result.push('\n'); i++; } continue; }
+    result.push(content[i]); i++;
+  }
+  return { cleaned: result.join('') };
+}
+
+function removeStringLiterals(content: string): string {
+  if (!content) return '';
+  return content.replace(/"(?:[^"\\]|\\.)*"/g, '""').replace(/'(?:[^'\\]|\\.)*'/g, "''");
+}
+
+function countLogicalUnits(content: string): number {
+  if (!content || !content.trim()) return 0;
+  let processedContent = removeStringLiterals(content);
+  let code = 0;
+  const patterns = [
+    /pragma\s+\w+[^;]*;/g, /import\s+(?:\{[^}]*\}|"[^"]*"|'[^']*')\s*(?:from\s+(?:"[^"]*"|'[^']*'))?\s*;/g,
+    /import\s+"[^"]*"\s*(?:as\s+\w+)?\s*;/g, /using\s+\w+\s+for\s+[^;]+;/g,
+    /\b(?:contract|interface|library|abstract\s+contract)\s+\w+/g,
+    /\b(?:function\s+\w+|fallback|receive)\s*\([^)]*\)/g, /\bconstructor\s*\([^)]*\)/g,
+    /\bmodifier\s+\w+\s*(?:\([^)]*\))?/g, /\bevent\s+\w+\s*\([^)]*\)/g, /\berror\s+\w+\s*(?:\([^)]*\))?/g,
+    /\bstruct\s+\w+\s*\{/g, /\benum\s+\w+\s*\{/g,
+    /\bmapping\s*\([^)]+\)(?:\s+(?:public|private|internal|constant))?\s+\w+\s*;/g,
+    /\b(?:uint\d*|int\d*|address|bool|string|bytes\d*)\s+(?:(?:public|private|internal|constant|immutable)\s+)*\w+(?:\s*=\s*[^;]+)?;/g,
+    /\btype\s+\w+\s+is\s+[^;]+;/g,
+  ];
+  for (const pattern of patterns) { const matches = processedContent.match(pattern); if (matches) { code += matches.length; processedContent = processedContent.replace(pattern, ''); } }
+  code += processedContent.split(';').length - 1;
+  return code;
+}
+
+function calculateServerNLOC(content: string): number {
+  const { cleaned } = removeComments(content);
+  return countLogicalUnits(cleaned);
+}
+
 interface ScopeFile {
   path: string;
   nLOC: number;
@@ -24,6 +72,7 @@ interface AuditStartRequest {
   scopeFiles: ScopeFile[];
   contextFiles: ContextFile[];
   additionalContext: string;
+  idempotency_key?: string;
 }
 
 Deno.serve(async (req) => {
@@ -73,6 +122,14 @@ Deno.serve(async (req) => {
     }
 
     const { projectName, scopeFiles, contextFiles, additionalContext, idempotency_key } = body;
+
+    // Recalculate nLOC server-side
+    for (const f of scopeFiles) {
+      if (f.content) f.nLOC = calculateServerNLOC(f.content);
+    }
+    for (const f of contextFiles || []) {
+      if (f.content) f.nLOC = calculateServerNLOC(f.content);
+    }
 
     if (!Array.isArray(scopeFiles) || scopeFiles.length === 0) {
       return new Response(
@@ -164,6 +221,17 @@ Deno.serve(async (req) => {
     }
 
     const tier = subscription.plan;
+
+    // Plan nLOC limit check
+    const PLAN_NLOC_LIMITS: Record<string, number> = { starter: 500, pro: 3000, business: 9999 };
+    const totalNlocCheck = scopeNloc + contextNloc;
+    const planNlocLimit = PLAN_NLOC_LIMITS[tier] ?? 500;
+    if (totalNlocCheck > planNlocLimit) {
+      return new Response(
+        JSON.stringify({ error: `Total nLOC (${totalNlocCheck}) exceeds ${tier} plan limit of ${planNlocLimit} nLOC` }),
+        { status: 402, headers: corsHeaders }
+      );
+    }
 
     const { data: credits } = await supabase
       .from('nloc_credits')
