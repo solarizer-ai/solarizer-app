@@ -1,70 +1,77 @@
 
 
-# Redesign Public Report Page to Solarizer Standard
+# Subscription Enforcement, Locked Phases, and Credit Gating
 
 ## Overview
-Overhaul `PublicReport.tsx` from its current plain layout to a polished, professional design matching the Solarizer aesthetic. Take direct inspiration from `SecurityScoreCard` (circular grade ring, vulnerability matrix bar), `FindingItem` (expandable accordion with sections for description, code, remediation), and `SecurityCoverageTab` (summary cards with colored borders/backgrounds).
+This plan addresses a silent tier-downgrade bug where users without an active subscription could start audits that ran as `tier=free`, producing incomplete reports. It also enforces credit minimums and updates the purchase modal.
 
-## Design Changes
+## Changes
 
-### 1. Hero / Score Section
-Replace the flat score card with the **circular SVG grade ring** from `SecurityScoreCard`:
-- Animated SVG circle showing score progress with grade letter centered
-- Grade-based coloring (green for A/B, amber for C/D, red/purple for F)
-- Vulnerability matrix horizontal bar beneath (colored segments per severity)
-- Category pills row (Critical, High, Medium, Low, Info, Gas) with icons, counts, and colored backgrounds/borders matching the existing pill design
+### 1. Edge Functions -- Enforce Active Subscription (403)
 
-### 2. Project Metadata Header
-- Terminal-style pill label "SECURITY AUDIT REPORT" using `terminal-pill` class
-- Project name as `heading-section` with `text-gradient` for the orange gradient
-- Metadata row: date, nLOC count, total findings, resolved count -- each with subtle icons
-- Separator line using `border-subtle`
+**`supabase/functions/cli-audit-start/index.ts`** (lines ~141-145)
+- Change `select('plan')` to `select('plan, status, current_period_end')`
+- Replace `const tier = subscription?.plan || 'free'` with a guard: if no subscription row, return 403 with `"No active subscription. Please subscribe to start an audit."`
+- Add expiry check: if `current_period_end` is in the past, return 403 with `"Your subscription has expired. Please renew to continue."`
+- Set `const tier = subscription.plan` (no fallback)
 
-### 3. Scope Section
-Replace the plain file list with a styled card matching the Coverage tab aesthetic:
-- Card with `bg-card border-border` and a subtle `bg-primary/5` header strip
-- Files shown as mono-styled rows with alternating subtle backgrounds
-- File count badge in the header
-- Collapsible if more than 10 files
+**`supabase/functions/web-audit-start/index.ts`** (lines ~248-250)
+- Same changes as above
 
-### 4. Findings Section -- Accordion Style
-Replace the flat card list with the **expandable accordion pattern** from `FindingItem`:
-- Each finding is a collapsible row: severity badge (colored pill with icon) + title + location + resolved status
-- Clicking expands to show:
-  - **Description** section with label "DESCRIPTION" (uppercase tracking-wider muted)
-  - **Affected Code** section using the existing `CodeBlock` component with Solidity syntax highlighting via the `highlightSolidityCode` function (copied from FindingItem since it's not exported)
-  - **Remediation** section in a `bg-success/5 border-success/20` box with lightbulb icon, matching the FindingItem remediation guide styling
-  - **Status** indicator: green checkmark "Resolved" or muted "Open"
-- Severity group headers with icon, label, and count
+### 2. Frontend Subscription Gate -- `NewAuditPage.tsx`
 
-### 5. Remediation Summary Widget
-Add a mini progress card (like `RemediationProgressWidget`) showing:
-- "X of Y findings resolved" with a progress bar
-- Percentage text
+- Destructure `isExpired` from `useSubscription()`
+- Compute `hasActivePlan = subscription?.status === 'active' && !isExpired`
+- If `!hasActivePlan`, render a lock screen with:
+  - Back button + "New Security Analysis" title (same header)
+  - Card with Lock icon, "Subscription Required" heading
+  - Description: "A Spark, Blaze, or Inferno plan is required to run security audits."
+  - "View Plans" button navigating to `/pricing`
+- Import `Lock` from lucide-react, `Card`/`CardContent` from ui/card
 
-### 6. Footer
-- Solarizer logo with subtle opacity
-- "Powered by Solarizer" text
-- Disclaimer text
-- Copyright line
-- Subtle `bg-radial-glow` background effect
+### 3. Credit Insufficiency Gate -- `NewAuditPage.tsx`
 
-### 7. Header Bar
-- Sticky header with `backdrop-blur-sm` (keep existing)
-- Add subtle bottom glow line using `border-primary/20`
+- Also check if user has zero credits (`!credits || credits.credits_remaining <= 0`)
+- Show a similar card: "Insufficient Credits" with description "You need credits to run security audits. Purchase credits to get started."
+- "Purchase Credits" button that opens the PurchasePowerUpModal
+- This is separate from the per-audit credit check in the wizard estimator -- it catches users with literally zero credits before they even start
 
-## Technical Details
+### 4. `useAuditProgress.ts` -- Add `skippedPhases`
 
-### File: `src/pages/PublicReport.tsx` (full rewrite)
-- Import `Collapsible` / `CollapsibleContent` / `CollapsibleTrigger` from radix
-- Import `Progress` component
-- Copy the `highlightSolidityCode` function (and keyword/type sets) from `FindingItem.tsx` since it is not exported as a shared utility
-- Also copy the `renderWithCodeFormatting` and `parseInlineFormatting` helpers for proper markdown rendering of descriptions and remediation text
-- Reuse `CodeBlock` component for code snippets
-- Add `useState` for expanded finding tracking (accordion behavior)
-- SVG circular progress ring rendered inline (same math as `SecurityScoreCard`)
-- Responsive: stacked on mobile, side-by-side on desktop for the score section
+Add `skippedPhases?: string[]` to the `progress` type in `AuditOrchestrationProgress`. No query changes needed.
 
-### No other files need modification
-This is a self-contained redesign of the single page component.
+### 5. `AuditProgressPanel.tsx` -- Render Locked Phases
+
+- Import `Lock` from lucide-react
+- Derive `skippedPhases` set from `orchestration.progress.skippedPhases`
+- In the phase render loop, add a fourth state `isLocked`:
+  - If locked: show `Lock` icon (gray), phase label with "Not included on this plan" subtitle
+  - Locked phases don't count as completed/active/pending
+- Locked phases appear grayed out with the lock icon
+
+### 6. `useRunAudit.ts` -- Surface 403 Error Messages
+
+- After `invokeWithRefresh`, if `error` exists, attempt to parse `error.message` as JSON to extract the `error` field
+- This ensures messages like "No active subscription..." and "Your subscription has expired..." surface in the toast via the existing `NewAuditPage` error handler
+
+### 7. `PurchasePowerUpModal.tsx` -- Minimum 25 Credits
+
+- Change `MIN_CREDITS` from `100` to `25`
+- Update `QUICK_OPTIONS` to `[25, 100, 500, 1000]` (remove 2500/5000, add 25)
+- Update the validation message accordingly
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `supabase/functions/cli-audit-start/index.ts` | Enforce active subscription (403) |
+| `supabase/functions/web-audit-start/index.ts` | Enforce active subscription (403) |
+| `src/pages/dashboard/NewAuditPage.tsx` | Subscription + credit gate before wizard |
+| `src/hooks/useAuditProgress.ts` | Add `skippedPhases` to progress type |
+| `src/components/AuditProgressPanel.tsx` | Render locked phase state with Lock icon |
+| `src/hooks/useRunAudit.ts` | Parse JSON error body for 403 messages |
+| `src/components/PurchasePowerUpModal.tsx` | Change MIN_CREDITS to 25 |
+
+## No Database Changes Required
+All changes are in edge functions and frontend code.
 
