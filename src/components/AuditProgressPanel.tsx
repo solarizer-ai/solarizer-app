@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { CheckCircle2, Loader2, Circle, AlertCircle, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import type { AuditOrchestrationProgress } from "@/hooks/useAuditProgress";
@@ -28,6 +27,7 @@ interface ScopeMetaItem {
 interface AuditProgressPanelProps {
   orchestration: AuditOrchestrationProgress;
   scopeMetadata?: ScopeMetaItem[] | null;
+  liveFindings?: { severity: string }[];
 }
 
 function formatElapsed(seconds: number): string {
@@ -47,7 +47,20 @@ const SUB_PHASES_BY_COMPLEXITY: Record<string, string[]> = {
   L3: ["DNA Matching", "Initial Scan", "Deep Scan"],
 };
 
-const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanelProps) => {
+const ComplexityPill = ({ level }: { level: string }) => {
+  const styles: Record<string, string> = {
+    L1: 'bg-muted text-muted-foreground ring-1 ring-border',
+    L2: 'bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/30',
+    L3: 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30',
+  };
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${styles[level] || styles.L1}`}>
+      {level}
+    </span>
+  );
+};
+
+const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }: AuditProgressPanelProps) => {
   const [elapsed, setElapsed] = useState(0);
   const [staleness, setStaleness] = useState<'fresh' | 'warn' | 'stuck'>('fresh');
   const lastUpdatedRef = useRef<string>(orchestration.updated_at);
@@ -101,14 +114,27 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
     });
   }, [scopeMetadata, contractProgress, orchestration.progress.currentContract, scopeMap]);
 
+  const scopeSummary = useMemo(() => {
+    if (!scopeMetadata || scopeMetadata.length === 0) return null;
+    const totalNloc = scopeMetadata.reduce((sum, s) => sum + s.nLOC, 0);
+    return `${scopeMetadata.length} contract${scopeMetadata.length !== 1 ? 's' : ''} · ${totalNloc.toLocaleString()} nLOC`;
+  }, [scopeMetadata]);
+
+  const isHuntingOrQa = orchestration.phase === 'hunting' || orchestration.phase === 'qa';
+
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            Audit in Progress
-          </CardTitle>
+          <div className="space-y-1">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              Audit in Progress
+            </CardTitle>
+            {scopeSummary && (
+              <p className="text-xs text-muted-foreground">{scopeSummary}</p>
+            )}
+          </div>
           <div className="flex flex-col items-end gap-0.5">
             <span className="text-sm font-mono text-muted-foreground">{formatElapsed(elapsed)}</span>
             {staleness === 'warn' && (
@@ -138,7 +164,7 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
 
             let suffix = "";
             if (isActive && (phase.key === "hunting" || phase.key === "qa")) {
-              const ci = orchestration.progress.contractIndex ?? 0;
+              const ci = (orchestration.progress.contractIndex ?? 0) + 1;
               suffix = ` (${ci}/${contractTotal})`;
             }
             if (isActive && phase.key === "cross_contract") {
@@ -148,7 +174,10 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
             }
 
             return (
-              <div key={phase.key} className="flex items-center gap-2 py-0.5">
+              <div key={phase.key} className={cn(
+                "flex items-center gap-2 py-1 px-2 -mx-2 rounded",
+                isActive && "bg-primary/5"
+              )}>
                 {isCompleted && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
                 {isActive && <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />}
                 {isPending && <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
@@ -184,30 +213,37 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
               const subPhases = SUB_PHASES_BY_COMPLEXITY[complexity] || SUB_PHASES_BY_COMPLEXITY.L1;
               const currentSubPhase = orchestration.progress.subPhase;
 
+              // Mutually exclusive icon: error > done > active > pending
+              let icon: React.ReactNode;
+              let textClass: string;
+              if (c.error) {
+                icon = <AlertCircle className="w-4 h-4 text-destructive shrink-0" />;
+                textClass = "text-destructive";
+              } else if (c.done) {
+                icon = <CheckCircle2 className="w-4 h-4 text-success shrink-0" />;
+                textClass = "text-success";
+              } else if (c.isActive) {
+                icon = <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />;
+                textClass = "text-primary font-medium";
+              } else {
+                icon = <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />;
+                textClass = "text-muted-foreground";
+              }
+
               return (
                 <div key={c.path} className="space-y-1">
                   <div className="flex items-center gap-2 py-0.5">
-                    {c.done && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
-                    {c.isActive && <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />}
-                    {c.error && <AlertCircle className="w-4 h-4 text-destructive shrink-0" />}
-                    {!c.done && !c.isActive && !c.error && <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
-                    <span className={cn(
-                      "text-sm truncate",
-                      c.done && "text-success",
-                      c.isActive && "text-primary font-medium",
-                      !c.done && !c.isActive && "text-muted-foreground"
-                    )}>
+                    {icon}
+                    <span className={cn("text-sm truncate", textClass)}>
                       {filename}
                     </span>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
-                      {complexity}
-                    </Badge>
+                    <ComplexityPill level={complexity} />
                     {!c.done && !c.isActive && !c.error && (
                       <span className="text-xs text-muted-foreground/50">pending</span>
                     )}
                   </div>
-                  {c.isActive && (
-                    <div className="ml-6 space-y-0.5">
+                  {c.isActive && isHuntingOrQa && (
+                    <div className="ml-6 pl-3 border-l-2 border-border/40 space-y-0.5">
                       {subPhases.map((sp) => {
                         const spKey = sp.toLowerCase().replace(/\s+/g, "_");
                         const currentKey = (currentSubPhase || "").toLowerCase().replace(/\s+/g, "_");
@@ -242,14 +278,49 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
           </div>
         )}
 
-        {/* Findings count */}
-        {(orchestration.findings_count || 0) > 0 && (
-          <div className="space-y-1">
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-              Findings ({orchestration.findings_count})
-            </h4>
-          </div>
-        )}
+        {/* Findings */}
+        {(orchestration.findings_count || 0) > 0 && (() => {
+          const severityOrder = ['critical', 'high', 'medium', 'low', 'info', 'gas'] as const;
+          const severityStyles: Record<string, string> = {
+            critical: 'bg-red-500/10 text-red-400 border-red-500/20',
+            high:     'bg-destructive/10 text-destructive border-destructive/20',
+            medium:   'bg-amber-500/10 text-amber-400 border-amber-500/20',
+            low:      'bg-blue-500/10 text-blue-400 border-blue-500/20',
+            info:     'bg-slate-400/10 text-slate-400 border-slate-400/20',
+            gas:      'bg-green-500/10 text-green-500 border-green-500/20',
+          };
+
+          const counts: Record<string, number> = {};
+          if (liveFindings.length > 0) {
+            for (const f of liveFindings) {
+              counts[f.severity] = (counts[f.severity] || 0) + 1;
+            }
+          }
+
+          const hasSeverityBreakdown = liveFindings.length > 0;
+
+          return (
+            <div className="space-y-2">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Findings ({orchestration.findings_count})
+              </h4>
+              {hasSeverityBreakdown ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {severityOrder
+                    .filter((sev) => (counts[sev] || 0) > 0)
+                    .map((sev) => (
+                      <span key={sev} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${severityStyles[sev]}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {sev} {counts[sev]}
+                      </span>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Loading breakdown...</p>
+              )}
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );
