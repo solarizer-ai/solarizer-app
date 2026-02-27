@@ -25,6 +25,7 @@ interface FindingsFilterProps {
   findings: Finding[];
   onFilteredChange: (filtered: Finding[]) => void;
   hiddenSeverities?: FindingSeverity[];
+  defaultSeverity?: FindingSeverity | null;
 }
 
 const severityOrder: Record<FindingSeverity, number> = {
@@ -36,9 +37,18 @@ const severityOrder: Record<FindingSeverity, number> = {
   gas: 5,
 };
 
-const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: FindingsFilterProps) => {
+const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [], defaultSeverity }: FindingsFilterProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSeverities, setSelectedSeverities] = useState<FindingSeverity[]>([]);
+  const [selectedSeverities, setSelectedSeverities] = useState<FindingSeverity[]>(
+    defaultSeverity ? [defaultSeverity] : []
+  );
+
+  // Apply external severity filter when set from parent (e.g. ScoreCard pill click)
+  useEffect(() => {
+    if (defaultSeverity) {
+      setSelectedSeverities([defaultSeverity]);
+    }
+  }, [defaultSeverity]);
   const [showResolved, setShowResolved] = useState(true);
 
   const allSeverities: FindingSeverity[] = ["critical", "high", "medium", "low", "info", "gas"];
@@ -111,7 +121,7 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [] }: F
       case "medium":
         return "bg-warning/10 text-warning border-warning/30 hover:bg-warning/20";
       case "low":
-        return "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20";
+        return "bg-low/10 text-low border-low/30 hover:bg-low/20";
       case "info":
         return "bg-slate-400/10 text-slate-400 border-slate-400/30 hover:bg-slate-400/20";
       case "gas":

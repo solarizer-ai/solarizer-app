@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb, Lock, Zap, Fuel } from "lucide-react";
+import { ChevronDown, AlertTriangle, AlertCircle, Info, FileCode, Lightbulb, Lock, Zap, Fuel, ShieldAlert } from "lucide-react";
 import CodeBlock from "@/components/CodeBlock";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ interface FindingItemProps {
 
 const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: string; className: string }> = {
   critical: {
-    icon: AlertTriangle,
+    icon: ShieldAlert,
     label: "Critical",
     className: "text-critical bg-critical/10 border-critical/20",
   },
@@ -57,7 +57,7 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
   low: {
     icon: Info,
     label: "Low",
-    className: "text-primary bg-primary/10 border-primary/20",
+    className: "text-low bg-low/10 border-low/20",
   },
   info: {
     icon: Info,
@@ -69,6 +69,15 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
     label: "Gas",
     className: "text-green-500 bg-green-500/10 border-green-500/20",
   },
+};
+
+const leftBorderClass: Record<Severity, string> = {
+  critical: "border-l-2 border-l-critical",
+  high:     "border-l-2 border-l-destructive",
+  medium:   "border-l-2 border-l-warning",
+  low:      "border-l-2 border-l-low",
+  info:     "border-l-2 border-l-slate-400",
+  gas:      "border-l-2 border-l-green-500",
 };
 
 // Helper function to parse inline formatting (bold, italic, code)
@@ -438,6 +447,7 @@ const FindingItem = ({
       ref={onRefReady}
       className={cn(
         "border border-border rounded-lg overflow-hidden bg-card/50 transition-all duration-300",
+        leftBorderClass[finding.severity],
         isNew && "animate-fade-in ring-2 ring-primary/30",
         isHighlighted && "ring-2 ring-warning animate-highlight-pulse"
       )}
@@ -445,7 +455,7 @@ const FindingItem = ({
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 hover:bg-muted/30 transition-colors text-left"
+        className="w-full p-4 hover:bg-muted/40 transition-colors duration-150 text-left"
       >
         {/* Mobile: Stacked layout, Desktop: Inline layout */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">

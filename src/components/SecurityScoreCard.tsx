@@ -13,11 +13,11 @@ interface VulnerabilityCount {
 
 interface SecurityScoreCardProps {
   grade: Grade;
-  score: number;
   projectName: string;
   timestamp: string;
   auditId?: string;
   counts?: VulnerabilityCount;
+  onSeverityClick?: (severity: string) => void;
 }
 
 const gradeConfig: Record<Exclude<Grade, null>, { color: string; label: string; description: string }> = {
@@ -56,17 +56,14 @@ const pendingConfig = {
 
 const SecurityScoreCard = ({ 
   grade, 
-  score, 
   projectName, 
   timestamp, 
   auditId,
-  counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 }
+  counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
+  onSeverityClick,
 }: SecurityScoreCardProps) => {
   const isPending = grade === null;
   const config = isPending ? pendingConfig : gradeConfig[grade];
-  const displayScore = isPending ? 0 : score;
-  const circumference = 2 * Math.PI * 45;
-  const strokeDashoffset = circumference - (displayScore / 100) * circumference;
 
   // Vulnerability matrix data
   const categories = [
@@ -101,10 +98,10 @@ const SecurityScoreCard = ({
       label: "Low",
       count: counts.low,
       icon: Info,
-      bgColor: "bg-primary/10",
-      textColor: "text-primary",
-      borderColor: "border-primary/30",
-      barColor: "bg-primary",
+      bgColor: "bg-low/10",
+      textColor: "text-low",
+      borderColor: "border-low/30",
+      barColor: "bg-low",
     },
     {
       label: "Info",
@@ -122,42 +119,16 @@ const SecurityScoreCard = ({
   return (
     <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
-        {/* Circular Progress */}
-        <div className="relative w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 shrink-0">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-            {/* Background circle */}
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              className="stroke-muted"
-              strokeWidth="6"
-              fill="none"
-            />
-            {/* Progress circle */}
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              className={cn(
-                "transition-all duration-1000 ease-out",
-                isPending ? "stroke-muted" :
-                grade === "A" || grade === "B" ? "stroke-success" :
-                grade === "C" || grade === "D" ? "stroke-warning" : "stroke-critical"
-              )}
-              strokeWidth="6"
-              fill="none"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={cn("text-2xl sm:text-3xl lg:text-4xl font-bold", config.color)}>
+        {/* Grade Badge */}
+        <div className="relative w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 shrink-0 flex items-center justify-center">
+          <div className={cn(
+            "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full border-2 flex items-center justify-center",
+            isPending ? "border-muted" :
+            grade === "A" || grade === "B" ? "border-success" :
+            grade === "C" || grade === "D" ? "border-warning" : "border-critical"
+          )}>
+            <span className={cn("text-3xl sm:text-4xl lg:text-5xl font-bold", config.color)}>
               {isPending ? "--" : grade}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {isPending ? "--/100" : `${score}/100`}
             </span>
           </div>
         </div>
@@ -186,7 +157,7 @@ const SecurityScoreCard = ({
             </div>
 
             {/* Visual Bar */}
-            <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-4">
+            <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
               {categories.map((cat) => {
                 const width = total > 0 ? (cat.count / total) * 100 : 0;
                 return width > 0 ? (
@@ -204,10 +175,12 @@ const SecurityScoreCard = ({
               {categories.map((cat) => (
                 <div
                   key={cat.label}
+                  onClick={() => onSeverityClick?.(cat.label.toLowerCase())}
                   className={cn(
                     "flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border",
                     cat.bgColor,
-                    cat.borderColor
+                    cat.borderColor,
+                    onSeverityClick ? "cursor-pointer hover:opacity-75 transition-opacity" : ""
                   )}
                 >
                   <cat.icon className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5", cat.textColor)} />

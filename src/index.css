@@ -39,6 +39,9 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
+    --low: 210 60% 55%;
+    --low-foreground: 0 0% 100%;
+
     --critical: 280 70% 55%;
     --critical-foreground: 0 0% 100%;
 

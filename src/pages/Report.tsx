@@ -29,7 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
 import { useReportFeatureAccess } from "@/hooks/useReportFeatureAccess";
 import { formatDistanceToNow } from "date-fns";
-import type { CoverageData, Finding, Invariant, ArchitectureInsight } from "@/hooks/useAudits";
+import type { CoverageData, Finding, FindingSeverity, Invariant, ArchitectureInsight } from "@/hooks/useAudits";
 import { useAuditProgress } from "@/hooks/useAuditProgress";
 import AuditProgressPanel from "@/components/AuditProgressPanel";
 import { PHASE_LABELS } from "@/components/AuditProgressPanel";
@@ -44,6 +44,7 @@ const Report = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [publicLinkCopied, setPublicLinkCopied] = useState(false);
+  const [severityFilter, setSeverityFilter] = useState<FindingSeverity | null>(null);
   const findingRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const togglePublicMutation = useTogglePublicReport();
   
@@ -426,11 +427,14 @@ const Report = () => {
                   {!isLive && (
                     <SecurityScoreCard
                       grade={currentAudit.grade || null}
-                      score={currentAudit.security_score || 0}
                       projectName={currentAudit.project_name}
                       timestamp={formatTimestamp(currentAudit.created_at)}
                       auditId={currentAudit.id}
                       counts={getVulnerabilityCounts()}
+                      onSeverityClick={(sev) => {
+                        setSeverityFilter(sev as FindingSeverity);
+                        setActiveTab("findings");
+                      }}
                     />
                   )}
                   
@@ -514,6 +518,7 @@ const Report = () => {
                               findings={visibleFindings}
                               onFilteredChange={handleFilteredChange}
                               hiddenSeverities={!canViewQAFindings ? ['low', 'info'] : []}
+                              defaultSeverity={severityFilter}
                             />
                             <div className="space-y-3">
                               {filteredFindings.map((finding) => (
