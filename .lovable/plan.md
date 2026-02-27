@@ -1,104 +1,79 @@
 
 
-# Apply 3 Admin Migrations + Wire Up Admin Dashboard
+# Impact of One-Time Payment Links (No Razorpay Subscriptions)
 
-## Overview
-The 3 uploaded SQL files need to be applied as database migrations, and the corresponding frontend (admin routes, pages, sidebar, and components) needs to be created.
+## Summary
 
-## Current State
-- **Database**: No `coupons`, `coupon_redemptions` tables. No admin RPC functions (`admin_get_users`, `admin_get_audits`, `admin_get_stats`, `admin_adjust_credits`, `validate_coupon`). No admin RLS policies on existing tables.
-- **Frontend**: No admin routes in `App.tsx`. No admin pages exist on disk (`AdminOverviewPage`, `AdminAuditsPage`, `AdminUsersPage`, `AdminCouponsPage`, `AdminCreditsPage`, `AdminUserDetailPage`, `AdminAuditDetailPage`). No `AdminRoute` guard component. No `useAdminRole` hook. No admin section in `DashboardSidebar`.
+Since you're using **one-time Payment Links** for everything (including plan purchases), the Razorpay Subscription API is completely unused. Several edge functions, secrets, webhook handlers, and DB columns are now dead code.
 
-## Part A: Database Migrations (3 migrations)
+## What's Already Correct
 
-### Migration 1 — Coupons Tables (`01_admin_coupons.sql`)
-- Create `coupons` table with RLS
-- Create `coupon_redemptions` table with RLS
-- Admin-only management policy + public read of active coupons
-- **One issue to fix**: The `CHECK` constraints on `discount_type` and `discount_value` should use a validation trigger instead per project guidelines. However, these are immutable checks (not time-based), so CHECK constraints are acceptable here.
+These are already aligned with one-time payments:
 
-### Migration 2 — Admin RLS Policies (`02_admin_rls.sql`)
-- Add `admins_select_all_*` SELECT policies on 7 tables: audits, audit_orchestration, credit_txns, subscriptions, nloc_credits, payment_orders, profiles, findings
-- Uses direct `user_roles` lookup (consistent pattern, though `has_role()` function exists and would be slightly better)
+- **`razorpay-create-order`** -- Creates Payment Links for subscriptions, power-ups, and upgrades. This is the correct entry point.
+- **`razorpay-verify-payment`** -- Verifies Payment Link signatures and calls `process_payment_success`. Correct.
+- **`razorpay-upgrade-subscription`** -- Despite its name, it already creates a Payment Link (not a Razorpay subscription). Works correctly.
+- **`useRazorpaySubscription.ts` hook** -- `createSubscription()` already calls `razorpay-create-order` (not `razorpay-create-subscription`). `cancelSubscription()` uses a local RPC (no Razorpay API). Both correct.
+- **`SubscriptionPlanSelector`** -- Already shows "Expires on" instead of "Renews on". Correct.
 
-### Migration 3 — Admin RPCs (`03_admin_rpcs.sql`)
-- `admin_get_users()` — paginated user list with search, joins profiles/subscriptions/credits/audits
-- `admin_get_audits()` — paginated audit list with status/user/search filters, joins orchestration
-- `admin_get_stats()` — dashboard overview stats (total users, audits, revenue, etc.)
-- `admin_adjust_credits()` — add/deduct credits for any user with audit trail
-- `validate_coupon()` — user-callable, validates coupon code before checkout
-- `increment_coupon_used_count()` — called by payment edge functions after redemption
+## What Needs to Change
 
-## Part B: Frontend Implementation
+### 1. Delete Dead Edge Function: `razorpay-create-subscription`
+This function creates actual Razorpay Subscriptions using plan IDs (`RAZORPAY_PLAN_LAUNCH`, `RAZORPAY_PLAN_PRO`, `RAZORPAY_PLAN_BUSINESS`). It is **never called** from the frontend -- `useRazorpaySubscription.createSubscription()` calls `razorpay-create-order` instead. Delete it.
 
-### 1. Create `src/hooks/useAdminRole.ts`
-- Queries `user_roles` table for current user
-- Returns `{ isAdmin, isLoading }`
+### 2. Delete Dead Edge Function: `razorpay-cancel-subscription`
+This function calls `Razorpay API /v1/subscriptions/{id}/cancel`. Since there are no Razorpay subscriptions to cancel (plans expire naturally), this is dead code. The frontend `cancelSubscription()` already uses the local `cancel_subscription` RPC. Delete it.
 
-### 2. Create `src/components/AdminRoute.tsx`
-- Route guard that checks `useAdminRole()`
-- Shows nothing while loading, redirects to `/` if not admin
+### 3. Clean Up Webhook Handler: `razorpay-webhook`
+The webhook has ~10 `subscription.*` event handlers (authenticated, activated, charged, pending, halted, cancelled, paused, resumed, completed, updated). With one-time payments, **none of these will ever fire**. The only relevant handlers are:
+- `payment.captured` -- still valid for Payment Link payments
+- `payment.failed` -- still valid
+- `order.paid` -- still valid
 
-### 3. Create Admin Pages
+**Action**: Remove all `subscription.*` cases from the switch statement.
 
-| Page | Path | Description |
-|------|------|-------------|
-| `AdminOverviewPage` | `/dashboard/admin` | Calls `admin_get_stats()`, displays cards for total users, audits, revenue, active audits |
-| `AdminUsersPage` | `/dashboard/admin/users` | Calls `admin_get_users()`, searchable table with credit adjust dialog |
-| `AdminUserDetailPage` | `/dashboard/admin/users/:userId` | Detailed view of a single user (subscription, credits, audits, txn history) |
-| `AdminAuditsPage` | `/dashboard/admin/audits` | Calls `admin_get_audits()`, filterable table with status/orchestration columns |
-| `AdminAuditDetailPage` | `/dashboard/admin/audits/:auditId` | Detailed view of a single audit (orchestration state, findings) |
-| `AdminCouponsPage` | `/dashboard/admin/coupons` | CRUD for coupons, redemptions drawer |
-| `AdminCreditsPage` | `/dashboard/admin/credits` | Credit reconciliation view using `cli_reconcile_credits()` |
+### 4. Remove Unused Secrets (3 secrets)
+These Razorpay plan ID secrets are only used by the deleted `razorpay-create-subscription`:
+- `RAZORPAY_PLAN_LAUNCH`
+- `RAZORPAY_PLAN_PRO`  
+- `RAZORPAY_PLAN_BUSINESS`
 
-### 4. Update `src/App.tsx`
-Add admin routes under `/dashboard/admin/*` wrapped in `AdminRoute`:
-```text
-/dashboard/admin          -> AdminOverviewPage
-/dashboard/admin/users    -> AdminUsersPage
-/dashboard/admin/users/:userId -> AdminUserDetailPage
-/dashboard/admin/audits   -> AdminAuditsPage
-/dashboard/admin/audits/:auditId -> AdminAuditDetailPage
-/dashboard/admin/coupons  -> AdminCouponsPage
-/dashboard/admin/credits  -> AdminCreditsPage
-```
+They can be removed from the project secrets.
 
-### 5. Update `src/components/DashboardSidebar.tsx`
-- Add an "ADMIN" nav group (conditionally rendered when `useAdminRole().isAdmin` is true)
-- Links: Overview, Users, Audits, Coupons, Credits
+### 5. Remove Unused DB Columns
+The `subscriptions` table has columns only used by Razorpay Subscriptions:
+- `rz_subscription_id` -- Razorpay subscription ID (never set with Payment Links)
+- `rz_plan_id` -- Razorpay plan ID (never set with Payment Links)
+- `payment_method_saved` -- only set by `subscription.activated` webhook (dead code)
 
-### 6. Create `src/components/CouponInput.tsx`
-- Reusable input component for checkout flows
-- Calls `validate_coupon()` RPC, shows discount preview
-- Used by subscription/power-up purchase flows
+**Action**: Drop these 3 columns via migration.
 
-## Part C: Migration Adjustments Needed
+### 6. Remove Dead RPC: `reactivate_subscription`
+This RPC sets `cancel_at_period_end = FALSE`. With one-time payments that simply expire, there's no auto-renewal to "reactivate." The concept doesn't apply. The frontend calls it but it's a no-op in the one-time model.
 
-A few improvements to the uploaded SQL before applying:
+Similarly, `cancel_subscription` RPC sets `cancel_at_period_end = TRUE` -- but with no auto-renewal, this flag is meaningless. However, the UI uses it to show "Cancellation Scheduled" state, so it still has UX value (user explicitly opting not to renew). Keep it but consider renaming conceptually.
 
-1. **Use `has_role()` instead of direct queries** in admin RLS policies (Migration 2). The project already has a `has_role()` SECURITY DEFINER function that avoids recursive RLS. The uploaded policies query `user_roles` directly which works but is inconsistent.
+### 7. Remove `subscription_events` table references
+The `subscription_events` table stores Razorpay webhook events for idempotency. With subscription webhooks removed, only `payment.captured` / `payment.failed` events will use it. The table itself can stay (it's still useful for idempotency on payment webhooks), but the subscription-specific columns (`subscription_id`) become less relevant.
 
-2. **Add `search_path` to RPCs** (Migration 3). The existing project functions all use `SET search_path TO 'public'` but some of the uploaded RPCs lack this.
+## File Changes Summary
 
-3. **`admin_get_audits` column ambiguity**: The function returns columns named `status`, `findings_count` etc. that also exist in the joined `audit_orchestration` table — these need explicit table prefixes (some are already there but `ao.status` conflicts with the return column name).
+| Action | File | Reason |
+|--------|------|--------|
+| Delete | `supabase/functions/razorpay-create-subscription/index.ts` | Dead code, never called |
+| Delete | `supabase/functions/razorpay-cancel-subscription/index.ts` | Dead code, no RZ subscriptions to cancel |
+| Modify | `supabase/functions/razorpay-webhook/index.ts` | Remove all `subscription.*` cases |
+| Migration | Drop `rz_subscription_id`, `rz_plan_id`, `payment_method_saved` from subscriptions | Unused columns |
+| Remove | Secrets: `RAZORPAY_PLAN_LAUNCH`, `RAZORPAY_PLAN_PRO`, `RAZORPAY_PLAN_BUSINESS` | No longer needed |
+| Optional | Rename `razorpay-upgrade-subscription` to something clearer (e.g., `razorpay-create-upgrade-order`) | Clarity, but not breaking |
 
-## File Summary
+## No Changes Needed
 
-| Action | File |
-|--------|------|
-| Migration | Create coupons + coupon_redemptions tables with RLS |
-| Migration | Add admin SELECT policies on 8 existing tables |
-| Migration | Create 6 admin/coupon RPC functions |
-| Create | `src/hooks/useAdminRole.ts` |
-| Create | `src/components/AdminRoute.tsx` |
-| Create | `src/pages/dashboard/admin/AdminOverviewPage.tsx` |
-| Create | `src/pages/dashboard/admin/AdminUsersPage.tsx` |
-| Create | `src/pages/dashboard/admin/AdminUserDetailPage.tsx` |
-| Create | `src/pages/dashboard/admin/AdminAuditsPage.tsx` |
-| Create | `src/pages/dashboard/admin/AdminAuditDetailPage.tsx` |
-| Create | `src/pages/dashboard/admin/AdminCouponsPage.tsx` |
-| Create | `src/pages/dashboard/admin/AdminCreditsPage.tsx` |
-| Create | `src/components/CouponInput.tsx` |
-| Modify | `src/App.tsx` (add admin routes) |
-| Modify | `src/components/DashboardSidebar.tsx` (add admin nav group) |
+- `razorpay-create-order` -- already correct
+- `razorpay-verify-payment` -- already correct  
+- `razorpay-callback` -- already correct (handles Payment Link callbacks)
+- `useRazorpaySubscription.ts` -- already routes through `razorpay-create-order`
+- `useRazorpayCheckout.ts` -- already correct
+- `process_payment_success` RPC -- already handles subscription/power_up/upgrade
+- Pricing page and SubscriptionPlanSelector -- already aligned
 
