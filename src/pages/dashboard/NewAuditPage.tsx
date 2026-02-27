@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Lock, Zap } from "lucide-react";
+import { ArrowLeft, Lock, Zap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import AuditWizard from "@/components/AuditWizard";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
@@ -22,8 +23,29 @@ const NewAuditPage = () => {
 
   const runAudit = useRunAudit();
   const { startScan } = useScan();
-  const { data: subscription, isExpired } = useSubscription();
-  const { data: credits } = useCredits();
+  const { data: subscription, isExpired, isLoading: subscriptionLoading } = useSubscription();
+  const { data: credits, isLoading: creditsLoading } = useCredits();
+
+  // Show loading skeleton while subscription/credits data is being fetched
+  if (subscriptionLoading || creditsLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Security Analysis</h1>
+        </div>
+        <Card className="max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center text-center py-10 space-y-4">
+            <Loader2 className="w-10 h-10 text-muted-foreground animate-spin" />
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const hasActivePlan = subscription?.status === 'active' && !isExpired;
   const hasCredits = credits && credits.credits_remaining > 0;
