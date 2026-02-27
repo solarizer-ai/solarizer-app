@@ -1,77 +1,117 @@
 
-
-# Subscription Enforcement, Locked Phases, and Credit Gating
+# Audit Flow Hardening — Implementation Plan
 
 ## Overview
-This plan addresses a silent tier-downgrade bug where users without an active subscription could start audits that ran as `tier=free`, producing incomplete reports. It also enforces credit minimums and updates the purchase modal.
+This plan applies 12 changes across edge functions, frontend components, hooks, and database to fix tier-downgrade bugs, remove the floating scan widget, add locked tabs for Spark users, enforce server-side nLOC limits, and add idempotency protection.
 
-## Changes
+---
 
-### 1. Edge Functions -- Enforce Active Subscription (403)
+## 1. Fix plan limits in `src/lib/nlocCalculator.ts`
+- Set `starter.initialCredits` to `50` (was `0`)
+- Set `business.nlocPerScan` to `9999` (was `12000`)
+- Remove `maxFilesPerScan` from starter
+- Remove `unlimitedScans` and `teamMembers`/`sharing` from pro/business (keep only `nlocPerScan` and `initialCredits`)
 
-**`supabase/functions/cli-audit-start/index.ts`** (lines ~141-145)
-- Change `select('plan')` to `select('plan, status, current_period_end')`
-- Replace `const tier = subscription?.plan || 'free'` with a guard: if no subscription row, return 403 with `"No active subscription. Please subscribe to start an audit."`
-- Add expiry check: if `current_period_end` is in the past, return 403 with `"Your subscription has expired. Please renew to continue."`
-- Set `const tier = subscription.plan` (no fallback)
+## 2. AuditProgressPanel — remove phantom phases + staleness thresholds
 
-**`supabase/functions/web-audit-start/index.ts`** (lines ~248-250)
-- Same changes as above
+**`src/components/AuditProgressPanel.tsx`:**
+- Remove `complexity_estimation` and `session_start` from PHASES array (keep only: hunting, cross_contract, validation, qa, formatting, reporting)
+- Change staleness thresholds: `warn` at 1800s (30 min), `stuck` at 3600s (60 min)
 
-### 2. Frontend Subscription Gate -- `NewAuditPage.tsx`
+## 3. Reduce polling in `src/hooks/useAuditProgress.ts`
+- Change `refetchInterval: 2000` to `refetchInterval: 10000`
 
-- Destructure `isExpired` from `useSubscription()`
-- Compute `hasActivePlan = subscription?.status === 'active' && !isExpired`
-- If `!hasActivePlan`, render a lock screen with:
-  - Back button + "New Security Analysis" title (same header)
-  - Card with Lock icon, "Subscription Required" heading
-  - Description: "A Spark, Blaze, or Inferno plan is required to run security audits."
-  - "View Plans" button navigating to `/pricing`
-- Import `Lock` from lucide-react, `Card`/`CardContent` from ui/card
+## 4. Extend OrchestrationProgress in `src/contexts/ScanContext.tsx`
+- Add `crossContractPass`, `crossContractTotal`, `skippedPhases` to the interface
+- (Already partially done; verify and add missing fields)
 
-### 3. Credit Insufficiency Gate -- `NewAuditPage.tsx`
+## 5. Fix navigate/startScan order in `src/pages/dashboard/NewAuditPage.tsx`
+- Swap `navigate("/dashboard")` and `startScan(...)` so `startScan` fires first
 
-- Also check if user has zero credits (`!credits || credits.credits_remaining <= 0`)
-- Show a similar card: "Insufficient Credits" with description "You need credits to run security audits. Purchase credits to get started."
-- "Purchase Credits" button that opens the PurchasePowerUpModal
-- This is separate from the per-audit credit check in the wizard estimator -- it catches users with literally zero credits before they even start
+## 6. Fix EstimatorStep nLOC validation in `src/components/wizard/EstimatorStep.tsx`
+- Change `getValidationStatus()` to check `scopeNloc + contextNloc` (total) against plan limit instead of just `scopeNloc`
+- Remove the `maxFilesPerScan` check (field no longer exists)
+- Update error message to say "Total nLOC"
 
-### 4. `useAuditProgress.ts` -- Add `skippedPhases`
+## 7. Remove ScanProgressWidget entirely
 
-Add `skippedPhases?: string[]` to the `progress` type in `AuditOrchestrationProgress`. No query changes needed.
+**Delete:** `src/components/ScanProgressWidget.tsx`
 
-### 5. `AuditProgressPanel.tsx` -- Render Locked Phases
+**Remove render sites:**
+- `src/pages/dashboard/DashboardHome.tsx`: Remove import, remove `<ScanProgressWidget .../>` block (lines 256-266), remove destructuring of widget-only state from `useScan()`
+- `src/pages/Index.tsx`: Remove import, remove `<ScanProgressWidget .../>` block (lines 319-327), remove destructuring of widget-only state from `useScan()`
 
-- Import `Lock` from lucide-react
-- Derive `skippedPhases` set from `orchestration.progress.skippedPhases`
-- In the phase render loop, add a fourth state `isLocked`:
-  - If locked: show `Lock` icon (gray), phase label with "Not included on this plan" subtitle
-  - Locked phases don't count as completed/active/pending
-- Locked phases appear grayed out with the lock icon
+**Simplify `src/contexts/ScanContext.tsx`:**
+- Remove `showWidget` state and `closeWidget` function
+- Remove `orchestrationPhase`, `orchestrationProgress`, `realtimeFindings`, `realtimeAuditStatus` from context value export
+- Keep realtime subscriptions for cache invalidation
+- Keep `startScan` but simplify to only set up subscriptions and show toast
+- Remove the orchestration channel subscription (no longer needed without widget)
 
-### 6. `useRunAudit.ts` -- Surface 403 Error Messages
+## 8. Locked tabs for Spark users on Report page
 
-- After `invokeWithRefresh`, if `error` exists, attempt to parse `error.message` as JSON to extract the `error` field
-- This ensures messages like "No active subscription..." and "Your subscription has expired..." surface in the toast via the existing `NewAuditPage` error handler
+**`src/pages/Report.tsx`:**
+- Use `effectivePlan` from the existing `useReportFeatureAccess` hook (already imported) to detect Spark users
+- For the Invariants and Insights tab triggers: add a Lock icon when `effectivePlan === 'starter'`
+- For the tab content: wrap `InvariantsTab` and `InsightsTab` in a conditional — show `FeatureLockedOverlay` for Spark users with:
+  - Invariants: `featureName="System Invariants"`, `requiredPlan="pro"`, `description="Invariant analysis identifies protocol-level assumptions that must always hold."`
+  - Insights: `featureName="Architecture Insights"`, `requiredPlan="pro"`, `description="Architecture insights provide a high-level review of protocol design and composability risks."`
+- Wire `onUpgrade` to open the existing upgrade modal
 
-### 7. `PurchasePowerUpModal.tsx` -- Minimum 25 Credits
+## 9. Server-side nLOC plan limit + idempotency + proxy refund in `web-audit-start`
 
-- Change `MIN_CREDITS` from `100` to `25`
-- Update `QUICK_OPTIONS` to `[25, 100, 500, 1000]` (remove 2500/5000, add 25)
-- Update the validation message accordingly
+**`supabase/functions/web-audit-start/index.ts`:**
 
-## Files to Modify
+**A) Plan nLOC limit check** — After the subscription expiry check (line 268), before credits fetch:
+```
+const PLAN_NLOC_LIMITS = { starter: 500, pro: 3000, business: 9999 };
+if (scopeNloc + contextNloc > limit) return 402
+```
 
-| File | Change |
+**B) Idempotency key** — Destructure `idempotency_key` from body, add lookup before credits check, pass to audit insert
+
+**C) Proxy failure refund** — Remove the inner try-catch around the proxy call (lines 338-360). Replace with a direct call that throws on non-2xx, letting the outer catch handle refund
+
+## 10. Server-side nLOC recalculation in `cli-audit-start`
+
+**`supabase/functions/cli-audit-start/index.ts`:**
+- Copy the `calculateServerNLOC` function (and its helpers `removeComments`, `removeStringLiterals`, `countLogicalUnits`) from `web-audit-start`
+- After parsing body, recalculate nLOC server-side for scope and context files
+- Add the same PLAN_NLOC_LIMITS check as item 9A (after tier is determined, before credits check)
+
+## 11. Generate idempotency key in `src/hooks/useRunAudit.ts`
+- Before calling `invokeWithRefresh`, generate `crypto.randomUUID()`
+- Include `idempotency_key` in the request body
+
+## 12. DB migration — one active audit per user
+Create a unique partial index on `audit_orchestration(user_id)` where status is `queued` or `running` to prevent race conditions.
+
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_audit_per_user
+  ON audit_orchestration(user_id)
+  WHERE status IN ('queued', 'running');
+```
+
+---
+
+## Files Summary
+
+| File | Action |
 |------|--------|
-| `supabase/functions/cli-audit-start/index.ts` | Enforce active subscription (403) |
-| `supabase/functions/web-audit-start/index.ts` | Enforce active subscription (403) |
-| `src/pages/dashboard/NewAuditPage.tsx` | Subscription + credit gate before wizard |
-| `src/hooks/useAuditProgress.ts` | Add `skippedPhases` to progress type |
-| `src/components/AuditProgressPanel.tsx` | Render locked phase state with Lock icon |
-| `src/hooks/useRunAudit.ts` | Parse JSON error body for 403 messages |
-| `src/components/PurchasePowerUpModal.tsx` | Change MIN_CREDITS to 25 |
+| `src/lib/nlocCalculator.ts` | Edit |
+| `src/components/AuditProgressPanel.tsx` | Edit |
+| `src/hooks/useAuditProgress.ts` | Edit |
+| `src/contexts/ScanContext.tsx` | Edit (simplify) |
+| `src/pages/dashboard/NewAuditPage.tsx` | Edit |
+| `src/components/wizard/EstimatorStep.tsx` | Edit |
+| `src/components/ScanProgressWidget.tsx` | Delete |
+| `src/pages/dashboard/DashboardHome.tsx` | Edit (remove widget) |
+| `src/pages/Index.tsx` | Edit (remove widget) |
+| `src/pages/Report.tsx` | Edit (locked tabs) |
+| `supabase/functions/web-audit-start/index.ts` | Edit |
+| `supabase/functions/cli-audit-start/index.ts` | Edit |
+| `src/hooks/useRunAudit.ts` | Edit |
+| `supabase/migrations/` | New migration file |
 
-## No Database Changes Required
-All changes are in edge functions and frontend code.
-
+## Deployment Note
+Edge functions (`web-audit-start`, `cli-audit-start`) will be deployed automatically after editing. The DB migration will be applied via the migration tool.
