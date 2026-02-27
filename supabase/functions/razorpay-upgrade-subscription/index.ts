@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface UpgradeSubscriptionRequest {
   toPlan: "starter" | "pro" | "business";
+  coupon_code?: string;
 }
 
 // Plan prices in cents (USD)
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
     }
 
     const body: UpgradeSubscriptionRequest = await req.json();
-    const { toPlan } = body;
+    const { toPlan, coupon_code } = body;
 
     if (!toPlan || !PLAN_PRICES[toPlan]) {
       return new Response(
@@ -101,11 +102,31 @@ Deno.serve(async (req) => {
     // Calculate full price difference (no time-based proration)
     const upgradeAmount = (PLAN_PRICES[toPlan] || 0) - (PLAN_PRICES[fromPlan] || 0);
 
+    // Apply coupon if provided
+    let couponId: string | undefined;
+    let finalAmount = upgradeAmount;
+
+    if (coupon_code) {
+      const { data: couponResult, error: couponError } = await supabase.rpc("validate_coupon", {
+        p_code: coupon_code.toUpperCase().trim(),
+        p_order_type: "subscription",
+        p_amount_cents: upgradeAmount,
+      });
+
+      if (!couponError && couponResult?.valid) {
+        couponId = couponResult.coupon_id;
+        finalAmount = couponResult.final_amount_cents;
+        console.log("Coupon applied to upgrade:", coupon_code, "discount:", upgradeAmount - finalAmount);
+      } else {
+        console.warn("Invalid coupon for upgrade, ignoring:", coupon_code);
+      }
+    }
+
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
 
     // If amount is 0 or very small, just upgrade directly
-    if (upgradeAmount < 100) { // Less than $1
+    if (finalAmount < 100) { // Less than $1
       await adminSupabase
         .from("subscriptions")
         .update({
@@ -137,7 +158,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: upgradeAmount,
+        amount: finalAmount,
         currency: "USD",
         reference_id: orderId,
         description: `Upgrade to ${planDisplayName} Plan`,
@@ -168,21 +189,27 @@ Deno.serve(async (req) => {
       p_user_id: user.id,
       p_order_id: orderId,
       p_order_type: "upgrade",
-      p_amount_cents: upgradeAmount,
+      p_amount_cents: finalAmount,
       p_payment_session_id: rzPaymentLink.id,
       p_plan: toPlan,
       p_billing_period: "monthly",
       p_credits_amount: null,
     });
 
+    const metadata: Record<string, any> = {
+      from_plan: fromPlan,
+      to_plan: toPlan,
+    };
+    if (couponId) {
+      metadata.coupon_id = couponId;
+      metadata.original_amount_cents = upgradeAmount;
+    }
+
     await adminSupabase
       .from("payment_orders")
       .update({
         rz_payment_link_id: rzPaymentLink.id,
-        metadata: {
-          from_plan: fromPlan,
-          to_plan: toPlan,
-        },
+        metadata,
       })
       .eq("order_id", orderId);
 
@@ -192,7 +219,8 @@ Deno.serve(async (req) => {
         flowType: "proration_order",
         paymentUrl: rzPaymentLink.short_url,
         orderId,
-        upgradeAmount,
+        upgradeAmount: finalAmount,
+        originalAmount: upgradeAmount,
         fromPlan,
         toPlan,
       }),

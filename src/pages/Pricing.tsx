@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
+import { SubscribeConfirmationModal } from "@/components/SubscribeConfirmationModal";
 import { useToast } from "@/hooks/use-toast";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { formatPlanName } from "@/lib/planNames";
@@ -93,7 +94,9 @@ const pricingPlans: PricingPlan[] = [
 const Pricing = () => {
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'business'>('pro');
+  const [targetSubscribePlan, setTargetSubscribePlan] = useState<'starter' | 'pro' | 'business'>('starter');
   
   const { user, loading: authLoading } = useAuth();
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
@@ -117,16 +120,23 @@ const Pricing = () => {
     return plan.monthlyPrice;
   };
 
-  const handleSubscribeClick = async (planId: 'starter' | 'pro' | 'business') => {
+  const handleSubscribeClick = (planId: 'starter' | 'pro' | 'business') => {
+    setTargetSubscribePlan(planId);
+    setSubscribeModalOpen(true);
+  };
+
+  const handleSubscribeConfirm = async (couponCode?: string) => {
+    setSubscribeModalOpen(false);
     await createSubscription({
-      plan: planId,
+      plan: targetSubscribePlan,
       billingPeriod: 'monthly',
+      coupon_code: couponCode,
     });
   };
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (couponCode?: string) => {
     setUpgradeModalOpen(false);
-    await upgradeSubscription({ toPlan: targetUpgradePlan });
+    await upgradeSubscription({ toPlan: targetUpgradePlan, coupon_code: couponCode });
   };
 
   const getButtonConfig = (planId: 'starter' | 'pro' | 'business') => {
@@ -379,6 +389,14 @@ const Pricing = () => {
         toPlan={targetUpgradePlan}
         prorationAmount={getProrationAmount()}
         onConfirm={handleUpgrade}
+        isLoading={subscriptionActionLoading}
+      />
+
+      <SubscribeConfirmationModal
+        open={subscribeModalOpen}
+        onOpenChange={setSubscribeModalOpen}
+        plan={targetSubscribePlan}
+        onConfirm={handleSubscribeConfirm}
         isLoading={subscriptionActionLoading}
       />
     </div>

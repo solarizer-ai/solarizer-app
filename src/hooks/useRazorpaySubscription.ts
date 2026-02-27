@@ -8,10 +8,12 @@ import { invokeWithRefresh } from "@/lib/sessionRefresh";
 interface CreateSubscriptionParams {
   plan: "starter" | "pro" | "business";
   billingPeriod: "monthly";
+  coupon_code?: string;
 }
 
 interface UpgradeParams {
   toPlan: "pro" | "business";
+  coupon_code?: string;
 }
 
 interface SubscriptionResponse {
@@ -66,7 +68,7 @@ export function useRazorpaySubscription() {
 
       const { data, error } = await invokeWithRefresh<SubscriptionResponse>(
         "razorpay-create-order",
-        { body: { orderType: "subscription", plan: params.plan, billingPeriod: params.billingPeriod } }
+        { body: { orderType: "subscription", plan: params.plan, billingPeriod: params.billingPeriod, coupon_code: params.coupon_code } }
       );
 
       if (error || !data?.success) {
@@ -120,7 +122,7 @@ export function useRazorpaySubscription() {
 
       const { data, error } = await invokeWithRefresh<SubscriptionResponse>(
         "razorpay-upgrade-subscription",
-        { body: params }
+        { body: { toPlan: params.toPlan, coupon_code: params.coupon_code } }
       );
 
       if (error || !data?.success) {
