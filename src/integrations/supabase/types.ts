@@ -165,9 +165,11 @@ export type Database = {
           id: string
           idempotency_key: string | null
           is_locked: boolean
+          is_public: boolean
           last_heartbeat: string | null
           nloc_count: number | null
           project_name: string
+          public_slug: string | null
           scope_metadata: Json | null
           security_score: number | null
           session_token: string | null
@@ -198,9 +200,11 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           is_locked?: boolean
+          is_public?: boolean
           last_heartbeat?: string | null
           nloc_count?: number | null
           project_name: string
+          public_slug?: string | null
           scope_metadata?: Json | null
           security_score?: number | null
           session_token?: string | null
@@ -231,9 +235,11 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           is_locked?: boolean
+          is_public?: boolean
           last_heartbeat?: string | null
           nloc_count?: number | null
           project_name?: string
+          public_slug?: string | null
           scope_metadata?: Json | null
           security_score?: number | null
           session_token?: string | null
@@ -1122,6 +1128,10 @@ export type Database = {
           display_name: string
           user_id: string
         }[]
+      }
+      toggle_audit_public: {
+        Args: { p_audit_id: string; p_is_public: boolean }
+        Returns: string
       }
       validate_coupon: {
         Args: { p_amount_cents: number; p_code: string; p_order_type: string }

@@ -19,6 +19,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import Report from "./pages/Report";
+import PublicReport from "./pages/PublicReport";
 
 // Dashboard pages
 import DashboardHome from "./pages/dashboard/DashboardHome";
@@ -109,6 +110,7 @@ const App = () => (
 
                 {/* Report stays standalone (full-width) */}
                 <Route path="/reports/:auditId" element={<ProtectedRoute><Report /></ProtectedRoute>} />
+                <Route path="/report/:slug" element={<PublicReport />} />
 
                 {/* Legacy redirects */}
                 <Route path="/settings" element={<Navigate to="/dashboard/profile" replace />} />
