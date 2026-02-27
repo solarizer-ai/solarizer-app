@@ -14,6 +14,7 @@ import { toast } from "sonner";
 const NewAuditPage = () => {
   const navigate = useNavigate();
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
+  const [requiredCredits, setRequiredCredits] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
   const [wizardProjectName, setWizardProjectName] = useState("");
@@ -63,14 +64,14 @@ const NewAuditPage = () => {
         subscription={subscription ? { plan: subscription.plan as 'starter' | 'pro' | 'business' } : null}
         credits={credits ? { credits_remaining: credits.credits_remaining, scans_remaining: credits.scans_remaining } : null}
         onUpgradeNeeded={handleUpgradeNeeded}
-        onPowerUpNeeded={() => setShowPowerUpModal(true)}
+        onPowerUpNeeded={(creditsNeeded) => { setRequiredCredits(creditsNeeded); setShowPowerUpModal(true); }}
         onProjectNameChange={setWizardProjectName}
       />
 
       <PurchasePowerUpModal
         open={showPowerUpModal}
         onOpenChange={setShowPowerUpModal}
-        requiredCredits={0}
+        requiredCredits={requiredCredits}
         currentCredits={credits?.credits_remaining || 0}
       />
       <UpgradeToProModal

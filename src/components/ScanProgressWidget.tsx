@@ -19,7 +19,7 @@ interface ScanProgressWidgetProps {
   auditStatus: 'pending' | 'analyzing' | 'secured' | 'issues' | 'failed' | null;
   orchestrationPhase?: string | null;
   orchestrationProgress?: OrchestrationProgress | null;
-  onCancel: () => void; onViewResults: () => void; onClose: () => void;
+  onViewResults: () => void; onClose: () => void;
 }
 
 function getPhaseLabel(phase: string | null | undefined, progress: OrchestrationProgress | null | undefined): string {
@@ -50,7 +50,7 @@ const getSeverityColor = (severity: string) => {
   }
 };
 
-const ScanProgressWidget = ({ isVisible, projectName, findings, auditStatus, orchestrationPhase, orchestrationProgress, onCancel, onViewResults, onClose }: ScanProgressWidgetProps) => {
+const ScanProgressWidget = ({ isVisible, projectName, findings, auditStatus, orchestrationPhase, orchestrationProgress, onViewResults, onClose }: ScanProgressWidgetProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const prevFindingsCountRef = useRef(0);
   const hasShownCompleteToastRef = useRef(false);
@@ -108,9 +108,7 @@ const ScanProgressWidget = ({ isVisible, projectName, findings, auditStatus, orc
               </div>
             ) : <p className="text-xs text-muted-foreground">{isScanning ? 'Waiting for findings...' : 'No issues found'}</p>}
             <div className="flex items-center gap-2 pt-1">
-              {isScanning ? (
-                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onCancel(); }} className="gap-1.5 text-xs h-7 text-muted-foreground hover:text-foreground"><X className="w-3 h-3" />Cancel</Button>
-              ) : (
+              {!isScanning && (
                 <><Button variant="default" size="sm" onClick={(e) => { e.stopPropagation(); onViewResults(); }} className="gap-1.5 text-xs h-7 flex-1"><Eye className="w-3 h-3" />View Results</Button><Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onClose(); }} className="h-7 px-2"><X className="w-3 h-3" /></Button></>
               )}
             </div>

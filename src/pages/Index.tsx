@@ -52,7 +52,7 @@ const Index = () => {
 
   const { user } = useAuth();
   const runAudit = useRunAudit();
-  const { startScan, showWidget, projectName: scanProjectName, realtimeFindings, realtimeAuditStatus, cancelScan, closeWidget, currentAuditId } = useScan();
+  const { startScan, showWidget, projectName: scanProjectName, realtimeFindings, realtimeAuditStatus, closeWidget, currentAuditId } = useScan();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -322,7 +322,6 @@ const Index = () => {
         projectName={scanProjectName}
         findings={realtimeFindings}
         auditStatus={realtimeAuditStatus}
-        onCancel={cancelScan}
         onViewResults={() => currentAuditId && navigate(`/reports/${currentAuditId}`)}
         onClose={closeWidget}
       />

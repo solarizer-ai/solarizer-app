@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { CheckCircle2, Loader2, Circle, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 import type { AuditOrchestrationProgress } from "@/hooks/useAuditProgress";
 
 const PHASES = [
@@ -50,6 +51,8 @@ const SUB_PHASES_BY_COMPLEXITY: Record<string, string[]> = {
 
 const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanelProps) => {
   const [elapsed, setElapsed] = useState(0);
+  const [staleness, setStaleness] = useState<'fresh' | 'warn' | 'stuck'>('fresh');
+  const lastUpdatedRef = useRef<string>(orchestration.updated_at);
 
   useEffect(() => {
     const start = new Date(orchestration.started_at).getTime();
@@ -58,6 +61,23 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, [orchestration.started_at]);
+
+  useEffect(() => {
+    lastUpdatedRef.current = orchestration.updated_at;
+    setStaleness('fresh');
+  }, [orchestration.updated_at]);
+
+  useEffect(() => {
+    const check = () => {
+      const secondsSince = Math.floor((Date.now() - new Date(lastUpdatedRef.current).getTime()) / 1000);
+      if (secondsSince >= 300) setStaleness('stuck');
+      else if (secondsSince >= 90) setStaleness('warn');
+      else setStaleness('fresh');
+    };
+    check();
+    const id = setInterval(check, 10000);
+    return () => clearInterval(id);
+  }, []);
 
   const activePhaseIdx = getPhaseIndex(orchestration.phase);
   const contractTotal = orchestration.progress.contractTotal || scopeMetadata?.length || 0;
@@ -69,7 +89,6 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
     return map;
   }, [scopeMetadata]);
 
-  // Build contract list
   const contractProgress = orchestration.progress.contractProgress || {};
   const contractList = useMemo(() => {
     const paths = scopeMetadata?.map((s) => s.path) || Object.keys(contractProgress);
@@ -89,7 +108,19 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
             Audit in Progress
           </CardTitle>
-          <span className="text-sm font-mono text-muted-foreground">{formatElapsed(elapsed)}</span>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-sm font-mono text-muted-foreground">{formatElapsed(elapsed)}</span>
+            {staleness === 'warn' && (
+              <span className="text-xs text-warning">
+                Last updated {formatDistanceToNow(new Date(orchestration.updated_at), { addSuffix: true })}
+              </span>
+            )}
+            {staleness === 'stuck' && (
+              <span className="text-xs text-destructive font-medium">
+                Progress hasn't updated — the audit may be stuck.
+              </span>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -163,7 +194,6 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
                       <span className="text-xs text-muted-foreground/50">pending</span>
                     )}
                   </div>
-                  {/* Sub-phases for active contract */}
                   {c.isActive && (
                     <div className="ml-6 space-y-0.5">
                       {subPhases.map((sp) => {
