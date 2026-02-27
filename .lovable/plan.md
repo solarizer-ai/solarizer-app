@@ -1,81 +1,50 @@
 
-# EstimatorStep Table Layout + AuditProgressPanel Improvements
 
-## Part 1: EstimatorStep Table Layout
+# Move Report Page into Dashboard Sidebar Layout
 
-**File: `src/components/wizard/EstimatorStep.tsx`**
+## Problem
+The Report page (`/reports/:auditId`) renders standalone with its own `<Header />` and `<Footer />`, outside the dashboard sidebar. This makes it feel disconnected from the rest of the app.
 
-### 1.1 Update ComplexityBadge styling
-Replace solid amber/orange badges with pill-shaped ring badges:
-- L1: gray with ring border
-- L2: blue tint with blue ring
-- L3: amber tint with amber ring
+## Solution
+Nest the report route inside the `DashboardLayout` so it shares the sidebar, then strip the standalone `<Header />`, `<Footer />`, and "Back to Dashboard" link from the Report component.
 
-### 1.2 Replace success-state card layout with HTML table
-Replace the stacked card rows (lines 160-238) with a proper `<table>` layout:
-- Column headers: File | Complexity | nLOC | Credits
-- Scope files section with labeled header row spanning all columns
-- Context files section (conditional) with labeled header row
-- `<tfoot>` with total credits row using `border-t-2` separator (no background tint)
-- Per-file credits in `text-foreground` (not orange); only total in `text-primary`
-- `tabular-nums` on numeric columns for consistent alignment
-- Complexity column hidden on mobile (`hidden sm:table-cell`)
-- Hover effect `hover:bg-muted/30` on file rows
-- Reasoning available via `title` attribute (native tooltip on hover)
+## Changes
 
-### 1.3 Update validation banner
-Change from full solid background to left-border accent style:
-- `border-l-4` with green or amber border
-- Lighter `bg-*/5` tint background
+### 1. `src/App.tsx` -- Move route inside dashboard layout
 
----
+Move the `/reports/:auditId` route from standalone to nested under the `/dashboard` route group:
 
-## Part 2: AuditProgressPanel Improvements
+```text
+Before:
+  <Route path="/reports/:auditId" element={<ProtectedRoute><Report /></ProtectedRoute>} />
 
-**File: `src/components/AuditProgressPanel.tsx`**
+After:
+  (inside the /dashboard route group)
+  <Route path="reports/:auditId" element={<Report />} />
+```
 
-### 2.1 Add `liveFindings` prop
-Add optional `liveFindings?: { severity: string }[]` prop to the component interface.
+The route becomes `/dashboard/reports/:auditId`. Add a legacy redirect from `/reports/:auditId` to `/dashboard/reports/:auditId` so existing links and bookmarks still work.
 
-### 2.2 Scope summary below title
-Compute and display "N contracts . X nLOC" summary line below the "Audit in Progress" title when `scopeMetadata` is available.
+### 2. `src/pages/Report.tsx` -- Remove standalone layout wrapper
 
-### 2.3 Active phase row highlight
-Add `bg-primary/5 rounded` background to the currently active phase row.
+- Remove `<Header />` import and usage
+- Remove `<Footer />` import and usage
+- Remove the outer `min-h-screen bg-background flex flex-col` wrapper div
+- Remove the "Back to Dashboard" button (the sidebar already provides navigation)
+- Remove `container mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8` padding (DashboardLayout provides its own `px-4 sm:px-6 lg:px-8 py-6 max-w-6xl mx-auto`)
+- Keep the inner `<div className="space-y-6">` as the root element
 
-### 2.4 Pill-style complexity badges on contracts
-Replace `<Badge variant="outline">` with the same pill-style badges used in EstimatorStep (L1 gray, L2 blue, L3 amber). Remove unused `Badge` import.
+### 3. Update internal navigation links
 
-### 2.5 Mutually exclusive contract icons
-Fix overlapping icons by using if/else priority: error > done > active > pending. Currently `done` and `error` can both render simultaneously.
+Search for any links pointing to `/reports/` and update them to `/dashboard/reports/`:
+- `src/components/AuditCard.tsx` (likely navigates to `/reports/:id`)
+- Any other components that link to reports
 
-### 2.6 Sub-phase tree connector line
-Add `border-l-2 border-border/40` to the sub-phase container to create a vertical connecting line (mimicking CLI tree structure).
+### Summary
 
-### 2.7 Show sub-phases only during hunting/qa
-Wrap sub-phase expansion in a condition: only show when `orchestration.phase === 'hunting' || orchestration.phase === 'qa'`.
-
-### 2.8 Findings severity breakdown
-Replace the empty "Findings (N)" header with severity pill badges showing counts per severity level (critical, high, medium, low, info, gas) with color-coded styles.
-
-### 2.9 Fix hunting/QA counter to 1-based
-Change `contractIndex` display to `contractIndex + 1` so users see "(1/3)" instead of "(0/3)".
-
----
-
-## Part 3: Wire liveFindings in Report.tsx
-
-**File: `src/pages/Report.tsx`**
-
-### 3.1 Pass `liveFindings` to AuditProgressPanel
-Add `liveFindings={visibleFindings}` prop to the existing `<AuditProgressPanel>` usage (line 420-423).
-
----
-
-## Summary of files changed
-
-| File | Changes |
+| File | Change |
 |---|---|
-| `src/components/wizard/EstimatorStep.tsx` | Table layout, pill badges, validation banner |
-| `src/components/AuditProgressPanel.tsx` | Scope summary, pill badges, tree lines, findings breakdown, icon fixes, phase highlight, 1-based counters |
-| `src/pages/Report.tsx` | Pass `liveFindings` prop |
+| `src/App.tsx` | Move report route into dashboard group; add legacy redirect |
+| `src/pages/Report.tsx` | Remove Header, Footer, back-link, outer wrapper |
+| Navigation references | Update `/reports/` to `/dashboard/reports/` |
+
