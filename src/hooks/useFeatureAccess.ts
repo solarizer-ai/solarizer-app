@@ -28,14 +28,16 @@ export interface FeatureAccess {
  * - business (Inferno): All Blaze features + Sharing, Comments
  */
 export function useFeatureAccess(): FeatureAccess {
-  const { data: subscription, isLoading } = useSubscription();
+  const { data: subscription, isLoading, isExpired } = useSubscription();
 
   const access = useMemo(() => {
     const plan = (subscription?.plan || null) as ExtendedSubscriptionPlan | null;
     
+    // If subscription is expired, treat as no active plan
+    const effectivelyActive = plan !== null && !isExpired;
     const hasSubscription = plan !== null;
-    const isPro = plan === 'pro' || plan === 'business';
-    const isBusiness = plan === 'business';
+    const isPro = effectivelyActive && (plan === 'pro' || plan === 'business');
+    const isBusiness = effectivelyActive && plan === 'business';
 
     return {
       // Blaze+ features
@@ -52,7 +54,7 @@ export function useFeatureAccess(): FeatureAccess {
       isLoading,
       hasSubscription,
     };
-  }, [subscription, isLoading]);
+  }, [subscription, isLoading, isExpired]);
 
   return access;
 }
