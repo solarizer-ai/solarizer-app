@@ -1,46 +1,81 @@
 
+# EstimatorStep Table Layout + AuditProgressPanel Improvements
 
-# Fix: Renew Expired Subscription for pro@test.com
+## Part 1: EstimatorStep Table Layout
 
-## Root Cause
+**File: `src/components/wizard/EstimatorStep.tsx`**
 
-The subscription for `pro@test.com` (user `0b94b478-...`) has:
-- **plan**: `business` (Inferno)
-- **status**: `expired` (set by the daily `expire_overdue_subscriptions` cron)
-- **current_period_end**: `2026-02-22` -- 5 days ago
-- **credits_remaining**: ~4.9M
+### 1.1 Update ComplexityBadge styling
+Replace solid amber/orange badges with pill-shaped ring badges:
+- L1: gray with ring border
+- L2: blue tint with blue ring
+- L3: amber tint with amber ring
 
-The `NewAuditPage` gate checks `subscription?.status === 'active' && !isExpired`. Since the status is `expired`, the gate blocks audit creation despite having plenty of credits.
+### 1.2 Replace success-state card layout with HTML table
+Replace the stacked card rows (lines 160-238) with a proper `<table>` layout:
+- Column headers: File | Complexity | nLOC | Credits
+- Scope files section with labeled header row spanning all columns
+- Context files section (conditional) with labeled header row
+- `<tfoot>` with total credits row using `border-t-2` separator (no background tint)
+- Per-file credits in `text-foreground` (not orange); only total in `text-primary`
+- `tabular-nums` on numeric columns for consistent alignment
+- Complexity column hidden on mobile (`hidden sm:table-cell`)
+- Hover effect `hover:bg-muted/30` on file rows
+- Reasoning available via `title` attribute (native tooltip on hover)
 
-## Fix Options
+### 1.3 Update validation banner
+Change from full solid background to left-border accent style:
+- `border-l-4` with green or amber border
+- Lighter `bg-*/5` tint background
 
-### Option A -- Renew the subscription in the database (quick fix)
+---
 
-Update the subscription row to extend the period by 1 month from now and set status back to `active`. This simulates a renewal.
+## Part 2: AuditProgressPanel Improvements
 
-**Database update:**
-```sql
-UPDATE subscriptions
-SET status = 'active',
-    current_period_start = now(),
-    current_period_end = now() + interval '1 month',
-    updated_at = now()
-WHERE user_id = '0b94b478-7d25-490b-a4b3-0632f72a6cc4';
-```
+**File: `src/components/AuditProgressPanel.tsx`**
 
-### Option B -- Also improve the frontend gating (recommended addition)
+### 2.1 Add `liveFindings` prop
+Add optional `liveFindings?: { severity: string }[]` prop to the component interface.
 
-In addition to the data fix, add a loading guard to `NewAuditPage.tsx` so the "Subscription Required" screen never flashes while data is loading. This was already identified as a needed improvement.
+### 2.2 Scope summary below title
+Compute and display "N contracts . X nLOC" summary line below the "Audit in Progress" title when `scopeMetadata` is available.
 
-- Destructure `isLoading` from `useSubscription()` and `useCredits()`
-- Show a skeleton/loading card while either is loading
-- Only evaluate the gate logic once both queries have resolved
+### 2.3 Active phase row highlight
+Add `bg-primary/5 rounded` background to the currently active phase row.
 
-## Recommendation
+### 2.4 Pill-style complexity badges on contracts
+Replace `<Badge variant="outline">` with the same pill-style badges used in EstimatorStep (L1 gray, L2 blue, L3 amber). Remove unused `Badge` import.
 
-Both options should be applied:
-1. **Data fix** (Option A) to unblock the user immediately
-2. **Code fix** (Option B) to prevent the loading flash issue for all users
+### 2.5 Mutually exclusive contract icons
+Fix overlapping icons by using if/else priority: error > done > active > pending. Currently `done` and `error` can both render simultaneously.
 
-No schema or RLS changes needed -- this is a data update + minor frontend guard.
+### 2.6 Sub-phase tree connector line
+Add `border-l-2 border-border/40` to the sub-phase container to create a vertical connecting line (mimicking CLI tree structure).
 
+### 2.7 Show sub-phases only during hunting/qa
+Wrap sub-phase expansion in a condition: only show when `orchestration.phase === 'hunting' || orchestration.phase === 'qa'`.
+
+### 2.8 Findings severity breakdown
+Replace the empty "Findings (N)" header with severity pill badges showing counts per severity level (critical, high, medium, low, info, gas) with color-coded styles.
+
+### 2.9 Fix hunting/QA counter to 1-based
+Change `contractIndex` display to `contractIndex + 1` so users see "(1/3)" instead of "(0/3)".
+
+---
+
+## Part 3: Wire liveFindings in Report.tsx
+
+**File: `src/pages/Report.tsx`**
+
+### 3.1 Pass `liveFindings` to AuditProgressPanel
+Add `liveFindings={visibleFindings}` prop to the existing `<AuditProgressPanel>` usage (line 420-423).
+
+---
+
+## Summary of files changed
+
+| File | Changes |
+|---|---|
+| `src/components/wizard/EstimatorStep.tsx` | Table layout, pill badges, validation banner |
+| `src/components/AuditProgressPanel.tsx` | Scope summary, pill badges, tree lines, findings breakdown, icon fixes, phase highlight, 1-based counters |
+| `src/pages/Report.tsx` | Pass `liveFindings` prop |
