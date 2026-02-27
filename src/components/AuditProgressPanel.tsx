@@ -70,8 +70,8 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata }: AuditProgressPanel
   useEffect(() => {
     const check = () => {
       const secondsSince = Math.floor((Date.now() - new Date(lastUpdatedRef.current).getTime()) / 1000);
-      if (secondsSince >= 300) setStaleness('stuck');
-      else if (secondsSince >= 90) setStaleness('warn');
+      if (secondsSince >= 1200) setStaleness('stuck');
+      else if (secondsSince >= 600) setStaleness('warn');
       else setStaleness('fresh');
     };
     check();
