@@ -20,7 +20,7 @@ const SubscriptionPage = () => {
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<"pro" | "business">("pro");
   const [targetDowngradePlan, setTargetDowngradePlan] = useState<"starter" | "pro">("starter");
 
-  const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
+  const { data: subscription, isLoading: subscriptionLoading, isExpired } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
   const {
     createSubscription,
@@ -88,6 +88,7 @@ const SubscriptionPage = () => {
             onReactivate={() => reactivateSubscription()}
             isReactivating={isReactivating}
             onRenew={(planId) => createSubscription({ plan: planId as "starter" | "pro" | "business", billingPeriod: "monthly" })}
+            isExpired={isExpired}
           />
         </CardContent>
       </Card>

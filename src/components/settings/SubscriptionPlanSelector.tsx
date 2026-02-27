@@ -35,6 +35,7 @@ interface SubscriptionPlanSelectorProps {
   onReactivate?: () => void;
   isReactivating?: boolean;
   onRenew?: (planId: string) => void;
+  isExpired?: boolean;
 }
 
 const PLAN_ORDER = { starter: 0, pro: 1, business: 2 };
@@ -55,11 +56,14 @@ export function SubscriptionPlanSelector({
   onReactivate,
   isReactivating,
   onRenew,
+  isExpired,
 }: SubscriptionPlanSelectorProps) {
   const currentPlanOrder = currentPlan ? PLAN_ORDER[currentPlan] : -1;
 
   const getPlanAction = (planId: Plan["id"]) => {
     if (currentPlan === null) return "subscribe";
+    if (isExpired && planId === currentPlan) return "expired";
+    if (isExpired) return "disabled";
     const planOrder = PLAN_ORDER[planId];
     if (planId === currentPlan) return "current";
     if (pendingPlan && planId === pendingPlan) return "pending";
@@ -88,6 +92,18 @@ export function SubscriptionPlanSelector({
     }
 
     switch (action) {
+      case "expired":
+        return (
+          <Button size="sm" className="w-full gap-1" onClick={() => onRenew?.(plan.id)} disabled={isLoading}>
+            Renew Plan
+          </Button>
+        );
+      case "disabled":
+        return (
+          <Button variant="outline" size="sm" disabled className="w-full">
+            Unavailable
+          </Button>
+        );
       case "subscribe":
         return (
           <Button size="sm" className="w-full gap-1" onClick={() => onSubscribe?.(plan.id)} disabled={isLoading}>
@@ -141,7 +157,12 @@ export function SubscriptionPlanSelector({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium text-foreground">Your Plan</h4>
-        {renewalDate && !hasPendingCancellation && (
+        {isExpired && renewalDate && (
+          <p className="text-xs text-destructive font-medium">
+            Expired on {format(new Date(renewalDate), "MMM d, yyyy")}
+          </p>
+        )}
+        {!isExpired && renewalDate && !hasPendingCancellation && (
           <p className="text-xs text-muted-foreground">
             Expires {format(new Date(renewalDate), "MMM d, yyyy")}
           </p>
@@ -154,8 +175,24 @@ export function SubscriptionPlanSelector({
         )}
       </div>
 
+      {/* Expired banner */}
+      {isExpired && currentPlan && (
+        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-3">
+          <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-destructive">Subscription Expired</p>
+            <p className="text-xs text-muted-foreground">
+              Renew your {formatPlanName(currentPlan)} plan to regain access to premium features.
+            </p>
+          </div>
+          <Button variant="default" size="sm" onClick={() => onRenew?.(currentPlan)}>
+            Renew Plan
+          </Button>
+        </div>
+      )}
+
       {/* Cancellation banner */}
-      {hasPendingCancellation && onReactivate && (
+      {!isExpired && hasPendingCancellation && onReactivate && (
         <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-3">
           <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -192,7 +229,8 @@ export function SubscriptionPlanSelector({
       <div className="flex flex-col space-y-2">
         {PLANS.map((plan) => {
           const action = getPlanAction(plan.id);
-          const isCurrent = action === "current";
+          const isCurrentExpired = action === "expired";
+          const isCurrent = action === "current" || isCurrentExpired;
           const isPending = action === "pending";
 
           return (
@@ -200,7 +238,8 @@ export function SubscriptionPlanSelector({
               key={plan.id}
               className={cn(
                 "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg border transition-all",
-                isCurrent && "border-l-4 border-l-primary border-t border-r border-b border-border bg-primary/5",
+                isCurrent && !isCurrentExpired && "border-l-4 border-l-primary border-t border-r border-b border-border bg-primary/5",
+                isCurrentExpired && "border-l-4 border-l-destructive border-t border-r border-b border-destructive/30 bg-destructive/5",
                 isPending && "border-l-4 border-l-amber-400 border-t border-r border-b border-amber-300 bg-amber-50/50 dark:bg-amber-900/10",
                 !isCurrent && !isPending && "border-l-4 border-l-transparent hover:border-l-muted-foreground/30"
               )}
@@ -209,7 +248,8 @@ export function SubscriptionPlanSelector({
               <div className="min-w-[80px]">
                   <div className="flex items-center gap-1.5">
                     <h5 className="font-semibold text-foreground">{plan.name}</h5>
-                    {isCurrent && <CheckCircle className="w-4 h-4 text-green-500" />}
+                    {isCurrent && !isCurrentExpired && <CheckCircle className="w-4 h-4 text-green-500" />}
+                    {isCurrentExpired && <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Expired</Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     ${plan.price}<span className="text-xs">/mo</span>

@@ -1057,6 +1057,7 @@ export type Database = {
             }
             Returns: Json
           }
+      expire_overdue_subscriptions: { Args: never; Returns: undefined }
       get_audit_access_context: { Args: { p_audit_id: string }; Returns: Json }
       get_audit_owner_info: {
         Args: { owner_user_id: string }
@@ -1144,7 +1145,7 @@ export type Database = {
         | "false_positive"
       security_grade: "A" | "B" | "C" | "D" | "F"
       subscription_plan: "starter" | "pro" | "business"
-      subscription_status: "active" | "canceled" | "past_due"
+      subscription_status: "active" | "canceled" | "past_due" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1290,7 +1291,7 @@ export const Constants = {
       ],
       security_grade: ["A", "B", "C", "D", "F"],
       subscription_plan: ["starter", "pro", "business"],
-      subscription_status: ["active", "canceled", "past_due"],
+      subscription_status: ["active", "canceled", "past_due", "expired"],
     },
   },
 } as const

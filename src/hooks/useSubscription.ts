@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
 export type SubscriptionPlan = 'starter' | 'pro' | 'business';
-export type SubscriptionStatus = 'active' | 'canceled' | 'past_due';
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'expired';
 
 export interface Subscription {
   id: string;
@@ -46,7 +46,7 @@ interface CreditOperationResponse {
 export function useSubscription() {
   const { user } = useAuth();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['subscription', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -66,6 +66,15 @@ export function useSubscription() {
     },
     enabled: !!user?.id,
   });
+
+  const subscription = query.data;
+  const isExpired = !!(
+    subscription &&
+    subscription.current_period_end &&
+    new Date(subscription.current_period_end) < new Date()
+  );
+
+  return { ...query, isExpired };
 }
 
 export function useCredits() {
