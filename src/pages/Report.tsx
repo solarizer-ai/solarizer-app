@@ -16,7 +16,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle, Archive, Lightbulb, ShieldCheck } from "lucide-react";
+import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle, Archive, Lightbulb, ShieldCheck, Globe, LockKeyhole, Copy, Check } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { useTogglePublicReport } from "@/hooks/useTogglePublicReport";
 import InvariantsTab from "@/components/InvariantsTab";
 import InsightsTab from "@/components/InsightsTab";
 import { generateMarkdownReport, downloadMarkdown } from "@/lib/exportMarkdown";
@@ -40,7 +42,9 @@ const Report = () => {
   const [highlightedFindingId, setHighlightedFindingId] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [publicLinkCopied, setPublicLinkCopied] = useState(false);
   const findingRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  const togglePublicMutation = useTogglePublicReport();
   
   // Contextual feature access based on audit ownership and owner's subscription
   const { 
@@ -288,6 +292,66 @@ const Report = () => {
                       )}
                     </Tooltip>
                   </TooltipProvider>
+                )}
+                {/* Public/Private Toggle */}
+                {isOwner && !isFailedOrCancelled && currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
+                  <div className="flex items-center gap-2 pl-2 border-l border-border ml-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2">
+                            {(currentAudit as any)?.is_public ? (
+                              <Globe className="w-4 h-4 text-primary" />
+                            ) : (
+                              <LockKeyhole className="w-4 h-4 text-muted-foreground" />
+                            )}
+                            <Switch
+                              checked={(currentAudit as any)?.is_public || false}
+                              disabled={togglePublicMutation.isPending}
+                              onCheckedChange={(checked) => {
+                                togglePublicMutation.mutate(
+                                  { auditId: currentAudit!.id, isPublic: checked },
+                                  {
+                                    onSuccess: (slug) => {
+                                      if (checked && slug) {
+                                        toast.success("Report is now public", {
+                                          description: "Anyone with the link can view this report",
+                                        });
+                                      } else {
+                                        toast.success("Report is now private");
+                                      }
+                                    },
+                                    onError: () => toast.error("Failed to update visibility"),
+                                  }
+                                );
+                              }}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{(currentAudit as any)?.is_public ? "Report is public — anyone with the link can view" : "Make report public"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    {(currentAudit as any)?.is_public && (currentAudit as any)?.public_slug && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 h-8"
+                        onClick={() => {
+                          const url = `${window.location.origin}/report/${(currentAudit as any).public_slug}`;
+                          navigator.clipboard.writeText(url).then(() => {
+                            setPublicLinkCopied(true);
+                            toast.success("Public link copied!");
+                            setTimeout(() => setPublicLinkCopied(false), 2000);
+                          });
+                        }}
+                      >
+                        {publicLinkCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span className="hidden sm:inline">{publicLinkCopied ? "Copied" : "Copy Link"}</span>
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
