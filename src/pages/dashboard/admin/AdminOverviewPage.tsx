@@ -176,8 +176,8 @@ export default function AdminOverviewPage() {
                       <td className="py-2 text-muted-foreground truncate max-w-[140px]">{audit.user_email}</td>
                       <td className="py-2 font-medium text-foreground truncate max-w-[140px]">{audit.project_name}</td>
                       <td className="py-2">
-                        <span className={`px-2 py-0.5 rounded text-xs border ${statusColor[audit.status] || "bg-muted text-muted-foreground"}`}>
-                          {audit.status}
+                        <span className={`px-2 py-0.5 rounded text-xs border ${statusColor[audit.audit_status] || "bg-muted text-muted-foreground"}`}>
+                          {audit.audit_status}
                         </span>
                       </td>
                       <td className="py-2 text-muted-foreground">{audit.grade || "—"}</td>
