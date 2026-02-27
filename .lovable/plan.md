@@ -1,62 +1,88 @@
 
 
-# Fix Subscription Expiration Logic
+# Public Report Sharing Feature
 
-## Problem
-The subscription for the Blaze user shows "Expires Feb 21, 2026" but the subscription is still fully active on Feb 27. There is **no expiration mechanism** anywhere in the codebase -- the `status` column stays `active` forever regardless of `current_period_end`.
+## Overview
+Add a Public/Private toggle to completed audit reports. When set to public, a unique shareable link is generated that anyone can view without authentication. The public view displays a professionally designed, Solarizer-branded read-only report page.
 
-## Root Cause
-The one-time payment model sets `current_period_end` when a subscription is created, but nothing ever:
-1. Checks if that date has passed
-2. Marks the subscription as expired
-3. Blocks feature access for expired subscriptions
+## Database Changes
 
-## Solution: Two-Layer Fix
+### 1. Add columns to `audits` table
+- `is_public` (boolean, default false) -- whether the report is publicly accessible
+- `public_slug` (text, unique, nullable) -- a short random slug for the public URL (e.g., `a3f8x9k2`)
 
-### Layer 1 -- Frontend Guard (immediate UX fix)
-Treat a subscription as expired on the client side when `current_period_end` is in the past. This provides instant protection without waiting for a backend job.
+### 2. RLS Policy for public access
+- Add a new SELECT policy on `audits`: allow anonymous read when `is_public = true` and the row matches the `public_slug`
+- Add a new SELECT policy on `findings`: allow anonymous read when the parent audit `is_public = true`
+- Owner-only UPDATE policy already exists; the toggle just updates `is_public` and `public_slug`
 
-**File: `src/hooks/useSubscription.ts`**
-- Add a computed `isExpired` boolean: `current_period_end !== null && new Date(current_period_end) < new Date()`
-- Export it from the `useSubscription` hook return value
+### 3. Database function
+- `toggle_audit_public(p_audit_id uuid, p_is_public boolean)` -- SECURITY DEFINER RPC that:
+  - Verifies the caller owns the audit
+  - If setting public: generates a random 10-char slug (if not already set), sets `is_public = true`
+  - If setting private: sets `is_public = false` (keeps slug for re-enabling)
+  - Returns the slug
 
-**File: `src/hooks/useFeatureAccess.ts`**
-- Import and check `isExpired` -- if expired, treat the user as having no active plan (block gated features)
+## Frontend Changes
 
-**File: `src/components/settings/SubscriptionPlanSelector.tsx`**
-- When subscription is expired, show an "Expired" banner instead of "Expires [date]"
-- Show "Renew Plan" prominently on the current plan row
-- Disable upgrade/downgrade buttons (user must renew first)
-- Use proper local-date parsing to avoid timezone issues (per the stack overflow hint): parse "YYYY-MM-DD" dates as local, not UTC
+### 4. Public/Private Toggle on Report Page (`src/pages/Report.tsx`)
+- Add a toggle button (Globe/Lock icon + Switch) in the report header, next to the Share/Export buttons
+- Only visible to the audit owner and when audit is completed (not analyzing/failed/cancelled)
+- When toggled on: calls the RPC, shows the public link with a copy button
+- When toggled off: calls the RPC, hides the link
 
-**File: `src/pages/dashboard/SubscriptionPage.tsx`**
-- Pass the `isExpired` flag to `SubscriptionPlanSelector`
+### 5. New Public Report Page (`src/pages/PublicReport.tsx`)
+A standalone, professionally designed page that:
+- Fetches audit + findings using the public slug (no auth required)
+- Uses Supabase anon key (no user session needed)
+- Displays a Solarizer-branded layout with:
+  - Solarizer logo + "Security Audit Report" header
+  - Project name, date, nLOC count, grade badge
+  - Security score card (grade ring + severity breakdown)
+  - Scope section (list of contracts analyzed)
+  - All findings grouped by severity, each with:
+    - Title, severity badge, description
+    - Code snippet with syntax highlighting
+    - Remediation guidance
+    - Resolved/Unresolved status indicator
+  - Verification coverage summary (if available)
+  - Footer with Solarizer branding + disclaimer
+- Fully read-only -- no edit, comment, or share functionality
+- Responsive design matching the Obsidian + Solar Orange theme
+- No Header/Footer navigation (standalone branded page)
 
-### Layer 2 -- Database Cron (backend enforcement)
-Create a database function + pg_cron job that runs daily and sets `status = 'expired'` for subscriptions whose `current_period_end` has passed.
+### 6. Route Registration (`src/App.tsx`)
+- Add public route: `/report/:slug` pointing to `PublicReport` component (no ProtectedRoute wrapper)
 
-**Migration SQL:**
-- Add `'expired'` as a valid status concept (the column is text, so no enum change needed)
-- Create function `expire_overdue_subscriptions()` that updates `status = 'expired'` where `current_period_end < now()` and `status = 'active'`
-- Schedule via `pg_cron` to run daily at midnight UTC
+### 7. Custom Hook (`src/hooks/usePublicAudit.ts`)
+- `usePublicAudit(slug)` -- fetches audit by `public_slug` where `is_public = true`
+- `usePublicFindings(auditId)` -- fetches findings for the public audit
+- Both use the anon key (no auth session required)
 
-### Layer 3 -- Fix timezone display
-The "Expires Feb 21" display uses `new Date(renewalDate)` which can shift dates due to UTC interpretation. Fix by using `format()` from date-fns which handles this correctly already, but ensure the comparison logic (for showing "Renew Plan" button) uses proper date normalization.
+### 8. Toggle Hook (`src/hooks/useTogglePublicReport.ts`)
+- Mutation hook that calls the `toggle_audit_public` RPC
+- Invalidates the audit query cache on success
 
-## Files Changed
+## Public URL Format
+`https://solarizer-app.lovable.app/report/<slug>`
 
-| File | Change |
+Example: `https://solarizer-app.lovable.app/report/a3f8x9k2`
+
+## Security Considerations
+- Only the audit owner can toggle public/private
+- Public access is read-only (SELECT only via RLS)
+- Slugs are random 10-char alphanumeric strings (not guessable)
+- No user data is exposed in the public view (no emails, no user IDs)
+- The public page does not show remediation toggle or comment features
+
+## Files to Create/Modify
+
+| File | Action |
 |------|--------|
-| `src/hooks/useSubscription.ts` | Add `isExpired` computed field |
-| `src/hooks/useFeatureAccess.ts` | Block features when subscription expired |
-| `src/components/settings/SubscriptionPlanSelector.tsx` | Show expired state, fix date comparison |
-| `src/pages/dashboard/SubscriptionPage.tsx` | Pass isExpired to plan selector |
-| New migration SQL | Add `expire_overdue_subscriptions()` cron job |
+| Migration SQL | Add `is_public`, `public_slug` columns + RLS policies + RPC |
+| `src/pages/PublicReport.tsx` | **New** -- branded public report page |
+| `src/hooks/usePublicAudit.ts` | **New** -- fetch audit/findings by slug |
+| `src/hooks/useTogglePublicReport.ts` | **New** -- toggle mutation hook |
+| `src/pages/Report.tsx` | Add Public/Private toggle with link copy |
+| `src/App.tsx` | Add `/report/:slug` public route |
 
-## Expiration UX
-
-When expired:
-- Header shows "Expired on [date]" in red instead of "Expires [date]"
-- Current plan row shows "Expired" badge + prominent "Renew Plan" button
-- Upgrade/Downgrade buttons are disabled with tooltip "Renew your plan first"
-- Feature access (remediation, export, sharing) is blocked as if unsubscribed
