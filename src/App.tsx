@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ScanProvider } from "@/contexts/ScanContext";
@@ -50,6 +50,11 @@ import GradesPage from "./pages/docs/GradesPage";
 import ReferencePage from "./pages/docs/ReferencePage";
 import FaqPage from "./pages/docs/FaqPage";
 import PlansAndCostingPage from "./pages/docs/PlansAndCostingPage";
+
+const ReportRedirect = () => {
+  const { auditId } = useParams();
+  return <Navigate to={`/dashboard/reports/${auditId}`} replace />;
+};
 
 const queryClient = new QueryClient();
 
@@ -104,12 +109,13 @@ const App = () => (
                   <Route path="admin/audits/:id" element={<AdminRoute><AdminAuditDetailPage /></AdminRoute>} />
                   <Route path="admin/coupons" element={<AdminRoute><AdminCouponsPage /></AdminRoute>} />
                   <Route path="admin/credits" element={<AdminRoute><AdminCreditsPage /></AdminRoute>} />
+                  <Route path="reports/:auditId" element={<Report />} />
                   <Route path="docs" element={<Navigate to="/docs/setup" replace />} />
                   <Route path="subscription" element={<Navigate to="/dashboard/billing" replace />} />
                 </Route>
 
-                {/* Report stays standalone (full-width) */}
-                <Route path="/reports/:auditId" element={<ProtectedRoute><Report /></ProtectedRoute>} />
+                {/* Legacy redirect for old report URLs */}
+                <Route path="/reports/:auditId" element={<ReportRedirect />} />
                 <Route path="/report/:slug" element={<PublicReport />} />
 
                 {/* Legacy redirects */}

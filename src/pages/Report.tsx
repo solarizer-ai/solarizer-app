@@ -1,8 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import FindingItem from "@/components/FindingItem";
 import FindingsFilter from "@/components/FindingsFilter";
 import SecurityScoreCard from "@/components/SecurityScoreCard";
@@ -221,19 +219,10 @@ const Report = () => {
   const currentUserEmail = user?.email || null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-
-      <main className="container mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8 flex-1">
-        <div className="space-y-6">
+    <>
+      <div className="space-y-6">
           {/* Results Header */}
           <div className="flex flex-col gap-2">
-            <button 
-              onClick={() => navigate("/dashboard")}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
-            >
-              ← Back to Dashboard
-            </button>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
                 {currentAudit?.project_name || "Contract"}
@@ -639,9 +628,6 @@ const Report = () => {
             </div>
           )}
         </div>
-      </main>
-
-      <Footer />
 
       {/* Share Modal */}
       {currentAudit && (
@@ -659,7 +645,7 @@ const Report = () => {
         onOpenChange={setUpgradeModalOpen}
         reason="nloc_limit"
       />
-    </div>
+    </>
   );
 };
 
