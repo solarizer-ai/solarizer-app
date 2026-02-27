@@ -35,8 +35,12 @@ const GitHubImportStep = ({ onFilesImported, onBack }: GitHubImportStepProps) =>
       onFilesImported(files);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch repository";
-      setError(message);
-      toast.error("Import failed", { description: message });
+      if (message === 'GITHUB_TOKEN_CORRUPTED') {
+        setError('GITHUB_TOKEN_CORRUPTED');
+      } else {
+        setError(message);
+        toast.error("Import failed", { description: message });
+      }
     } finally { setIsLoading(false); }
   };
 
@@ -67,7 +71,19 @@ const GitHubImportStep = ({ onFilesImported, onBack }: GitHubImportStepProps) =>
           <div className="space-y-2"><Label htmlFor="branch">Branch (optional)</Label><Input id="branch" placeholder="main" value={branch} onChange={(e) => setBranch(e.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="subfolder">Subfolder (optional)</Label><Input id="subfolder" placeholder="contracts/" value={subfolder} onChange={(e) => setSubfolder(e.target.value)} /></div>
         </div>
-        {error && <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm"><AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{error}</span></div>}
+        {error && (
+          error === 'GITHUB_TOKEN_CORRUPTED' ? (
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-warning/30 bg-warning/10 text-warning text-sm">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>
+                Your GitHub connection has expired.{" "}
+                <a href="/settings" className="font-medium underline">Reconnect GitHub →</a>
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm"><AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{error}</span></div>
+          )
+        )}
         {!isConnected && <div className="flex items-start gap-2 p-3 rounded-lg bg-muted text-muted-foreground text-sm"><Github className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>Connect your GitHub account in Settings to access private repositories.</span></div>}
       </div>
       <div className="flex items-center justify-between">

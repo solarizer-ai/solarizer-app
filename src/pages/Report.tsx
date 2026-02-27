@@ -174,12 +174,9 @@ const Report = () => {
   // Show toast notification when viewing a failed or cancelled audit
   const [hasShownFailedToast, setHasShownFailedToast] = useState(false);
   useEffect(() => {
-    if ((currentAudit?.status === 'failed' || currentAudit?.status === 'cancelled') && !hasShownFailedToast) {
-      const isCancelled = currentAudit.status === 'cancelled';
-      toast.error(isCancelled ? "Analysis Cancelled" : "Analysis Failed", {
-        description: isCancelled 
-          ? "This analysis was cancelled. Your credits have been automatically refunded."
-          : "This analysis encountered an error. Your credits have been automatically refunded.",
+    if (currentAudit?.status === 'failed' && !hasShownFailedToast) {
+      toast.error("Analysis Failed", {
+        description: "This analysis encountered an error. If credits were charged, they will be refunded.",
         duration: 8000,
       });
       setHasShownFailedToast(true);
@@ -384,17 +381,30 @@ const Report = () => {
                     {currentAudit.status === 'cancelled' ? 'Analysis Cancelled' : 'Analysis Failed'}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-md mb-4">
-                    {currentAudit.status === 'cancelled' 
-                      ? 'This analysis was cancelled by you. Your credits have been automatically refunded.'
-                      : 'This analysis encountered an error and could not be completed. Your credits have been automatically refunded.'
+                    {currentAudit.status === 'cancelled'
+                      ? 'This analysis was cancelled.'
+                      : 'This analysis encountered an error and could not be completed.'
                     }
                   </p>
                   <p className="text-xs text-muted-foreground mb-6">
                     {currentAudit.status === 'cancelled'
                       ? "You can start a new analysis whenever you're ready."
-                      : 'Please try again after some time. If the issue persists, contact support.'
+                      : 'If credits were charged, they will be refunded. Please try again, or contact support if the issue persists.'
                     }
                   </p>
+                  {(currentAudit as any).refund_failed && (
+                    <div className="mb-4 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning max-w-md text-left">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>
+                        Your credits couldn't be refunded automatically.{" "}
+                        <a href="mailto:support@solarizer.io" className="font-medium underline">
+                          Contact support
+                        </a>{" "}
+                        with audit ID:{" "}
+                        <code className="font-mono text-xs">{currentAudit.id}</code>
+                      </span>
+                    </div>
+                  )}
                   <Button 
                     onClick={() => navigate("/dashboard?new=true")} 
                     className="gap-2"

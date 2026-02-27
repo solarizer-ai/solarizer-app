@@ -1,8 +1,6 @@
 import { createContext, useContext, useState, useRef, useCallback, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUpdateAudit } from "@/hooks/useAudits";
-import type { AuditStatus } from "@/hooks/useAudits";
 import { toast } from "sonner";
 
 interface Finding { id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'info'; }
@@ -24,7 +22,6 @@ interface ScanState {
 
 interface ScanContextValue extends ScanState {
   startScan: (auditId: string, projectName: string) => void;
-  cancelScan: () => Promise<void>;
   closeWidget: () => void;
 }
 
@@ -46,12 +43,10 @@ export const ScanProvider = ({ children }: { children: ReactNode }) => {
   const [orchestrationPhase, setOrchestrationPhase] = useState<string | null>(null);
   const [orchestrationProgress, setOrchestrationProgress] = useState<OrchestrationProgress | null>(null);
 
-  const abortControllerRef = useRef<AbortController | null>(null);
   const findingsChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const auditChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const orchestrationChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const queryClient = useQueryClient();
-  const updateAudit = useUpdateAudit();
 
   const cleanupChannels = useCallback(() => {
     if (findingsChannelRef.current) { supabase.removeChannel(findingsChannelRef.current); findingsChannelRef.current = null; }
@@ -81,8 +76,7 @@ export const ScanProvider = ({ children }: { children: ReactNode }) => {
         if (updatedAudit.status === 'secured' || updatedAudit.status === 'issues' || updatedAudit.status === 'failed') {
           cleanupChannels();
           setIsScanning(false);
-          abortControllerRef.current = null;
-          if (updatedAudit.status === 'failed') toast.error("Analysis Failed", { description: "Something went wrong. Your credits have been refunded.", duration: 8000 });
+          if (updatedAudit.status === 'failed') toast.error("Analysis Failed", { description: "Something went wrong. If credits were charged, they will be refunded.", duration: 8000 });
         }
       }).subscribe();
     auditChannelRef.current = auditChannel;
@@ -101,24 +95,11 @@ export const ScanProvider = ({ children }: { children: ReactNode }) => {
 
   const startScan = useCallback((auditId: string, name: string) => {
     cleanupChannels();
-    abortControllerRef.current = new AbortController();
     setCurrentAuditId(auditId); setProjectName(name); setIsScanning(true); setShowWidget(true);
     setRealtimeFindings([]); setRealtimeAuditStatus('analyzing');
     setOrchestrationPhase('queued'); setOrchestrationProgress(null);
     toast.info("Security analysis started", { description: `Analyzing ${name}...`, duration: 4000 });
   }, [cleanupChannels]);
-
-  const cancelScan = useCallback(async () => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = null;
-    cleanupChannels();
-    if (currentAuditId) {
-      try { await updateAudit.mutateAsync({ id: currentAuditId, status: "cancelled" as AuditStatus, is_locked: true }); queryClient.invalidateQueries({ queryKey: ['audits'] }); } catch {}
-    }
-    setIsScanning(false); setCurrentAuditId(null); setProjectName(""); setRealtimeFindings([]); setRealtimeAuditStatus(null); setShowWidget(false);
-    setOrchestrationPhase(null); setOrchestrationProgress(null);
-    toast.info("Analysis cancelled", { description: "Note: Credits used for this analysis have already been consumed." });
-  }, [currentAuditId, updateAudit, cleanupChannels, queryClient]);
 
   const closeWidget = useCallback(() => {
     setShowWidget(false);
@@ -126,7 +107,7 @@ export const ScanProvider = ({ children }: { children: ReactNode }) => {
   }, [isScanning]);
 
   return (
-    <ScanContext.Provider value={{ isScanning, showWidget, currentAuditId, projectName, realtimeFindings, realtimeAuditStatus, orchestrationPhase, orchestrationProgress, startScan, cancelScan, closeWidget }}>
+    <ScanContext.Provider value={{ isScanning, showWidget, currentAuditId, projectName, realtimeFindings, realtimeAuditStatus, orchestrationPhase, orchestrationProgress, startScan, closeWidget }}>
       {children}
     </ScanContext.Provider>
   );

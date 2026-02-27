@@ -89,7 +89,11 @@ export async function fetchRepoContents(
   }
 
   if (!data?.success) {
-    throw new Error(data?.error || 'Failed to fetch repository');
+    const msg = data?.error || 'Failed to fetch repository';
+    if (msg.toLowerCase().includes('reconnect') || msg.toLowerCase().includes('corrupted')) {
+      throw new Error('GITHUB_TOKEN_CORRUPTED');
+    }
+    throw new Error(msg);
   }
 
   return buildFileNodesFromFiles(data.files || []);

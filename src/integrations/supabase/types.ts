@@ -170,6 +170,7 @@ export type Database = {
           nloc_count: number | null
           project_name: string
           public_slug: string | null
+          refund_failed: boolean | null
           scope_metadata: Json | null
           security_score: number | null
           session_token: string | null
@@ -205,6 +206,7 @@ export type Database = {
           nloc_count?: number | null
           project_name: string
           public_slug?: string | null
+          refund_failed?: boolean | null
           scope_metadata?: Json | null
           security_score?: number | null
           session_token?: string | null
@@ -240,6 +242,7 @@ export type Database = {
           nloc_count?: number | null
           project_name?: string
           public_slug?: string | null
+          refund_failed?: boolean | null
           scope_metadata?: Json | null
           security_score?: number | null
           session_token?: string | null

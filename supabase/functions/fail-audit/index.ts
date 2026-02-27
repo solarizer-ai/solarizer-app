@@ -110,6 +110,11 @@ Deno.serve(async (req) => {
               `failed for user ${audit.user_id}, audit ${auditId}:`,
             refundError,
           );
+          // Mark refund_failed so frontend can surface a support message
+          await supabase
+            .from('audits')
+            .update({ refund_failed: true })
+            .eq('id', auditId);
         } else {
           creditsRefunded = creditsToRefund;
         }
