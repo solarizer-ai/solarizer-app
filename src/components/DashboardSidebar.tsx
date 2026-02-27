@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -88,7 +89,7 @@ const adminNavItems = [
 export function DashboardSidebar() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, toggleSidebar, state } = useSidebar();
   const [profile, setProfile] = useState<Profile | null>(null);
   const { isAdmin } = useAdminRole();
 
@@ -119,21 +120,40 @@ export function DashboardSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      {/* Logo */}
+      {/* Logo + Collapse Toggle */}
       <SidebarHeader className="p-4">
-        <button
-          onClick={() => { navigate("/dashboard"); handleNavClick(); }}
-          className="flex items-center gap-2.5 group-data-[collapsible=icon]:justify-center"
-        >
-          <img
-            src={solarizerLogo}
-            alt="Solarizer"
-            className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
-          />
-          <span className="text-sm font-semibold text-foreground group-data-[collapsible=icon]:hidden">
-            Solarizer
-          </span>
-        </button>
+        {state === "collapsed" ? (
+          <button
+            onClick={() => toggleSidebar()}
+            className="hidden md:flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors mx-auto"
+            aria-label="Expand sidebar"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        ) : (
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => { navigate("/dashboard"); handleNavClick(); }}
+              className="flex items-center gap-2.5"
+            >
+              <img
+                src={solarizerLogo}
+                alt="Solarizer"
+                className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
+              />
+              <span className="text-sm font-semibold text-foreground">
+                Solarizer
+              </span>
+            </button>
+            <button
+              onClick={() => toggleSidebar()}
+              className="hidden md:flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarSeparator />
