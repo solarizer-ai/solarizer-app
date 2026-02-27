@@ -420,6 +420,7 @@ const Report = () => {
                     <AuditProgressPanel
                       orchestration={orchestration}
                       scopeMetadata={currentAudit.scope_metadata as any[] | null}
+                      liveFindings={visibleFindings as { severity: string }[]}
                     />
                   )}
 

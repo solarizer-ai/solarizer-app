@@ -43,12 +43,12 @@ type EstimationState =
 
 const ComplexityBadge = ({ level }: { level: string }) => {
   const styles: Record<string, string> = {
-    L1: 'bg-muted text-muted-foreground',
-    L2: 'bg-amber-400 text-black',
-    L3: 'bg-orange-500 text-white',
+    L1: 'bg-muted text-muted-foreground ring-1 ring-border',
+    L2: 'bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/30',
+    L3: 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30',
   };
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${styles[level] || styles.L1}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${styles[level] || styles.L1}`}>
       {level}
     </span>
   );
@@ -164,68 +164,84 @@ const EstimatorStep = ({ scopeFiles, contextFiles, onBack, onProceed, onUpgradeN
         <p className="text-sm text-muted-foreground">Server-calculated breakdown for this analysis</p>
       </div>
 
-      <div className="bg-card border border-border rounded-lg p-4 sm:p-6 space-y-4">
-        {/* Scope files table */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-foreground">Scope Files ({result.scopeFiles.length})</h4>
-          <div className="space-y-1.5">
+      {/* Table */}
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">File</th>
+              <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Complexity</th>
+              <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">nLOC</th>
+              <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">Credits</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Scope files section label */}
+            <tr className="border-b border-border/50">
+              <td colSpan={4} className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30">
+                Scope Files ({result.scopeFiles.length})
+              </td>
+            </tr>
+
+            {/* Scope file rows */}
             {result.scopeFiles.map((f) => {
               const fileCost = Math.ceil(f.nLOC * (RATES[f.complexity] ?? 1.0));
               const fileName = f.path.split('/').pop() ?? f.path;
               return (
-                <div key={f.path} className="flex items-center justify-between p-2 sm:p-2.5 bg-muted/50 rounded-lg text-sm gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-foreground truncate">{fileName}</span>
+                <tr key={f.path} className="border-b border-border/30 hover:bg-muted/30 transition-colors" title={f.reasoning || undefined}>
+                  <td className="px-4 py-2 text-foreground truncate max-w-[200px]">{fileName}</td>
+                  <td className="px-4 py-2 hidden sm:table-cell">
                     <ComplexityBadge level={f.complexity} />
-                    {f.reasoning && (
-                      <span className="text-[10px] text-muted-foreground hidden sm:inline truncate max-w-[120px]" title={f.reasoning}>
-                        {f.reasoning}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0 text-xs">
-                    <span className="text-muted-foreground">{f.nLOC.toLocaleString()} nLOC</span>
-                    <span className="text-primary font-medium">{fileCost.toLocaleString()} cr</span>
-                  </div>
-                </div>
+                  </td>
+                  <td className="px-4 py-2 text-right text-muted-foreground tabular-nums">{f.nLOC.toLocaleString()}</td>
+                  <td className="px-4 py-2 text-right text-foreground font-medium tabular-nums">{fileCost.toLocaleString()}</td>
+                </tr>
               );
             })}
-          </div>
-        </div>
 
-        {/* Context files */}
-        {result.contextFiles.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Context Files ({result.contextFiles.length}) — 15% rate</h4>
-            <div className="space-y-1.5">
-              {result.contextFiles.map((f) => {
-                const fileCost = Math.ceil(f.nLOC * CONTEXT_CREDIT_RATE);
-                const fileName = f.path.split('/').pop() ?? f.path;
-                return (
-                  <div key={f.path} className="flex items-center justify-between p-2 sm:p-2.5 bg-muted/30 rounded-lg text-sm gap-2">
-                    <span className="text-muted-foreground truncate">{fileName}</span>
-                    <div className="flex items-center gap-3 shrink-0 text-xs">
-                      <span className="text-muted-foreground">{f.nLOC.toLocaleString()} nLOC</span>
-                      <span className="text-muted-foreground font-medium">{fileCost.toLocaleString()} cr</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+            {/* Context files section label + rows */}
+            {result.contextFiles.length > 0 && (
+              <>
+                <tr className="border-b border-border/50">
+                  <td colSpan={4} className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30">
+                    Context Files ({result.contextFiles.length})
+                    <span className="ml-2 text-[10px] font-normal normal-case">— 15% rate</span>
+                  </td>
+                </tr>
+                {result.contextFiles.map((f) => {
+                  const fileCost = Math.ceil(f.nLOC * CONTEXT_CREDIT_RATE);
+                  const fileName = f.path.split('/').pop() ?? f.path;
+                  return (
+                    <tr key={f.path} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-2 text-muted-foreground truncate max-w-[200px]">{fileName}</td>
+                      <td className="px-4 py-2 hidden sm:table-cell">
+                        <span className="text-muted-foreground/50">—</span>
+                      </td>
+                      <td className="px-4 py-2 text-right text-muted-foreground tabular-nums">{f.nLOC.toLocaleString()}</td>
+                      <td className="px-4 py-2 text-right text-foreground font-medium tabular-nums">{fileCost.toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </>
+            )}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-border">
+              <td colSpan={3} className="px-4 py-3 text-sm font-semibold text-foreground">Estimated Credits</td>
+              <td className="px-4 py-3 text-right text-2xl font-bold text-primary tabular-nums">{result.totalCredits.toLocaleString()}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
-        {/* Total */}
-        <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg border border-primary/20">
-          <span className="text-sm font-semibold text-foreground">Estimated Credits</span>
-          <span className="text-2xl font-bold text-primary">{result.totalCredits.toLocaleString()}</span>
-        </div>
-
-        {/* Validation status */}
-        <div className={`flex items-center gap-2 p-3 rounded-lg ${validation.valid ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-          {validation.valid ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-          <span className="text-sm">{validation.message}</span>
-        </div>
+      {/* Validation banner */}
+      <div className={`flex items-center gap-2 p-3 rounded-lg border-l-4 ${
+        validation.valid
+          ? 'border-l-green-500 bg-green-500/5 text-green-500'
+          : 'border-l-amber-500 bg-amber-500/5 text-amber-500'
+      }`}>
+        {validation.valid ? <Check className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+        <span className="text-sm">{validation.message}</span>
       </div>
 
       <div className="flex items-center justify-between">
