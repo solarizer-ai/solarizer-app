@@ -21,31 +21,11 @@ interface SecurityScoreCardProps {
 }
 
 const gradeConfig: Record<Exclude<Grade, null>, { color: string; label: string; description: string }> = {
-  A: {
-    color: "text-success",
-    label: "Excellent",
-    description: "No critical vulnerabilities detected",
-  },
-  B: {
-    color: "text-success",
-    label: "Good",
-    description: "Minor issues that should be addressed",
-  },
-  C: {
-    color: "text-warning",
-    label: "Fair",
-    description: "Several issues requiring attention",
-  },
-  D: {
-    color: "text-warning",
-    label: "Poor",
-    description: "Significant vulnerabilities detected",
-  },
-  F: {
-    color: "text-critical",
-    label: "Critical",
-    description: "Critical security flaws present",
-  },
+  A: { color: "text-success", label: "Excellent", description: "No critical vulnerabilities detected" },
+  B: { color: "text-success", label: "Good", description: "Minor issues that should be addressed" },
+  C: { color: "text-warning", label: "Fair", description: "Several issues requiring attention" },
+  D: { color: "text-warning", label: "Poor", description: "Significant vulnerabilities detected" },
+  F: { color: "text-critical", label: "Critical", description: "Critical security flaws present" },
 };
 
 const pendingConfig = {
@@ -65,132 +45,72 @@ const SecurityScoreCard = ({
   const isPending = grade === null;
   const config = isPending ? pendingConfig : gradeConfig[grade];
 
-  // Vulnerability matrix data
   const categories = [
-    {
-      label: "Critical",
-      count: counts.critical,
-      icon: AlertTriangle,
-      bgColor: "bg-critical/10",
-      textColor: "text-critical",
-      borderColor: "border-critical/30",
-      barColor: "bg-critical",
-    },
-    {
-      label: "High",
-      count: counts.high,
-      icon: AlertTriangle,
-      bgColor: "bg-destructive/10",
-      textColor: "text-destructive",
-      borderColor: "border-destructive/30",
-      barColor: "bg-destructive",
-    },
-    {
-      label: "Medium",
-      count: counts.medium,
-      icon: AlertCircle,
-      bgColor: "bg-warning/10",
-      textColor: "text-warning",
-      borderColor: "border-warning/30",
-      barColor: "bg-warning",
-    },
-    {
-      label: "Low",
-      count: counts.low,
-      icon: Info,
-      bgColor: "bg-low/10",
-      textColor: "text-low",
-      borderColor: "border-low/30",
-      barColor: "bg-low",
-    },
-    {
-      label: "Info",
-      count: counts.info,
-      icon: Info,
-      bgColor: "bg-slate-400/10",
-      textColor: "text-slate-400",
-      borderColor: "border-slate-400/30",
-      barColor: "bg-slate-400",
-    },
+    { label: "Critical", count: counts.critical, icon: AlertTriangle, bgColor: "bg-critical/10", textColor: "text-critical", borderColor: "border-critical/30", barColor: "bg-critical" },
+    { label: "High", count: counts.high, icon: AlertTriangle, bgColor: "bg-destructive/10", textColor: "text-destructive", borderColor: "border-destructive/30", barColor: "bg-destructive" },
+    { label: "Medium", count: counts.medium, icon: AlertCircle, bgColor: "bg-warning/10", textColor: "text-warning", borderColor: "border-warning/30", barColor: "bg-warning" },
+    { label: "Low", count: counts.low, icon: Info, bgColor: "bg-low/10", textColor: "text-low", borderColor: "border-low/30", barColor: "bg-low" },
+    { label: "Info", count: counts.info, icon: Info, bgColor: "bg-slate-400/10", textColor: "text-slate-400", borderColor: "border-slate-400/30", barColor: "bg-slate-400" },
   ];
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6">
-      <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
-        {/* Grade Badge */}
-        <div className="relative w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 shrink-0 flex items-center justify-center">
-          <div className={cn(
-            "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-full border-2 flex items-center justify-center",
-            isPending ? "border-muted" :
-            grade === "A" || grade === "B" ? "border-success" :
-            grade === "C" || grade === "D" ? "border-warning" : "border-critical"
-          )}>
-            <span className={cn("text-3xl sm:text-4xl lg:text-5xl font-bold", config.color)}>
-              {isPending ? "--" : grade}
-            </span>
+    <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+      {/* Grade + Rating */}
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          "w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0",
+          isPending ? "border-muted" :
+          grade === "A" || grade === "B" ? "border-success" :
+          grade === "C" || grade === "D" ? "border-warning" : "border-critical"
+        )}>
+          <span className={cn("text-xl font-bold", config.color)}>
+            {isPending ? "--" : grade}
+          </span>
+        </div>
+        <div>
+          <div className="flex items-baseline gap-2">
+            <span className={cn("text-lg font-semibold", config.color)}>{config.label}</span>
+            <span className="text-sm text-muted-foreground">Security Rating</span>
           </div>
+          <p className="text-xs text-muted-foreground">{config.description}</p>
+        </div>
+      </div>
+
+      {/* Vulnerability Matrix Bar */}
+      <div className="pt-3 border-t border-border">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Matrix</h4>
+          <span className="text-xs text-muted-foreground">{total} findings</span>
         </div>
 
-        {/* Score Details + Vulnerability Matrix */}
-        <div className="flex-1 text-center lg:text-left space-y-4">
-          <div>
-            <div className="flex items-baseline gap-2 justify-center lg:justify-start mb-2">
-              <span className={cn("text-xl lg:text-2xl font-semibold", config.color)}>
-                {config.label}
-              </span>
-              <span className="text-sm text-muted-foreground">Security Rating</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {config.description}
-            </p>
-          </div>
+        <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
+          {categories.map((cat) => {
+            const width = total > 0 ? (cat.count / total) * 100 : 0;
+            return width > 0 ? (
+              <div key={cat.label} className={cn("h-full transition-all duration-500", cat.barColor)} style={{ width: `${width}%` }} />
+            ) : null;
+          })}
+        </div>
 
-          {/* Vulnerability Matrix - Integrated */}
-          <div className="pt-4 border-t border-border">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Vulnerability Matrix
-              </h4>
-              <span className="text-xs text-muted-foreground">{total} findings</span>
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+          {categories.map((cat) => (
+            <div
+              key={cat.label}
+              onClick={() => onSeverityClick?.(cat.label.toLowerCase())}
+              className={cn(
+                "flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border",
+                cat.bgColor, cat.borderColor,
+                onSeverityClick ? "cursor-pointer hover:opacity-75 transition-opacity" : ""
+              )}
+            >
+              <cat.icon className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5", cat.textColor)} />
+              <span className={cn("text-xs sm:text-sm font-medium", cat.textColor)}>{cat.count}</span>
+              <span className="text-xs text-muted-foreground hidden sm:inline">{cat.label}</span>
+              <span className="text-[11px] text-muted-foreground sm:hidden">{cat.label.slice(0, 3)}</span>
             </div>
-
-            {/* Visual Bar */}
-            <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
-              {categories.map((cat) => {
-                const width = total > 0 ? (cat.count / total) * 100 : 0;
-                return width > 0 ? (
-                  <div
-                    key={cat.label}
-                    className={cn("h-full transition-all duration-500", cat.barColor)}
-                    style={{ width: `${width}%` }}
-                  />
-                ) : null;
-              })}
-            </div>
-
-            {/* Category Pills */}
-            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:justify-center lg:justify-start">
-              {categories.map((cat) => (
-                <div
-                  key={cat.label}
-                  onClick={() => onSeverityClick?.(cat.label.toLowerCase())}
-                  className={cn(
-                    "flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border",
-                    cat.bgColor,
-                    cat.borderColor,
-                    onSeverityClick ? "cursor-pointer hover:opacity-75 transition-opacity" : ""
-                  )}
-                >
-                  <cat.icon className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5", cat.textColor)} />
-                  <span className={cn("text-xs sm:text-sm font-medium", cat.textColor)}>{cat.count}</span>
-                  <span className="text-xs text-muted-foreground hidden sm:inline">{cat.label}</span>
-                  <span className="text-[11px] text-muted-foreground sm:hidden">{cat.label.slice(0, 3)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>

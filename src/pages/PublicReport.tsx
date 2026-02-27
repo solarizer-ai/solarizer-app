@@ -399,64 +399,58 @@ const PublicReport = () => {
         </div>
 
         {/* ── Score Card with Grade Ring ──────────────────── */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
-            {/* Grade Badge */}
-            <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center">
-              <div className={cn(
-                "w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 flex items-center justify-center",
-                !grade ? "border-muted" :
-                grade === "A" || grade === "B" ? "border-success" :
-                grade === "C" || grade === "D" ? "border-warning" : "border-critical"
-              )}>
-                <span className={cn("text-3xl sm:text-4xl font-bold", gConfig?.color || "text-muted-foreground")}>
-                  {grade || "--"}
-                </span>
-              </div>
+        <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+          {/* Grade + Rating */}
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0",
+              !grade ? "border-muted" :
+              grade === "A" || grade === "B" ? "border-success" :
+              grade === "C" || grade === "D" ? "border-warning" : "border-critical"
+            )}>
+              <span className={cn("text-xl font-bold", gConfig?.color || "text-muted-foreground")}>
+                {grade || "--"}
+              </span>
             </div>
-
-            {/* Score details + Vulnerability matrix */}
-            <div className="flex-1 text-center lg:text-left space-y-4">
-              <div>
-                <div className="flex items-baseline gap-2 justify-center lg:justify-start mb-1">
-                  <span className={cn("text-xl lg:text-2xl font-semibold", gConfig?.color || "text-muted-foreground")}>
-                    {gConfig?.label || "Pending"}
-                  </span>
-                  <span className="text-sm text-muted-foreground">Security Rating</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{gConfig?.description || "Analysis in progress"}</p>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className={cn("text-lg font-semibold", gConfig?.color || "text-muted-foreground")}>
+                  {gConfig?.label || "Pending"}
+                </span>
+                <span className="text-sm text-muted-foreground">Security Rating</span>
               </div>
+              <p className="text-xs text-muted-foreground">{gConfig?.description || "Analysis in progress"}</p>
+            </div>
+          </div>
 
-              {/* Vulnerability Matrix Bar */}
-              <div className="pt-4 border-t border-border">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Matrix</h4>
-                  <span className="text-xs text-muted-foreground">{totalFindings} findings</span>
-                </div>
-                <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-4">
-                  {SEVERITY_ORDER.map(sev => {
-                    const width = totalFindings > 0 ? (severityCounts[sev] / totalFindings) * 100 : 0;
-                    return width > 0 ? (
-                      <div key={sev} className={cn("h-full transition-all duration-500", severityConfig[sev].barColor)} style={{ width: `${width}%` }} />
-                    ) : null;
-                  })}
-                </div>
-                {/* Category Pills */}
-                <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:justify-center lg:justify-start">
-                  {SEVERITY_ORDER.map(sev => {
-                    const config = severityConfig[sev];
-                    const Icon = config.icon;
-                    return (
-                      <div key={sev} className={cn("flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border", config.className)}>
-                        <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                        <span className="text-xs sm:text-sm font-medium">{severityCounts[sev]}</span>
-                        <span className="text-xs text-muted-foreground hidden sm:inline">{config.label}</span>
-                        <span className="text-[11px] text-muted-foreground sm:hidden">{config.label.slice(0, 3)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+          {/* Vulnerability Matrix Bar */}
+          <div className="pt-3 border-t border-border">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Matrix</h4>
+              <span className="text-xs text-muted-foreground">{totalFindings} findings</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
+              {SEVERITY_ORDER.map(sev => {
+                const width = totalFindings > 0 ? (severityCounts[sev] / totalFindings) * 100 : 0;
+                return width > 0 ? (
+                  <div key={sev} className={cn("h-full transition-all duration-500", severityConfig[sev].barColor)} style={{ width: `${width}%` }} />
+                ) : null;
+              })}
+            </div>
+            {/* Category Pills */}
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+              {SEVERITY_ORDER.map(sev => {
+                const config = severityConfig[sev];
+                const Icon = config.icon;
+                return (
+                  <div key={sev} className={cn("flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border", config.className)}>
+                    <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="text-xs sm:text-sm font-medium">{severityCounts[sev]}</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">{config.label}</span>
+                    <span className="text-[11px] text-muted-foreground sm:hidden">{config.label.slice(0, 3)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
