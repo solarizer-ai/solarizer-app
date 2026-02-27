@@ -216,7 +216,7 @@ const Auth = () => {
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
           <Link to="/">
-            <img src={solarizerLogo} alt="Solarizer" className="w-14 h-14 rounded-lg" />
+            <img src={solarizerLogo} alt="Solarizer" className="w-14 h-14 rounded-lg" decoding="sync" />
           </Link>
         </div>
 

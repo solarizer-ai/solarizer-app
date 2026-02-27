@@ -140,6 +140,7 @@ export function DashboardSidebar() {
                 src={solarizerLogo}
                 alt="Solarizer"
                 className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
+                decoding="sync"
               />
               <span className="text-sm font-semibold text-foreground">
                 Solarizer
