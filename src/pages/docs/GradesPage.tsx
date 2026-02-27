@@ -5,7 +5,7 @@ const GradesPage = () => (
   <div className="space-y-6">
     <div>
       <h2 className="text-2xl font-semibold text-foreground">Security Grades</h2>
-      <p className="text-sm text-muted-foreground mt-1">Understanding your security score</p>
+      <p className="text-sm text-muted-foreground mt-1">Understanding your audit grade</p>
     </div>
     <Card>
       <CardHeader>
@@ -13,16 +13,16 @@ const GradesPage = () => (
           <Shield className="w-5 h-5 text-primary" />
           Grade Breakdown
         </CardTitle>
-        <CardDescription>How your security score maps to a grade</CardDescription>
+        <CardDescription>Grades are determined by the highest severity finding in your audit</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {[
-            { grade: "A", range: "85-100%", desc: "Excellent security posture" },
-            { grade: "B", range: "70-84%", desc: "Good with minor issues" },
-            { grade: "C", range: "60-69%", desc: "Moderate vulnerabilities" },
-            { grade: "D", range: "50-59%", desc: "Significant concerns" },
-            { grade: "F", range: "0-49%", desc: "Critical issues found" },
+            { grade: "A", criteria: "No vulnerabilities", desc: "Only gas optimizations or informational findings (or no findings at all)" },
+            { grade: "B", criteria: "Low severity only", desc: "Minor issues with no medium, high, or critical findings" },
+            { grade: "C", criteria: "Medium severity found", desc: "At least one medium-severity vulnerability present" },
+            { grade: "D", criteria: "High severity found", desc: "At least one high-severity vulnerability present" },
+            { grade: "F", criteria: "Critical found", desc: "At least one critical vulnerability — immediate action required" },
           ].map((item) => (
             <div key={item.grade} className="text-center p-4 rounded-lg bg-muted/50">
               <div
@@ -36,7 +36,7 @@ const GradesPage = () => (
               >
                 {item.grade}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">{item.range}</div>
+              <div className="text-xs text-muted-foreground mt-1">{item.criteria}</div>
               <div className="text-xs mt-2">{item.desc}</div>
             </div>
           ))}

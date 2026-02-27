@@ -28,7 +28,7 @@ const severityConfig: Record<Severity, {
   critical: { icon: ShieldAlert, label: "Critical", className: "text-critical bg-critical/10 border-critical/30", barColor: "bg-critical" },
   high: { icon: AlertTriangle, label: "High", className: "text-destructive bg-destructive/10 border-destructive/30", barColor: "bg-destructive" },
   medium: { icon: AlertCircle, label: "Medium", className: "text-warning bg-warning/10 border-warning/30", barColor: "bg-warning" },
-  low: { icon: Info, label: "Low", className: "text-primary bg-primary/10 border-primary/30", barColor: "bg-primary" },
+  low: { icon: Info, label: "Low", className: "text-low bg-low/10 border-low/30", barColor: "bg-low" },
   info: { icon: Info, label: "Info", className: "text-slate-400 bg-slate-400/10 border-slate-400/30", barColor: "bg-slate-400" },
   gas: { icon: Fuel, label: "Gas", className: "text-green-500 bg-green-500/10 border-green-500/30", barColor: "bg-green-500" },
 };
@@ -353,12 +353,8 @@ const PublicReport = () => {
     .filter(sev => severityCounts[sev] > 0)
     .map(sev => ({ severity: sev, findings: allFindings.filter(f => f.severity === sev) }));
 
-  // Score ring math
-  const score = audit.security_score ?? 0;
   const grade = audit.grade as string | null;
   const gConfig = grade ? gradeConfig[grade] : null;
-  const circumference = 2 * Math.PI * 45;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
 
   // Scope files
   const scopeFiles: string[] = (() => {
@@ -405,23 +401,17 @@ const PublicReport = () => {
         {/* ── Score Card with Grade Ring ──────────────────── */}
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8">
-            {/* Circular Progress Ring */}
-            <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" className="stroke-muted" strokeWidth="6" fill="none" />
-                <circle
-                  cx="50" cy="50" r="45"
-                  className={cn("transition-all duration-1000 ease-out", gConfig?.stroke || "stroke-muted")}
-                  strokeWidth="6" fill="none" strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
+            {/* Grade Badge */}
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center">
+              <div className={cn(
+                "w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 flex items-center justify-center",
+                !grade ? "border-muted" :
+                grade === "A" || grade === "B" ? "border-success" :
+                grade === "C" || grade === "D" ? "border-warning" : "border-critical"
+              )}>
                 <span className={cn("text-3xl sm:text-4xl font-bold", gConfig?.color || "text-muted-foreground")}>
                   {grade || "--"}
                 </span>
-                <span className="text-xs text-muted-foreground">{score}/100</span>
               </div>
             </div>
 
@@ -531,7 +521,14 @@ const PublicReport = () => {
               </h2>
               <div className="space-y-2">
                 {groupFindings.map(finding => (
-                  <div key={finding.id} className="border border-border rounded-lg overflow-hidden bg-card/50">
+                  <div key={finding.id} className={cn(
+                    "border border-border rounded-lg overflow-hidden bg-card/50 border-l-2",
+                    severity === "critical" ? "border-l-critical" :
+                    severity === "high" ? "border-l-destructive" :
+                    severity === "medium" ? "border-l-warning" :
+                    severity === "low" ? "border-l-low" :
+                    severity === "info" ? "border-l-slate-400" : "border-l-green-500"
+                  )}>
                     <PublicFindingItem finding={finding} />
                   </div>
                 ))}

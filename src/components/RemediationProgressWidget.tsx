@@ -30,10 +30,10 @@ const severityConfig = {
     text: "text-warning",
   },
   low: {
-    dot: "bg-primary",
-    bg: "bg-primary/10",
-    border: "border-primary/30",
-    text: "text-primary",
+    dot: "bg-low",
+    bg: "bg-low/10",
+    border: "border-low/30",
+    text: "text-low",
   },
   info: {
     dot: "bg-slate-400",
@@ -104,7 +104,7 @@ export function RemediationProgressWidget({ auditId, className }: RemediationPro
           </div>
           <Progress 
             value={stats.percentage} 
-            className="h-2"
+            className="h-2.5"
           />
         </div>
 
@@ -126,6 +126,9 @@ export function RemediationProgressWidget({ auditId, className }: RemediationPro
                 )}
               >
                 <span className={cn("w-2 h-2 rounded-full", config.dot)} />
+                <span className={cn("text-xs font-medium capitalize", config.text)}>
+                  {severity}
+                </span>
                 <span className={cn("text-sm font-medium", config.text)}>
                   {severityStats.resolved}/{severityStats.total}
                 </span>
