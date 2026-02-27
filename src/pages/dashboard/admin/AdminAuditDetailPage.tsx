@@ -105,7 +105,7 @@ export default function AdminAuditDetailPage() {
               { label: "Source", value: audit?.source || "—" },
               { label: "nLOC", value: audit?.nloc_count?.toLocaleString() || "—" },
               { label: "Credits Deducted", value: audit?.credits_deducted?.toLocaleString() || "—" },
-              { label: "Findings", value: audit?.findings_count?.toLocaleString() || "0" },
+              { label: "Findings", value: (findingCounts ? Object.values(findingCounts).reduce((s: number, c: number) => s + c, 0) : 0).toLocaleString() },
               { label: "Created", value: audit?.created_at ? new Date(audit.created_at).toLocaleString() : "—" },
               { label: "Error", value: audit?.error_message || "none" },
             ].map((item) => (

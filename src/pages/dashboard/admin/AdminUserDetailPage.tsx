@@ -171,7 +171,7 @@ export default function AdminUserDetailPage() {
                     onClick={() => navigate(`/dashboard/admin/audits/${a.audit_id}`)}
                   >
                     <td className="p-3 font-medium text-foreground">{a.project_name}</td>
-                    <td className={`p-3 font-medium ${statusColor[a.status] || ""}`}>{a.status}</td>
+                    <td className={`p-3 font-medium ${statusColor[a.audit_status] || ""}`}>{a.audit_status}</td>
                     <td className="p-3 text-muted-foreground">{a.grade || "—"}</td>
                     <td className="p-3 text-muted-foreground">{a.nloc_count?.toLocaleString() || "—"}</td>
                     <td className="p-3 text-muted-foreground">{a.credits_deducted?.toLocaleString() || "—"}</td>

@@ -108,8 +108,8 @@ export default function AdminAuditsPage() {
                         <td className="p-3 text-muted-foreground truncate max-w-[120px]">{a.user_email}</td>
                         <td className="p-3 font-medium text-foreground truncate max-w-[120px]">{a.project_name}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-xs border ${statusColor[a.status] || ""}`}>
-                            {a.status}
+                          <span className={`px-2 py-0.5 rounded text-xs border ${statusColor[a.audit_status] || ""}`}>
+                            {a.audit_status}
                           </span>
                         </td>
                         <td className="p-3 text-muted-foreground">{a.grade || "—"}</td>

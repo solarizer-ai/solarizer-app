@@ -50,14 +50,25 @@ export default function AdminCreditsPage() {
   const { data: recentAdjustments = [] } = useQuery({
     queryKey: ["admin-adjustments"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch txns without broken join
+      const { data: txns, error } = await supabase
         .from("credit_txns")
-        .select("*, profiles(display_name, email)")
+        .select("*")
         .eq("type", "admin_adjustment")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data;
+      if (!txns || txns.length === 0) return [];
+
+      // Batch-lookup profiles for unique user_ids
+      const userIds = [...new Set(txns.map((t: any) => t.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, email, display_name")
+        .in("user_id", userIds);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      return txns.map((tx: any) => ({ ...tx, profile: profileMap.get(tx.user_id) || null }));
     },
   });
 
@@ -178,7 +189,7 @@ export default function AdminCreditsPage() {
               <tbody>
                 {(recentAdjustments as any[]).map((tx) => (
                   <tr key={tx.id} className="border-b border-border/50">
-                    <td className="p-3 text-muted-foreground">{tx.profiles?.email || tx.user_id}</td>
+                    <td className="p-3 text-muted-foreground">{tx.profile?.email || tx.user_id}</td>
                     <td className={`p-3 font-medium ${tx.amount >= 0 ? "text-success" : "text-destructive"}`}>
                       {tx.amount >= 0 ? "+" : ""}{tx.amount?.toLocaleString()}
                     </td>
