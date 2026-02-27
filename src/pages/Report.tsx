@@ -16,7 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle, Archive, Lightbulb, ShieldCheck, Globe, LockKeyhole, Copy, Check } from "lucide-react";
+import { Shield, AlertTriangle, FileCode, Share2, Users, Download, Lock, Sparkles, XCircle, Archive, Lightbulb, ShieldCheck, Globe, LockKeyhole, Copy, Check } from "lucide-react";
+import { ReportSkeleton } from "@/components/AuditCardSkeleton";
 import { Switch } from "@/components/ui/switch";
 import { useTogglePublicReport } from "@/hooks/useTogglePublicReport";
 import InvariantsTab from "@/components/InvariantsTab";
@@ -366,9 +367,7 @@ const Report = () => {
           </div>
 
           {auditLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
+            <ReportSkeleton />
           ) : currentAudit ? (
             <>
               {(currentAudit.status === 'failed' || currentAudit.status === 'cancelled') ? (

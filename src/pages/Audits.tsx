@@ -6,7 +6,8 @@ import AuditCard from "@/components/AuditCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Loader2, FileCode, Trash2 } from "lucide-react";
+import { Plus, Search, FileCode, Trash2 } from "lucide-react";
+import { AuditListSkeleton } from "@/components/AuditCardSkeleton";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -165,9 +166,7 @@ const Audits = () => {
 
           {/* Audit Grid */}
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
+            <AuditListSkeleton count={6} columns="md:grid-cols-2 lg:grid-cols-3" />
           ) : filteredAudits && filteredAudits.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredAudits.map((audit) => {
