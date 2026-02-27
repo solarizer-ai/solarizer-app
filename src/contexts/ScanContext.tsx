@@ -3,26 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-interface Finding { id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low' | 'info'; }
-
-interface OrchestrationProgress {
-  currentContract?: string;
-  contractIndex?: number;
-  contractTotal?: number;
-  subPhase?: string;
-}
-
 interface ScanState {
-  isScanning: boolean; showWidget: boolean; currentAuditId: string | null; projectName: string;
-  realtimeFindings: Finding[];
-  realtimeAuditStatus: 'pending' | 'analyzing' | 'secured' | 'issues' | 'failed' | null;
-  orchestrationPhase: string | null;
-  orchestrationProgress: OrchestrationProgress | null;
+  isScanning: boolean;
+  currentAuditId: string | null;
+  projectName: string;
 }
 
 interface ScanContextValue extends ScanState {
   startScan: (auditId: string, projectName: string) => void;
-  closeWidget: () => void;
 }
 
 const ScanContext = createContext<ScanContextValue | null>(null);
@@ -35,23 +23,16 @@ export const useScan = () => {
 
 export const ScanProvider = ({ children }: { children: ReactNode }) => {
   const [isScanning, setIsScanning] = useState(false);
-  const [showWidget, setShowWidget] = useState(false);
   const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
-  const [realtimeFindings, setRealtimeFindings] = useState<Finding[]>([]);
-  const [realtimeAuditStatus, setRealtimeAuditStatus] = useState<ScanState['realtimeAuditStatus']>(null);
-  const [orchestrationPhase, setOrchestrationPhase] = useState<string | null>(null);
-  const [orchestrationProgress, setOrchestrationProgress] = useState<OrchestrationProgress | null>(null);
 
   const findingsChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const auditChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const orchestrationChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const queryClient = useQueryClient();
 
   const cleanupChannels = useCallback(() => {
     if (findingsChannelRef.current) { supabase.removeChannel(findingsChannelRef.current); findingsChannelRef.current = null; }
     if (auditChannelRef.current) { supabase.removeChannel(auditChannelRef.current); auditChannelRef.current = null; }
-    if (orchestrationChannelRef.current) { supabase.removeChannel(orchestrationChannelRef.current); orchestrationChannelRef.current = null; }
   }, []);
 
   useEffect(() => {
@@ -59,10 +40,7 @@ export const ScanProvider = ({ children }: { children: ReactNode }) => {
 
     const findingsChannel = supabase
       .channel(`findings-${currentAuditId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'findings', filter: `audit_id=eq.${currentAuditId}` }, (payload) => {
-        const newFinding = payload.new as Finding;
-        if (newFinding.severity === 'info') return;
-        setRealtimeFindings(prev => [...prev, { id: newFinding.id, title: newFinding.title, severity: newFinding.severity }]);
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'findings', filter: `audit_id=eq.${currentAuditId}` }, () => {
         queryClient.invalidateQueries({ queryKey: ['findings', currentAuditId] });
       }).subscribe();
     findingsChannelRef.current = findingsChannel;
@@ -70,10 +48,9 @@ export const ScanProvider = ({ children }: { children: ReactNode }) => {
     const auditChannel = supabase
       .channel(`audit-${currentAuditId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'audits', filter: `id=eq.${currentAuditId}` }, (payload) => {
-        const updatedAudit = payload.new as { status: ScanState['realtimeAuditStatus'] };
-        setRealtimeAuditStatus(updatedAudit.status);
+        const updatedAudit = payload.new as { status: string };
         queryClient.invalidateQueries({ queryKey: ['audit', currentAuditId] });
-        if (updatedAudit.status === 'secured' || updatedAudit.status === 'issues' || updatedAudit.status === 'failed') {
+        if (['secured', 'issues', 'failed'].includes(updatedAudit.status)) {
           cleanupChannels();
           setIsScanning(false);
           if (updatedAudit.status === 'failed') toast.error("Analysis Failed", { description: "Something went wrong. If credits were charged, they will be refunded.", duration: 8000 });
@@ -81,33 +58,19 @@ export const ScanProvider = ({ children }: { children: ReactNode }) => {
       }).subscribe();
     auditChannelRef.current = auditChannel;
 
-    const orchestrationChannel = supabase
-      .channel(`orchestration-${currentAuditId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'audit_orchestration', filter: `session_id=eq.${currentAuditId}` }, (payload) => {
-        const row = payload.new as { phase?: string; progress?: OrchestrationProgress };
-        setOrchestrationPhase(row.phase ?? null);
-        setOrchestrationProgress(row.progress ?? null);
-      }).subscribe();
-    orchestrationChannelRef.current = orchestrationChannel;
-
     return () => { cleanupChannels(); };
   }, [currentAuditId, isScanning, queryClient, cleanupChannels]);
 
   const startScan = useCallback((auditId: string, name: string) => {
     cleanupChannels();
-    setCurrentAuditId(auditId); setProjectName(name); setIsScanning(true); setShowWidget(true);
-    setRealtimeFindings([]); setRealtimeAuditStatus('analyzing');
-    setOrchestrationPhase('queued'); setOrchestrationProgress(null);
+    setCurrentAuditId(auditId);
+    setProjectName(name);
+    setIsScanning(true);
     toast.info("Security analysis started", { description: `Analyzing ${name}...`, duration: 4000 });
   }, [cleanupChannels]);
 
-  const closeWidget = useCallback(() => {
-    setShowWidget(false);
-    if (!isScanning) { setCurrentAuditId(null); setProjectName(""); setRealtimeFindings([]); setRealtimeAuditStatus(null); setOrchestrationPhase(null); setOrchestrationProgress(null); }
-  }, [isScanning]);
-
   return (
-    <ScanContext.Provider value={{ isScanning, showWidget, currentAuditId, projectName, realtimeFindings, realtimeAuditStatus, orchestrationPhase, orchestrationProgress, startScan, closeWidget }}>
+    <ScanContext.Provider value={{ isScanning, currentAuditId, projectName, startScan }}>
       {children}
     </ScanContext.Provider>
   );

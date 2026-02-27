@@ -11,7 +11,7 @@ import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
-import ScanProgressWidget from "@/components/ScanProgressWidget";
+
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { FileCode, Loader2, Trash2, ChevronRight, Zap, Plus, X } from "lucide-react";
@@ -52,7 +52,7 @@ const Index = () => {
 
   const { user } = useAuth();
   const runAudit = useRunAudit();
-  const { startScan, showWidget, projectName: scanProjectName, realtimeFindings, realtimeAuditStatus, closeWidget, currentAuditId } = useScan();
+  const { startScan, currentAuditId } = useScan();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -316,15 +316,6 @@ const Index = () => {
         onOpenChange={setShowUpgradeModal}
       />
 
-      {/* Scan Progress Widget */}
-      <ScanProgressWidget
-        isVisible={showWidget}
-        projectName={scanProjectName}
-        findings={realtimeFindings}
-        auditStatus={realtimeAuditStatus}
-        onViewResults={() => currentAuditId && navigate(`/reports/${currentAuditId}`)}
-        onClose={closeWidget}
-      />
 
       <Footer />
     </div>

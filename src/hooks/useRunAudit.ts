@@ -15,12 +15,14 @@ interface AuditStartedResult {
 export const useRunAudit = () => {
   return useMutation({
     mutationFn: async (params: RunAuditParams): Promise<AuditStartedResult> => {
+      const idempotency_key = crypto.randomUUID();
       const { data, error } = await invokeWithRefresh<AuditStartedResult>('web-audit-start', {
         body: {
           projectName: params.projectName,
           files: params.files,
           scope: params.scope,
           additionalContext: params.additionalContext,
+          idempotency_key,
         },
       });
 

@@ -42,6 +42,6 @@ export function useAuditProgress(auditId: string | null, enabled: boolean) {
       return data as unknown as AuditOrchestrationProgress;
     },
     enabled: !!auditId && enabled,
-    refetchInterval: 2000,
+    refetchInterval: 10000,
   });
 }

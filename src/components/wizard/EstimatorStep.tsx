@@ -128,11 +128,10 @@ const EstimatorStep = ({ scopeFiles, contextFiles, onBack, onProceed, onUpgradeN
   const { result } = estimation;
 
   const getValidationStatus = () => {
-    if (plan === 'starter') {
-      if (scopeFiles.length > (PLAN_LIMITS.starter as any).maxFilesPerScan) return { valid: false, reason: 'file_limit' as const, message: `Launch plan allows only 1 file per scan.` };
-      if (result.scopeNloc > PLAN_LIMITS.starter.nlocPerScan) return { valid: false, reason: 'nloc_limit' as const, message: `Scope (${result.scopeNloc} nLOC) exceeds ${PLAN_LIMITS.starter.nlocPerScan} nLOC limit.` };
-      if (result.totalCredits > creditsRemaining) return { valid: false, reason: 'credits' as const, message: `You need ${result.totalCredits} credits but only have ${creditsRemaining}.` };
-      return { valid: true, message: 'Within your plan limits' };
+    const totalNloc = result.scopeNloc + result.contextNloc;
+    const planLimit = PLAN_LIMITS[plan]?.nlocPerScan ?? PLAN_LIMITS.starter.nlocPerScan;
+    if (totalNloc > planLimit) {
+      return { valid: false, reason: 'nloc_limit' as const, message: `Total nLOC (${totalNloc}) exceeds ${planLimit} nLOC limit.` };
     }
     if (result.totalCredits > creditsRemaining) return { valid: false, reason: 'credits' as const, message: `You need ${result.totalCredits} credits but only have ${creditsRemaining}.` };
     return { valid: true, message: `Will use ${result.totalCredits} of your ${creditsRemaining} credits` };
@@ -142,7 +141,7 @@ const EstimatorStep = ({ scopeFiles, contextFiles, onBack, onProceed, onUpgradeN
 
   const handleProceed = () => {
     if (!validation.valid) {
-      if (validation.reason === 'nloc_limit' || validation.reason === 'file_limit') onUpgradeNeeded(validation.reason, result.totalCredits);
+      if (validation.reason === 'nloc_limit') onUpgradeNeeded(validation.reason, result.totalCredits);
       else if (validation.reason === 'credits') onPowerUpNeeded(result.totalCredits);
       return;
     }
