@@ -1,39 +1,33 @@
 
 
-# Hide Report Sections During Active Audit
+# Fix Failed Kinetiq Audit -- One-Time Data Correction
 
-## Problem
-When an audit is in progress (`status === 'analyzing'`), the Report page shows the Remediation Progress widget, tab bar (Scope, Insights, Invariants, Findings, Coverage, Archive), and all tab content. These sections are meaningless during analysis since data hasn't been generated yet.
+## Current State
+- Audit `7e8c3ed5` is marked as `failed` with `findings_count: 0`, no grade, and `is_locked: true`
+- Orchestration record shows `status: failed`, `phase: qa`
+- However, 85 findings are persisted in the `findings` table (4 high, 12 medium, 39 low, 19 info, 11 gas)
 
-## Fix (single file: `src/pages/Report.tsx`)
+## Fix
 
-Wrap the Remediation Progress widget (line 432-434) and the entire Tabs block (lines 437-621) with an `{!isLive && (...)}` guard so they only render after the audit completes successfully.
+Create a temporary edge function (`admin-fix-audit`) that uses the service role key to update both records:
 
-The AuditProgressPanel (lines 408-414) already has its own `{isLive && ...}` guard, so it will continue to show during analysis. The SecurityScoreCard (lines 417-429) also already has `{!isLive && ...}`.
+**audits table:**
+- `status`: failed -> issues
+- `grade`: null -> D (has high-severity findings)
+- `findings_count`: 0 -> 85
+- `contracts_completed`: 0 -> 6
+- `error_message`: clear to null
 
-### What changes
+**audit_orchestration table:**
+- `status`: failed -> completed
+- `phase`: qa -> completed
+- `findings_count`: 69 -> 85
+- `error`: clear to null
 
-Lines 431-621 get wrapped:
+## Steps
+1. Create `supabase/functions/admin-fix-audit/index.ts` with the two update queries
+2. Deploy and invoke it once
+3. Delete the edge function after confirming success
 
-```
-{!isLive && (
-  <>
-    {/* Remediation Progress - Business only */}
-    {canCommentOnFindings && (
-      <RemediationProgressWidget auditId={currentAudit.id} />
-    )}
-
-    {/* Tabbed Interface */}
-    <Tabs ...>
-      ...all tab content unchanged...
-    </Tabs>
-  </>
-)}
-```
-
-This means during an active audit, the user sees only:
-- The project name header with "Analysing..." subtitle
-- The AuditProgressPanel with live phase/contract tracking
-
-Once the audit transitions to a terminal state (completed/failed/cancelled), `isLive` becomes false and the full report UI appears.
+No schema changes needed. The `is_locked` flag stays true (correct for terminal state).
 
