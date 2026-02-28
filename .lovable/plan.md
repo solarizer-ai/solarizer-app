@@ -1,34 +1,37 @@
 
+# Home Page Visual Fixes
 
-# Fix: Previous contracts not marked as done when phase advances
+Four targeted fixes in `src/pages/Home.tsx`.
 
-## Problem
-In `AuditProgressPanel.tsx`, the contract completion logic on line 119 relies on `orchestration.progress.contractIndex` to determine if a previous contract is done (`idx < currentIdx`). However, the backend often updates `currentContract` (the path string) without reliably incrementing `contractIndex`, so it defaults to 0 -- meaning no contract ever satisfies `idx < 0`.
+## Fix 1 -- Pipeline Line Overshoots Last Icon (lines 470-498)
 
-The screenshot confirms: "SingleProviderPoolType.sol" shows as "pending" even though the audit has moved on to "SingleProviderHelper.sol".
+Remove the two absolute line divs (lines 471-475) that span the full container height. Replace with per-step connector lines rendered inside the `phases.map()` loop:
 
-## Fix (single file: `src/components/AuditProgressPanel.tsx`)
+- Each phase (except the last) renders a dashed background connector and an active fill overlay
+- Lines start at icon center (`top-6 md:top-8`) and span to the next icon (`h-[calc(100%+1.25rem)] md:h-[calc(100%+2rem)]`)
+- The active fill uses the existing `isActive` threshold check
+- Last phase renders no connector, so the line stops at the last icon center
 
-### Derive effective index from `currentContract` path
+## Fix 2 -- Hero Headline Asymmetry (lines 288-291)
 
-In the `contractList` useMemo (lines 111-123), compute the effective current index by finding the position of `currentContract` in the paths array, then fall back to `contractIndex`:
+Remove `w-fit` from the `h1` and `whitespace-nowrap` + `block` from both spans. Use `text-center` on the h1 and a `<br />` between lines so each line sits centered at its natural width.
 
-```typescript
-const currentContractPath = orchestration.progress.currentContract;
-const derivedIdx = currentContractPath
-  ? paths.findIndex((p) => p === currentContractPath)
-  : -1;
-const effectiveIdx = derivedIdx >= 0 ? derivedIdx : currentIdx;
+```
+Before: <h1 className="w-fit mx-auto ...">
+After:  <h1 className="mx-auto ... text-center">
 ```
 
-Then update the done check from:
-```typescript
-const done = prog?.done || idx < currentIdx || activePhaseIdx > 1;
-```
-to:
-```typescript
-const done = prog?.done || idx < effectiveIdx || activePhaseIdx > 1;
-```
+## Fix 3 -- Finding Cards Inconsistent Heights (lines 159-160, 430, 450)
 
-This ensures that any contract appearing before the currently active contract in the list is correctly marked as done, regardless of whether `contractIndex` is properly set by the backend.
+- Add `flex flex-col h-full` to the FindingCard root div
+- Add `items-stretch` to both finding card grids (lines 430, 450)
 
+## Fix 4 -- Remove CLI References (lines 143-148, 223-242)
+
+- Change enterprise feature title from "Dashboard + CLI" to "Web Dashboard"
+- Update description to remove terminal/CLI mention
+- Replace `InterfacesIllustration` two-column grid (Dashboard + CLI panels) with a single full-width dashboard panel
+
+## Technical Details
+
+All changes are in `src/pages/Home.tsx`. No new dependencies or files needed.
