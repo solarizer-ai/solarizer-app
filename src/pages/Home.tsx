@@ -103,13 +103,6 @@ const capabilities = [
   },
 ];
 
-const stats = [
-  { value: "Minutes", versus: "not weeks", label: "Time to results" },
-  { value: "$149/mo", versus: "not $50K+", label: "Starting price" },
-  { value: "5", versus: "AI agents", label: "Multi-agent ensemble" },
-  { value: "Every", versus: "commit", label: "Continuous coverage" },
-  { value: "Real-time", versus: "findings", label: "As detected" },
-];
 
 const knownFindings = [
   {
@@ -696,7 +689,7 @@ const Home = () => {
       <section className="relative pt-28 pb-12 md:pt-40 md:pb-14">
         <HeroBackground />
 
-        <div className="relative max-w-6xl mx-auto text-center px-5 md:px-6">
+        <div className="relative z-20 max-w-6xl mx-auto text-center px-5 md:px-6">
           <h1 className="mx-auto font-black leading-[1.15] tracking-tight text-center">
             <FitText as="span" max={88} min={22} className="block text-foreground">
               AI-Powered Smart Contract Audits
@@ -706,7 +699,7 @@ const Home = () => {
             </FitText>
           </h1>
 
-          <p className="text-base md:text-lg text-muted-foreground/70 mt-4 md:mt-8 max-w-xl mx-auto leading-relaxed">
+          <p className="text-[clamp(0.75rem,calc(0.6rem+0.7vw),1.125rem)] text-muted-foreground/70 mt-3 md:mt-8 max-w-xl mx-auto leading-relaxed">
             Multi-agent security engine that hunts vulnerabilities across your entire protocol — from known exploit patterns to protocol-specific logic flaws. Results in minutes, not weeks.
           </p>
 
@@ -731,7 +724,7 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="relative mt-10 sm:mt-16 max-w-5xl mx-auto px-5 md:px-6">
+        <div className="relative z-20 mt-10 sm:mt-16 max-w-5xl mx-auto px-5 md:px-6">
           <DashboardAuditDemo />
         </div>
       </section>
@@ -759,43 +752,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── SECTION 3: Comparison ─────────────────────────────────────── */}
-      <section className="py-16 md:py-24">
-        <div className="max-w-4xl mx-auto px-5 md:px-6">
-          <ScrollReveal>
-            <div className="text-center mb-10 md:mb-14">
-              <h2 className="font-black tracking-tight leading-[1.15]">
-                <FitText as="span" max={56} min={19} className="block">Traditional Audits</FitText>
-                <FitText as="span" max={56} min={19} className="block text-gradient">Can't Keep Up</FitText>
-              </h2>
-            </div>
-          </ScrollReveal>
-
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-            {stats.map((s, i) => (
-              <ScrollReveal key={s.label} delay={i * 80}>
-                <div className={cn(
-                  "rounded-2xl border border-primary/15 p-4 md:p-5 text-center relative overflow-hidden h-full",
-                  i === 0 && "col-span-2 md:col-span-1"
-                )}>
-                  <div className="absolute inset-0 bg-radial-glow opacity-40 pointer-events-none" />
-                  <p className="relative text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-2">
-                    {s.label}
-                  </p>
-                  <p className="relative text-2xl md:text-3xl font-black text-primary leading-tight">
-                    {s.value}
-                  </p>
-                  <p className="relative text-xs text-muted-foreground/50 mt-1">
-                    {s.versus}
-                  </p>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 4: How It Works ───────────────────────────────────── */}
+      {/* ── SECTION 3: How It Works ───────────────────────────────────── */}
       <section id="how-it-works" className="py-16 md:py-24 bg-[#030303]">
         <div className="max-w-3xl mx-auto px-5 md:px-6">
           <ScrollReveal>
@@ -803,7 +760,7 @@ const Home = () => {
               <FitText as="h2" max={56} min={19} className="font-black tracking-tight leading-[1.15]">
                 The Engine
               </FitText>
-              <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
+              <p className="text-[clamp(0.7rem,calc(0.5rem+0.55vw),1rem)] text-muted-foreground/60 mt-3 md:mt-4 max-w-xl mx-auto">
                 7 phases from scoping to report
               </p>
             </div>
@@ -864,14 +821,14 @@ const Home = () => {
               <FitText as="h2" max={56} min={19} className="font-black tracking-tight leading-[1.15]">
                 Real Findings
               </FitText>
-              <p className="text-sm md:text-base text-muted-foreground/60 mt-4 max-w-lg mx-auto">
+              <p className="text-[clamp(0.7rem,calc(0.5rem+0.55vw),1rem)] text-muted-foreground/60 mt-3 md:mt-4 max-w-lg mx-auto">
                 From known exploits to protocol-specific logic
               </p>
             </div>
           </ScrollReveal>
 
           {/* Known patterns */}
-          <div className="mt-8 md:mt-10 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
+          <div className="mt-8 md:mt-10 rounded-2xl bg-foreground/[0.01] border border-border/10 p-5 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-6">
               <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
                 Known Vulnerability Patterns
@@ -890,7 +847,7 @@ const Home = () => {
           </div>
 
           {/* Protocol-specific */}
-          <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
+          <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-5 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-3">
               <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
                 Protocol-Specific Logic
@@ -912,7 +869,7 @@ const Home = () => {
           </div>
 
           {/* QA & Gas */}
-          <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-4 md:p-8">
+          <div className="mt-6 rounded-2xl bg-foreground/[0.01] border border-border/10 p-5 md:p-8">
             <div className="flex items-center justify-center gap-2 mb-6">
               <p className="text-xs font-mono uppercase tracking-widest text-primary/60">
                 QA & Gas Optimizations
@@ -968,7 +925,7 @@ const Home = () => {
       </section>
 
       {/* ── SECTION 7: Final CTA ──────────────────────────────────────── */}
-      <section className="py-16 md:py-24 bg-[#030303]">
+      <section className="py-16 md:py-24">
         <ScrollReveal>
           <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
             <h2 className="font-black tracking-tight leading-[1.15]">
@@ -976,7 +933,7 @@ const Home = () => {
               <FitText as="span" max={88} min={22} className="block text-gradient mt-1 md:mt-2">Fraction of the Cost</FitText>
             </h2>
 
-            <p className="text-sm md:text-lg text-muted-foreground/60 mt-6 max-w-lg mx-auto leading-relaxed">
+            <p className="text-[clamp(0.75rem,calc(0.6rem+0.7vw),1.125rem)] text-muted-foreground/60 mt-4 md:mt-6 max-w-lg mx-auto leading-relaxed">
               Multi-pass AI analysis, exploit-pattern matching, and line-accurate remediation — accessible to every team, at every stage.
             </p>
 
@@ -989,16 +946,6 @@ const Home = () => {
               </Link>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
-              {["Multi-Phase Analysis", "Line-Accurate Fixes", "Reports in Minutes"].map((pill) => (
-                <span
-                  key={pill}
-                  className="bg-foreground/[0.03] border border-border/10 rounded-full px-3 py-1 text-[11px] font-mono text-muted-foreground/50"
-                >
-                  {pill}
-                </span>
-              ))}
-            </div>
           </div>
         </ScrollReveal>
       </section>

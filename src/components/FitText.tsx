@@ -41,7 +41,7 @@ export function FitText({
       }
     }
 
-    el.style.fontSize = `${lo}px`;
+    el.style.fontSize = `${lo - 1}px`;
   }, [min, max]);
 
   useLayoutEffect(() => {
