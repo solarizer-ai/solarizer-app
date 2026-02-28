@@ -438,29 +438,29 @@ const Report = () => {
                       {/* Tabbed Interface: Scope, Coverage & Findings */}
                       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                     <TabsList className="flex w-full overflow-x-auto no-scrollbar">
-                      <TabsTrigger value="scope" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+                      <TabsTrigger value="scope" className="flex-1 flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <FileCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Scope
                       </TabsTrigger>
-                      <TabsTrigger value="insights" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+                      <TabsTrigger value="insights" className="flex-1 flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Insights
                         {effectivePlan === 'starter' && <Lock className="w-3 h-3 text-muted-foreground" />}
                       </TabsTrigger>
-                      <TabsTrigger value="invariants" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+                      <TabsTrigger value="invariants" className="flex-1 flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Invariants
                         {effectivePlan === 'starter' && <Lock className="w-3 h-3 text-muted-foreground" />}
                       </TabsTrigger>
-                      <TabsTrigger value="findings" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+                      <TabsTrigger value="findings" className="flex-1 flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Findings
                       </TabsTrigger>
-                      <TabsTrigger value="coverage" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+                      <TabsTrigger value="coverage" className="flex-1 flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Coverage
                       </TabsTrigger>
-                      <TabsTrigger value="archive" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+                      <TabsTrigger value="archive" className="flex-1 flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <Archive className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Archive
                       </TabsTrigger>
