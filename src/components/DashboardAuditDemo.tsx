@@ -48,10 +48,10 @@ const SUB_PHASES = ["DNA Matching", "Initial Scan", "Deep Scan"];
 
 const FINDINGS: DemoFinding[] = [
   // ── CRITICAL ─────────────────────────────────────────────────────────────
-  { severity: "critical", title: "_executeQueuedHookFeesByHookTransfers clears reentrancy flags enabling re-entrancy during swap/liquidity operations", location: "PoolHooks.sol", lines: "1316-1340", startLine: 1316, snippet: `function _executeQueuedHookFeesByHookTransfers(...) internal {\n    _reentrancyFlags = 0;\n}` },
-  { severity: "critical", title: "_executeQueuedHookFeesByHookTransfers clears all reentrancy flags before performing external token transfers", location: "PoolHooks.sol", lines: "1316-1340", startLine: 1316, snippet: `_reentrancyFlags = 0;\n_processTransfers(hookFeeTransfers);` },
+  { severity: "critical", title: "Fee accounting desync in LiquidityPool collectFees drains reserves without updating reserveA/reserveB", location: "PoolHooks.sol", lines: "1316-1340", startLine: 1316, snippet: "" },
+  { severity: "critical", title: "Uncapped Pro-Rata Fee Calculation Can Cause Permanent Freezing of Funds in Consuming Contracts", location: "PoolHooks.sol", lines: "1316-1340", startLine: 1316, snippet: "" },
   // ── HIGH ──────────────────────────────────────────────────────────────────
-  { severity: "high", title: "_storeNonTokenHookFees uses tokenFor for both hash parameters instead of tokenFee, causing incorrect fee accounting", location: "HookFeeManager.sol", lines: "1237-1253", startLine: 1237, snippet: `bytes32 key = keccak256(abi.encode(poolId, tokenFor, tokenFor));` },
+  { severity: "high", title: "Denial of Service in Settlement via Dust Redemption Requests", location: "HookFeeManager.sol", lines: "1237-1253", startLine: 1237, snippet: "" },
   { severity: "high", title: "executeQueuedHookFeesByHookTransfers clears reentrancy flags then performs external transfers enabling reentrancy", location: "PoolHooks.sol", lines: "1316-1340", startLine: 1316, snippet: `_reentrancyFlags = 0;\ntoken.transfer(recipient, amount);` },
   // ── MEDIUM ───────────────────────────────────────────────────────────────
   { severity: "medium", title: "createPool clears reentrancy guard before delegatecall to addLiquidity, enabling re-entry during hook execution", location: "PoolManager.sol", lines: "18-42", startLine: 18, snippet: `_reentrancyGuard = false;\naddress(this).delegatecall(...)` },
