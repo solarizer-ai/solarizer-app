@@ -19,6 +19,7 @@ import Footer from "@/components/Footer";
 import DashboardAuditDemo from "@/components/DashboardAuditDemo";
 import HeroBackground from "@/components/HeroBackground";
 import ScrollReveal from "@/components/ScrollReveal";
+import { FitText } from "@/components/FitText";
 import { cn } from "@/lib/utils";
 
 // ─── Data ──────────────────────────────────────────────────────────────────
@@ -698,12 +699,12 @@ const Home = () => {
 
         <div className="relative max-w-6xl mx-auto text-center px-5 md:px-6">
           <h1 className="mx-auto font-black leading-[1.15] tracking-tight text-center">
-            <span className="block text-foreground text-[clamp(1.4rem,5vw,5.5rem)]">
+            <FitText as="span" max={88} min={22} className="block text-foreground">
               AI-Powered Smart Contract Audits
-            </span>
-            <span className="block text-gradient text-[clamp(1.4rem,5vw,5.5rem)]">
+            </FitText>
+            <FitText as="span" max={88} min={22} className="block text-gradient">
               That Find Real Exploits
-            </span>
+            </FitText>
           </h1>
 
           <p className="text-base md:text-lg text-muted-foreground/70 mt-4 md:mt-8 max-w-xl mx-auto leading-relaxed">
@@ -740,9 +741,9 @@ const Home = () => {
       <section className="py-16 md:py-24 bg-[#030303]">
         <div className="max-w-5xl mx-auto px-5 md:px-6">
           <ScrollReveal>
-            <h2 className="text-center font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+            <FitText as="h2" max={56} min={19} className="text-center font-black tracking-tight leading-[1.15]">
               Why We're Different
-            </h2>
+            </FitText>
           </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-10 md:mt-14">
@@ -764,9 +765,9 @@ const Home = () => {
         <div className="max-w-4xl mx-auto px-5 md:px-6">
           <ScrollReveal>
             <div className="text-center mb-10 md:mb-14">
-              <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
-                <span className="block">Traditional Audits</span>
-                <span className="block text-gradient">Can't Keep Up</span>
+              <h2 className="font-black tracking-tight leading-[1.15]">
+                <FitText as="span" max={56} min={19} className="block">Traditional Audits</FitText>
+                <FitText as="span" max={56} min={19} className="block text-gradient">Can't Keep Up</FitText>
               </h2>
             </div>
           </ScrollReveal>
@@ -819,9 +820,9 @@ const Home = () => {
         <div className="max-w-3xl mx-auto px-5 md:px-6">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+              <FitText as="h2" max={56} min={19} className="font-black tracking-tight leading-[1.15]">
                 The Engine
-              </h2>
+              </FitText>
               <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
                 7 phases from scoping to report
               </p>
@@ -880,9 +881,9 @@ const Home = () => {
         <div className="max-w-4xl mx-auto px-5 md:px-6">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+              <FitText as="h2" max={56} min={19} className="font-black tracking-tight leading-[1.15]">
                 Real Findings
-              </h2>
+              </FitText>
               <p className="text-sm md:text-base text-muted-foreground/60 mt-4 max-w-lg mx-auto">
                 From known exploits to protocol-specific logic
               </p>
@@ -959,9 +960,9 @@ const Home = () => {
       <section className="py-16 md:py-24 bg-[#030303]">
         <div className="max-w-5xl mx-auto px-5 md:px-6">
           <ScrollReveal>
-            <h2 className="text-center font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+            <FitText as="h2" max={56} min={19} className="text-center font-black tracking-tight leading-[1.15]">
               Built Different
-            </h2>
+            </FitText>
           </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-10 md:mt-14">
@@ -990,9 +991,9 @@ const Home = () => {
       <section className="py-14 md:py-20">
         <ScrollReveal>
           <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
-            <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+            <FitText as="h2" max={56} min={19} className="font-black tracking-tight leading-[1.15]">
               Ready to Start?
-            </h2>
+            </FitText>
             <p className="text-sm md:text-base text-muted-foreground/60 mt-4 max-w-lg mx-auto">
               Get findings in minutes, not weeks
             </p>
@@ -1012,9 +1013,9 @@ const Home = () => {
       <section className="py-16 md:py-24 bg-[#030303]">
         <ScrollReveal>
           <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
-            <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.4rem,5vw,5.5rem)]">
-              <span className="block">Professional Security</span>
-              <span className="block text-gradient mt-1 md:mt-2">Fraction of the Cost</span>
+            <h2 className="font-black tracking-tight leading-[1.15]">
+              <FitText as="span" max={88} min={22} className="block">Professional Security</FitText>
+              <FitText as="span" max={88} min={22} className="block text-gradient mt-1 md:mt-2">Fraction of the Cost</FitText>
             </h2>
 
             <p className="text-sm md:text-lg text-muted-foreground/60 mt-6 max-w-lg mx-auto leading-relaxed">
