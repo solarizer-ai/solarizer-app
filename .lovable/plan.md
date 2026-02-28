@@ -1,66 +1,73 @@
 
 
-# Update DashboardAuditDemo to Match Real Report UI (Updated Plan)
+# Fix DashboardAuditDemo Mobile View -- CSS Scale Approach
 
-## Overview
-Rewrite `src/components/DashboardAuditDemo.tsx` to match the real `AuditProgressPanel` and `SecurityScoreCard` components. Fixed-height container, no layout growth from findings.
+## Problem
+On mobile, the demo tries to fit content into a smaller width by cramping elements. Instead, it should render at desktop proportions and scale down visually -- like dragging a window corner to shrink it. All fonts, icons, spacing, and content shrink proportionally.
 
-## Edge Case Verifications (requested)
+## Solution
+Use CSS `transform: scale()` to render the demo at a fixed desktop size (640x520) and scale it down on smaller screens. Everything -- fonts, icons, padding, findings cards -- shrinks uniformly.
 
-1. **phaseIdx: 6 on complete frame** -- Correct. With 6 phases (indices 0-5), `phaseIdx > idx` is true for all, so all render as done.
+## Changes (single file: `src/components/DashboardAuditDemo.tsx`)
 
-2. **FRAMES phaseIdx remapping** -- Current values `[0, 2, 2, 2, 2, 3, 4, 7, 8]` become `[0, 0, 0, 0, 0, 1, 2, 5, 6]` after removing the first 2 phases.
-   - Contract "isDone" check (line 321): `state.phaseIdx > 2` must change to `state.phaseIdx > 0` (Hunting is now index 0).
-   - Contract "isActive" check (line 322): `state.phaseIdx === 2` must change to `state.phaseIdx === 0`.
-   - Hunting suffix (line 297): Uses `phase === "Hunting"` string match -- still works regardless of index. Confirmed correct.
+### 1. Add a ResizeObserver-based scale wrapper
 
-3. **Fixed-height + findings scroll** -- The outer wrapper must be `flex flex-col` with a fixed height (`h-[480px] sm:h-[520px]`). The findings area uses `overflow-y-auto flex-1 min-h-0` inside it so scrolling stays within bounds.
+- Add a `useRef` on an outer container div and a `ResizeObserver` to measure its width
+- Compute `scale = Math.min(containerWidth / 640, 1)` (never scale up beyond 1x)
+- Store scale in state
 
-4. **GRADE_DESCRIPTIONS for "B+"** -- The demo uses "B+" as a grade string (not just "B"). Both `GRADE_LABELS` and `GRADE_DESCRIPTIONS` must include entries for "B+" and "C+" in addition to plain letter grades. Confirmed: all maps will include: `A`, `B+`, `B`, `C+`, `C`, `D`, `F`, and the pending value.
+### 2. Structure the wrapper
 
-## All Changes (single file: `src/components/DashboardAuditDemo.tsx`)
+```text
++--------------------------------------+
+| Outer div (width: 100%)              |
+| height = 520 * scale (dynamic)       |
+| overflow: hidden, position: relative |
+|                                      |
+|  +--------------------------------+  |
+|  | Inner div (fixed 640px x 520px)|  |
+|  | transform: scale(X)            |  |
+|  | transform-origin: top left     |  |
+|  | position: absolute, top: 0     |  |
+|  |                                |  |
+|  | All content renders at desktop |  |
+|  | size -- fonts, icons, spacing  |  |
+|  | all shrink via the CSS scale   |  |
+|  +--------------------------------+  |
++--------------------------------------+
+```
 
-### Constants / Data
+On a 360px phone: scale = 360/640 = 0.5625, so the entire demo (including all text, icons, padding) appears at ~56% of desktop size -- same proportions, just smaller.
 
-| # | What | Detail |
-|---|------|--------|
-| 1 | PHASES | Remove "Complexity Analysis" and "Session Start". Keep 6: Hunting, Cross-Contract, Validation, QA Scan, Formatting, Report Generation |
-| 2 | FRAMES phaseIdx | Remap: `[0,2,2,2,2,3,4,7,8]` to `[0,0,0,0,0,1,2,5,6]`. Add `gas: 0` to all counts |
-| 3 | VULN_CATEGORIES | Add Gas entry (`bg-green-500`). Use full labels. Add icon field per entry |
-| 4 | New maps | `GRADE_LABELS` (A=Excellent, B+=Good, B=Good, C+=Fair, C=Fair, D=Poor, F=Critical), `GRADE_DESCRIPTIONS` (with B+ and C+ entries), `COMPLEXITY_STYLES` (L1/L2/L3 color maps) |
-| 5 | Import | Add `Fuel` from lucide-react |
+### 3. Remove all `sm:` responsive breakpoints inside the component
 
-### Layout
+Since the component always renders at 640px internally, responsive breakpoints are unnecessary. Strip all `sm:` prefixed classes and keep only the desktop variants:
 
-| # | What | Detail |
-|---|------|--------|
-| 6 | Fixed container | Inner content area: `flex flex-col h-[480px] sm:h-[520px] overflow-hidden` |
-| 7 | Conditional layout | `!complete`: full-width progress panel only, hide score card. `complete`: full-width score card only, hide progress panel |
+- `p-3 sm:p-5` becomes `p-5`
+- `h-[480px] sm:h-[520px]` becomes `h-[520px]` (fixed at desktop height)
+- `text-sm sm:text-base` becomes `text-base`
+- `text-[10px] sm:text-xs` becomes `text-xs`
+- `text-xs sm:text-sm` becomes `text-sm`
+- `hidden sm:inline` becomes just present (remove hidden)
+- `sm:hidden` elements get removed entirely (mobile-only abbreviations no longer needed)
+- `grid grid-cols-3 gap-2 sm:flex sm:flex-wrap` becomes `flex flex-wrap`
+- `p-3 sm:p-4` becomes `p-4`
+- `px-3 sm:px-4` becomes `px-4`
+- `w-3 h-3 sm:w-3.5 sm:h-3.5` becomes `w-3.5 h-3.5`
 
-### Progress Panel
+### 4. Keep the macOS title bar inside the scaled container
 
-| # | What | Detail |
-|---|------|--------|
-| 8 | Text sizes | Phase/contract rows: `text-sm`. Header: `text-sm`. Sub-phases: `text-xs` |
-| 9 | Active highlight | Active phase row: `bg-primary/5 rounded px-2 -mx-2` |
-| 10 | Complexity pills | Replace Badge with colored pill using COMPLEXITY_STYLES map |
-| 11 | Sub-phase tree | Change `ml-5 space-y-px` to `ml-6 pl-3 border-l-2 border-border/40 space-y-0.5` |
-| 12 | Contract logic | isDone: `phaseIdx > 0` (was `> 2`). isActive: `phaseIdx === 0` (was `=== 2`) |
+The title bar (traffic lights + title) is part of the inner fixed-size div, so it also scales down proportionally with everything else.
 
-### Score Card
+### 5. Border radius and shadow stay on the outer wrapper
 
-| # | What | Detail |
-|---|------|--------|
-| 13 | Grade circle | Replace SVG donut with `w-12 h-12 rounded-full border-2` div, letter only, no numeric score |
-| 14 | Rating label | Use `GRADE_LABELS[state.grade]` lookup (fixes double "Good" bug) |
-| 15 | Description | Add `GRADE_DESCRIPTIONS[state.grade]` below rating label |
-| 16 | Bar height | `h-2` to `h-2.5` |
-| 17 | Vuln pills | `grid grid-cols-3 gap-2 sm:flex sm:flex-wrap`, with icon, count, full/abbreviated label |
-| 18 | Gas category | Add to pills and bar |
+Move `rounded-xl border border-border bg-card shadow-2xl` to the outer wrapper so they don't get distorted by the scale transform. The inner div gets no border/shadow/rounding.
 
-### Findings Area
+## Technical Details
 
-| # | What | Detail |
-|---|------|--------|
-| 19 | Scroll containment | Findings list wrapper: `overflow-y-auto flex-1 min-h-0` inside the flex-col container |
+- The `ResizeObserver` fires on mount and resize, updating `scale` state
+- The outer div uses `style={{ height: 520 * scale }}` for correct document flow
+- The inner div uses `style={{ transform: \`scale(${scale})\`, transformOrigin: 'top left', width: 640, height: 520 }}`
+- On desktop (width >= 640px), scale = 1, no visual change
+- On mobile, everything shrinks uniformly -- no cramped text, no layout breaks
 
