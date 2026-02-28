@@ -696,12 +696,12 @@ const Home = () => {
       <section className="relative pt-28 pb-12 md:pt-40 md:pb-14">
         <HeroBackground />
 
-        <div className="relative max-w-4xl mx-auto text-center px-5 md:px-6">
+        <div className="relative max-w-6xl mx-auto text-center px-5 md:px-6">
           <h1 className="mx-auto font-black leading-[1.15] tracking-tight text-center">
-            <span className="block whitespace-nowrap text-foreground text-[clamp(1.4rem,5vw,5.5rem)]">
+            <span className="block text-foreground text-[clamp(1.4rem,5vw,5.5rem)]">
               AI-Powered Smart Contract Audits
             </span>
-            <span className="block whitespace-nowrap text-gradient text-[clamp(1.4rem,5vw,5.5rem)]">
+            <span className="block text-gradient text-[clamp(1.4rem,5vw,5.5rem)]">
               That Find Real Exploits
             </span>
           </h1>
@@ -740,8 +740,8 @@ const Home = () => {
       <section className="py-16 md:py-24 bg-[#030303]">
         <div className="max-w-5xl mx-auto px-5 md:px-6">
           <ScrollReveal>
-            <h2 className="text-center font-black tracking-tight leading-[1.15] whitespace-nowrap text-[clamp(1.2rem,4vw,3.5rem)]">
-              What Makes Solarizer Different
+            <h2 className="text-center font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+              Why We're Different
             </h2>
           </ScrollReveal>
 
@@ -764,8 +764,9 @@ const Home = () => {
         <div className="max-w-4xl mx-auto px-5 md:px-6">
           <ScrollReveal>
             <div className="text-center mb-10 md:mb-14">
-              <h2 className="font-black tracking-tight leading-[1.15] whitespace-nowrap text-[clamp(1.2rem,4vw,3.5rem)]">
-                Why Teams Switch From Traditional Audits
+              <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+                <span className="block">Traditional Audits</span>
+                <span className="block text-gradient">Can't Keep Up</span>
               </h2>
             </div>
           </ScrollReveal>
@@ -818,11 +819,11 @@ const Home = () => {
         <div className="max-w-3xl mx-auto px-5 md:px-6">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="font-black tracking-tight whitespace-nowrap leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
-                How Solarizer Audits Your Code
+              <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+                The Engine
               </h2>
               <p className="text-xs md:text-base text-muted-foreground/60 mt-4 max-w-xl mx-auto">
-                Each contract passes through a structured 7-phase pipeline — from complexity classification to line-accurate remediation
+                7 phases from scoping to report
               </p>
             </div>
           </ScrollReveal>
@@ -879,11 +880,11 @@ const Home = () => {
         <div className="max-w-4xl mx-auto px-5 md:px-6">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="font-black tracking-tight whitespace-nowrap leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
-                What Solarizer Finds
+              <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+                Real Findings
               </h2>
               <p className="text-sm md:text-base text-muted-foreground/60 mt-4 max-w-lg mx-auto">
-                From known exploit patterns to your protocol's unique logic flaws
+                From known exploits to protocol-specific logic
               </p>
             </div>
           </ScrollReveal>
@@ -958,7 +959,7 @@ const Home = () => {
       <section className="py-16 md:py-24 bg-[#030303]">
         <div className="max-w-5xl mx-auto px-5 md:px-6">
           <ScrollReveal>
-            <h2 className="text-center font-black tracking-tight whitespace-nowrap leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+            <h2 className="text-center font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
               Built Different
             </h2>
           </ScrollReveal>
@@ -989,11 +990,11 @@ const Home = () => {
       <section className="py-14 md:py-20">
         <ScrollReveal>
           <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
-            <h2 className="font-black tracking-tight whitespace-nowrap leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
-              Start Your First Audit in Minutes
+            <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.2rem,4vw,3.5rem)]">
+              Ready to Start?
             </h2>
             <p className="text-sm md:text-base text-muted-foreground/60 mt-4 max-w-lg mx-auto">
-              Upload contracts, configure scope, get line-accurate findings with remediation guidance.
+              Get findings in minutes, not weeks
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
               <Button asChild variant="solarGlow" size="lg">
@@ -1013,7 +1014,7 @@ const Home = () => {
           <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
             <h2 className="font-black tracking-tight leading-[1.15] text-[clamp(1.4rem,5vw,5.5rem)]">
               <span className="block">Professional Security</span>
-              <span className="block text-gradient mt-1 md:mt-2">Without the Six-Figure Price Tag</span>
+              <span className="block text-gradient mt-1 md:mt-2">Fraction of the Cost</span>
             </h2>
 
             <p className="text-sm md:text-lg text-muted-foreground/60 mt-6 max-w-lg mx-auto leading-relaxed">
