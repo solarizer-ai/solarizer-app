@@ -43,7 +43,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
   ],
   business: [
     "Everything in Blaze",
-    "Up to 12,000 nLOC per audit",
+    "Up to 9,999 nLOC per audit",
     "Share reports on dashboard",
     "Invite up to 5 collaborators",
     "Comment & track remediation progress",

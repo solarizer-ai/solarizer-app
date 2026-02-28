@@ -83,7 +83,7 @@ const pricingPlans: PricingPlan[] = [
     gradient: 'bg-gradient-to-br from-orange-700 via-red-600 to-purple-700',
     specs: [
       { label: 'Includes', value: 'Everything in Blaze, plus:' },
-      { label: 'nLOC limit per audit', value: '12,000' },
+      { label: 'nLOC limit per audit', value: '9,999' },
       { label: 'Report sharing', value: 'Up to 5 collaborators' },
       { label: 'Remediation tracking', value: 'Included' },
       { label: 'Credit rate', value: '$2.20/credit' },

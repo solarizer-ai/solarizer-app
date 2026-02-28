@@ -216,7 +216,7 @@ const TermsOfService = () => {
                         <td className="text-center py-2 px-4">$499/mo</td>
                         <td className="text-center py-2 px-4">50</td>
                         <td className="text-center py-2 px-4">$2.20/credit</td>
-                        <td className="text-center py-2 pl-4">12,000 nLOC</td>
+                        <td className="text-center py-2 pl-4">9,999 nLOC</td>
                       </tr>
                     </tbody>
                   </table>

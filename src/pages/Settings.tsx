@@ -151,7 +151,7 @@ const Settings = () => {
     if (hasPendingDowngrade && subscription?.pending_plan_effective_date) {
       return `Changes on ${format(new Date(subscription.pending_plan_effective_date), "MMM d, yyyy")}`;
     }
-    if (plan === 'business') return '50 credits/month, 12,000 nLOC per audit, team collaboration';
+    if (plan === 'business') return '50 credits/month, 9,999 nLOC per audit, team collaboration';
     if (plan === 'pro') return '50 credits/month, 3,000 nLOC per audit';
     return `${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit limit, 1 file per scan`;
   };

@@ -11,32 +11,32 @@ const faqs = [
   {
     question: "What is a credit?",
     answer:
-      "Simple: 1 credit allows you to audit exactly 1 line of Solidity code. It's the fuel for your smart contract's security.",
+      "Credits are the currency for running audits. Each credit covers one normalized line of code (nLOC) — that's your source code excluding comments and blank lines. The actual cost per audit also depends on complexity: L1 contracts use 0.83× credits, L2 use 1.0×, and L3 use 1.2×. Context files are charged at a reduced 0.15× rate.",
   },
   {
-    question: "What exactly counts towards my credit limit?",
+    question: "What exactly counts towards my credit cost?",
     answer:
-      "Every line of code in the files you upload is scanned and counted towards your quota. This includes imports and external libraries if they are present in the file. Tip: To save credits, we recommend flattening your contracts or only uploading your core logic files.",
+      "Only the Solidity files you include in your audit scope are counted. The nLOC (normalized lines of code) is calculated by stripping comments and whitespace, then applying the complexity multiplier for each file. Context files (interfaces, libraries) are counted at a reduced rate of 15%.",
   },
   {
     question: "What happens to my credits if I switch plans?",
     answer:
-      "Your credit balance is yours. If you Upgrade your plan, your existing balance is maintained 1:1. If you Downgrade, credits are converted based on the Credit Fair Usage Policy to preserve their monetary value.",
+      "If you upgrade, your existing credit balance is maintained 1:1. If you downgrade, credits are converted using the Credit Fair Usage Policy — your balance is recalculated based on the ratio of credit rates between plans to preserve their monetary value.",
   },
   {
     question: "Do my credits expire?",
     answer:
-      "No. Credits remain in your account forever until used. They never expire as long as you maintain an active subscription.",
+      "No. Credits remain in your account until used. They never expire as long as you maintain an active subscription.",
   },
   {
     question: "Can I buy credits without a subscription?",
     answer:
-      "No. You need an active subscription (Spark, Blaze, or Inferno) to access the Solarizer analysis engine. However, you can buy as many credits as you need on top of any active plan.",
+      "No. You need an active subscription (Spark, Blaze, or Inferno) to access the Solarizer analysis engine. However, you can purchase additional power-up credits at any time on top of your plan.",
   },
   {
-    question: "Why can't I see remediation recommendations on the Launch Plan?",
+    question: "Why can't I see remediation recommendations on the Spark plan?",
     answer:
-      "The Launch Plan is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation and report exports, you will need to upgrade to the Pro Plan.",
+      "Spark is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation guidance, report exports, and Low/Info/Gas severity findings, upgrade to the Blaze plan.",
   },
 ];
 

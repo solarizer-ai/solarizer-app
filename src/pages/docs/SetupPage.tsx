@@ -1,23 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
 
-const Code = ({ children }: { children: React.ReactNode }) => (
-  <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{children}</code>
-);
-
 const SetupPage = () => (
   <div className="space-y-6">
     <div>
-      <h2 className="text-2xl font-semibold text-foreground">Installation & Setup</h2>
+      <h2 className="text-2xl font-semibold text-foreground">Getting Started</h2>
       <p className="text-sm text-muted-foreground mt-1">Get up and running in under 2 minutes</p>
     </div>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-primary" />
-          Getting Started
+          Quick Start
         </CardTitle>
-        <CardDescription>Follow these steps to install and authenticate</CardDescription>
+        <CardDescription>Follow these steps to start your first security audit</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -26,9 +22,9 @@ const SetupPage = () => (
               <span className="text-sm font-medium text-primary">1</span>
             </div>
             <div>
-              <h4 className="font-medium">Install the CLI</h4>
+              <h4 className="font-medium">Create Your Account</h4>
               <p className="text-sm text-muted-foreground mt-1">
-                Run <Code>npm install -g @solarizer/cli</Code> to install Solarizer globally.
+                Sign up at <strong className="text-foreground">solarizer.io</strong> to create your account and access the dashboard.
               </p>
             </div>
           </div>
@@ -37,9 +33,9 @@ const SetupPage = () => (
               <span className="text-sm font-medium text-primary">2</span>
             </div>
             <div>
-              <h4 className="font-medium">Launch & Authenticate</h4>
+              <h4 className="font-medium">Choose a Plan</h4>
               <p className="text-sm text-muted-foreground mt-1">
-                Run <Code>solarizer</Code> and paste your API key when prompted. Alternatively, set the <Code>SOLARIZER_API_KEY</Code> environment variable to skip the prompt.
+                Subscribe to a plan — <strong className="text-foreground">Spark</strong>, <strong className="text-foreground">Blaze</strong>, or <strong className="text-foreground">Inferno</strong> — to unlock the analysis engine. Each plan includes 50 monthly credits.
               </p>
             </div>
           </div>
@@ -48,9 +44,9 @@ const SetupPage = () => (
               <span className="text-sm font-medium text-primary">3</span>
             </div>
             <div>
-              <h4 className="font-medium">You're on the Dashboard</h4>
+              <h4 className="font-medium">Start Your First Audit</h4>
               <p className="text-sm text-muted-foreground mt-1">
-                Navigate with <Code>↑</Code> <Code>↓</Code> arrow keys and select with <Code>Enter</Code>.
+                Click <strong className="text-foreground">New Audit</strong> from the dashboard, upload your Solidity contracts, and follow the guided wizard to begin your security analysis.
               </p>
             </div>
           </div>

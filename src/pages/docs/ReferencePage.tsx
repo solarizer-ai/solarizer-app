@@ -7,11 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Terminal } from "lucide-react";
-
-const Code = ({ children }: { children: React.ReactNode }) => (
-  <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{children}</code>
-);
+import { LayoutDashboard } from "lucide-react";
 
 const ReferencePage = () => (
   <div className="space-y-6">
@@ -22,40 +18,38 @@ const ReferencePage = () => (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Terminal className="w-5 h-5 text-primary" />
+          <LayoutDashboard className="w-5 h-5 text-primary" />
           Available Actions
         </CardTitle>
-        <CardDescription>Quick reference for dashboard actions</CardDescription>
+        <CardDescription>Quick reference for dashboard features and where to find them</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Action</TableHead>
-              <TableHead>Section</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>Description</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {[
-              { action: "Start Audit", section: "Audits", desc: "Launch the guided audit wizard" },
-              { action: "Resume Audit", section: "Audits", desc: "Continue an in-progress audit session" },
-              { action: "Theme", section: "Settings", desc: "Toggle between light and dark mode" },
-              { action: "Auth", section: "Settings", desc: "Manage your API key and authentication" },
-              { action: "Editor", section: "Settings", desc: "Configure your preferred code editor" },
-              { action: "Permissions", section: "Settings", desc: "Manage file system access permissions" },
+              { action: "New Audit", location: "Dashboard", desc: "Start a new security analysis using the guided wizard" },
+              { action: "View Report", location: "Dashboard / Analyses", desc: "Click any audit to view its full security report" },
+              { action: "Export Report", location: "Report page", desc: "Download your report as a markdown file (Blaze and above)" },
+              { action: "Share Report", location: "Report page", desc: "Share a report with collaborators via email (Inferno)" },
+              { action: "Toggle Public", location: "Report page", desc: "Make a report publicly accessible via a shareable link" },
+              { action: "Buy Credits", location: "Dashboard / Billing", desc: "Purchase additional power-up credits for larger audits" },
+              { action: "Manage Plan", location: "Settings → Billing", desc: "Upgrade, downgrade, or cancel your subscription" },
             ].map((row) => (
               <TableRow key={row.action}>
                 <TableCell className="font-medium">{row.action}</TableCell>
-                <TableCell className="text-muted-foreground">{row.section}</TableCell>
+                <TableCell className="text-muted-foreground">{row.location}</TableCell>
                 <TableCell className="text-muted-foreground">{row.desc}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p><Code>↑</Code> <Code>↓</Code> Navigate items &nbsp;&nbsp; <Code>Enter</Code> Select &nbsp;&nbsp; <Code>Esc</Code> Back</p>
-        </div>
       </CardContent>
     </Card>
   </div>

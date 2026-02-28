@@ -15,7 +15,7 @@ interface Plan {
 const PLANS: Plan[] = [
   { id: "starter", name: "Spark", price: 149, keyFeature: "500 nLOC per scan" },
   { id: "pro", name: "Blaze", price: 199, keyFeature: "3,000 nLOC + deep scan" },
-  { id: "business", name: "Inferno", price: 499, keyFeature: "12,000 nLOC + teams" },
+  { id: "business", name: "Inferno", price: 499, keyFeature: "9,999 nLOC + teams" },
 ];
 
 interface SubscriptionPlanSelectorProps {
