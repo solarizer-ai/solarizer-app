@@ -103,13 +103,12 @@ const capabilities = [
   },
 ];
 
-const comparisons = [
-  { label: "Turnaround", old: "2–6 weeks", solarizer: "Minutes to results" },
-  { label: "Cost", old: "$50K–$500K per engagement", solarizer: "Starting at $149/mo" },
-  { label: "Coverage", old: "One-shot, point-in-time", solarizer: "Continuous, every commit" },
-  { label: "Analysis", old: "1–2 auditors, human bias", solarizer: "Multi-agent AI ensemble" },
-  { label: "Findings", old: "Report in 30 days", solarizer: "Real-time as detected" },
-  { label: "Re-audits", old: "Full engagement again", solarizer: "Re-run in one click" },
+const stats = [
+  { value: "Minutes", versus: "not weeks", label: "Time to results" },
+  { value: "$149/mo", versus: "not $50K+", label: "Starting price" },
+  { value: "5", versus: "AI agents", label: "Multi-agent ensemble" },
+  { value: "Every", versus: "commit", label: "Continuous coverage" },
+  { value: "Real-time", versus: "findings", label: "As detected" },
 ];
 
 const knownFindings = [
@@ -772,45 +771,26 @@ const Home = () => {
             </div>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <ScrollReveal direction="left">
-              <div className="rounded-2xl border border-border/20 p-5 md:p-8 h-full">
-                <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground/30 mb-6">
-                  Traditional Audit
-                </p>
-                <div className="space-y-4">
-                  {comparisons.map((c) => (
-                    <div key={c.label} className="flex items-start gap-3">
-                      <span className="text-muted-foreground/20 text-sm mt-0.5">✗</span>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground/50">{c.label}</p>
-                        <p className="text-xs text-muted-foreground/30">{c.old}</p>
-                      </div>
-                    </div>
-                  ))}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+            {stats.map((s, i) => (
+              <ScrollReveal key={s.label} delay={i * 80}>
+                <div className={cn(
+                  "rounded-2xl border border-primary/15 p-4 md:p-5 text-center relative overflow-hidden h-full",
+                  i === 0 && "col-span-2 md:col-span-1"
+                )}>
+                  <div className="absolute inset-0 bg-radial-glow opacity-40 pointer-events-none" />
+                  <p className="relative text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-2">
+                    {s.label}
+                  </p>
+                  <p className="relative text-2xl md:text-3xl font-black text-primary leading-tight">
+                    {s.value}
+                  </p>
+                  <p className="relative text-xs text-muted-foreground/50 mt-1">
+                    {s.versus}
+                  </p>
                 </div>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal direction="right">
-              <div className="rounded-2xl border border-primary/25 p-5 md:p-8 relative overflow-hidden h-full">
-                <div className="absolute inset-0 bg-radial-glow pointer-events-none" />
-                <p className="relative text-xs font-mono uppercase tracking-widest text-primary/60 mb-6">
-                  Solarizer
-                </p>
-                <div className="relative space-y-4">
-                  {comparisons.map((c) => (
-                    <div key={c.label} className="flex items-start gap-3">
-                      <span className="text-success text-sm mt-0.5">✓</span>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{c.label}</p>
-                        <p className="text-xs text-muted-foreground/60">{c.solarizer}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </ScrollReveal>
+              </ScrollReveal>
+            ))}
           </div>
         </div>
       </section>
@@ -961,7 +941,7 @@ const Home = () => {
         <div className="max-w-5xl mx-auto px-5 md:px-6">
           <ScrollReveal>
             <FitText as="h2" max={56} min={19} className="text-center font-black tracking-tight leading-[1.15]">
-              Built Different
+              Under the Hood
             </FitText>
           </ScrollReveal>
 
@@ -987,29 +967,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── SECTION 7: Intermediate CTA ───────────────────────────────── */}
-      <section className="py-14 md:py-20">
-        <ScrollReveal>
-          <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
-            <FitText as="h2" max={56} min={19} className="font-black tracking-tight leading-[1.15]">
-              Ready to Start?
-            </FitText>
-            <p className="text-sm md:text-base text-muted-foreground/60 mt-4 max-w-lg mx-auto">
-              Get findings in minutes, not weeks
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
-              <Button asChild variant="solarGlow" size="lg">
-                <Link to="/signup">Start Auditing</Link>
-              </Button>
-              <Link to="/pricing" className="text-sm text-primary hover:underline">
-                View Pricing →
-              </Link>
-            </div>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* ── SECTION 8: Final CTA ──────────────────────────────────────── */}
+      {/* ── SECTION 7: Final CTA ──────────────────────────────────────── */}
       <section className="py-16 md:py-24 bg-[#030303]">
         <ScrollReveal>
           <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
