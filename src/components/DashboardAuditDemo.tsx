@@ -172,10 +172,73 @@ const DashboardAuditDemo = () => {
   const total = Object.values(state.counts).reduce((a, b) => a + b, 0);
   const visibleFindings = FINDINGS.slice(0, state.findingsCount);
 
+  // Shared phase/finding state for mobile card
+  const currentPhase = PHASES[Math.min(state.phaseIdx, PHASES.length - 1)];
+  const phaseProgress = state.complete ? PHASES.length : Math.min(state.phaseIdx + 1, PHASES.length);
+
   return (
+    <>
+    {/* ── Mobile simplified card ── */}
+    <div className="sm:hidden rounded-xl border border-border bg-card overflow-hidden shadow-2xl">
+      <div className="px-4 py-3 bg-[hsl(0_0%_5%)] border-b border-border flex items-center justify-between">
+        <span className="text-xs font-mono text-muted-foreground/50">Solarizer</span>
+        <span className="text-[10px] font-mono text-muted-foreground/40">{timeStr}</span>
+      </div>
+      <div className="p-4 space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">VaultProtocol</h3>
+          <p className="text-[10px] text-muted-foreground/50 mt-0.5">4 contracts · 2,847 nLOC</p>
+        </div>
+
+        {!state.complete ? (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+              <span className="text-xs font-medium text-primary">{currentPhase}</span>
+              <span className="text-[10px] text-muted-foreground/40 ml-auto">{phaseProgress}/{PHASES.length}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${(phaseProgress / PHASES.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="bg-card border border-border rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0",
+                "border-critical"
+              )}>
+                <span className="text-sm font-bold text-critical">{state.grade}</span>
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-critical">Critical</span>
+                <p className="text-[10px] text-muted-foreground">Security Rating</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-1.5">
+          {VULN_CATEGORIES.filter(cat => state.counts[cat.key] > 0).map(cat => (
+            <div key={cat.key} className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded-md border text-[10px]",
+              cat.bgColor, cat.borderColor
+            )}>
+              <span className={cn("font-medium", cat.textColor)}>{state.counts[cat.key]}</span>
+              <span className="text-muted-foreground">{cat.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* ── Desktop full demo ── */}
     <div
       ref={outerRef}
-      className="rounded-xl border border-border bg-card overflow-hidden shadow-2xl relative"
+      className="hidden sm:block rounded-xl border border-border bg-card overflow-hidden shadow-2xl relative"
       style={{ height: FIXED_H * scale }}
     >
       <div
@@ -439,6 +502,7 @@ const DashboardAuditDemo = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
