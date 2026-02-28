@@ -1,61 +1,74 @@
 
 
-# Update DashboardAuditDemo: Findings Data, Card UI, and Stop-on-Complete
+# Fix DashboardAuditDemo: Full Width, Correct Grade, Clean Tab Labels
 
-## Overview
-Three changes to `src/components/DashboardAuditDemo.tsx`:
-1. Replace FINDINGS array with 16 new entries (2 critical, 2 high, 3 medium, 4 low, 5 gas)
-2. Simplify finding cards to collapsed severity badge + truncated title only
-3. Stop the animation after the audit completes instead of looping -- restart only on page revisit
+## Problems
+1. The demo renders at a fixed 640px width inside a 1024px container, leaving it at roughly half width on desktop -- looks incomplete
+2. The final grade shows "B+ Good" but with 2 critical findings it should be "F -- Critical Issues Found"
+3. The Findings tab label shows "(16)" in brackets -- should be removed to match the real dashboard
 
 ## Changes (single file: `src/components/DashboardAuditDemo.tsx`)
 
-### 1. Update DemoFinding type
-Add `"low"` and `"gas"` to the severity union on line 8.
+### 1. Increase fixed render width from 640px to 1024px
 
-### 2. Replace FINDINGS array (lines 49-93)
-Replace with the 16 new findings from the spec (2 critical, 2 high, 3 medium, 4 low, 5 gas).
+Change `FIXED_W` from 640 to 1024 and `FIXED_H` from 520 to 640 to give the content more room and match the `max-w-5xl` container it sits in. This makes the demo fill the available width on desktop and scale proportionally on smaller screens.
 
-### 3. Add SEVERITY_CONFIG entries for "low" and "gas"
-- `low`: Info icon, "Low" label, blue-ish styling
-- `gas`: Fuel icon, "Gas" label, green styling
+```
+FIXED_W = 1024
+FIXED_H = 640
+```
 
-### 4. Update FRAMES counts
-All frames get a `gas` key. Progressive reveal:
+The inner content area height adjusts accordingly (from `h-[480px]` to `h-[600px]`).
 
-| Frame | phaseIdx | findingsCount | c/h/m/l/i/g |
-|-------|----------|---------------|-------------|
-| 0     | 0        | 0             | 0/0/0/0/0/0 |
-| 1     | 0        | 0             | 0/0/0/0/0/0 |
-| 2     | 0        | 1             | 1/0/0/0/0/0 |
-| 3     | 0        | 3             | 1/1/1/0/0/0 |
-| 4     | 0        | 5             | 2/2/1/0/0/0 |
-| 5     | 1        | 8             | 2/2/3/1/0/0 |
-| 6     | 2        | 10            | 2/2/3/3/0/0 |
-| 7     | 5        | 14            | 2/2/3/4/0/3 |
-| 8     | 6        | 16 (complete) | 2/2/3/4/0/5 |
+### 2. Fix grade progression to end at F
 
-### 5. Stop animation on complete -- no looping
-Change the frame advancement logic (line 173) from:
-```typescript
-setFrameIdx(f => (f >= FRAMES.length - 1 ? 0 : f + 1));
+Update FRAMES to reflect correct grading based on severity rules (Critical findings = F grade):
+
+| Frame | Grade | Color | Score |
+|-------|-------|-------|-------|
+| 0-1   | --    | muted | 0     |
+| 2     | F     | text-critical | 12 |
+| 3     | F     | text-critical | 18 |
+| 4     | F     | text-critical | 22 |
+| 5     | F     | text-critical | 28 |
+| 6     | F     | text-critical | 32 |
+| 7     | F     | text-critical | 36 |
+| 8 (complete) | F | text-critical | 38 |
+
+The final scorecard will show: **F** -- **Critical** -- "Critical security flaws present"
+
+Also update the grade border in the score card circle to use `border-critical` when grade is F.
+
+### 3. Remove finding count from Findings tab
+
+Remove the `count` property from the Findings tab definition and remove the rendering of the count badge. The tab label will just read "Findings" with no brackets.
+
+Change line 378 from:
+```
+{ label: "Findings", icon: AlertTriangle, active: true, count: state.findingsCount },
 ```
 to:
-```typescript
-setFrameIdx(f => (f >= FRAMES.length - 1 ? f : f + 1));
+```
+{ label: "Findings", icon: AlertTriangle, active: true },
 ```
 
-This stops at the last frame. The demo only restarts when the user navigates away and comes back, because `useState(0)` re-initializes on mount.
+And remove the count rendering block (lines 395-397).
 
-### 6. Simplify finding card rendering
-Remove from each finding card:
-- File location line (FileCode icon + line numbers)
-- Code snippet block (the `border-t bg-[hsl(0_0%_4%)]` pre block)
+### 4. Adjust internal layout for wider canvas
 
-Each card becomes a single row:
-```
-[SEVERITY_BADGE]  Title text (truncated with line-clamp-1)
-```
+With 1024px width, the content has more breathing room:
+- The score card and vulnerability matrix will spread naturally
+- The findings list cards will show longer titles before truncating
+- The phase stepper during progress will have proper spacing
+- Tab bar items will be comfortably spaced
 
-Rendered as a flex row with the severity pill on the left and the title (truncated) on the right, inside a compact `p-2.5 px-3` container.
+No structural changes needed -- the existing flex/grid layouts will fill the wider space naturally.
 
+## Technical Summary
+
+- `FIXED_W`: 640 -> 1024
+- `FIXED_H`: 520 -> 640
+- Inner content height: `h-[480px]` -> `h-[600px]`
+- All 9 FRAMES: grade changed to "F" with `text-critical` color (from frame 2 onward)
+- Findings tab: count display removed
+- Score card grade circle: border uses `border-critical` for F grade
