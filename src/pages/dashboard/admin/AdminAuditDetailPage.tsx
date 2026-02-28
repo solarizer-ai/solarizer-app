@@ -15,12 +15,12 @@ function buildCloudRunLogsUrl(auditId: string): string {
 }
 
 const severityColors: Record<string, string> = {
-  critical: "bg-destructive/10 text-destructive border-destructive/20",
-  high: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  critical: "bg-critical/10 text-critical border-critical/20",
+  high: "bg-destructive/10 text-destructive border-destructive/20",
   medium: "bg-warning/10 text-warning border-warning/20",
-  low: "bg-muted text-muted-foreground border-border",
-  info: "bg-muted/50 text-muted-foreground border-border",
-  gas: "bg-primary/10 text-primary border-primary/20",
+  low: "bg-low/10 text-low border-low/20",
+  info: "bg-slate-400/10 text-slate-400 border-slate-400/20",
+  gas: "bg-green-500/10 text-green-500 border-green-500/20",
 };
 
 export default function AdminAuditDetailPage() {

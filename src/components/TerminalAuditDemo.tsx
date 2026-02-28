@@ -31,7 +31,7 @@ interface Contract {
 
 interface FindingGroup {
   severity: string;
-  color: string;
+  colorClass: string;
   count: number;
   titles: string[];
 }
@@ -101,7 +101,7 @@ function buildFrame(idx: number): FrameState {
     c[0].subPhases![1].status = "done"; c[0].subPhases![1].elapsed = "22s";
     c[0].subPhases![2].status = "active";
     c[0].activeLabel = "Deep Scan";
-    f.push({ severity: "CRITICAL", color: "#DC2626", count: 1, titles: ["Read-only reentrancy via getPricePerShare()"] });
+    f.push({ severity: "CRITICAL", colorClass: "text-critical", count: 1, titles: ["Read-only reentrancy via getPricePerShare()"] });
   }
   if (idx >= 6) {
     c[0].status = "done"; c[0].findings = 2; c[0].elapsed = "56s";
@@ -111,7 +111,7 @@ function buildFrame(idx: number): FrameState {
     c[1].subPhases![1].status = "active";
     p[2].label = "Hunting (2/4)";
     f[0].count = 1;
-    f.push({ severity: "HIGH", color: "#DC2626", count: 1, titles: ["Fee-on-transfer token insolvency in deposit()"] });
+    f.push({ severity: "HIGH", colorClass: "text-destructive", count: 1, titles: ["Fee-on-transfer token insolvency in deposit()"] });
   }
   if (idx >= 7) {
     c[1].status = "done"; c[1].findings = 2; c[1].elapsed = "48s";
@@ -123,7 +123,7 @@ function buildFrame(idx: number): FrameState {
     p[2].label = "Hunting (3/4)";
     f[1].count = 2;
     f[1].titles.push("Liquidation threshold bypass via callback ordering");
-    f.push({ severity: "MEDIUM", color: "#F59E0B", count: 1, titles: ["TWAP window insufficient for low-liquidity pairs"] });
+    f.push({ severity: "MEDIUM", colorClass: "text-warning", count: 1, titles: ["TWAP window insufficient for low-liquidity pairs"] });
   }
   if (idx >= 8) {
     c[2].status = "done"; c[2].findings = 1; c[2].elapsed = "31s";
@@ -314,7 +314,7 @@ const TerminalAuditDemo = () => {
             <div className="mt-1 space-y-1">
               {state.findings.map((fg) => (
                 <div key={fg.severity}>
-                  <div className="ml-2" style={{ color: fg.color }}>
+                  <div className={`ml-2 ${fg.colorClass}`}>
                     {fg.severity} ({fg.count})
                   </div>
                   {fg.titles.map((t, i) => {

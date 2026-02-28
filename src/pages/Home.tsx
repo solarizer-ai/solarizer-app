@@ -213,11 +213,11 @@ const builtDifferentFeatures = [
 ];
 
 const severityStyles: Record<string, { badge: string; border: string; text: string }> = {
-  CRITICAL: { badge: "bg-red-500/10 text-red-400", border: "border-l-red-500/60", text: "text-red-400" },
-  HIGH: { badge: "bg-orange-500/10 text-orange-400", border: "border-l-orange-500/60", text: "text-orange-400" },
-  MEDIUM: { badge: "bg-yellow-500/10 text-yellow-500", border: "border-l-yellow-500/60", text: "text-yellow-500" },
-  LOW: { badge: "bg-blue-500/10 text-blue-400", border: "border-l-blue-500/60", text: "text-blue-400" },
-  GAS: { badge: "bg-green-500/10 text-green-400", border: "border-l-green-500/60", text: "text-green-400" },
+  CRITICAL: { badge: "bg-critical/10 text-critical", border: "border-l-critical", text: "text-critical" },
+  HIGH: { badge: "bg-destructive/10 text-destructive", border: "border-l-destructive", text: "text-destructive" },
+  MEDIUM: { badge: "bg-warning/10 text-warning", border: "border-l-warning", text: "text-warning" },
+  LOW: { badge: "bg-low/10 text-low", border: "border-l-low", text: "text-low" },
+  GAS: { badge: "bg-green-500/10 text-green-500", border: "border-l-green-500", text: "text-green-500" },
 };
 
 // ─── Solidity code snippet (static React elements, no innerHTML) ───────
@@ -269,7 +269,7 @@ const InvariantDemo = () => (
         <div key={inv.text} className="flex items-start gap-2">
           <span className={cn(
             "text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 mt-px",
-            inv.sev === "CRITICAL" ? "bg-red-500/10 text-red-400" : "bg-orange-500/10 text-orange-400"
+            inv.sev === "CRITICAL" ? "bg-critical/10 text-critical" : "bg-destructive/10 text-destructive"
           )}>
             {inv.sev}
           </span>
@@ -282,9 +282,9 @@ const InvariantDemo = () => (
 
 const CrossContractDemo = () => (
   <div className="bg-[hsl(0_0%_4%)] border border-border/10 rounded-lg px-4 py-3 font-mono text-[11px]">
-    <div className="border-l-2 border-l-red-500/60 pl-3 space-y-1.5">
+    <div className="border-l-2 border-l-critical pl-3 space-y-1.5">
       <div className="flex items-center gap-2">
-        <span className="bg-red-500/10 text-red-400 text-[9px] font-bold px-1.5 py-0.5 rounded">CRITICAL</span>
+        <span className="bg-critical/10 text-critical text-[9px] font-bold px-1.5 py-0.5 rounded">CRITICAL</span>
       </div>
       <p className="text-foreground/90 text-xs font-medium leading-snug">
         Liquidation bypass via callback ordering in LendingCore → Vault
@@ -453,10 +453,10 @@ const ProgressDemo = () => (
         <span className="text-foreground/70">8</span>
       </div>
       <div className="flex gap-2 text-[10px]">
-        <span className="text-red-400">critical 2</span>
-        <span className="text-orange-400">high 2</span>
-        <span className="text-yellow-500">medium 3</span>
-        <span className="text-blue-400">low 1</span>
+        <span className="text-critical">critical 2</span>
+        <span className="text-destructive">high 2</span>
+        <span className="text-warning">medium 3</span>
+        <span className="text-low">low 1</span>
       </div>
     </div>
   </div>
@@ -543,28 +543,28 @@ const LineAccurateDemo = () => (
 const ScoreDemo = () => (
   <div className="bg-foreground/[0.02] border border-border/10 rounded-xl p-5 mt-8">
     <div className="flex items-center gap-4">
-      <div className="w-14 h-14 rounded-full border-2 border-red-500/60 flex items-center justify-center shrink-0">
-        <span className="text-2xl font-bold text-red-400">F</span>
+      <div className="w-14 h-14 rounded-full border-2 border-critical flex items-center justify-center shrink-0">
+        <span className="text-2xl font-bold text-critical">F</span>
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-red-400 font-semibold">Critical</span>
+          <span className="text-critical font-semibold">Critical</span>
           <span className="text-muted-foreground/50 text-sm">· 16 findings</span>
         </div>
         <p className="text-[10px] font-mono text-muted-foreground/40 mb-2">Vulnerability Matrix</p>
         <div className="h-2 rounded-full bg-muted flex overflow-hidden mb-2">
-          <div className="bg-red-500 h-full" style={{ width: "12.5%" }} />
-          <div className="bg-orange-500 h-full" style={{ width: "12.5%" }} />
-          <div className="bg-yellow-500 h-full" style={{ width: "18.75%" }} />
-          <div className="bg-blue-400 h-full" style={{ width: "25%" }} />
+          <div className="bg-critical h-full" style={{ width: "12.5%" }} />
+          <div className="bg-destructive h-full" style={{ width: "12.5%" }} />
+          <div className="bg-warning h-full" style={{ width: "18.75%" }} />
+          <div className="bg-low h-full" style={{ width: "25%" }} />
           <div className="bg-green-500 h-full" style={{ width: "31.25%" }} />
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-mono">
-          <span className="text-red-400">Critical 2</span>
-          <span className="text-orange-400">High 2</span>
-          <span className="text-yellow-500">Medium 3</span>
-          <span className="text-blue-400">Low 4</span>
-          <span className="text-green-400">Gas 5</span>
+          <span className="text-critical">Critical 2</span>
+          <span className="text-destructive">High 2</span>
+          <span className="text-warning">Medium 3</span>
+          <span className="text-low">Low 4</span>
+          <span className="text-green-500">Gas 5</span>
         </div>
       </div>
     </div>

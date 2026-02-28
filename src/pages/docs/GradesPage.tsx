@@ -29,9 +29,9 @@ const GradesPage = () => (
                 className={`text-2xl font-bold ${
                   item.grade === "A" || item.grade === "B"
                     ? "text-success"
-                    : item.grade === "C"
+                    : item.grade === "C" || item.grade === "D"
                     ? "text-warning"
-                    : "text-destructive"
+                    : "text-critical"
                 }`}
               >
                 {item.grade}

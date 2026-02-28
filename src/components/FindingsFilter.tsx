@@ -115,9 +115,9 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [], def
   const getSeverityColor = (severity: FindingSeverity) => {
     switch (severity) {
       case "critical":
-        return "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/20";
+        return "bg-critical/10 text-critical border-critical/30 hover:bg-critical/20";
       case "high":
-        return "bg-orange-500/10 text-orange-500 border-orange-500/30 hover:bg-orange-500/20";
+        return "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/20";
       case "medium":
         return "bg-warning/10 text-warning border-warning/30 hover:bg-warning/20";
       case "low":

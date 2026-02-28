@@ -293,10 +293,10 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
         {(orchestration.findings_count || 0) > 0 && (() => {
           const severityOrder = ['critical', 'high', 'medium', 'low', 'info', 'gas'] as const;
           const severityStyles: Record<string, string> = {
-            critical: 'bg-red-500/10 text-red-400 border-red-500/20',
+            critical: 'bg-critical/10 text-critical border-critical/20',
             high:     'bg-destructive/10 text-destructive border-destructive/20',
-            medium:   'bg-amber-500/10 text-amber-400 border-amber-500/20',
-            low:      'bg-blue-500/10 text-blue-400 border-blue-500/20',
+            medium:   'bg-warning/10 text-warning border-warning/20',
+            low:      'bg-low/10 text-low border-low/20',
             info:     'bg-slate-400/10 text-slate-400 border-slate-400/20',
             gas:      'bg-green-500/10 text-green-500 border-green-500/20',
           };

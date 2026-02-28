@@ -56,13 +56,13 @@ const InvariantsTab = ({ invariants }: InvariantsTabProps) => {
           <div className="flex h-2 rounded-full overflow-hidden bg-secondary">
             {criticalCount > 0 && (
               <div
-                className="bg-destructive transition-all"
+                className="bg-critical transition-all"
                 style={{ width: `${criticalPct}%` }}
               />
             )}
             {highCount > 0 && (
               <div
-                className="bg-orange-500 transition-all"
+                className="bg-destructive transition-all"
                 style={{ width: `${100 - criticalPct}%` }}
               />
             )}
@@ -71,10 +71,10 @@ const InvariantsTab = ({ invariants }: InvariantsTabProps) => {
 
         {/* Stats Row */}
         <div className="flex flex-wrap gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-destructive/10 text-destructive">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-critical/10 text-critical">
             {criticalCount} critical
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-orange-500/10 text-orange-600 dark:text-orange-400">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-destructive/10 text-destructive">
             {highCount} high
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
@@ -152,8 +152,8 @@ const InvariantCard = ({ invariant }: { invariant: Invariant }) => {
           <Badge
             className={cn(
               isCritical
-                ? "bg-destructive/10 text-destructive border-destructive/20"
-                : "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20"
+                ? "bg-critical/10 text-critical border-critical/20"
+                : "bg-destructive/10 text-destructive border-destructive/20"
             )}
           >
             {invariant.severity_if_broken}
