@@ -141,9 +141,9 @@ const enterpriseFeatures = [
   },
   {
     icon: Monitor,
-    title: "Dashboard + CLI",
+    title: "Web Dashboard",
     description:
-      "Upload from the dashboard or run from your terminal. Full flexibility — same engine, same depth, same results. One subscription, two interfaces.",
+      "Upload contracts, configure scope, and read findings — all from a clean web dashboard. No setup, no toolchain, no friction.",
     illustration: "interfaces",
   },
 ];
@@ -157,7 +157,7 @@ const severityBorder: Record<string, string> = {
 // ─── Sub-components ────────────────────────────────────────────────────────
 
 const FindingCard = ({ f }: { f: typeof knownFindings[0] }) => (
-  <div className={`rounded-[14px] border bg-card/20 p-5 sm:p-6 hover:border-opacity-60 transition-colors ${severityBorder[f.severity] || "border-border/20"}`}>
+  <div className={`rounded-[14px] border bg-card/20 p-5 sm:p-6 flex flex-col h-full hover:border-opacity-60 transition-colors ${severityBorder[f.severity] || "border-border/20"}`}>
     <div className="space-y-2">
       <span className={`${f.badgeClass} text-[11px] font-mono font-bold px-2.5 py-1 rounded-md`}>
         {f.severity}
@@ -221,21 +221,13 @@ const PipelineIllustration = () => (
 );
 
 const InterfacesIllustration = () => (
-  <div className="grid grid-cols-2 gap-3 py-4">
+  <div className="py-4">
     <div className="rounded-lg border border-border/20 p-2.5">
       <p className="text-[9px] text-muted-foreground/40 mb-1.5">Dashboard</p>
       <div className="space-y-1">
         <div className="h-1.5 rounded bg-primary/15 w-full" />
         <div className="h-1.5 rounded bg-primary/10 w-3/4" />
         <div className="h-1.5 rounded bg-primary/5 w-1/2" />
-      </div>
-    </div>
-    <div className="rounded-lg border border-border/20 p-2.5">
-      <p className="text-[9px] text-muted-foreground/40 mb-1.5">$ solarizer</p>
-      <div className="space-y-1">
-        <div className="h-1.5 rounded bg-success/15 w-full" />
-        <div className="h-1.5 rounded bg-success/10 w-4/5" />
-        <div className="h-1.5 rounded bg-success/5 w-3/5" />
       </div>
     </div>
   </div>
@@ -285,9 +277,10 @@ const Home = () => {
         <HeroBackground />
 
         <div className="relative max-w-4xl mx-auto text-center px-5 md:px-6">
-          <h1 className="w-fit mx-auto text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight">
-            <span className="block whitespace-nowrap text-foreground">Enterprise-Grade Security</span>
-            <span className="block whitespace-nowrap text-gradient mt-1 md:mt-2">Accessible To All</span>
+          <h1 className="mx-auto text-[clamp(1.6rem,5vw,5.5rem)] font-black leading-[1.15] tracking-tight text-center">
+            <span className="text-foreground">Enterprise-Grade Security</span>
+            <br />
+            <span className="text-gradient">Accessible To All</span>
           </h1>
 
           <p className="text-base md:text-lg text-muted-foreground/70 mt-4 md:mt-8 max-w-lg mx-auto leading-relaxed">
@@ -427,7 +420,7 @@ const Home = () => {
                 {knownFindings.length}
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4 items-stretch">
               {knownFindings.map(f => <FindingCard key={f.title} f={f} />)}
             </div>
           </div>
@@ -447,7 +440,7 @@ const Home = () => {
               invariants — the accounting rules, epoch mechanics, and collateral
               assumptions unique to your codebase
             </p>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4 items-stretch">
               {protocolFindings.map(f => <FindingCard key={f.title} f={f} />)}
             </div>
           </div>
@@ -468,18 +461,27 @@ const Home = () => {
           </div>
 
           <div className="relative mt-8 md:mt-12" ref={pipelineRef}>
-            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px border-l border-dashed border-border/20" />
-            <div
-              className="absolute left-6 md:left-8 top-0 w-px bg-primary transition-none"
-              style={{ height: `${pipelineProgress * 100}%` }}
-            />
             <div className="space-y-5 md:space-y-8">
               {phases.map((phase, index) => {
                 const Icon = phase.icon;
+                const isLast = index === phases.length - 1;
                 const threshold = index / phases.length;
                 const isActive = pipelineProgress >= threshold;
+                const nextThreshold = (index + 1) / phases.length;
+                const isNextActive = pipelineProgress >= nextThreshold;
                 return (
                   <div key={phase.pill} className="relative flex items-start gap-4 md:gap-8">
+                    {/* Connector line to next item */}
+                    {!isLast && (
+                      <div className="absolute left-6 md:left-8 top-6 md:top-8 w-px h-[calc(100%+1.25rem)] md:h-[calc(100%+2rem)] -translate-x-1/2 border-l border-dashed border-border/20" />
+                    )}
+                    {/* Active fill overlay */}
+                    {!isLast && (
+                      <div
+                        className="absolute left-6 md:left-8 top-6 md:top-8 w-px -translate-x-1/2 bg-primary transition-none"
+                        style={{ height: isNextActive ? 'calc(100% + 1.25rem)' : isActive ? '50%' : '0%' }}
+                      />
+                    )}
                     <div className={cn(
                       "relative z-10 flex-shrink-0 w-12 md:w-16 h-12 md:h-16 rounded-full bg-card border flex items-center justify-center transition-colors duration-500",
                       isActive ? "border-primary/50" : "border-border/20"
