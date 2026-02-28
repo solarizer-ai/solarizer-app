@@ -111,12 +111,15 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
   const contractList = useMemo(() => {
     const paths = scopeMetadata?.map((s) => s.path) || Object.keys(contractProgress);
     const currentIdx = orchestration.progress.contractIndex ?? 0;
+    const currentContractPath = orchestration.progress.currentContract;
+    const derivedIdx = currentContractPath
+      ? paths.findIndex((p) => p === currentContractPath)
+      : -1;
+    const effectiveIdx = derivedIdx >= 0 ? derivedIdx : currentIdx;
     return paths.map((path, idx) => {
       const meta = scopeMap.get(path);
       const prog = contractProgress[path];
-      // A contract is done if: explicitly marked, or its index is behind the current pointer,
-      // or the hunting phase is already complete (past hunting index which is 1)
-      const done = prog?.done || idx < currentIdx || activePhaseIdx > 1;
+      const done = prog?.done || idx < effectiveIdx || activePhaseIdx > 1;
       const isActive = orchestration.progress.currentContract === path && !done;
       return { path, meta, done, error: prog?.error, isActive };
     });
