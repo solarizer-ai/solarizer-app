@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import type { AuditOrchestrationProgress } from "@/hooks/useAuditProgress";
 
 const PHASES = [
+  { key: "preparing", label: "Preparing" },
   { key: "hunting", label: "Hunting" },
   { key: "cross_contract", label: "Cross-Contract" },
   { key: "validation", label: "Validation" },
@@ -90,7 +91,10 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
     return () => clearInterval(id);
   }, []);
 
-  const activePhaseIdx = getPhaseIndex(orchestration.phase);
+  // Map backend phase to our display phases. If no backend phase matches
+  // (e.g. "queued" or empty), we're still preparing (index 0).
+  const rawPhaseIdx = getPhaseIndex(orchestration.phase);
+  const activePhaseIdx = rawPhaseIdx >= 0 ? rawPhaseIdx : 0;
   const contractTotal = orchestration.progress.contractTotal || scopeMetadata?.length || 0;
   const hideCC = contractTotal <= 1;
 
@@ -111,8 +115,8 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
       const meta = scopeMap.get(path);
       const prog = contractProgress[path];
       // A contract is done if: explicitly marked, or its index is behind the current pointer,
-      // or the hunting phase is already complete (activePhaseIdx > 0)
-      const done = prog?.done || idx < currentIdx || activePhaseIdx > 0;
+      // or the hunting phase is already complete (past hunting index which is 1)
+      const done = prog?.done || idx < currentIdx || activePhaseIdx > 1;
       const isActive = orchestration.progress.currentContract === path && !done;
       return { path, meta, done, error: prog?.error, isActive };
     });
@@ -162,9 +166,16 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
             if (phase.key === "cross_contract" && hideCC) return null;
 
             const isLocked = isSkipped(phase.key);
-            const isCompleted = !isLocked && activePhaseIdx > idx;
-            const isActive = !isLocked && activePhaseIdx === idx;
-            const isPending = !isLocked && activePhaseIdx < idx;
+
+            // "preparing" is a virtual phase: active when backend hasn't reached hunting yet, done once it has
+            const isPreparing = phase.key === "preparing";
+            const isCompleted = isPreparing
+              ? !isLocked && rawPhaseIdx >= 0
+              : !isLocked && activePhaseIdx > idx;
+            const isActive = isPreparing
+              ? !isLocked && rawPhaseIdx < 0
+              : !isLocked && activePhaseIdx === idx;
+            const isPending = !isPreparing && !isLocked && activePhaseIdx < idx;
 
             let suffix = "";
             if (isActive && (phase.key === "hunting" || phase.key === "qa")) {
