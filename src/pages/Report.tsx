@@ -428,13 +428,15 @@ const Report = () => {
                     />
                   )}
                   
-                  {/* Remediation Progress - Business only */}
-                  {canCommentOnFindings && (
-                    <RemediationProgressWidget auditId={currentAudit.id} />
-                  )}
+                  {!isLive && (
+                    <>
+                      {/* Remediation Progress - Business only */}
+                      {canCommentOnFindings && (
+                        <RemediationProgressWidget auditId={currentAudit.id} />
+                      )}
 
-                  {/* Tabbed Interface: Scope, Coverage & Findings */}
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                      {/* Tabbed Interface: Scope, Coverage & Findings */}
+                      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                     <TabsList className="flex w-full overflow-x-auto no-scrollbar justify-evenly">
                       <TabsTrigger value="scope" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
                         <FileCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -619,6 +621,8 @@ const Report = () => {
                       )}
                     </TabsContent>
                   </Tabs>
+                    </>
+                  )}
                 </>
               )}
             </>
