@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 // ─── Types ────────────────────────────────────────────────────────────────
 
 interface DemoFinding {
-  severity: "critical" | "high" | "medium";
+  severity: "critical" | "high" | "medium" | "low" | "gas";
   title: string;
   location: string;
   lines: string;
@@ -47,70 +47,50 @@ const CONTRACTS = [
 const SUB_PHASES = ["DNA Matching", "Initial Scan", "Deep Scan"];
 
 const FINDINGS: DemoFinding[] = [
-  {
-    severity: "critical",
-    title: "Read-only reentrancy via getPricePerShare()",
-    location: "Vault.sol",
-    lines: "334-341",
-    startLine: 334,
-    snippet: `function getPricePerShare() public view returns (uint256) {
-    return totalAssets() / totalSupply();
-    // @audit stale mid-callback value
-}`,
-  },
-  {
-    severity: "high",
-    title: "Fee-on-transfer insolvency in deposit()",
-    location: "LendingCore.sol",
-    lines: "89-96",
-    startLine: 89,
-    snippet: `function deposit(uint256 amount) external {
-    token.transferFrom(msg.sender, address(this), amount);
-    balances[msg.sender] += amount; // @audit actual != amount
-}`,
-  },
-  {
-    severity: "high",
-    title: "Liquidation bypass via callback ordering",
-    location: "LendingCore.sol",
-    lines: "167-174",
-    startLine: 167,
-    snippet: `function liquidate(address user) external {
-    _repay(user);  // external call
-    require(getCollateralRatio(user) < threshold);
-    // @audit check after interaction
-}`,
-  },
-  {
-    severity: "medium",
-    title: "TWAP window insufficient for thin markets",
-    location: "PriceOracle.sol",
-    lines: "211-218",
-    startLine: 211,
-    snippet: `uint256 twapPrice = _getTWAP(15 minutes);
-// @audit single-block manipulation on low liq`,
-  },
+  // ── CRITICAL ─────────────────────────────────────────────────────────────
+  { severity: "critical", title: "_executeQueuedHookFeesByHookTransfers clears reentrancy flags enabling re-entrancy during swap/liquidity operations", location: "PoolHooks.sol", lines: "1316-1340", startLine: 1316, snippet: `function _executeQueuedHookFeesByHookTransfers(...) internal {\n    _reentrancyFlags = 0;\n}` },
+  { severity: "critical", title: "_executeQueuedHookFeesByHookTransfers clears all reentrancy flags before performing external token transfers", location: "PoolHooks.sol", lines: "1316-1340", startLine: 1316, snippet: `_reentrancyFlags = 0;\n_processTransfers(hookFeeTransfers);` },
+  // ── HIGH ──────────────────────────────────────────────────────────────────
+  { severity: "high", title: "_storeNonTokenHookFees uses tokenFor for both hash parameters instead of tokenFee, causing incorrect fee accounting", location: "HookFeeManager.sol", lines: "1237-1253", startLine: 1237, snippet: `bytes32 key = keccak256(abi.encode(poolId, tokenFor, tokenFor));` },
+  { severity: "high", title: "executeQueuedHookFeesByHookTransfers clears reentrancy flags then performs external transfers enabling reentrancy", location: "PoolHooks.sol", lines: "1316-1340", startLine: 1316, snippet: `_reentrancyFlags = 0;\ntoken.transfer(recipient, amount);` },
+  // ── MEDIUM ───────────────────────────────────────────────────────────────
+  { severity: "medium", title: "createPool clears reentrancy guard before delegatecall to addLiquidity, enabling re-entry during hook execution", location: "PoolManager.sol", lines: "18-42", startLine: 18, snippet: `_reentrancyGuard = false;\naddress(this).delegatecall(...)` },
+  { severity: "medium", title: "Flashloan fee accounting allows fee token surplus to be double-counted as protocol fees", location: "FlashLoan.sol", lines: "1139-1218", startLine: 1139, snippet: `protocolFees += surplus;\nprotocolFees += (borrowed * flashLoanBPS) / BPS_DENOMINATOR;` },
+  { severity: "medium", title: "_executePoolFeeHook subtracts hook fees from amount in unchecked block without validating totalHookFees <= amount", location: "PoolHooks.sol", lines: "91-115", startLine: 91, snippet: `unchecked { amountOut -= totalHookFees; }` },
+  // ── LOW ───────────────────────────────────────────────────────────────────
+  { severity: "low", title: "_poolSwapByInput partial fill adjusts exchangeFeeAmount but not feeOnTopAmount, causing incorrect fee distribution", location: "SwapRouter.sol", lines: "91-115", startLine: 91, snippet: `exchangeFeeAmount = (filled * feeBPS) / BPS;` },
+  { severity: "low", title: "Flashloan fee calculation incorrect when tokenFeeAmount > 0 — protocol overcharges and accounting mismatch", location: "FlashLoan.sol", lines: "91-115", startLine: 91, snippet: `fee = (amount * flashLoanBPS) / BPS + tokenFeeAmount;` },
+  { severity: "low", title: "setFlashloanFee allows setting flashLoanBPS above MAX_BPS, permanently disabling flashloans", location: "FlashLoan.sol", lines: "75-82", startLine: 75, snippet: `flashLoanBPS = bps;` },
+  { severity: "low", title: "Inconsistent exchange fee BPS boundary: input swaps allow 100% fee (BPS=10000) while output swaps reject it", location: "SwapRouter.sol", lines: "91-115", startLine: 91, snippet: `require(feeBPS <= BPS);\nrequire(feeBPS < BPS);` },
+  // ── GAS ───────────────────────────────────────────────────────────────────
+  { severity: "gas", title: "Redundant FixedPositionInfo storage positionCache alias in _collectPosition", location: "PositionManager.sol", lines: "340-370", startLine: 340, snippet: `FixedPositionInfo storage positionCache = positions[id];` },
+  { severity: "gas", title: "Height state written back unconditionally even when unchanged", location: "PositionManager.sol", lines: "1957-1968", startLine: 1957, snippet: `poolState.height = newHeight;` },
+  { severity: "gas", title: "Unused address parameter in collectFees, addLiquidity, removeLiquidity", location: "PositionManager.sol", lines: "157-165", startLine: 157, snippet: `function collectFees(address recipient, ...)` },
+  { severity: "gas", title: "Redundant storage pointer in _calculatePosition for positionCache", location: "PositionManager.sol", lines: "195-196", startLine: 195, snippet: `FixedPositionInfo storage positionCache = _positions[posId];` },
+  { severity: "gas", title: "Redundant storage reads for pool state in view functions", location: "PoolManager.sol", lines: "370-390", startLine: 370, snippet: `pools[poolId].liquidity;\npools[poolId].sqrtPrice;\npools[poolId].fee;` },
 ];
 
 const FRAMES: FrameState[] = [
   { phaseIdx: 0, findingsCount: 0, score: 0, grade: "—", gradeColor: "text-muted-foreground/20", elapsed: 0, contractIdx: 0, subPhaseIdx: 0, counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, gas: 0 } },
   { phaseIdx: 0, findingsCount: 0, score: 0, grade: "—", gradeColor: "text-muted-foreground/20", elapsed: 9, contractIdx: 0, subPhaseIdx: 0, counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, gas: 0 } },
   { phaseIdx: 0, findingsCount: 1, score: 28, grade: "C+", gradeColor: "text-warning", elapsed: 51, contractIdx: 0, subPhaseIdx: 1, counts: { critical: 1, high: 0, medium: 0, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 0, findingsCount: 2, score: 44, grade: "C+", gradeColor: "text-warning", elapsed: 86, contractIdx: 1, subPhaseIdx: 0, counts: { critical: 1, high: 1, medium: 0, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 0, findingsCount: 3, score: 61, grade: "B", gradeColor: "text-success", elapsed: 118, contractIdx: 1, subPhaseIdx: 2, counts: { critical: 1, high: 2, medium: 0, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 1, findingsCount: 4, score: 67, grade: "B", gradeColor: "text-success", elapsed: 149, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 1, high: 2, medium: 1, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 2, findingsCount: 4, score: 71, grade: "B", gradeColor: "text-success", elapsed: 163, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 1, high: 2, medium: 1, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 5, findingsCount: 4, score: 74, grade: "B+", gradeColor: "text-success", elapsed: 180, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 1, high: 2, medium: 1, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 6, findingsCount: 4, score: 74, grade: "B+", gradeColor: "text-success", elapsed: 194, contractIdx: 3, subPhaseIdx: 2, complete: true, counts: { critical: 1, high: 2, medium: 1, low: 0, info: 0, gas: 0 } },
+  { phaseIdx: 0, findingsCount: 3, score: 38, grade: "C+", gradeColor: "text-warning", elapsed: 86, contractIdx: 1, subPhaseIdx: 0, counts: { critical: 1, high: 1, medium: 1, low: 0, info: 0, gas: 0 } },
+  { phaseIdx: 0, findingsCount: 5, score: 48, grade: "C+", gradeColor: "text-warning", elapsed: 118, contractIdx: 1, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 1, low: 0, info: 0, gas: 0 } },
+  { phaseIdx: 1, findingsCount: 8, score: 56, grade: "C+", gradeColor: "text-warning", elapsed: 149, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 1, info: 0, gas: 0 } },
+  { phaseIdx: 2, findingsCount: 10, score: 62, grade: "B", gradeColor: "text-success", elapsed: 163, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 3, info: 0, gas: 0 } },
+  { phaseIdx: 5, findingsCount: 14, score: 68, grade: "B", gradeColor: "text-success", elapsed: 180, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 4, info: 0, gas: 3 } },
+  { phaseIdx: 6, findingsCount: 16, score: 74, grade: "B+", gradeColor: "text-success", elapsed: 194, contractIdx: 3, subPhaseIdx: 2, complete: true, counts: { critical: 2, high: 2, medium: 3, low: 4, info: 0, gas: 5 } },
 ];
 
 const FRAME_DELAYS = [1600, 2000, 1800, 1800, 2000, 1800, 2000, 2400, 5000];
 
-const SEVERITY_CONFIG = {
+const SEVERITY_CONFIG: Record<DemoFinding["severity"], { icon: typeof AlertTriangle; label: string; className: string }> = {
   critical: { icon: AlertTriangle, label: "Critical", className: "text-critical bg-critical/10 border-critical/20" },
   high:     { icon: AlertTriangle, label: "High",     className: "text-destructive bg-destructive/10 border-destructive/20" },
   medium:   { icon: AlertCircle,  label: "Medium",   className: "text-warning bg-warning/10 border-warning/20" },
-} as const;
+  low:      { icon: Info,         label: "Low",      className: "text-low bg-low/10 border-low/20" },
+  gas:      { icon: Fuel,         label: "Gas",      className: "text-green-500 bg-green-500/10 border-green-500/20" },
+};
 
 const VULN_CATEGORIES = [
   { label: "Critical", key: "critical" as const, icon: AlertTriangle, barColor: "bg-critical",    bgColor: "bg-critical/10",    textColor: "text-critical",    borderColor: "border-critical/30" },
@@ -170,7 +150,7 @@ const DashboardAuditDemo = () => {
   useEffect(() => {
     const delay = FRAME_DELAYS[frameIdx] ?? 2000;
     timerRef.current = setTimeout(() => {
-      setFrameIdx(f => (f >= FRAMES.length - 1 ? 0 : f + 1));
+      setFrameIdx(f => (f >= FRAMES.length - 1 ? f : f + 1));
     }, delay);
     return () => clearTimeout(timerRef.current);
   }, [frameIdx]);
@@ -434,39 +414,17 @@ const DashboardAuditDemo = () => {
                   return (
                     <div
                       key={f.title}
-                      className="border border-border rounded-lg overflow-hidden bg-card/50 animate-fade-in"
-                      style={{ animationDelay: `${i * 100}ms`, animationFillMode: "both" }}
+                      className="flex items-center gap-3 p-2.5 px-3 border border-border rounded-lg bg-card/50 animate-fade-in"
+                      style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}
                     >
-                      <div className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium border shrink-0 w-fit",
-                            config.className
-                          )}>
-                            <Icon className="w-3 h-3" />
-                            {config.label}
-                          </div>
-                          <p className="text-sm font-medium text-foreground line-clamp-1">{f.title}</p>
-                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground ml-auto shrink-0">
-                            <FileCode className="w-3 h-3" />
-                            <span className="font-mono">L{f.lines}</span>
-                          </div>
-                        </div>
+                      <div className={cn(
+                        "flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium border shrink-0",
+                        config.className
+                      )}>
+                        <Icon className="w-3 h-3" />
+                        {config.label}
                       </div>
-                      {i === 0 && (
-                        <div className="border-t border-border bg-[hsl(0_0%_4%)] px-4 py-2 overflow-x-auto">
-                          <pre className="text-[11px] font-mono leading-relaxed">
-                            {f.snippet.split("\n").map((line, li) => (
-                              <div key={li} className="flex">
-                                <span className="pr-3 text-right text-muted-foreground/30 select-none shrink-0 w-8">
-                                  {f.startLine + li}
-                                </span>
-                                <span className="text-foreground/80">{line}</span>
-                              </div>
-                            ))}
-                          </pre>
-                        </div>
-                      )}
+                      <p className="text-sm font-medium text-foreground line-clamp-1">{f.title}</p>
                     </div>
                   );
                 })
