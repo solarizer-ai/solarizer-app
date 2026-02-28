@@ -181,10 +181,6 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
             const isPending = !isPreparing && !isLocked && activePhaseIdx < idx;
 
             let suffix = "";
-            if (isActive && (phase.key === "hunting" || phase.key === "qa")) {
-              const ci = (orchestration.progress.contractIndex ?? 0) + 1;
-              suffix = ` (${ci}/${contractTotal})`;
-            }
             if (isActive && phase.key === "cross_contract") {
               const cp = orchestration.progress.crossContractPass ?? 0;
               const ct = orchestration.progress.crossContractTotal ?? 0;
