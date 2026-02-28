@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, AlertCircle, Info, ShieldAlert, ShieldCheck, Fuel } from "lucide-react";
@@ -40,11 +39,9 @@ export const SeverityBreakdown = () => {
   
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <Skeleton className="h-5 w-32" />
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+        <Skeleton className="h-4 w-32 mb-3" />
+        <div className="space-y-3">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="flex items-center gap-3">
               <Skeleton className="h-8 w-8 rounded" />
@@ -54,8 +51,8 @@ export const SeverityBreakdown = () => {
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -108,11 +105,9 @@ export const SeverityBreakdown = () => {
   ];
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">Severity Distribution</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Severity Distribution</h4>
+      <div className="space-y-3">
         {total === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No findings yet
@@ -129,7 +124,7 @@ export const SeverityBreakdown = () => {
             />
           ))
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

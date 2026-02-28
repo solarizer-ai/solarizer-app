@@ -62,18 +62,18 @@ const SecurityScoreCard = ({
       {/* Grade + Rating */}
       <div className="flex items-center gap-3">
         <div className={cn(
-          "w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0",
+          "w-10 h-10 rounded-full border-2 flex items-center justify-center shrink-0",
           isPending ? "border-muted" :
           grade === "A" || grade === "B" ? "border-success" :
           grade === "C" || grade === "D" ? "border-warning" : "border-critical"
         )}>
-          <span className={cn("text-xl font-bold", config.color)}>
+          <span className={cn("text-lg font-bold", config.color)}>
             {isPending ? "--" : grade}
           </span>
         </div>
         <div>
           <div className="flex items-baseline gap-2">
-            <span className={cn("text-lg font-semibold", config.color)}>{config.label}</span>
+            <span className={cn("text-base font-semibold", config.color)}>{config.label}</span>
             <span className="text-sm text-muted-foreground">Security Rating</span>
           </div>
           <p className="text-xs text-muted-foreground">{config.description}</p>

@@ -446,7 +446,7 @@ const FindingItem = ({
     <div 
       ref={onRefReady}
       className={cn(
-        "border border-border rounded-lg overflow-hidden bg-card/50 transition-all duration-300",
+        "border border-border rounded-lg overflow-hidden bg-card transition-all duration-300",
         leftBorderClass[finding.severity],
         isNew && "animate-fade-in ring-2 ring-primary/30",
         isHighlighted && "ring-2 ring-warning animate-highlight-pulse"
@@ -455,7 +455,7 @@ const FindingItem = ({
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 hover:bg-muted/40 transition-colors duration-150 text-left"
+        className="w-full p-3 sm:p-4 hover:bg-muted/30 transition-colors duration-150 text-left"
       >
         {/* Mobile: Stacked layout, Desktop: Inline layout */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
@@ -509,7 +509,7 @@ const FindingItem = ({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-t border-border p-4 space-y-4 bg-muted/20">
+        <div className="border-t border-border p-3 sm:p-4 space-y-4 bg-muted/10">
           {/* Description */}
           <div>
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">

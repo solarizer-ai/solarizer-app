@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { CheckCircle2, Loader2, Circle, AlertCircle, Lock } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import type { AuditOrchestrationProgress } from "@/hooks/useAuditProgress";
@@ -134,34 +133,32 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
   const isHuntingOrQa = orchestration.phase === 'hunting' || orchestration.phase === 'qa';
 
   return (
-    <Card className="border-primary/20">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              Audit in Progress
-            </CardTitle>
-            {scopeSummary && (
-              <p className="text-xs text-muted-foreground">{scopeSummary}</p>
-            )}
-          </div>
-          <div className="flex flex-col items-end gap-0.5">
-            <span className="text-sm font-mono text-muted-foreground">{formatElapsed(elapsed)}</span>
-            {staleness === 'warn' && (
-              <span className="text-xs text-warning">
-                Last updated {formatDistanceToNow(new Date(orchestration.updated_at), { addSuffix: true })}
-              </span>
-            )}
-            {staleness === 'stuck' && (
-              <span className="text-xs text-destructive font-medium">
-                Progress hasn't updated — the audit may be stuck.
-              </span>
-            )}
-          </div>
+    <div className="rounded-lg border border-primary/20 bg-card p-4 sm:p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="space-y-1">
+          <h3 className="text-lg flex items-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            Audit in Progress
+          </h3>
+          {scopeSummary && (
+            <p className="text-xs text-muted-foreground">{scopeSummary}</p>
+          )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-sm font-mono text-muted-foreground">{formatElapsed(elapsed)}</span>
+          {staleness === 'warn' && (
+            <span className="text-xs text-warning">
+              Last updated {formatDistanceToNow(new Date(orchestration.updated_at), { addSuffix: true })}
+            </span>
+          )}
+          {staleness === 'stuck' && (
+            <span className="text-xs text-destructive font-medium">
+              Progress hasn't updated — the audit may be stuck.
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="space-y-6">
         {/* Phases */}
         <div className="space-y-1.5">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Phases</h4>
@@ -335,8 +332,8 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
             </div>
           );
         })()}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

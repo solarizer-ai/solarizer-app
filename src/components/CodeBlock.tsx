@@ -72,7 +72,7 @@ const CodeBlock = ({ code, language, startLine = 1, useHighlighting = false, hig
   return (
     <div className="my-3 bg-background rounded-md border border-border overflow-hidden">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b border-border">
+      <div className="flex items-center justify-between px-2.5 py-1 bg-muted/50 border-b border-border">
         <span className="text-xs text-muted-foreground uppercase tracking-wider">
           {language || 'code'}
         </span>
@@ -95,7 +95,7 @@ const CodeBlock = ({ code, language, startLine = 1, useHighlighting = false, hig
         </button>
       </div>
       {/* Code content */}
-      <div className="p-3 text-sm overflow-x-auto max-w-full" style={{ fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace" }}>
+      <div className="p-2.5 text-[13px] overflow-x-auto max-w-full" style={{ fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace" }}>
         <div className="min-w-max">
           {highlightFn
             ? highlightFn(formattedCode, startLine)

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, Filter, X, Lock } from "lucide-react";
+import { Search, X, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -155,7 +155,6 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [], def
 
         {/* Severity Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
           {allSeverities.map((severity) => {
             const isHidden = hiddenSeverities.includes(severity);
             

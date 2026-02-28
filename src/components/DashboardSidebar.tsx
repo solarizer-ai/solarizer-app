@@ -176,7 +176,7 @@ export function DashboardSidebar() {
                         end={item.end}
                         onClick={handleNavClick}
                         className="text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent transition-colors"
-                        activeClassName="bg-primary/10 text-foreground font-medium border-l-2 border-l-primary"
+                        activeClassName="bg-primary/10 text-foreground font-medium"
                       >
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>
@@ -206,7 +206,7 @@ export function DashboardSidebar() {
                         end={item.end}
                         onClick={handleNavClick}
                         className="text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent transition-colors"
-                        activeClassName="bg-primary/10 text-foreground font-medium border-l-2 border-l-primary"
+                        activeClassName="bg-primary/10 text-foreground font-medium"
                       >
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>

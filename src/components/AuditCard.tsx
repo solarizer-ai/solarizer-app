@@ -75,9 +75,8 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
     <div
       onClick={onClick}
       className={cn(
-        "group relative bg-card border border-border rounded-lg p-5 cursor-pointer",
-        "hover:border-primary/30 hover:bg-card/80 transition-all duration-200",
-        "hover:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.15)]",
+        "group relative bg-card border border-border rounded-lg p-4 sm:p-5 cursor-pointer",
+        "hover:border-primary/20 transition-colors",
         isShared && "border-l-2 border-l-secondary"
       )}
     >
@@ -105,7 +104,7 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
 
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0 pr-2">
-          <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+          <h3 className="font-medium text-foreground truncate">
             {projectName}
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -115,7 +114,7 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
         
         {grade && (
           <div className={cn(
-            "w-10 h-10 rounded-lg border flex items-center justify-center font-semibold text-lg",
+            "w-9 h-9 rounded-lg border flex items-center justify-center font-semibold text-base",
             (isShared || hasShares) && "mt-6",
             gradeColors[grade]
           )}>

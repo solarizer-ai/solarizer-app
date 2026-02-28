@@ -86,7 +86,7 @@ const DashboardHome = () => {
       {/* Dashboard Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg sm:text-xl font-semibold text-foreground">
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
             {getTimeBasedGreeting()}{displayName ? `, ${displayName}` : ""}
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -134,11 +134,11 @@ const DashboardHome = () => {
       <DashboardStats />
 
       {/* Main Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Recent Audits - Takes 2 columns */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">Recent Analysis</h3>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Analysis</h3>
             {audits && audits.length > 4 && (
               <Button
                 variant="ghost"
@@ -155,7 +155,7 @@ const DashboardHome = () => {
           {auditsLoading ? (
             <AuditListSkeleton count={4} />
           ) : audits && audits.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {audits.slice(0, 4).map((audit) => {
                 const isOwned = audit.user_id === user?.id;
                 return (
@@ -212,7 +212,7 @@ const DashboardHome = () => {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4 order-first lg:order-last">
+        <div className="space-y-3 order-first lg:order-last">
           <SeverityBreakdown />
           <div className="hidden lg:block">
             <SecurityTrend />

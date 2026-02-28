@@ -18,7 +18,7 @@ export function CreditBalance() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg animate-pulse">
+      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md animate-pulse">
         <div className="h-4 w-24 bg-muted rounded" />
       </div>
     );
@@ -27,7 +27,7 @@ export function CreditBalance() {
   // No subscription = show "No Plan" state
   if (!subscription) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border border-border/50">
+      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md">
         <Zap className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium text-muted-foreground">No Plan</span>
       </div>
@@ -38,7 +38,7 @@ export function CreditBalance() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border border-border/50">
+      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md">
         <Zap className="h-4 w-4 text-primary" />
         <span className="text-sm font-medium">
           {creditsRemaining.toLocaleString()}

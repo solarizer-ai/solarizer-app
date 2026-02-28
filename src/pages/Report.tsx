@@ -224,7 +224,7 @@ const Report = () => {
           {/* Results Header */}
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">
                 {currentAudit?.project_name || "Contract"}
               </h2>
               <div className="flex items-center gap-2 flex-wrap">
@@ -437,32 +437,32 @@ const Report = () => {
 
                       {/* Tabbed Interface: Scope, Coverage & Findings */}
                       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className="flex w-full overflow-x-auto no-scrollbar justify-evenly">
-                      <TabsTrigger value="scope" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                    <TabsList className="flex w-full overflow-x-auto no-scrollbar">
+                      <TabsTrigger value="scope" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <FileCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Scope</span>
+                        Scope
                       </TabsTrigger>
-                      <TabsTrigger value="insights" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                      <TabsTrigger value="insights" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Insights</span>
+                        Insights
                         {effectivePlan === 'starter' && <Lock className="w-3 h-3 text-muted-foreground" />}
                       </TabsTrigger>
-                      <TabsTrigger value="invariants" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                      <TabsTrigger value="invariants" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Invariants</span>
+                        Invariants
                         {effectivePlan === 'starter' && <Lock className="w-3 h-3 text-muted-foreground" />}
                       </TabsTrigger>
-                      <TabsTrigger value="findings" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                      <TabsTrigger value="findings" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Findings</span>
+                        Findings
                       </TabsTrigger>
-                      <TabsTrigger value="coverage" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                      <TabsTrigger value="coverage" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Coverage</span>
+                        Coverage
                       </TabsTrigger>
-                      <TabsTrigger value="archive" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm">
+                      <TabsTrigger value="archive" className="flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <Archive className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Archive</span>
+                        Archive
                       </TabsTrigger>
                     </TabsList>
 

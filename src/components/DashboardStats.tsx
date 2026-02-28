@@ -12,8 +12,8 @@ interface StatCardProps {
 }
 
 const StatCard = ({ icon, label, value, subValue, iconColor = "text-primary" }: StatCardProps) => (
-  <Card className="relative overflow-hidden group hover:border-primary/30 transition-colors">
-    <CardContent className="p-3 sm:p-5">
+  <Card className="group hover:border-primary/20 transition-colors">
+    <CardContent className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
           <p className="text-xs text-muted-foreground font-medium truncate">{label}</p>
@@ -24,12 +24,10 @@ const StatCard = ({ icon, label, value, subValue, iconColor = "text-primary" }: 
             <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{subValue}</p>
           )}
         </div>
-        <div className={`p-2 sm:p-2.5 rounded-lg bg-primary/10 ${iconColor} shrink-0`}>
+        <div className={`p-1.5 sm:p-2 rounded-md bg-primary/10 ${iconColor} shrink-0`}>
           {icon}
         </div>
       </div>
-      {/* Subtle glow effect on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </CardContent>
   </Card>
 );
