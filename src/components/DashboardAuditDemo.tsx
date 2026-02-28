@@ -73,13 +73,13 @@ const FINDINGS: DemoFinding[] = [
 const FRAMES: FrameState[] = [
   { phaseIdx: 0, findingsCount: 0, score: 0, grade: "—", gradeColor: "text-muted-foreground/20", elapsed: 0, contractIdx: 0, subPhaseIdx: 0, counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, gas: 0 } },
   { phaseIdx: 0, findingsCount: 0, score: 0, grade: "—", gradeColor: "text-muted-foreground/20", elapsed: 9, contractIdx: 0, subPhaseIdx: 0, counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 0, findingsCount: 1, score: 28, grade: "C+", gradeColor: "text-warning", elapsed: 51, contractIdx: 0, subPhaseIdx: 1, counts: { critical: 1, high: 0, medium: 0, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 0, findingsCount: 3, score: 38, grade: "C+", gradeColor: "text-warning", elapsed: 86, contractIdx: 1, subPhaseIdx: 0, counts: { critical: 1, high: 1, medium: 1, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 0, findingsCount: 5, score: 48, grade: "C+", gradeColor: "text-warning", elapsed: 118, contractIdx: 1, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 1, low: 0, info: 0, gas: 0 } },
-  { phaseIdx: 1, findingsCount: 8, score: 56, grade: "C+", gradeColor: "text-warning", elapsed: 149, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 1, info: 0, gas: 0 } },
-  { phaseIdx: 2, findingsCount: 10, score: 62, grade: "B", gradeColor: "text-success", elapsed: 163, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 3, info: 0, gas: 0 } },
-  { phaseIdx: 5, findingsCount: 14, score: 68, grade: "B", gradeColor: "text-success", elapsed: 180, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 4, info: 0, gas: 3 } },
-  { phaseIdx: 6, findingsCount: 16, score: 74, grade: "B+", gradeColor: "text-success", elapsed: 194, contractIdx: 3, subPhaseIdx: 2, complete: true, counts: { critical: 2, high: 2, medium: 3, low: 4, info: 0, gas: 5 } },
+  { phaseIdx: 0, findingsCount: 1, score: 12, grade: "F", gradeColor: "text-critical", elapsed: 51, contractIdx: 0, subPhaseIdx: 1, counts: { critical: 1, high: 0, medium: 0, low: 0, info: 0, gas: 0 } },
+  { phaseIdx: 0, findingsCount: 3, score: 18, grade: "F", gradeColor: "text-critical", elapsed: 86, contractIdx: 1, subPhaseIdx: 0, counts: { critical: 1, high: 1, medium: 1, low: 0, info: 0, gas: 0 } },
+  { phaseIdx: 0, findingsCount: 5, score: 22, grade: "F", gradeColor: "text-critical", elapsed: 118, contractIdx: 1, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 1, low: 0, info: 0, gas: 0 } },
+  { phaseIdx: 1, findingsCount: 8, score: 28, grade: "F", gradeColor: "text-critical", elapsed: 149, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 1, info: 0, gas: 0 } },
+  { phaseIdx: 2, findingsCount: 10, score: 32, grade: "F", gradeColor: "text-critical", elapsed: 163, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 3, info: 0, gas: 0 } },
+  { phaseIdx: 5, findingsCount: 14, score: 36, grade: "F", gradeColor: "text-critical", elapsed: 180, contractIdx: 3, subPhaseIdx: 2, counts: { critical: 2, high: 2, medium: 3, low: 4, info: 0, gas: 3 } },
+  { phaseIdx: 6, findingsCount: 16, score: 38, grade: "F", gradeColor: "text-critical", elapsed: 194, contractIdx: 3, subPhaseIdx: 2, complete: true, counts: { critical: 2, high: 2, medium: 3, low: 4, info: 0, gas: 5 } },
 ];
 
 const FRAME_DELAYS = [1600, 2000, 1800, 1800, 2000, 1800, 2000, 2400, 5000];
@@ -123,8 +123,8 @@ const COMPLEXITY_STYLES: Record<string, string> = {
   L3: "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30",
 };
 
-const FIXED_W = 640;
-const FIXED_H = 520;
+const FIXED_W = 1024;
+const FIXED_H = 640;
 
 // ─── Component ────────────────────────────────────────────────────────────
 
@@ -201,7 +201,7 @@ const DashboardAuditDemo = () => {
         </div>
 
         {/* Fixed-height content area */}
-        <div className="flex flex-col h-[480px] overflow-hidden">
+        <div className="flex flex-col h-[600px] overflow-hidden">
           <div className="p-5 flex flex-col flex-1 min-h-0 space-y-4">
             {/* ── Project header ─────────────────────────────────── */}
             <div className="flex items-start justify-between gap-3 shrink-0">
@@ -319,6 +319,7 @@ const DashboardAuditDemo = () => {
                   <div className={cn(
                     "w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0",
                     state.score === 0 ? "border-muted" :
+                    state.grade === "F" ? "border-critical" :
                     state.score >= 65 ? "border-success" : "border-warning"
                   )}>
                     <span className={cn("text-xl font-bold", state.gradeColor)}>
@@ -375,7 +376,7 @@ const DashboardAuditDemo = () => {
                 { label: "Scope",      icon: FileCode,   active: false },
                 { label: "Insights",   icon: Lightbulb,  active: false },
                 { label: "Invariants", icon: Shield,      active: false },
-                { label: "Findings",   icon: AlertTriangle, active: true, count: state.findingsCount },
+                { label: "Findings",   icon: AlertTriangle, active: true },
                 { label: "Coverage",   icon: ShieldCheck, active: false },
                 { label: "Archive",    icon: Archive,     active: false },
               ].map(tab => {
@@ -392,9 +393,6 @@ const DashboardAuditDemo = () => {
                   >
                     <TabIcon className="w-3.5 h-3.5" />
                     <span>{tab.label}</span>
-                    {tab.count !== undefined && tab.count > 0 && (
-                      <span className="text-muted-foreground/70">({tab.count})</span>
-                    )}
                   </div>
                 );
               })}
