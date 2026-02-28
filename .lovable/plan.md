@@ -1,73 +1,61 @@
 
 
-# Fix DashboardAuditDemo Mobile View -- CSS Scale Approach
+# Update DashboardAuditDemo: Findings Data, Card UI, and Stop-on-Complete
 
-## Problem
-On mobile, the demo tries to fit content into a smaller width by cramping elements. Instead, it should render at desktop proportions and scale down visually -- like dragging a window corner to shrink it. All fonts, icons, spacing, and content shrink proportionally.
-
-## Solution
-Use CSS `transform: scale()` to render the demo at a fixed desktop size (640x520) and scale it down on smaller screens. Everything -- fonts, icons, padding, findings cards -- shrinks uniformly.
+## Overview
+Three changes to `src/components/DashboardAuditDemo.tsx`:
+1. Replace FINDINGS array with 16 new entries (2 critical, 2 high, 3 medium, 4 low, 5 gas)
+2. Simplify finding cards to collapsed severity badge + truncated title only
+3. Stop the animation after the audit completes instead of looping -- restart only on page revisit
 
 ## Changes (single file: `src/components/DashboardAuditDemo.tsx`)
 
-### 1. Add a ResizeObserver-based scale wrapper
+### 1. Update DemoFinding type
+Add `"low"` and `"gas"` to the severity union on line 8.
 
-- Add a `useRef` on an outer container div and a `ResizeObserver` to measure its width
-- Compute `scale = Math.min(containerWidth / 640, 1)` (never scale up beyond 1x)
-- Store scale in state
+### 2. Replace FINDINGS array (lines 49-93)
+Replace with the 16 new findings from the spec (2 critical, 2 high, 3 medium, 4 low, 5 gas).
 
-### 2. Structure the wrapper
+### 3. Add SEVERITY_CONFIG entries for "low" and "gas"
+- `low`: Info icon, "Low" label, blue-ish styling
+- `gas`: Fuel icon, "Gas" label, green styling
 
-```text
-+--------------------------------------+
-| Outer div (width: 100%)              |
-| height = 520 * scale (dynamic)       |
-| overflow: hidden, position: relative |
-|                                      |
-|  +--------------------------------+  |
-|  | Inner div (fixed 640px x 520px)|  |
-|  | transform: scale(X)            |  |
-|  | transform-origin: top left     |  |
-|  | position: absolute, top: 0     |  |
-|  |                                |  |
-|  | All content renders at desktop |  |
-|  | size -- fonts, icons, spacing  |  |
-|  | all shrink via the CSS scale   |  |
-|  +--------------------------------+  |
-+--------------------------------------+
+### 4. Update FRAMES counts
+All frames get a `gas` key. Progressive reveal:
+
+| Frame | phaseIdx | findingsCount | c/h/m/l/i/g |
+|-------|----------|---------------|-------------|
+| 0     | 0        | 0             | 0/0/0/0/0/0 |
+| 1     | 0        | 0             | 0/0/0/0/0/0 |
+| 2     | 0        | 1             | 1/0/0/0/0/0 |
+| 3     | 0        | 3             | 1/1/1/0/0/0 |
+| 4     | 0        | 5             | 2/2/1/0/0/0 |
+| 5     | 1        | 8             | 2/2/3/1/0/0 |
+| 6     | 2        | 10            | 2/2/3/3/0/0 |
+| 7     | 5        | 14            | 2/2/3/4/0/3 |
+| 8     | 6        | 16 (complete) | 2/2/3/4/0/5 |
+
+### 5. Stop animation on complete -- no looping
+Change the frame advancement logic (line 173) from:
+```typescript
+setFrameIdx(f => (f >= FRAMES.length - 1 ? 0 : f + 1));
+```
+to:
+```typescript
+setFrameIdx(f => (f >= FRAMES.length - 1 ? f : f + 1));
 ```
 
-On a 360px phone: scale = 360/640 = 0.5625, so the entire demo (including all text, icons, padding) appears at ~56% of desktop size -- same proportions, just smaller.
+This stops at the last frame. The demo only restarts when the user navigates away and comes back, because `useState(0)` re-initializes on mount.
 
-### 3. Remove all `sm:` responsive breakpoints inside the component
+### 6. Simplify finding card rendering
+Remove from each finding card:
+- File location line (FileCode icon + line numbers)
+- Code snippet block (the `border-t bg-[hsl(0_0%_4%)]` pre block)
 
-Since the component always renders at 640px internally, responsive breakpoints are unnecessary. Strip all `sm:` prefixed classes and keep only the desktop variants:
+Each card becomes a single row:
+```
+[SEVERITY_BADGE]  Title text (truncated with line-clamp-1)
+```
 
-- `p-3 sm:p-5` becomes `p-5`
-- `h-[480px] sm:h-[520px]` becomes `h-[520px]` (fixed at desktop height)
-- `text-sm sm:text-base` becomes `text-base`
-- `text-[10px] sm:text-xs` becomes `text-xs`
-- `text-xs sm:text-sm` becomes `text-sm`
-- `hidden sm:inline` becomes just present (remove hidden)
-- `sm:hidden` elements get removed entirely (mobile-only abbreviations no longer needed)
-- `grid grid-cols-3 gap-2 sm:flex sm:flex-wrap` becomes `flex flex-wrap`
-- `p-3 sm:p-4` becomes `p-4`
-- `px-3 sm:px-4` becomes `px-4`
-- `w-3 h-3 sm:w-3.5 sm:h-3.5` becomes `w-3.5 h-3.5`
-
-### 4. Keep the macOS title bar inside the scaled container
-
-The title bar (traffic lights + title) is part of the inner fixed-size div, so it also scales down proportionally with everything else.
-
-### 5. Border radius and shadow stay on the outer wrapper
-
-Move `rounded-xl border border-border bg-card shadow-2xl` to the outer wrapper so they don't get distorted by the scale transform. The inner div gets no border/shadow/rounding.
-
-## Technical Details
-
-- The `ResizeObserver` fires on mount and resize, updating `scale` state
-- The outer div uses `style={{ height: 520 * scale }}` for correct document flow
-- The inner div uses `style={{ transform: \`scale(${scale})\`, transformOrigin: 'top left', width: 640, height: 520 }}`
-- On desktop (width >= 640px), scale = 1, no visual change
-- On mobile, everything shrinks uniformly -- no cramped text, no layout breaks
+Rendered as a flex row with the severity pill on the left and the title (truncated) on the right, inside a compact `p-2.5 px-3` container.
 
