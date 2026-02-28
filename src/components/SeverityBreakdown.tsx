@@ -1,138 +1,77 @@
 import { useDashboardStats } from "@/hooks/useDashboardStats";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, AlertCircle, Info, ShieldAlert, ShieldCheck, Fuel } from "lucide-react";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { TerminalDivider } from "@/components/ui/TerminalDivider";
 
-interface SeverityBarProps {
-  label: string;
-  count: number;
-  total: number;
-  iconColor: string;
-  barColor: string;
-  icon: React.ReactNode;
-}
+const SEVERITIES = [
+  { key: "critical", label: "CRITICAL", textColor: "text-critical", bgColor: "bg-critical" },
+  { key: "high", label: "HIGH", textColor: "text-destructive", bgColor: "bg-destructive" },
+  { key: "medium", label: "MEDIUM", textColor: "text-warning", bgColor: "bg-warning" },
+  { key: "low", label: "LOW", textColor: "text-low", bgColor: "bg-low" },
+  { key: "info", label: "INFO", textColor: "text-slate-400", bgColor: "bg-slate-400" },
+  { key: "gas", label: "GAS", textColor: "text-green-500", bgColor: "bg-green-500" },
+] as const;
 
-const SeverityBar = ({ label, count, total, iconColor, barColor, icon }: SeverityBarProps) => {
-  const percentage = total > 0 ? (count / total) * 100 : 0;
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className={`p-1.5 rounded ${iconColor}`}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-foreground capitalize">{label}</span>
-          <span className="text-xs text-muted-foreground">{count}</span>
-        </div>
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-            style={{ width: `${Math.max(percentage, count > 0 ? 5 : 0)}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
+type SeverityKey = (typeof SEVERITIES)[number]["key"];
 
 export const SeverityBreakdown = () => {
   const { stats, isLoading } = useDashboardStats();
-  
+
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
-        <Skeleton className="h-4 w-32 mb-3" />
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="flex items-center gap-3">
-              <Skeleton className="h-8 w-8 rounded" />
-              <div className="flex-1 space-y-1">
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-1.5 w-full" />
-              </div>
+      <TerminalPanel variant="data">
+        <TerminalDivider label="Severity Distribution" />
+        <div className="mt-3 space-y-2">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="h-3 w-[58px] animate-pulse bg-white/[0.03] rounded" />
+              <div className="h-3 w-6 animate-pulse bg-white/[0.03] rounded" />
+              <div className="h-3 flex-1 animate-pulse bg-white/[0.03] rounded" />
+              <div className="h-3 w-9 animate-pulse bg-white/[0.03] rounded" />
             </div>
           ))}
         </div>
-      </div>
+      </TerminalPanel>
     );
   }
 
   const { severityBreakdown } = stats;
   const total = Object.values(severityBreakdown).reduce((a, b) => a + b, 0);
 
-  const severities = [
-    {
-      key: 'critical',
-      label: 'Critical',
-      count: severityBreakdown.critical,
-      iconColor: 'bg-critical/10 text-critical',
-      barColor: 'bg-critical',
-      icon: <ShieldAlert className="w-4 h-4" />
-    },
-    {
-      key: 'high',
-      label: 'High',
-      count: severityBreakdown.high,
-      iconColor: 'bg-destructive/10 text-destructive',
-      barColor: 'bg-destructive',
-      icon: <AlertTriangle className="w-4 h-4" />
-    },
-    {
-      key: 'medium',
-      label: 'Medium',
-      count: severityBreakdown.medium,
-      iconColor: 'bg-warning/10 text-warning',
-      barColor: 'bg-warning',
-      icon: <AlertCircle className="w-4 h-4" />
-    },
-    {
-      key: 'low',
-      label: 'Low',
-      count: severityBreakdown.low,
-      iconColor: 'bg-low/10 text-low',
-      barColor: 'bg-low',
-      icon: <Info className="w-4 h-4" />
-    },
-    {
-      key: 'info',
-      label: 'Info',
-      count: severityBreakdown.info,
-      iconColor: 'bg-slate-400/10 text-slate-400',
-      barColor: 'bg-slate-400',
-      icon: <ShieldCheck className="w-4 h-4" />
-    },
-    {
-      key: 'gas',
-      label: 'Gas',
-      count: severityBreakdown.gas,
-      iconColor: 'bg-green-500/10 text-green-500',
-      barColor: 'bg-green-500',
-      icon: <Fuel className="w-4 h-4" />
-    },
-  ];
-
   return (
-    <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
-      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Severity Distribution</h4>
-      <div className="space-y-3">
+    <TerminalPanel variant="data">
+      <TerminalDivider label="Severity Distribution" />
+      <div className="mt-3 space-y-0.5">
         {total === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="text-muted-foreground/40 font-mono text-[12px] text-center py-4">
             No findings yet
           </p>
         ) : (
-          severities.map(severity => (
-            <SeverityBar
-              key={severity.key}
-              label={severity.label}
-              count={severity.count}
-              total={total}
-              iconColor={severity.iconColor}
-              barColor={severity.barColor}
-              icon={severity.icon}
-            />
-          ))
+          SEVERITIES.map(({ key, label, textColor, bgColor }) => {
+            const count = severityBreakdown[key as SeverityKey];
+            const pct = Math.round((count / total) * 100);
+
+            return (
+              <div key={key} className="flex items-center gap-2 font-mono text-[12px] leading-[1.7]">
+                <span className={`w-[58px] uppercase text-[11px] font-medium shrink-0 ${textColor}`}>
+                  {label}
+                </span>
+                <span className="w-6 text-right text-muted-foreground/70">
+                  {count}
+                </span>
+                <div className="flex-1 h-1.5 bg-white/[0.03] rounded-sm overflow-hidden">
+                  <div
+                    className={`h-full rounded-sm ${bgColor}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="w-9 text-right text-muted-foreground/30 text-[10px]">
+                  {pct}%
+                </span>
+              </div>
+            );
+          })
         )}
       </div>
-    </div>
+    </TerminalPanel>
   );
 };

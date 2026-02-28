@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { CheckCircle2, Loader2, Circle, AlertTriangle, AlertCircle, Info, FileCode, Shield, Lightbulb, ShieldCheck, Archive, Fuel } from "lucide-react";
+import { Loader2, AlertTriangle, AlertCircle, Info, FileCode, Shield, Lightbulb, ShieldCheck, Archive, Fuel } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -179,7 +179,7 @@ const DashboardAuditDemo = () => {
   return (
     <>
     {/* ── Mobile simplified card ── */}
-    <div className="sm:hidden rounded-xl border border-border bg-card overflow-hidden shadow-2xl">
+    <div className="sm:hidden rounded-xl ring-1 ring-white/[0.05] bg-[#050505] overflow-hidden shadow-2xl">
       <div className="px-4 py-3 bg-[hsl(0_0%_5%)] border-b border-border flex items-center justify-between">
         <span className="text-xs font-mono text-muted-foreground/50">Solarizer</span>
         <span className="text-[10px] font-mono text-muted-foreground/40">{timeStr}</span>
@@ -205,14 +205,9 @@ const DashboardAuditDemo = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-lg p-3">
+          <div className="bg-[#050505] ring-1 ring-white/[0.05] rounded-lg p-3">
             <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0",
-                "border-critical"
-              )}>
-                <span className="text-sm font-bold text-critical">{state.grade}</span>
-              </div>
+              <span className="font-mono text-2xl font-bold text-critical">{state.grade}</span>
               <div>
                 <span className="text-sm font-semibold text-critical">Critical</span>
                 <p className="text-[10px] text-muted-foreground">Security Rating</p>
@@ -223,13 +218,9 @@ const DashboardAuditDemo = () => {
 
         <div className="flex flex-wrap gap-1.5">
           {VULN_CATEGORIES.filter(cat => state.counts[cat.key] > 0).map(cat => (
-            <div key={cat.key} className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-md border text-[10px]",
-              cat.bgColor, cat.borderColor
-            )}>
-              <span className={cn("font-medium", cat.textColor)}>{state.counts[cat.key]}</span>
-              <span className="text-muted-foreground">{cat.label}</span>
-            </div>
+            <span key={cat.key} className={cn("font-mono text-[10px]", cat.textColor)}>
+              {state.counts[cat.key]} {cat.label}
+            </span>
           ))}
         </div>
       </div>
@@ -281,7 +272,7 @@ const DashboardAuditDemo = () => {
 
             {/* ── Conditional: Progress Panel OR Score Card ─────── */}
             {!state.complete ? (
-              <div className="bg-card border border-primary/20 rounded-lg p-5 shrink-0">
+              <div className="bg-[#050505] ring-1 ring-white/[0.05] rounded-xl p-5 shrink-0">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-1.5">
                     <Loader2 className="w-4 h-4 animate-spin text-primary" />
@@ -292,7 +283,7 @@ const DashboardAuditDemo = () => {
 
                 {/* Phases */}
                 <div className="space-y-1 mb-3">
-                  <h4 className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Phases</h4>
+                  <span className="text-muted-foreground/40 font-mono text-[11px] select-none">{"── Phases ──────────────────────────────────"}</span>
                   {PHASES.map((phase, idx) => {
                     const isDone = state.phaseIdx > idx;
                     const isActive = state.phaseIdx === idx;
@@ -305,11 +296,11 @@ const DashboardAuditDemo = () => {
                         "flex items-center gap-2 py-1 px-2 -mx-2 rounded",
                         isActive && "bg-primary/5"
                       )}>
-                        {isDone && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
-                        {isActive && <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />}
-                        {isPending && <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
+                        {isDone && <span className="text-green-400 shrink-0 w-4 text-center">{"✓"}</span>}
+                        {isActive && <span className="text-primary font-bold shrink-0 w-4 text-center">{"»"}</span>}
+                        {isPending && <span className="text-muted-foreground/40 shrink-0 w-4 text-center">{"☐"}</span>}
                         <span className={cn(
-                          "text-sm",
+                          "font-mono text-[13px]",
                           isDone && "text-success",
                           isActive && "text-primary font-medium",
                           isPending && "text-muted-foreground"
@@ -323,18 +314,18 @@ const DashboardAuditDemo = () => {
 
                 {/* Contracts */}
                 <div className="space-y-1">
-                  <h4 className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Contracts</h4>
+                  <span className="text-muted-foreground/40 font-mono text-[11px] select-none">{"── Contracts ───────────────────────────────"}</span>
                   {CONTRACTS.map((c, idx) => {
                     const isDone = idx < state.contractIdx || state.phaseIdx > 0;
                     const isActive = idx === state.contractIdx && state.phaseIdx === 0;
                     return (
                       <div key={c.name} className="space-y-0.5">
                         <div className="flex items-center gap-2 py-0.5">
-                          {isDone && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
-                          {isActive && <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />}
-                          {!isDone && !isActive && <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
+                          {isDone && <span className="text-green-400 shrink-0 w-4 text-center">{"✓"}</span>}
+                          {isActive && <span className="text-primary font-bold shrink-0 w-4 text-center">{"»"}</span>}
+                          {!isDone && !isActive && <span className="text-muted-foreground/40 shrink-0 w-4 text-center">{"☐"}</span>}
                           <span className={cn(
-                            "text-sm truncate",
+                            "font-mono text-[13px] truncate",
                             isDone && "text-success",
                             isActive && "text-primary font-medium",
                             !isDone && !isActive && "text-muted-foreground"
@@ -349,15 +340,17 @@ const DashboardAuditDemo = () => {
                           </span>
                         </div>
                         {isActive && (
-                          <div className="ml-6 pl-3 border-l-2 border-border/40 space-y-0.5">
+                          <div className="ml-6 space-y-0.5">
                             {SUB_PHASES.map((sp, spIdx) => {
                               const spDone = spIdx < state.subPhaseIdx;
                               const spActive = spIdx === state.subPhaseIdx;
+                              const isLast = spIdx === SUB_PHASES.length - 1;
                               return (
-                                <div key={sp} className="flex items-center gap-2">
-                                  {spDone && <CheckCircle2 className="w-3 h-3 text-success shrink-0" />}
-                                  {spActive && <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />}
-                                  {!spDone && !spActive && <Circle className="w-3 h-3 text-muted-foreground/40 shrink-0" />}
+                                <div key={sp} className="flex items-center gap-1">
+                                  <span className="text-muted-foreground/20 shrink-0">{isLast ? "└" : "├"}</span>
+                                  {spDone && <span className="text-green-400 shrink-0 w-3 text-center text-xs">{"✓"}</span>}
+                                  {spActive && <span className="text-primary font-bold shrink-0 w-3 text-center text-xs">{"»"}</span>}
+                                  {!spDone && !spActive && <span className="text-muted-foreground/40 shrink-0 w-3 text-center text-xs">{"☐"}</span>}
                                   <span className={cn(
                                     "text-xs",
                                     spDone && "text-success",
@@ -377,18 +370,12 @@ const DashboardAuditDemo = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-card border border-border rounded-lg p-5 shrink-0">
+              <div className="bg-[#050505] ring-1 ring-white/[0.05] rounded-xl p-5 shrink-0">
+                <span className="text-muted-foreground/40 font-mono text-[11px] select-none mb-3 block">{"── Security Assessment ─────────────────────"}</span>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={cn(
-                    "w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0",
-                    state.score === 0 ? "border-muted" :
-                    state.grade === "F" ? "border-critical" :
-                    state.score >= 65 ? "border-success" : "border-warning"
-                  )}>
-                    <span className={cn("text-xl font-bold", state.gradeColor)}>
-                      {state.grade === "—" ? "--" : state.grade}
-                    </span>
-                  </div>
+                  <span className={cn("font-mono text-[48px] font-bold leading-none", state.gradeColor)}>
+                    {state.grade === "—" ? "--" : state.grade}
+                  </span>
                   <div>
                     <div className="flex items-baseline gap-2">
                       <span className={cn("text-lg font-semibold", state.gradeColor)}>
@@ -400,35 +387,30 @@ const DashboardAuditDemo = () => {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Matrix</h4>
-                    <span className="text-xs text-muted-foreground">{total} findings</span>
-                  </div>
-                  <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
-                    {VULN_CATEGORIES.map(cat => {
-                      const count = state.counts[cat.key];
-                      const width = total > 0 ? (count / total) * 100 : 0;
-                      return width > 0 ? (
-                        <div key={cat.key} className={cn("h-full transition-all duration-500", cat.barColor)} style={{ width: `${width}%` }} />
-                      ) : null;
-                    })}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {VULN_CATEGORIES.map(cat => {
-                      const CatIcon = cat.icon;
-                      return (
-                        <div key={cat.key} className={cn(
-                          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border",
-                          cat.bgColor, cat.borderColor
-                        )}>
-                          <CatIcon className={cn("w-3.5 h-3.5", cat.textColor)} />
-                          <span className={cn("text-sm font-medium", cat.textColor)}>{state.counts[cat.key]}</span>
-                          <span className="text-xs text-muted-foreground">{cat.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                <span className="text-muted-foreground/40 font-mono text-[11px] select-none mt-4 mb-3 block">{"── Vulnerability Matrix ────────────────────"}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">{total} findings</span>
+                </div>
+                <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
+                  {VULN_CATEGORIES.map(cat => {
+                    const count = state.counts[cat.key];
+                    const width = total > 0 ? (count / total) * 100 : 0;
+                    return width > 0 ? (
+                      <div key={cat.key} className={cn("h-full transition-all duration-500", cat.barColor)} style={{ width: `${width}%` }} />
+                    ) : null;
+                  })}
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  {VULN_CATEGORIES.map(cat => {
+                    const count = state.counts[cat.key];
+                    const abbr: Record<string, string> = { critical: "CRIT", high: "HIGH", medium: "MED", low: "LOW", info: "INFO", gas: "GAS" };
+                    return (
+                      <span key={cat.key} className="font-mono text-[12px]">
+                        <span className={cat.textColor}>{abbr[cat.key]}</span>{" "}
+                        <span className="text-muted-foreground/60">{count}</span>
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -471,21 +453,22 @@ const DashboardAuditDemo = () => {
               ) : (
                 visibleFindings.map((f, i) => {
                   const config = SEVERITY_CONFIG[f.severity];
-                  const Icon = config.icon;
                   return (
                     <div
                       key={f.title}
-                      className="flex items-center gap-3 p-2.5 px-3 border border-border rounded-lg bg-card/50 animate-fade-in"
+                      className="flex items-center gap-3 p-2.5 px-3 bg-[#050505] ring-1 ring-white/[0.05] rounded-lg animate-fade-in"
                       style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}
                     >
-                      <div className={cn(
-                        "flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium border shrink-0",
-                        config.className
+                      <span className={cn(
+                        "font-mono text-[10px] uppercase font-semibold shrink-0",
+                        f.severity === "critical" ? "text-critical" :
+                        f.severity === "high" ? "text-destructive" :
+                        f.severity === "medium" ? "text-warning" :
+                        f.severity === "low" ? "text-low" : "text-green-500"
                       )}>
-                        <Icon className="w-3 h-3" />
                         {config.label}
-                      </div>
-                      <p className="text-sm font-medium text-foreground line-clamp-1">{f.title}</p>
+                      </span>
+                      <p className="text-[13px] text-foreground/80 line-clamp-1">{f.title}</p>
                     </div>
                   );
                 })

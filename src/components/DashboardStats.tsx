@@ -1,50 +1,21 @@
-import { Shield, Bug, TrendingUp } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { TerminalDivider } from "@/components/ui/TerminalDivider";
+import { KPIStat } from "@/components/ui/KPIStat";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
-import { Skeleton } from "@/components/ui/skeleton";
 
-interface StatCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  subValue?: string;
-  iconColor?: string;
-}
+const getScoreColor = (score: number): string | undefined => {
+  if (score === 0) return undefined;
+  if (score > 70) return "text-success";
+  if (score >= 50) return "text-warning";
+  return "text-critical";
+};
 
-const StatCard = ({ icon, label, value, subValue, iconColor = "text-primary" }: StatCardProps) => (
-  <Card className="group hover:border-primary/20 transition-colors">
-    <CardContent className="p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-2">
-        <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground font-medium truncate">{label}</p>
-          <p className="text-xl sm:text-3xl font-bold text-foreground tracking-tight">
-            {typeof value === 'number' ? value.toLocaleString() : value}
-          </p>
-          {subValue && (
-            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{subValue}</p>
-          )}
-        </div>
-        <div className={`p-1.5 sm:p-2 rounded-md bg-primary/10 ${iconColor} shrink-0`}>
-          {icon}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
+const VerticalDivider = () => (
+  <div className="w-px h-12 bg-white/[0.05] hidden sm:block" />
 );
 
-const StatCardSkeleton = () => (
-  <Card>
-    <CardContent className="p-4 sm:p-5">
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="h-3 w-20" />
-        </div>
-        <Skeleton className="h-10 w-10 rounded-lg" />
-      </div>
-    </CardContent>
-  </Card>
+const LoadingPlaceholder = () => (
+  <div className="h-10 w-20 animate-pulse bg-white/[0.03] rounded" />
 );
 
 export const DashboardStats = () => {
@@ -52,38 +23,44 @@ export const DashboardStats = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <div className="col-span-2 sm:col-span-1"><StatCardSkeleton /></div>
-      </div>
+      <TerminalPanel variant="data">
+        <TerminalDivider label="Overview" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-around gap-6 sm:gap-0 mt-3">
+          <LoadingPlaceholder />
+          <VerticalDivider />
+          <LoadingPlaceholder />
+          <VerticalDivider />
+          <LoadingPlaceholder />
+        </div>
+      </TerminalPanel>
     );
   }
 
+  const score = stats.averageSecurityScore;
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-      <StatCard
-        icon={<Shield className="w-5 h-5" />}
-        label="Total Contracts"
-        value={stats.totalContractsScanned}
-        subValue="files scanned"
-      />
-      <StatCard
-        icon={<Bug className="w-5 h-5" />}
-        label="Vulnerabilities"
-        value={stats.totalVulnerabilitiesFound}
-        subValue="issues found"
-        iconColor="text-destructive"
-      />
-      <div className="col-span-2 sm:col-span-1">
-        <StatCard
-          icon={<TrendingUp className="w-5 h-5" />}
-          label="Avg. Score"
-          value={stats.averageSecurityScore > 0 ? `${stats.averageSecurityScore}%` : '--'}
-          subValue="security rating"
-          iconColor="text-success"
+    <TerminalPanel variant="data">
+      <TerminalDivider label="Overview" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-around gap-6 sm:gap-0 mt-3">
+        <KPIStat
+          value={stats.totalContractsScanned.toLocaleString()}
+          label="contracts"
+          subLabel="scanned"
+        />
+        <VerticalDivider />
+        <KPIStat
+          value={stats.totalVulnerabilitiesFound.toLocaleString()}
+          label="vulnerabilities"
+          subLabel="found"
+        />
+        <VerticalDivider />
+        <KPIStat
+          value={score > 0 ? `${score}%` : "--"}
+          label="avg score"
+          subLabel="rating"
+          valueClassName={getScoreColor(score)}
         />
       </div>
-    </div>
+    </TerminalPanel>
   );
 };

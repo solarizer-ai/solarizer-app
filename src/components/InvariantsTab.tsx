@@ -3,6 +3,8 @@ import { Shield, ChevronDown, ChevronRight, FileCode, GitBranch } from "lucide-r
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { cn } from "@/lib/utils";
 import type { Invariant } from "@/hooks/useAudits";
 
@@ -35,8 +37,18 @@ const InvariantsTab = ({ invariants }: InvariantsTabProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Top Divider */}
+      <TerminalDivider
+        label="Protocol Invariants"
+        right={
+          <span className="text-muted-foreground/60 font-mono text-[11px]">
+            {invariants.length} invariant{invariants.length !== 1 ? 's' : ''}
+          </span>
+        }
+      />
+
       {/* Summary Card */}
-      <div className="p-4 md:p-6 rounded-lg border bg-card">
+      <TerminalPanel variant="data">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
             <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -86,19 +98,22 @@ const InvariantsTab = ({ invariants }: InvariantsTabProps) => {
             {crossContractInvariants.length} cross-contract
           </span>
         </div>
-      </div>
+      </TerminalPanel>
 
       {/* Contract Invariants */}
       {contractInvariants.length > 0 && (
         <Collapsible open={contractOpen} onOpenChange={setContractOpen}>
-          <CollapsibleTrigger className="flex items-center gap-3 text-sm font-semibold text-foreground hover:text-foreground/80 transition-colors w-full text-left pl-3 border-l-2 border-l-blue-500">
-            {contractOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-              <FileCode className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            </div>
-            Contract Invariants ({contractInvariants.length})
+          <CollapsibleTrigger className="w-full text-left">
+            <TerminalDivider
+              label={`Contract Invariants (${contractInvariants.length})`}
+              right={
+                contractOpen
+                  ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/40" />
+                  : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
+              }
+            />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-3 space-y-3 ml-3">
+          <CollapsibleContent className="mt-3 space-y-3">
             {contractInvariants.map((inv, i) => (
               <InvariantCard key={i} invariant={inv} />
             ))}
@@ -109,14 +124,17 @@ const InvariantsTab = ({ invariants }: InvariantsTabProps) => {
       {/* Cross-Contract Invariants */}
       {crossContractInvariants.length > 0 && (
         <Collapsible open={crossContractOpen} onOpenChange={setCrossContractOpen}>
-          <CollapsibleTrigger className="flex items-center gap-3 text-sm font-semibold text-foreground hover:text-foreground/80 transition-colors w-full text-left pl-3 border-l-2 border-l-amber-500">
-            {crossContractOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            <div className="w-6 h-6 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-              <GitBranch className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            </div>
-            Cross-Contract Invariants ({crossContractInvariants.length})
+          <CollapsibleTrigger className="w-full text-left">
+            <TerminalDivider
+              label={`Cross-Contract Invariants (${crossContractInvariants.length})`}
+              right={
+                crossContractOpen
+                  ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/40" />
+                  : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
+              }
+            />
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-3 space-y-3 ml-3">
+          <CollapsibleContent className="mt-3 space-y-3">
             {crossContractInvariants.map((inv, i) => (
               <InvariantCard key={i} invariant={inv} />
             ))}
@@ -133,7 +151,7 @@ const InvariantCard = ({ invariant }: { invariant: Invariant }) => {
 
   return (
     <div className={cn(
-      "rounded-lg border bg-card p-4 space-y-3 border-l-4",
+      "rounded-lg ring-1 ring-white/[0.05] bg-[#050505] p-4 space-y-3 border-l-4",
       isCritical ? "border-l-destructive" : "border-l-orange-500"
     )}>
       <div className="flex items-start justify-between gap-3">
@@ -141,7 +159,7 @@ const InvariantCard = ({ invariant }: { invariant: Invariant }) => {
         <div className="flex items-center gap-1.5 shrink-0">
           <Badge
             className={cn(
-              "text-[10px] px-1.5 py-0",
+              "font-mono text-[12px] px-1.5 py-0",
               isContract
                 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
                 : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
@@ -165,7 +183,7 @@ const InvariantCard = ({ invariant }: { invariant: Invariant }) => {
           {invariant.contracts.map((contract, i) => (
             <span
               key={i}
-              className="font-mono text-xs bg-muted rounded px-1.5 py-0.5 text-muted-foreground"
+              className="font-mono text-[12px] bg-muted rounded px-1.5 py-0.5 text-muted-foreground"
             >
               {contract}
             </span>

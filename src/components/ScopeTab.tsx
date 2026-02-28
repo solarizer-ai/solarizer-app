@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
-import { FileCode, FileText, FolderOpen, Folder, Info, CheckCircle2, ChevronRight, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { FileCode, FileText, FolderOpen, Folder } from "lucide-react";
+import { TerminalPanel } from "@/components/ui/TerminalPanel";
+import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import type { CoverageData } from "@/components/SecurityCoverageTab";
 import type { Finding, AuditStatus } from "@/hooks/useAudits";
 
@@ -79,24 +80,24 @@ function normalizePaths(data: unknown): string[] {
 
 // Build a hierarchical tree from flat file paths
 function buildFileTree(
-  allFiles: string[], 
-  scopeFiles: string[], 
+  allFiles: string[],
+  scopeFiles: string[],
   getFileStatus: (path: string) => 'context' | 'pending' | 'analysed'
 ): TreeNode[] {
   const root: TreeNode[] = [];
-  
+
   for (const filePath of allFiles) {
     const parts = filePath.split('/');
     let currentLevel = root;
     let currentPath = '';
-    
+
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       currentPath = currentPath ? `${currentPath}/${part}` : part;
       const isFile = i === parts.length - 1;
-      
+
       let existing = currentLevel.find(node => node.name === part && node.isFile === isFile);
-      
+
       if (!existing) {
         existing = {
           name: part,
@@ -107,13 +108,13 @@ function buildFileTree(
         };
         currentLevel.push(existing);
       }
-      
+
       if (!isFile) {
         currentLevel = existing.children;
       }
     }
   }
-  
+
   // Sort: folders first, then files, alphabetically
   const sortNodes = (nodes: TreeNode[]): TreeNode[] => {
     return nodes.sort((a, b) => {
@@ -124,7 +125,7 @@ function buildFileTree(
       children: sortNodes(node.children),
     }));
   };
-  
+
   return sortNodes(root);
 }
 
@@ -137,36 +138,34 @@ interface FileTreeNodeProps {
 
 const FileTreeNode = ({ node, depth = 0, expandedFolders, onToggleExpand }: FileTreeNodeProps) => {
   const paddingLeft = depth * 16;
-  
+
   if (!node.isFile) {
     const isExpanded = expandedFolders.has(node.path);
-    
+
     return (
       <div>
-        <div 
+        <div
           className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors cursor-pointer select-none"
           style={{ paddingLeft: `${paddingLeft}px` }}
           onClick={() => onToggleExpand(node.path)}
         >
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-          )}
+          <span className="text-muted-foreground/40 font-mono text-[13px] shrink-0 w-4 text-center">
+            {isExpanded ? '▾' : '▸'}
+          </span>
           {isExpanded ? (
             <FolderOpen className="w-4 h-4 text-primary/70 shrink-0" />
           ) : (
             <Folder className="w-4 h-4 text-primary/70 shrink-0" />
           )}
-          <span className="text-sm font-medium text-foreground">{node.name}</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="font-mono text-[13px] font-medium text-foreground">{node.name}</span>
+          <span className="font-mono text-[12px] text-muted-foreground">
             ({node.children.length})
           </span>
         </div>
         {isExpanded && node.children.map((child) => (
-          <FileTreeNode 
-            key={child.path} 
-            node={child} 
+          <FileTreeNode
+            key={child.path}
+            node={child}
             depth={depth + 1}
             expandedFolders={expandedFolders}
             onToggleExpand={onToggleExpand}
@@ -175,19 +174,19 @@ const FileTreeNode = ({ node, depth = 0, expandedFolders, onToggleExpand }: File
       </div>
     );
   }
-  
+
   return (
-    <div 
+    <div
       className="flex items-center justify-between gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors"
       style={{ paddingLeft: `${paddingLeft + 20}px` }}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <FileCode className="w-4 h-4 text-muted-foreground shrink-0" />
-        <span className="text-sm font-mono text-foreground truncate">{node.name}</span>
+        <span className="font-mono text-[13px] text-foreground truncate">{node.name}</span>
       </div>
       <div className="shrink-0">
         {node.status === 'context' && (
-          <Info className="w-4 h-4 text-muted-foreground" />
+          <span className="text-muted-foreground/40 font-mono text-[13px]">○</span>
         )}
         {node.status === 'pending' && (
           <span className="relative flex h-3 w-3">
@@ -196,18 +195,18 @@ const FileTreeNode = ({ node, depth = 0, expandedFolders, onToggleExpand }: File
           </span>
         )}
         {node.status === 'analysed' && (
-          <CheckCircle2 className="w-4 h-4 text-success" />
+          <span className="text-green-400 font-mono text-[13px]">✓</span>
         )}
       </div>
     </div>
   );
 };
 
-const ScopeTab = ({ 
-  coverageData, 
-  findings, 
-  contractCount, 
-  nlocCount, 
+const ScopeTab = ({
+  coverageData,
+  findings,
+  contractCount,
+  nlocCount,
   readOnly = false,
   auditStatus,
   systemHologram,
@@ -260,24 +259,24 @@ const ScopeTab = ({
   const getFileStatus = useMemo(() => {
     const isComplete = auditStatus === 'secured' || auditStatus === 'issues';
     const scopeSet = new Set(derivedScopeFiles);
-    
+
     return (filePath: string): 'context' | 'pending' | 'analysed' => {
       // Check if file is in scope using exact match or suffix matching
-      const isInScope = scopeSet.has(filePath) || derivedScopeFiles.some(s => 
+      const isInScope = scopeSet.has(filePath) || derivedScopeFiles.some(s =>
         s && filePath && (filePath.endsWith(s) || s.endsWith(filePath))
       );
-      
+
       if (!isInScope) return 'context';
       if (isComplete) return 'analysed';
-      
-      const hasResults = coverageData?.details?.some(d => 
+
+      const hasResults = coverageData?.details?.some(d =>
         d?.file && filePath && (d.file === filePath || filePath.includes(d.file) || d.file.includes(filePath))
       );
-      
-      const hasFindings = findings.some(f => 
+
+      const hasFindings = findings.some(f =>
         f?.location && filePath && (f.location.includes(filePath) || filePath.includes(f.location))
       );
-      
+
       return (hasResults || hasFindings) ? 'analysed' : 'pending';
     };
   }, [derivedScopeFiles, coverageData?.details, findings, auditStatus]);
@@ -333,41 +332,46 @@ const ScopeTab = ({
 
       {/* File Tree */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Files in Scope
-          </h4>
-          {hasTreeData && (
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                <span>{statusCounts.analysed} analysed</span>
-              </div>
-              {statusCounts.pending > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                  <span>{statusCounts.pending} analysing</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>{statusCounts.context} context</span>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {hasTreeData ? (
-          <div className="p-4 rounded-lg border border-border bg-card">
-            {fileTree.map((node) => (
-              <FileTreeNode 
-                key={node.path} 
-                node={node}
-                expandedFolders={expandedFolders}
-                onToggleExpand={handleToggleExpand}
-              />
-            ))}
+        <TerminalDivider
+          label="Files in Scope"
+          right={
+            hasTreeData ? (
+              <span className="font-mono text-[12px] text-muted-foreground/60">
+                {derivedAllFiles.length} files
+              </span>
+            ) : undefined
+          }
+        />
+
+        {hasTreeData && (
+          <div className="flex items-center gap-4 font-mono text-[12px] text-muted-foreground/60">
+            <span>
+              <span className="text-green-400">✓</span> {statusCounts.analysed} analysed
+            </span>
+            {statusCounts.pending > 0 && (
+              <span>
+                <span className="text-primary">·</span> {statusCounts.pending} analysing
+              </span>
+            )}
+            <span>
+              <span className="text-muted-foreground/40">○</span> {statusCounts.context} context
+            </span>
           </div>
+        )}
+
+        {hasTreeData ? (
+          <TerminalPanel variant="data" noPadding>
+            <div className="p-4">
+              {fileTree.map((node) => (
+                <FileTreeNode
+                  key={node.path}
+                  node={node}
+                  expandedFolders={expandedFolders}
+                  onToggleExpand={handleToggleExpand}
+                />
+              ))}
+            </div>
+          </TerminalPanel>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border border-dashed border-border rounded-lg">
             <FileText className="w-12 h-12 mb-4 opacity-50" />

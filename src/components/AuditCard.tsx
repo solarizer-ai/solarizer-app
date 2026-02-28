@@ -14,6 +14,7 @@ interface AuditCardProps {
   isShared?: boolean;
   hasShares?: boolean;
   phase?: string;
+  variant?: "card" | "dense";
 }
 
 const gradeColors: Record<SecurityGrade, string> = {
@@ -22,6 +23,14 @@ const gradeColors: Record<SecurityGrade, string> = {
   C: "text-warning bg-warning/10 border-warning/20",
   D: "text-warning bg-warning/10 border-warning/20",
   F: "text-critical bg-critical/10 border-critical/20",
+};
+
+const denseGradeColors: Record<SecurityGrade, string> = {
+  A: "text-success",
+  B: "text-success",
+  C: "text-warning",
+  D: "text-warning",
+  F: "text-critical",
 };
 
 const statusConfig: Record<AuditStatus, { label: string; icon: React.ReactNode; className: string }> = {
@@ -57,6 +66,15 @@ const statusConfig: Record<AuditStatus, { label: string; icon: React.ReactNode; 
   },
 };
 
+const denseStatusMarkers: Record<AuditStatus, { marker: string; className: string }> = {
+  analyzing: { marker: "\u00BB", className: "text-primary font-bold" },
+  secured: { marker: "\u2713", className: "text-green-400" },
+  issues: { marker: "\u25CF", className: "text-warning" },
+  pending: { marker: "\u2610", className: "text-muted-foreground/40" },
+  cancelled: { marker: "\u2610", className: "text-muted-foreground/40" },
+  failed: { marker: "\u2717", className: "text-destructive" },
+};
+
 const PHASE_LABELS: Record<string, string> = {
   complexity_estimation: "Complexity Analysis",
   session_start: "Session Start",
@@ -68,8 +86,37 @@ const PHASE_LABELS: Record<string, string> = {
   reporting: "Report Generation",
 };
 
-const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onClick, isShared, hasShares, phase }: AuditCardProps) => {
+const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onClick, isShared, hasShares, phase, variant = "card" }: AuditCardProps) => {
   const statusInfo = statusConfig[status];
+
+  if (variant === "dense") {
+    const { marker, className: markerClass } = denseStatusMarkers[status];
+
+    return (
+      <div
+        onClick={onClick}
+        className="group flex items-center gap-3 py-2.5 px-4 hover:bg-white/[0.02] cursor-pointer border-b border-white/[0.03] last:border-b-0 transition-colors"
+      >
+        <span className={cn("font-mono text-[13px]", markerClass)}>{marker}</span>
+
+        <span className="font-mono text-[13px] text-foreground/80 flex-1 truncate">{projectName}</span>
+
+        {isShared && <span className="text-[10px] text-muted-foreground/40">shared</span>}
+
+        {grade ? (
+          <span className={cn("font-mono text-[13px] font-semibold", denseGradeColors[grade])}>{grade}</span>
+        ) : (
+          <span className="font-mono text-[13px] text-muted-foreground/20">--</span>
+        )}
+
+        <span className="font-mono text-[11px] text-muted-foreground/40 hidden sm:inline">
+          {contractCount} contract{contractCount !== 1 ? "s" : ""}
+        </span>
+
+        <span className="font-mono text-[11px] text-muted-foreground/30">{timestamp}</span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -84,8 +131,8 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
       {(isShared || hasShares) && (
         <div className={cn(
           "absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs",
-          isShared 
-            ? "bg-secondary/20 text-secondary-foreground" 
+          isShared
+            ? "bg-secondary/20 text-secondary-foreground"
             : "bg-primary/10 text-primary border border-primary/20"
         )}>
           {isShared ? (
@@ -111,7 +158,7 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
             {contractCount} contract{contractCount !== 1 ? "s" : ""}
           </p>
         </div>
-        
+
         {grade && (
           <div className={cn(
             "w-9 h-9 rounded-lg border flex items-center justify-center font-semibold text-base",

@@ -71,6 +71,15 @@ const severityConfig: Record<Severity, { icon: typeof AlertTriangle; label: stri
   },
 };
 
+const severityTextColor: Record<Severity, string> = {
+  critical: "text-critical",
+  high: "text-destructive",
+  medium: "text-warning",
+  low: "text-low",
+  info: "text-slate-400",
+  gas: "text-green-500",
+};
+
 const leftBorderClass: Record<Severity, string> = {
   critical: "border-l-2 border-l-critical",
   high:     "border-l-2 border-l-destructive",
@@ -84,26 +93,26 @@ const leftBorderClass: Record<Severity, string> = {
 // Bold labels (ending with :) render as block elements on new lines
 const parseInlineFormatting = (text: string, keyPrefix: string): JSX.Element[] => {
   const result: JSX.Element[] = [];
-  
+
   // Combined regex: **bold**, *italic*, `code`
   // Order matters: match ** before * to avoid conflicts
   const inlinePattern = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
   const parts = text.split(inlinePattern);
-  
+
   parts.forEach((part, index) => {
     if (!part) return;
-    
+
     if (part.startsWith('**') && part.endsWith('**')) {
       const boldContent = part.slice(2, -2);
-      
+
       // Check if this is a label (ends with colon - like "Attack Vector:")
       const isLabel = boldContent.endsWith(':');
-      
+
       if (isLabel) {
         // Render as block element on new line
         result.push(
-          <strong 
-            key={`${keyPrefix}-${index}`} 
+          <strong
+            key={`${keyPrefix}-${index}`}
             className="block mt-3 mb-1 font-semibold text-foreground"
           >
             {boldContent}
@@ -136,7 +145,7 @@ const parseInlineFormatting = (text: string, keyPrefix: string): JSX.Element[] =
       result.push(<span key={`${keyPrefix}-${index}`}>{part}</span>);
     }
   });
-  
+
   return result;
 };
 
@@ -148,7 +157,7 @@ const renderNumberedList = (text: string, keyPrefix: string): { prefixText: stri
   const suffixLines: string[] = [];
   let foundFirstItem = false;
   let listEnded = false;
-  
+
   for (const line of lines) {
     const match = line.match(/^(\d+)\.\s+(.*)$/);
     if (match && !listEnded) {
@@ -168,9 +177,9 @@ const renderNumberedList = (text: string, keyPrefix: string): { prefixText: stri
       }
     }
   }
-  
+
   if (listItems.length === 0) return null;
-  
+
   return {
     prefixText: prefixLines.join(' '),
     list: (
@@ -192,14 +201,14 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
   const normalizedText = text
     .replace(/\r\n/g, '\n')  // Windows -> Unix line endings
     .replace(/```\s*(\w+)\s*\n/g, '```$1\n'); // Clean up language tag spacing
-  
+
   // First, split by triple backtick code blocks - more permissive pattern
   const blockPattern = /```(\w+)?(?:\n|\s)?([\s\S]*?)```/g;
   const segments: (string | { type: 'codeblock'; language?: string; code: string })[] = [];
-  
+
   let lastIndex = 0;
   let match;
-  
+
   while ((match = blockPattern.exec(normalizedText)) !== null) {
     // Add text before the code block
     if (match.index > lastIndex) {
@@ -213,7 +222,7 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
     });
     lastIndex = match.index + match[0].length;
   }
-  
+
   // Add remaining text after last code block
   if (lastIndex < normalizedText.length) {
     segments.push(normalizedText.slice(lastIndex));
@@ -222,19 +231,19 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
   // Second pass: detect unfenced code blocks (bare language tag on its own line followed by code)
   const knownLangs = ['solidity', 'sol', 'javascript', 'typescript', 'python', 'rust', 'go', 'java', 'cpp', 'c'];
   const langPattern = new RegExp(`(?:^|\\n)(${knownLangs.join('|')})\\n([\\s\\S]+?)(?=\\n\\n(?:[A-Z])|$)`, 'g');
-  
+
   const processedSegments: typeof segments = [];
   for (const seg of segments) {
     if (typeof seg !== 'string') {
       processedSegments.push(seg);
       continue;
     }
-    
+
     let segLastIndex = 0;
     let langMatch;
     langPattern.lastIndex = 0;
     let hasMatch = false;
-    
+
     while ((langMatch = langPattern.exec(seg)) !== null) {
       hasMatch = true;
       const matchStart = langMatch.index + (langMatch[0].startsWith('\n') ? 1 : 0);
@@ -248,14 +257,14 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
       });
       segLastIndex = langMatch.index + langMatch[0].length;
     }
-    
+
     if (!hasMatch) {
       processedSegments.push(seg);
     } else if (segLastIndex < seg.length) {
       processedSegments.push(seg.slice(segLastIndex));
     }
   }
-  
+
   return processedSegments.map((segment, segmentIndex) => {
     if (typeof segment === 'object' && segment.type === 'codeblock') {
       // Render code block with syntax highlighting for Solidity
@@ -270,10 +279,10 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
         />
       );
     }
-    
+
     // For regular text segments, check for numbered lists first
     const textSegment = segment as string;
-    
+
       // Check if this segment contains a numbered list (multiple lines starting with numbers)
       const listMatch = textSegment.match(/(?:^|\n)(\d+)\.\s+/gm);
       if (listMatch && listMatch.length >= 2) {
@@ -296,7 +305,7 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
           );
         }
       }
-    
+
     // Handle inline formatting (bold, italic, code) for non-list text
     return (
       <span key={segmentIndex}>
@@ -326,17 +335,17 @@ const solidityTypes = new Set([
 const highlightSolidityCode = (code: string | undefined, startLine: number = 1) => {
   if (!code) return null;
   const lines = code.split('\n');
-  
+
   // Calculate the width needed for line numbers based on the largest line number
   const maxLineNumber = startLine + lines.length - 1;
   const lineNumberWidth = Math.max(3, String(maxLineNumber).length);
-  
+
   return lines.map((line, lineIndex) => {
     const lineNumber = startLine + lineIndex;
     const tokens: JSX.Element[] = [];
     let remaining = line;
     let tokenIndex = 0;
-    
+
     while (remaining.length > 0) {
       // Check for single-line comment
       const commentMatch = remaining.match(/^(\/\/.*)/);
@@ -349,7 +358,7 @@ const highlightSolidityCode = (code: string | undefined, startLine: number = 1) 
         remaining = remaining.slice(commentMatch[1].length);
         continue;
       }
-      
+
       // Check for string
       const stringMatch = remaining.match(/^("[^"]*"|'[^']*')/);
       if (stringMatch) {
@@ -361,7 +370,7 @@ const highlightSolidityCode = (code: string | undefined, startLine: number = 1) 
         remaining = remaining.slice(stringMatch[1].length);
         continue;
       }
-      
+
       // Check for number (hex or decimal)
       const numberMatch = remaining.match(/^(0x[0-9a-fA-F]+|\d+)/);
       if (numberMatch) {
@@ -373,19 +382,19 @@ const highlightSolidityCode = (code: string | undefined, startLine: number = 1) 
         remaining = remaining.slice(numberMatch[1].length);
         continue;
       }
-      
+
       // Check for word (keyword, type, or identifier)
       const wordMatch = remaining.match(/^([a-zA-Z_][a-zA-Z0-9_]*)/);
       if (wordMatch) {
         const word = wordMatch[1];
         let className = "text-foreground/90";
-        
+
         if (solidityKeywords.has(word)) {
           className = "text-purple-400";
         } else if (solidityTypes.has(word) || word.startsWith('uint') || word.startsWith('int') || word.startsWith('bytes')) {
           className = "text-blue-400";
         }
-        
+
         tokens.push(
           <span key={`${lineIndex}-${tokenIndex++}`} className={className}>
             {word}
@@ -394,7 +403,7 @@ const highlightSolidityCode = (code: string | undefined, startLine: number = 1) 
         remaining = remaining.slice(word.length);
         continue;
       }
-      
+
       // Default: take one character
       tokens.push(
         <span key={`${lineIndex}-${tokenIndex++}`} className="text-foreground/90">
@@ -403,10 +412,10 @@ const highlightSolidityCode = (code: string | undefined, startLine: number = 1) 
       );
       remaining = remaining.slice(1);
     }
-    
+
     return (
       <div key={lineIndex} className="flex leading-relaxed">
-        <span 
+        <span
           className="pr-3 text-right text-muted-foreground/50 select-none shrink-0 border-r border-border/50 mr-3"
           style={{ width: `${lineNumberWidth + 1}ch` }}
         >
@@ -420,20 +429,19 @@ const highlightSolidityCode = (code: string | undefined, startLine: number = 1) 
   });
 };
 
-const FindingItem = ({ 
-  finding, 
-  isNew = false, 
+const FindingItem = ({
+  finding,
+  isNew = false,
   isHighlighted = false,
   forceExpanded = false,
   canViewRemediation = true,
   canCommentOnFindings = false,
   currentUserId,
   onUpgradeClick,
-  onRefReady 
+  onRefReady
 }: FindingItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const config = severityConfig[finding.severity];
-  const Icon = config.icon;
 
   // Auto-expand when forceExpanded changes to true
   useEffect(() => {
@@ -443,10 +451,10 @@ const FindingItem = ({
   }, [forceExpanded]);
 
   return (
-    <div 
+    <div
       ref={onRefReady}
       className={cn(
-        "border border-border rounded-lg overflow-hidden bg-card transition-all duration-300",
+        "border border-white/[0.04] rounded-lg overflow-hidden bg-[#050505] transition-all duration-300",
         leftBorderClass[finding.severity],
         isNew && "animate-fade-in ring-2 ring-primary/30",
         isHighlighted && "ring-2 ring-warning animate-highlight-pulse"
@@ -455,40 +463,45 @@ const FindingItem = ({
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-3 sm:p-4 hover:bg-muted/30 transition-colors duration-150 text-left"
+        className="w-full px-3 py-2 sm:px-4 sm:py-2.5 hover:bg-muted/30 transition-colors duration-150 text-left"
       >
         {/* Mobile: Stacked layout, Desktop: Inline layout */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          {/* Top row on mobile: Badge + Chevron */}
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+          {/* Top row on mobile: Severity + Chevron */}
           <div className="flex items-center justify-between sm:contents">
-            <div className={cn(
-              "flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border shrink-0 min-w-[85px] justify-center",
-              config.className
+            <span className={cn(
+              "font-mono text-[10px] sm:text-[11px] uppercase font-semibold min-w-[52px] sm:min-w-[60px] shrink-0",
+              severityTextColor[finding.severity]
             )}>
-              <Icon className="w-3.5 h-3.5" />
               {config.label}
-            </div>
-            
+            </span>
+
             {/* Chevron - visible on mobile in top row */}
             <ChevronDown className={cn(
               "w-4 h-4 text-muted-foreground transition-transform duration-200 sm:hidden",
               isExpanded && "rotate-180"
             )} />
           </div>
-          
-          {/* Title - full width on mobile, can wrap to 2 lines */}
+
+          {/* Separator - desktop only */}
+          <span className="text-muted-foreground/20 hidden sm:inline">·</span>
+
+          {/* Title */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground line-clamp-2 sm:truncate">
+            <p className="text-[12px] sm:text-[13px] text-foreground/80 line-clamp-2 sm:truncate">
               {renderWithCodeFormatting(finding.title)}
             </p>
           </div>
 
           {/* Location + Chevron (desktop only) */}
-          <div className="hidden sm:flex items-center gap-3 shrink-0 min-w-[80px]">
-            {finding.location?.lines && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
-                <FileCode className="w-3.5 h-3.5 shrink-0" />
-                <span className="font-mono">L{finding.location.lines}</span>
+          <div className="hidden sm:flex items-center gap-3 shrink-0">
+            {finding.location && (finding.location.file || finding.location.lines) && (
+              <div className="font-mono text-[10px] sm:text-[11px] text-muted-foreground/40 shrink-0 hidden sm:flex items-center gap-1">
+                <FileCode className="w-3 h-3" />
+                <span className="whitespace-nowrap">
+                  {finding.location.file ? finding.location.file.split('/').pop() : ''}
+                  {finding.location.lines ? ` L${finding.location.lines}` : ''}
+                </span>
               </div>
             )}
             <ChevronDown className={cn(
@@ -496,12 +509,15 @@ const FindingItem = ({
               isExpanded && "rotate-180"
             )} />
           </div>
-          
+
           {/* Location on mobile - smaller, below title */}
-          {finding.location?.lines && (
-            <div className="flex sm:hidden items-center gap-1.5 text-xs text-muted-foreground">
-              <FileCode className="w-3 h-3 shrink-0" />
-              <span className="font-mono text-[11px] whitespace-nowrap">L{finding.location.lines}</span>
+          {finding.location && (finding.location.file || finding.location.lines) && (
+            <div className="flex sm:hidden items-center gap-1 font-mono text-[10px] text-muted-foreground/40">
+              <FileCode className="w-3 h-3" />
+              <span className="whitespace-nowrap">
+                {finding.location.file ? finding.location.file.split('/').pop() : ''}
+                {finding.location.lines ? ` L${finding.location.lines}` : ''}
+              </span>
             </div>
           )}
         </div>
@@ -588,8 +604,8 @@ const FindingItem = ({
                          Upgrade to Blaze to view AI-powered fix recommendations
                        </p>
                      </div>
-                     <Button 
-                       size="sm" 
+                     <Button
+                       size="sm"
                        onClick={(e) => {
                          e.stopPropagation();
                          onUpgradeClick?.();
@@ -637,8 +653,8 @@ const FindingItem = ({
 
           {/* Comments Section - Business only */}
           {canCommentOnFindings ? (
-            <FindingComments 
-              findingId={finding.id} 
+            <FindingComments
+              findingId={finding.id}
               currentUserId={currentUserId}
             />
           ) : (
