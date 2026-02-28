@@ -8,10 +8,9 @@ import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
-import { TerminalPanel } from "@/components/ui/TerminalPanel";
-import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { Button } from "@/components/ui/button";
-import { Trash2, Zap, Plus } from "lucide-react";
+import { FileCode, Trash2, ChevronRight, Zap, Plus } from "lucide-react";
+import { AuditListSkeleton } from "@/components/AuditCardSkeleton";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { formatDistanceToNow } from "date-fns";
@@ -138,87 +137,74 @@ const DashboardHome = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Recent Audits - Takes 2 columns */}
         <div className="lg:col-span-2 space-y-4">
-          <TerminalPanel variant="data" noPadding>
-            <div className="px-4 pt-4 md:px-5 md:pt-5">
-              <TerminalDivider
-                label="Recent Analysis"
-                right={audits && audits.length > 4 ? (
-                  <button
-                    onClick={() => navigate("/dashboard/analyses")}
-                    className="font-mono text-[11px] text-primary/60 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    view all →
-                  </button>
-                ) : undefined}
-              />
-            </div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Analysis</h3>
+            {audits && audits.length > 4 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/dashboard/analyses")}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                View More
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            )}
+          </div>
 
-            <div className="mt-2 pb-1">
-              {auditsLoading ? (
-                <div className="px-4 md:px-5 pb-4 space-y-2">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="flex items-center gap-3 py-2">
-                      <div className="h-4 w-4 animate-pulse bg-white/[0.03] rounded" />
-                      <div className="h-4 flex-1 animate-pulse bg-white/[0.03] rounded" />
-                      <div className="h-4 w-12 animate-pulse bg-white/[0.03] rounded" />
-                    </div>
-                  ))}
-                </div>
-              ) : audits && audits.length > 0 ? (
-                <>
-                  {audits.slice(0, 6).map((audit) => {
-                    const isOwned = audit.user_id === user?.id;
-                    return (
-                      <div key={audit.id} className="relative group">
-                        <AuditCard
-                          variant="dense"
-                          projectName={audit.project_name}
-                          contractCount={audit.contract_count}
-                          grade={audit.grade || undefined}
-                          status={audit.status}
-                          timestamp={formatTimestamp(audit.created_at)}
-                          onClick={() => handleViewResults(audit.id)}
-                          isShared={!isOwned}
-                          hasShares={isOwned && (audit.share_count || 0) > 0}
-                        />
-                        {isOwned && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteAuditId(audit.id);
-                            }}
-                            className="absolute top-1/2 -translate-y-1/2 right-3 p-1 rounded text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </>
+          {auditsLoading ? (
+            <AuditListSkeleton count={4} />
+          ) : audits && audits.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {audits.slice(0, 4).map((audit) => {
+                const isOwned = audit.user_id === user?.id;
+                return (
+                  <div key={audit.id} className="relative group">
+                    <AuditCard
+                      projectName={audit.project_name}
+                      contractCount={audit.contract_count}
+                      grade={audit.grade || undefined}
+                      status={audit.status}
+                      timestamp={formatTimestamp(audit.created_at)}
+                      onClick={() => handleViewResults(audit.id)}
+                      isShared={!isOwned}
+                      hasShares={isOwned && (audit.share_count || 0) > 0}
+                    />
+                    {isOwned && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteAuditId(audit.id);
+                        }}
+                        className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-16 border border-dashed border-border rounded-lg">
+              <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No assessments yet</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {subscription ? "Start a new audit to analyze your smart contracts" : "Subscribe to start running security analyses"}
+              </p>
+              {subscription ? (
+                <Button onClick={() => navigate("/dashboard/new-audit")} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  New Audit
+                </Button>
               ) : (
-                <div className="px-4 md:px-5 pb-4 pt-2 text-center">
-                  <p className="font-mono text-[12px] text-muted-foreground/40 mb-1">
-                    ☐ No assessments yet
-                  </p>
-                  <p className="font-mono text-[11px] text-muted-foreground/30 mb-4">
-                    {subscription ? "Start a new audit to analyze your contracts" : "Subscribe to start running security analyses"}
-                  </p>
-                  {subscription ? (
-                    <Button size="sm" onClick={() => navigate("/dashboard/new-audit")} className="gap-1.5">
-                      <Plus className="w-3.5 h-3.5" />
-                      New Audit
-                    </Button>
-                  ) : (
-                    <Button size="sm" onClick={() => navigate("/pricing")} variant="outline" className="gap-1.5">
-                      <Zap className="w-3.5 h-3.5" />
-                      View Plans
-                    </Button>
-                  )}
-                </div>
+                <Button onClick={() => navigate("/pricing")} variant="outline" className="gap-2">
+                  <Zap className="w-4 h-4" />
+                  View Plans
+                </Button>
               )}
             </div>
-          </TerminalPanel>
+          )}
 
           <div className="lg:hidden">
             <SecurityTrend />

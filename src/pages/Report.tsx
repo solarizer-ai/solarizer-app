@@ -344,13 +344,13 @@ const Report = () => {
               </div>
             </div>
             {isLive ? (
-              <p className="font-mono text-[12px] text-muted-foreground/50 animate-pulse">
+              <p className="text-sm text-muted-foreground animate-pulse">
                 {orchestration?.phase
                   ? `Analysing · ${PHASE_LABELS[orchestration.phase] || orchestration.phase}`
                   : 'Analysing...'}
               </p>
             ) : currentAudit ? (
-              <p className="font-mono text-[12px] text-muted-foreground/50">
+              <p className="text-sm text-muted-foreground">
                 Analysed {formatTimestamp(currentAudit.created_at)}
               </p>
             ) : null}

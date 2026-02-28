@@ -1,35 +1,22 @@
 import { useDashboardStats } from "@/hooks/useDashboardStats";
-import { TerminalPanel } from "@/components/ui/TerminalPanel";
-import { TerminalDivider } from "@/components/ui/TerminalDivider";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Area, AreaChart, XAxis, YAxis } from "recharts";
-
-const chartConfig = {
-  score: {
-    label: "Score",
-    color: "hsl(var(--primary))",
-  },
-};
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 export const SecurityTrend = () => {
   const { stats, isLoading } = useDashboardStats();
 
   if (isLoading) {
     return (
-      <TerminalPanel variant="data">
-        <TerminalDivider label="Score Trend" />
-        <div className="flex items-start gap-4 mt-3">
-          <div className="h-4 w-28 animate-pulse bg-white/[0.03] rounded" />
-          <div className="flex-1">
-            <div className="h-16 w-full animate-pulse bg-white/[0.03] rounded" />
-          </div>
-        </div>
-      </TerminalPanel>
+      <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+        <Skeleton className="h-4 w-28 mb-2" />
+        <Skeleton className="h-24 w-full" />
+      </div>
     );
   }
 
@@ -37,12 +24,12 @@ export const SecurityTrend = () => {
 
   if (securityScoreTrend.length < 2) {
     return (
-      <TerminalPanel variant="data">
-        <TerminalDivider label="Score Trend" />
-        <p className="font-mono text-[12px] text-muted-foreground/30 text-center py-6">
+      <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Score Trend</h4>
+        <p className="text-sm text-muted-foreground text-center py-6">
           Complete more analyses to see trends
         </p>
-      </TerminalPanel>
+      </div>
     );
   }
 
@@ -56,50 +43,46 @@ export const SecurityTrend = () => {
   const trend = latestScore - previousScore;
 
   const TrendIcon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;
-  const trendColor =
-    trend > 0
-      ? "text-success"
-      : trend < 0
-        ? "text-destructive"
-        : "text-muted-foreground";
-  const trendLabel = trend > 0 ? `+${trend}` : trend < 0 ? `\u2212${Math.abs(trend)}` : "0";
+  const trendColor = trend > 0 ? "text-success" : trend < 0 ? "text-destructive" : "text-muted-foreground";
+
+  const chartConfig = {
+    score: {
+      label: "Score",
+      color: "hsl(var(--primary))",
+    },
+  };
 
   return (
-    <TerminalPanel variant="data">
-      <TerminalDivider label="Score Trend" />
-      <div className="flex items-start gap-4 mt-3">
-        <div>
-          <div className="font-mono text-[28px] font-bold text-muted-foreground/50 leading-none">
-            {latestScore}
-          </div>
-          <div className={`flex items-center gap-1 font-mono text-[13px] mt-1 ${trendColor}`}>
-            <TrendIcon className="w-3.5 h-3.5" />
-            <span>{trendLabel}</span>
-          </div>
-        </div>
-        <div className="flex-1">
-          <ChartContainer config={chartConfig} className="h-16 w-full">
-            <AreaChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-              <defs>
-                <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="name" hide />
-              <YAxis domain={[0, 100]} hide />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Area
-                type="monotone"
-                dataKey="score"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                fill="url(#scoreGradient)"
-              />
-            </AreaChart>
-          </ChartContainer>
+    <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Score Trend</h4>
+        <div className={`flex items-center gap-1 ${trendColor}`}>
+          <TrendIcon className="w-4 h-4" />
+          <span className="text-xs font-medium">
+            {trend > 0 ? '+' : ''}{trend}
+          </span>
         </div>
       </div>
-    </TerminalPanel>
+      <ChartContainer config={chartConfig} className="h-20 w-full">
+        <AreaChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+          <defs>
+            <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis dataKey="name" hide />
+          <YAxis domain={[0, 100]} hide />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Area
+            type="monotone"
+            dataKey="score"
+            stroke="hsl(var(--primary))"
+            strokeWidth={2}
+            fill="url(#scoreGradient)"
+          />
+        </AreaChart>
+      </ChartContainer>
+    </div>
   );
 };

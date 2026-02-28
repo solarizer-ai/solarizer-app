@@ -5,11 +5,10 @@ import CodeBlock from "@/components/CodeBlock";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import {
-  Shield, ShieldAlert, AlertTriangle, AlertCircle,
-  Info, Fuel, CheckCircle2, XCircle, ChevronDown, FileCode, Lightbulb,
+  Loader2, Shield, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle,
+  Info, Zap, Fuel, CheckCircle2, XCircle, ChevronDown, FileCode, Lightbulb,
+  Calendar, Code2, Bug, CircleCheckBig,
 } from "lucide-react";
-import { TerminalPanel } from "@/components/ui/TerminalPanel";
-import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { ReportSkeleton } from "@/components/AuditCardSkeleton";
 import { format } from "date-fns";
 import solarLogo from "@/assets/solarizer-logo.png";
@@ -188,19 +187,11 @@ const renderWithCodeFormatting = (text: string) => {
 };
 
 // ── Finding Accordion Item ──────────────────────────────────────────
-const severityTextColors: Record<Severity, string> = {
-  critical: "text-critical",
-  high: "text-destructive",
-  medium: "text-warning",
-  low: "text-low",
-  info: "text-slate-400",
-  gas: "text-green-500",
-};
-
 const PublicFindingItem = ({ finding }: { finding: any }) => {
   const [open, setOpen] = useState(false);
   const sev = (finding.severity as Severity) || "info";
   const config = severityConfig[sev];
+  const Icon = config.icon;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -208,13 +199,14 @@ const PublicFindingItem = ({ finding }: { finding: any }) => {
         <button className="w-full p-4 hover:bg-muted/30 transition-colors text-left">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center justify-between sm:contents">
-              <span className={cn("font-mono text-[10px] uppercase font-semibold w-[56px] shrink-0", severityTextColors[sev])}>
+              <div className={cn("flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border shrink-0 min-w-[85px] justify-center", config.className)}>
+                <Icon className="w-3.5 h-3.5" />
                 {config.label}
-              </span>
+              </div>
               <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200 sm:hidden", open && "rotate-180")} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-foreground/80 line-clamp-2 sm:truncate">{finding.title}</p>
+              <p className="text-sm font-medium text-foreground line-clamp-2 sm:truncate">{finding.title}</p>
             </div>
             <div className="hidden sm:flex items-center gap-3 shrink-0">
               {finding.location && (
@@ -398,21 +390,28 @@ const PublicReport = () => {
         <div className="space-y-3">
           <span className="terminal-pill">Audit Report</span>
           <h1 className="heading-section font-bold text-gradient">{audit.project_name}</h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-[12px] text-muted-foreground/50">
-            <span>{format(new Date(audit.created_at), "MMM d, yyyy")}</span>
-            {audit.nloc_count && <span>{audit.nloc_count.toLocaleString()} nLOC</span>}
-            <span>{totalFindings} findings</span>
-            <span>{resolvedCount} resolved</span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{format(new Date(audit.created_at), "MMM d, yyyy")}</span>
+            {audit.nloc_count && <span className="flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5" />{audit.nloc_count.toLocaleString()} nLOC</span>}
+            <span className="flex items-center gap-1.5"><Bug className="w-3.5 h-3.5" />{totalFindings} findings</span>
+            <span className="flex items-center gap-1.5"><CircleCheckBig className="w-3.5 h-3.5" />{resolvedCount} resolved</span>
           </div>
         </div>
 
-        {/* ── Score Card with Grade ─────────────────────── */}
-        <TerminalPanel variant="hero" title="solarizer — security report">
-          <TerminalDivider label="Security Assessment" className="mb-4" />
-          <div className="flex items-center gap-5">
-            <span className={cn("font-mono text-[64px] font-bold leading-none", gConfig?.color || "text-muted-foreground")}>
-              {grade || "--"}
-            </span>
+        {/* ── Score Card with Grade Ring ──────────────────── */}
+        <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+          {/* Grade + Rating */}
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0",
+              !grade ? "border-muted" :
+              grade === "A" || grade === "B" ? "border-success" :
+              grade === "C" || grade === "D" ? "border-warning" : "border-critical"
+            )}>
+              <span className={cn("text-xl font-bold", gConfig?.color || "text-muted-foreground")}>
+                {grade || "--"}
+              </span>
+            </div>
             <div>
               <div className="flex items-baseline gap-2">
                 <span className={cn("text-lg font-semibold", gConfig?.color || "text-muted-foreground")}>
@@ -425,57 +424,67 @@ const PublicReport = () => {
           </div>
 
           {/* Vulnerability Matrix Bar */}
-          <TerminalDivider label="Vulnerability Matrix" className="mt-5 mb-3" />
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-mono text-[11px] text-muted-foreground/40">{totalFindings} findings</span>
+          <div className="pt-3 border-t border-border">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Matrix</h4>
+              <span className="text-xs text-muted-foreground">{totalFindings} findings</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
+              {SEVERITY_ORDER.map(sev => {
+                const width = totalFindings > 0 ? (severityCounts[sev] / totalFindings) * 100 : 0;
+                return width > 0 ? (
+                  <div key={sev} className={cn("h-full transition-all duration-500", severityConfig[sev].barColor)} style={{ width: `${width}%` }} />
+                ) : null;
+              })}
+            </div>
+            {/* Category Pills */}
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+              {SEVERITY_ORDER.map(sev => {
+                const config = severityConfig[sev];
+                const Icon = config.icon;
+                return (
+                  <div key={sev} className={cn("flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border", config.className)}>
+                    <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="text-xs sm:text-sm font-medium">{severityCounts[sev]}</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">{config.label}</span>
+                    <span className="text-[11px] text-muted-foreground sm:hidden">{config.label.slice(0, 3)}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
-            {SEVERITY_ORDER.map(sev => {
-              const width = totalFindings > 0 ? (severityCounts[sev] / totalFindings) * 100 : 0;
-              return width > 0 ? (
-                <div key={sev} className={cn("h-full transition-all duration-500", severityConfig[sev].barColor)} style={{ width: `${width}%` }} />
-              ) : null;
-            })}
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {SEVERITY_ORDER.map(sev => {
-              const count = severityCounts[sev];
-              if (count === 0) return null;
-              const abbr: Record<Severity, string> = { critical: "CRIT", high: "HIGH", medium: "MED", low: "LOW", info: "INFO", gas: "GAS" };
-              const colors: Record<Severity, string> = {
-                critical: "text-critical", high: "text-destructive", medium: "text-warning",
-                low: "text-low", info: "text-slate-400", gas: "text-green-500"
-              };
-              return (
-                <span key={sev} className="font-mono text-[12px]">
-                  <span className={colors[sev]}>{abbr[sev]}</span>{" "}
-                  <span className="text-muted-foreground/60">{count}</span>
-                </span>
-              );
-            })}
-          </div>
-        </TerminalPanel>
+        </div>
 
         {/* ── Remediation Progress Widget ─────────────────── */}
         {totalFindings > 0 && (
-          <TerminalPanel variant="data">
-            <TerminalDivider label="Remediation" right={<span className="font-mono text-[11px] text-primary">{resolvedPct}%</span>} className="mb-3" />
+          <div className="bg-card border border-border rounded-lg p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                <CircleCheckBig className="w-4 h-4 text-success" />
+                Remediation Progress
+              </h4>
+              <span className="text-sm font-semibold text-foreground">{resolvedPct}%</span>
+            </div>
             <Progress value={resolvedPct} className="h-2 mb-2" />
             <p className="text-xs text-muted-foreground">
               {resolvedCount} of {totalFindings} findings resolved
             </p>
-          </TerminalPanel>
+          </div>
         )}
 
         {/* ── Scope Section ──────────────────────────────── */}
         {scopeFiles.length > 0 && (
-          <TerminalPanel variant="data" noPadding>
-            <div className="px-4 pt-4 md:px-5 md:pt-5">
-              <TerminalDivider label="Audit Scope" right={<span className="font-mono text-[11px] text-muted-foreground/50">{scopeFiles.length} files</span>} />
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="px-5 py-3 bg-primary/5 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                Audit Scope
+              </h3>
+              <span className="text-xs text-muted-foreground font-mono">{scopeFiles.length} files</span>
             </div>
-            <div className="mt-2">
+            <div className="divide-y divide-border/50">
               {visibleScopeFiles.map((file, i) => (
-                <div key={i} className="px-5 py-2 text-sm font-mono text-muted-foreground/70 border-b border-white/[0.03] last:border-b-0">
+                <div key={i} className={cn("px-5 py-2 text-sm font-mono text-muted-foreground", i % 2 === 0 ? "bg-card" : "bg-muted/20")}>
                   {file}
                 </div>
               ))}
@@ -483,27 +492,31 @@ const PublicReport = () => {
             {showScopeToggle && (
               <button
                 onClick={() => setScopeExpanded(!scopeExpanded)}
-                className="w-full py-2.5 text-xs text-primary hover:text-primary/80 transition-colors border-t border-white/[0.03]"
+                className="w-full py-2.5 text-xs text-primary hover:text-primary/80 transition-colors border-t border-border"
               >
                 {scopeExpanded ? "Show less" : `Show all ${scopeFiles.length} files`}
               </button>
             )}
-          </TerminalPanel>
+          </div>
         )}
 
         {/* ── Findings by Severity ────────────────────────── */}
         {groupedFindings.map(({ severity, findings: groupFindings }) => {
           const config = severityConfig[severity];
+          const Icon = config.icon;
           return (
             <div key={severity} className="space-y-3">
-              <TerminalDivider
-                label={`${config.label} (${groupFindings.length})`}
-                className="mb-2"
-              />
+              <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border", config.className)}>
+                  <Icon className="w-4 h-4" />
+                  {config.label}
+                </div>
+                <span className="text-muted-foreground text-sm font-normal">({groupFindings.length})</span>
+              </h2>
               <div className="space-y-2">
                 {groupFindings.map(finding => (
                   <div key={finding.id} className={cn(
-                    "bg-[#050505] ring-1 ring-white/[0.05] rounded-lg overflow-hidden border-l-2",
+                    "border border-border rounded-lg overflow-hidden bg-card/50 border-l-2",
                     severity === "critical" ? "border-l-critical" :
                     severity === "high" ? "border-l-destructive" :
                     severity === "medium" ? "border-l-warning" :
@@ -520,12 +533,11 @@ const PublicReport = () => {
 
         {/* No findings */}
         {totalFindings === 0 && (
-          <TerminalPanel variant="data">
-            <div className="text-center py-12">
-              <p className="font-mono text-[13px] text-muted-foreground/40 mb-1">No Vulnerabilities Found</p>
-              <p className="font-mono text-[11px] text-muted-foreground/30">This project passed security analysis with no issues.</p>
-            </div>
-          </TerminalPanel>
+          <div className="text-center py-16 bg-card border border-border rounded-lg">
+            <ShieldCheck className="w-12 h-12 text-success mx-auto mb-4" />
+            <p className="text-lg font-medium text-foreground">No Vulnerabilities Found</p>
+            <p className="text-sm text-muted-foreground mt-1">This project passed security analysis with no issues.</p>
+          </div>
         )}
       </main>
 

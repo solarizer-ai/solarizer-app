@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Lightbulb, AlertTriangle, Layers, ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { TerminalPanel } from "@/components/ui/TerminalPanel";
-import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import { cn } from "@/lib/utils";
 import type { ArchitectureInsight } from "@/hooks/useAudits";
 
@@ -83,18 +81,8 @@ const InsightsTab = ({ insights }: InsightsTabProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Top Divider */}
-      <TerminalDivider
-        label="Architecture Insights"
-        right={
-          <span className="text-muted-foreground/60 font-mono text-[11px]">
-            {insights.length} insight{insights.length !== 1 ? 's' : ''}
-          </span>
-        }
-      />
-
       {/* Summary Card */}
-      <TerminalPanel variant="data">
+      <div className="p-4 md:p-6 rounded-lg border bg-card">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
             <Lightbulb className="w-6 h-6 text-amber-600 dark:text-amber-400" />
@@ -114,27 +102,27 @@ const InsightsTab = ({ insights }: InsightsTabProps) => {
             ) : null
           )}
         </div>
-      </TerminalPanel>
+      </div>
 
       {/* Sections */}
-      {SECTIONS.map(({ category, label, Icon, iconBg, iconColor }) => {
+      {SECTIONS.map(({ category, label, Icon, iconBg, iconColor, borderColor }) => {
         const items = insights.filter((i) => i.category === category);
         if (items.length === 0) return null;
         const isOpen = openSections[category] ?? true;
 
         return (
           <Collapsible key={category} open={isOpen} onOpenChange={() => toggle(category)}>
-            <CollapsibleTrigger className="w-full text-left">
-              <TerminalDivider
-                label={`${label} (${items.length})`}
-                right={
-                  isOpen
-                    ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/40" />
-                    : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-                }
-              />
+            <CollapsibleTrigger className={cn(
+              "flex items-center gap-3 text-sm font-semibold text-foreground hover:text-foreground/80 transition-colors w-full text-left pl-3 border-l-2",
+              borderColor
+            )}>
+              {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              <div className={cn("w-6 h-6 rounded-full flex items-center justify-center shrink-0", iconBg)}>
+                <Icon className={cn("w-3.5 h-3.5", iconColor)} />
+              </div>
+              {label} ({items.length})
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-3 space-y-3">
+            <CollapsibleContent className="mt-3 space-y-3 ml-3">
               {items.map((insight, i) => (
                 <InsightCard key={i} insight={insight} />
               ))}
@@ -151,7 +139,7 @@ const InsightCard = ({ insight }: { insight: ArchitectureInsight }) => {
 
   return (
     <div className={cn(
-      "rounded-lg ring-1 ring-white/[0.05] bg-[#050505] p-4 space-y-3 border-l-4",
+      "rounded-lg border bg-card p-4 space-y-3 border-l-4",
       priorityBorder[insight.priority] || priorityBorder.low
     )}>
       <div className="flex items-start justify-between gap-3">
@@ -173,7 +161,10 @@ const InsightCard = ({ insight }: { insight: ArchitectureInsight }) => {
           {insight.affected_contracts.map((contract, i) => (
             <span
               key={i}
-              className="font-mono text-[12px] rounded px-1.5 py-0.5 bg-muted text-muted-foreground"
+              className={cn(
+                "font-mono text-xs rounded px-1.5 py-0.5",
+                section ? section.pillBg : "bg-muted text-muted-foreground"
+              )}
             >
               {contract}
             </span>

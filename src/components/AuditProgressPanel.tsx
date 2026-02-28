@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, Lock } from "lucide-react";
+import { CheckCircle2, Loader2, Circle, AlertCircle, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { TerminalPanel } from "@/components/ui/TerminalPanel";
-import { TerminalDivider } from "@/components/ui/TerminalDivider";
 import type { AuditOrchestrationProgress } from "@/hooks/useAuditProgress";
 
 const PHASES = [
@@ -60,30 +58,6 @@ const ComplexityPill = ({ level }: { level: string }) => {
       {level}
     </span>
   );
-};
-
-const StatusMarker = ({ status }: { status: "done" | "active" | "pending" | "error" }) => {
-  switch (status) {
-    case "done":
-      return <span className="text-green-400 shrink-0 w-4 text-center">&#10003;</span>;
-    case "active":
-      return <span className="text-primary font-bold shrink-0 w-4 text-center">&raquo;</span>;
-    case "pending":
-      return <span className="text-muted-foreground/40 shrink-0 w-4 text-center">&#9744;</span>;
-    case "error":
-      return <span className="text-destructive shrink-0 w-4 text-center">&#10007;</span>;
-  }
-};
-
-const SubPhaseMarker = ({ status }: { status: "done" | "active" | "pending" }) => {
-  switch (status) {
-    case "done":
-      return <span className="text-green-400 shrink-0 w-3 text-center text-xs">&#10003;</span>;
-    case "active":
-      return <span className="text-primary font-bold shrink-0 w-3 text-center text-xs">&raquo;</span>;
-    case "pending":
-      return <span className="text-muted-foreground/40 shrink-0 w-3 text-center text-xs">&#9744;</span>;
-  }
 };
 
 const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }: AuditProgressPanelProps) => {
@@ -158,10 +132,8 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
 
   const isHuntingOrQa = orchestration.phase === 'hunting' || orchestration.phase === 'qa';
 
-  const terminalTitle = `solarizer — audit · ${formatElapsed(elapsed)}`;
-
   return (
-    <TerminalPanel variant="hero" title={terminalTitle}>
+    <div className="rounded-lg border border-primary/20 bg-card p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="space-y-1">
           <h3 className="text-lg flex items-center gap-2">
@@ -173,6 +145,7 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
           )}
         </div>
         <div className="flex flex-col items-end gap-0.5">
+          <span className="text-sm font-mono text-muted-foreground">{formatElapsed(elapsed)}</span>
           {staleness === 'warn' && (
             <span className="text-xs text-warning">
               Last updated {formatDistanceToNow(new Date(orchestration.updated_at), { addSuffix: true })}
@@ -188,7 +161,7 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
       <div className="space-y-6">
         {/* Phases */}
         <div className="space-y-1.5">
-          <TerminalDivider label="Phases" />
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Phases</h4>
           {PHASES.map((phase, idx) => {
             if (phase.key === "cross_contract" && hideCC) return null;
 
@@ -213,16 +186,17 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
 
             return (
               <div key={phase.key} className={cn(
-                "flex items-center gap-2 py-1 px-2 -mx-2 rounded font-mono text-[13px]",
+                "flex items-center gap-2 py-1 px-2 -mx-2 rounded",
                 isActive && "bg-primary/5"
               )}>
-                {isCompleted && <StatusMarker status="done" />}
-                {isActive && <StatusMarker status="active" />}
-                {isPending && <StatusMarker status="pending" />}
+                {isCompleted && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
+                {isActive && <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />}
+                {isPending && <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
                 {isLocked && <Lock className="w-4 h-4 text-muted-foreground/40 shrink-0" />}
                 <div className="flex flex-col">
                   <span className={cn(
-                    isCompleted && "text-green-400",
+                    "text-sm",
+                    isCompleted && "text-success",
                     isActive && "text-primary font-medium",
                     isPending && "text-muted-foreground",
                     isLocked && "text-muted-foreground/50"
@@ -243,38 +217,35 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
         {/* Contracts */}
         {contractList.length > 0 && (
           <div className="space-y-1.5">
-            <TerminalDivider label="Contracts" />
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Contracts</h4>
             {contractList.map((c) => {
               const filename = c.path.split("/").pop() || c.path;
               const complexity = c.meta?.complexity || "L1";
               const subPhases = SUB_PHASES_BY_COMPLEXITY[complexity] || SUB_PHASES_BY_COMPLEXITY.L1;
               const currentSubPhase = orchestration.progress.subPhase;
 
-              // Determine status: error > done > active > pending
-              let contractStatus: "done" | "active" | "pending" | "error";
+              // Mutually exclusive icon: error > done > active > pending
+              let icon: React.ReactNode;
               let textClass: string;
               if (c.error) {
-                contractStatus = "error";
+                icon = <AlertCircle className="w-4 h-4 text-destructive shrink-0" />;
                 textClass = "text-destructive";
               } else if (c.done) {
-                contractStatus = "done";
-                textClass = "text-green-400";
+                icon = <CheckCircle2 className="w-4 h-4 text-success shrink-0" />;
+                textClass = "text-success";
               } else if (c.isActive) {
-                contractStatus = "active";
+                icon = <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />;
                 textClass = "text-primary font-medium";
               } else {
-                contractStatus = "pending";
+                icon = <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />;
                 textClass = "text-muted-foreground";
               }
 
-              // Compute the last visible sub-phase index for tree connectors
-              const lastSubPhaseIdx = subPhases.length - 1;
-
               return (
-                <div key={c.path} className="space-y-0.5">
-                  <div className="flex items-center gap-2 py-0.5 font-mono text-[13px]">
-                    <StatusMarker status={contractStatus} />
-                    <span className={cn("truncate", textClass)}>
+                <div key={c.path} className="space-y-1">
+                  <div className="flex items-center gap-2 py-0.5">
+                    {icon}
+                    <span className={cn("text-sm truncate", textClass)}>
                       {filename}
                     </span>
                     <ComplexityPill level={complexity} />
@@ -283,30 +254,25 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
                     )}
                   </div>
                   {c.isActive && isHuntingOrQa && (
-                    <div className="space-y-0.5">
-                      {subPhases.map((sp, spIdx) => {
+                    <div className="ml-6 pl-3 border-l-2 border-border/40 space-y-0.5">
+                      {subPhases.map((sp) => {
                         const spKey = sp.toLowerCase().replace(/\s+/g, "_");
                         const currentKey = (currentSubPhase || "").toLowerCase().replace(/\s+/g, "_");
+                        const spIdx = subPhases.indexOf(sp);
                         const activeIdx = subPhases.findIndex(
                           (s) => s.toLowerCase().replace(/\s+/g, "_") === currentKey
                         );
                         const isDone = activeIdx > spIdx;
                         const isCurrent = spKey === currentKey;
-                        const isLast = spIdx === lastSubPhaseIdx;
-                        const connector = isLast ? "\u2514" : "\u251C";
-
-                        let spStatus: "done" | "active" | "pending";
-                        if (isDone) spStatus = "done";
-                        else if (isCurrent) spStatus = "active";
-                        else spStatus = "pending";
 
                         return (
-                          <div key={sp} className="ml-6 flex items-center gap-2 font-mono text-[13px]">
-                            <span className="text-muted-foreground/20">{connector}</span>
-                            <SubPhaseMarker status={spStatus} />
+                          <div key={sp} className="flex items-center gap-2">
+                            {isDone && <CheckCircle2 className="w-3 h-3 text-success shrink-0" />}
+                            {isCurrent && <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />}
+                            {!isDone && !isCurrent && <Circle className="w-3 h-3 text-muted-foreground/40 shrink-0" />}
                             <span className={cn(
                               "text-xs",
-                              isDone && "text-green-400",
+                              isDone && "text-success",
                               isCurrent && "text-primary",
                               !isDone && !isCurrent && "text-muted-foreground"
                             )}>
@@ -346,7 +312,9 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
 
           return (
             <div className="space-y-2">
-              <TerminalDivider label={`Findings (${orchestration.findings_count})`} />
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Findings ({orchestration.findings_count})
+              </h4>
               {hasSeverityBreakdown ? (
                 <div className="flex flex-wrap gap-1.5">
                   {severityOrder
@@ -365,7 +333,7 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
           );
         })()}
       </div>
-    </TerminalPanel>
+    </div>
   );
 };
 
