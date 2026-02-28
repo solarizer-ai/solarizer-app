@@ -1,37 +1,39 @@
 
-# Home Page Visual Fixes
 
-Four targeted fixes in `src/pages/Home.tsx`.
+# Hide Report Sections During Active Audit
 
-## Fix 1 -- Pipeline Line Overshoots Last Icon (lines 470-498)
+## Problem
+When an audit is in progress (`status === 'analyzing'`), the Report page shows the Remediation Progress widget, tab bar (Scope, Insights, Invariants, Findings, Coverage, Archive), and all tab content. These sections are meaningless during analysis since data hasn't been generated yet.
 
-Remove the two absolute line divs (lines 471-475) that span the full container height. Replace with per-step connector lines rendered inside the `phases.map()` loop:
+## Fix (single file: `src/pages/Report.tsx`)
 
-- Each phase (except the last) renders a dashed background connector and an active fill overlay
-- Lines start at icon center (`top-6 md:top-8`) and span to the next icon (`h-[calc(100%+1.25rem)] md:h-[calc(100%+2rem)]`)
-- The active fill uses the existing `isActive` threshold check
-- Last phase renders no connector, so the line stops at the last icon center
+Wrap the Remediation Progress widget (line 432-434) and the entire Tabs block (lines 437-621) with an `{!isLive && (...)}` guard so they only render after the audit completes successfully.
 
-## Fix 2 -- Hero Headline Asymmetry (lines 288-291)
+The AuditProgressPanel (lines 408-414) already has its own `{isLive && ...}` guard, so it will continue to show during analysis. The SecurityScoreCard (lines 417-429) also already has `{!isLive && ...}`.
 
-Remove `w-fit` from the `h1` and `whitespace-nowrap` + `block` from both spans. Use `text-center` on the h1 and a `<br />` between lines so each line sits centered at its natural width.
+### What changes
+
+Lines 431-621 get wrapped:
 
 ```
-Before: <h1 className="w-fit mx-auto ...">
-After:  <h1 className="mx-auto ... text-center">
+{!isLive && (
+  <>
+    {/* Remediation Progress - Business only */}
+    {canCommentOnFindings && (
+      <RemediationProgressWidget auditId={currentAudit.id} />
+    )}
+
+    {/* Tabbed Interface */}
+    <Tabs ...>
+      ...all tab content unchanged...
+    </Tabs>
+  </>
+)}
 ```
 
-## Fix 3 -- Finding Cards Inconsistent Heights (lines 159-160, 430, 450)
+This means during an active audit, the user sees only:
+- The project name header with "Analysing..." subtitle
+- The AuditProgressPanel with live phase/contract tracking
 
-- Add `flex flex-col h-full` to the FindingCard root div
-- Add `items-stretch` to both finding card grids (lines 430, 450)
+Once the audit transitions to a terminal state (completed/failed/cancelled), `isLive` becomes false and the full report UI appears.
 
-## Fix 4 -- Remove CLI References (lines 143-148, 223-242)
-
-- Change enterprise feature title from "Dashboard + CLI" to "Web Dashboard"
-- Update description to remove terminal/CLI mention
-- Replace `InterfacesIllustration` two-column grid (Dashboard + CLI panels) with a single full-width dashboard panel
-
-## Technical Details
-
-All changes are in `src/pages/Home.tsx`. No new dependencies or files needed.
