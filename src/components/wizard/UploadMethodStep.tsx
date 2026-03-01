@@ -1,7 +1,6 @@
-import { FolderUp, ArrowLeft, Lock, Github } from "lucide-react";
+import { FolderUp, ArrowLeft, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useGitHubConnection } from "@/hooks/useGitHubConnection";
 
 export type UploadMethod = 'folder' | 'github';
@@ -9,42 +8,28 @@ export type UploadMethod = 'folder' | 'github';
 interface UploadMethodStepProps {
   onSelectMethod: (method: UploadMethod) => void;
   onBack: () => void;
-  isStarterPlan?: boolean;
 }
 
-const UploadMethodStep = ({ onSelectMethod, onBack, isStarterPlan = false }: UploadMethodStepProps) => {
+const UploadMethodStep = ({ onSelectMethod, onBack }: UploadMethodStepProps) => {
   const { isConnected, connection } = useGitHubConnection();
 
   const MethodCard = ({ method, icon: Icon, title, description, badges }: { method: UploadMethod; icon: typeof FolderUp; title: string; description: string; badges: React.ReactNode }) => (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={() => !isStarterPlan && onSelectMethod(method)}
-            disabled={isStarterPlan}
-            className={cn(
-              "group relative flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
-              isStarterPlan ? "opacity-60 cursor-not-allowed" : "hover:border-primary hover:bg-primary/5"
-            )}
-          >
-            {isStarterPlan && (
-              <div className="absolute top-3 right-3">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground"><Lock className="w-3 h-3" />Pro</span>
-              </div>
-            )}
-            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-colors", isStarterPlan ? "bg-muted" : "bg-primary/10 group-hover:bg-primary/20")}>
-              <Icon className={cn("w-7 h-7", isStarterPlan ? "text-muted-foreground" : "text-primary")} />
-            </div>
-            <div className="text-center space-y-1.5">
-              <h3 className="text-base font-semibold text-foreground">{title}</h3>
-              <p className="text-xs text-muted-foreground">{description}</p>
-            </div>
-            <div className="flex flex-wrap gap-1 justify-center">{badges}</div>
-          </button>
-        </TooltipTrigger>
-        {isStarterPlan && <TooltipContent side="bottom" className="max-w-xs"><p>Multi-file uploads require the Pro plan.</p></TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
+    <button
+      onClick={() => onSelectMethod(method)}
+      className={cn(
+        "group relative flex flex-col items-center gap-4 p-6 rounded-xl border-2 border-border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
+        "hover:border-primary hover:bg-primary/5"
+      )}
+    >
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-colors bg-primary/10 group-hover:bg-primary/20">
+        <Icon className="w-7 h-7 text-primary" />
+      </div>
+      <div className="text-center space-y-1.5">
+        <h3 className="text-base font-semibold text-foreground">{title}</h3>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <div className="flex flex-wrap gap-1 justify-center">{badges}</div>
+    </button>
   );
 
   return (

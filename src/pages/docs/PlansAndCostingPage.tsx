@@ -339,7 +339,7 @@ export default function PlansAndCostingPage() {
                     "", "", "",
                   ],
                   ["Local markdown report", <Yes />, <Yes />, <Yes />],
-                  ["Dashboard report", "5 credits each", "Free", "Free"],
+                  ["Dashboard report", "Free", "Free", "Free"],
                   ["Share reports with team", <No />, <No />, <Yes />],
                   [
                     <span className="font-semibold text-foreground text-xs uppercase tracking-wider">Collaboration</span>,
@@ -523,14 +523,14 @@ export default function PlansAndCostingPage() {
               <DocTable
                 headers={["Plan", "Dashboard report access"]}
                 rows={[
-                  [<strong className="text-foreground">Spark</strong>, "5 credits per report"],
+                  [<strong className="text-foreground">Spark</strong>, "Free"],
                   [<strong className="text-foreground">Blaze</strong>, "Free"],
                   [<strong className="text-foreground">Inferno</strong>, "Free + shareable with collaborators"],
                 ]}
               />
               <p>
-                On Spark, you decide per-report whether to spend the credits.
-                Your local markdown report is always complete and free.
+                Dashboard reports are free on all plans.
+                Your local markdown report is also always available.
               </p>
             </CardContent>
           </Card>

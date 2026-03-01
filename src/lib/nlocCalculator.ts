@@ -70,12 +70,3 @@ export function calculateDowngradeCredits(
   return Math.floor((currentCredits * oldRate) / newRate);
 }
 
-/**
- * Power-up options available for Pro users
- */
-export const POWER_UP_OPTIONS = [
-  { nloc: 2000, priceCents: 2500, savings: 1, discountPercent: 4 },
-  { nloc: 5000, priceCents: 5500, savings: 10, discountPercent: 15 },
-  { nloc: 12000, priceCents: 12000, savings: 36, discountPercent: 23 },
-  { nloc: 25000, priceCents: 22500, savings: 100, discountPercent: 30 },
-] as const;

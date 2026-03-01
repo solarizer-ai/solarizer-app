@@ -39,7 +39,6 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "Cross-contract analysis",
     "AI validation (false positive elimination)",
     "Remediation guidance",
-    "Free dashboard report access",
   ],
   business: [
     "Everything in Blaze",
