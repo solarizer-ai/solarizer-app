@@ -1,33 +1,37 @@
 
 
-# Fix Failed Kinetiq Audit -- One-Time Data Correction
+# Tier Feature Adjustments — 5 Changes
 
-## Current State
-- Audit `7e8c3ed5` is marked as `failed` with `findings_count: 0`, no grade, and `is_locked: true`
-- Orchestration record shows `status: failed`, `phase: qa`
-- However, 85 findings are persisted in the `findings` table (4 high, 12 medium, 39 low, 19 info, 11 gas)
+## Change 1: Architecture Insights — Inferno Only
+**File: `src/pages/Report.tsx`**
+- Line 448: Change `effectivePlan === 'starter'` to `effectivePlan !== 'business'` for the Insights tab lock icon
+- Lines 608-614: Change condition from `effectivePlan === 'starter'` to `effectivePlan !== 'business'` and update `requiredPlan="pro"` to `requiredPlan="business"`
 
-## Fix
+## Change 2: Dashboard Reports — Free for All Plans
+- **`src/pages/Pricing.tsx` line 50**: `'5 credits each'` -> `'Free'`
+- **`src/pages/docs/PlansAndCostingPage.tsx` line 342**: `"5 credits each"` -> `"Free"`
+- **`src/pages/docs/PlansAndCostingPage.tsx` line 526**: `"5 credits per report"` -> `"Free"`
+- **`src/pages/docs/PlansAndCostingPage.tsx` lines 531-534**: Replace paragraph with "Dashboard reports are free on all plans. Your local markdown report is also always available."
+- **`src/components/UpgradeConfirmationModal.tsx` line 42**: Remove `"Free dashboard report access"` from pro features array
 
-Create a temporary edge function (`admin-fix-audit`) that uses the service role key to update both records:
+## Change 3: Multi-File Upload — All Plans
+- **`src/components/wizard/UploadMethodStep.tsx`**: Remove all `isStarterPlan` logic, tooltip wrappers, and `Lock` import. Simplify to always-enabled cards.
+- **`src/components/AuditWizard.tsx` line 89**: Remove `isStarterPlan` prop from `UploadMethodStep`
+- **`src/components/UpgradeToProModal.tsx`**:
+  - Line 15: Remove `'file_limit'` from reason type
+  - Lines 39-43: Remove file_limit conditional, show only nLOC message
+  - Line 27: Change text to `"Up to 3,000 nLOC per audit"` (remove "Multi-file analysis")
 
-**audits table:**
-- `status`: failed -> issues
-- `grade`: null -> D (has high-severity findings)
-- `findings_count`: 0 -> 85
-- `contracts_completed`: 0 -> 6
-- `error_message`: clear to null
+## Change 4: Remove POWER_UP_OPTIONS
+**File: `src/lib/nlocCalculator.ts` lines 72-81**: Delete the `POWER_UP_OPTIONS` constant (confirmed no imports elsewhere).
 
-**audit_orchestration table:**
-- `status`: failed -> completed
-- `phase`: qa -> completed
-- `findings_count`: 69 -> 85
-- `error`: clear to null
+## Change 5: Initial Credits
+No changes needed — already correct at 50.
 
-## Steps
-1. Create `supabase/functions/admin-fix-audit/index.ts` with the two update queries
-2. Deploy and invoke it once
-3. Delete the edge function after confirming success
+## Pre-existing Build Errors
+The 16 TypeScript errors in the build output are all in edge function files (`_shared/`, `cli-*`) and are pre-existing type issues unrelated to these changes. They will not be affected by this work.
 
-No schema changes needed. The `is_locked` flag stays true (correct for terminal state).
-
+### Technical Details
+- 8 files modified total across all changes
+- No database migrations needed
+- No new dependencies
