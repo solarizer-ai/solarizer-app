@@ -58,15 +58,14 @@ export function GitHubIntegration() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
-    const tab = params.get('tab');
     
-    if (code && tab === 'integrations') {
-      const redirectUri = `${window.location.origin}/settings?tab=integrations`;
+    if (code && window.location.pathname === '/dashboard/integrations') {
+      const redirectUri = `${window.location.origin}/dashboard/integrations`;
       
       connect({ code, redirectUri })
         .then(() => {
           toast({ title: "GitHub connected successfully!" });
-          window.history.replaceState({}, '', '/settings?tab=integrations');
+          window.history.replaceState({}, '', '/dashboard/integrations');
         })
         .catch((err) => {
           toast({ 
@@ -74,7 +73,7 @@ export function GitHubIntegration() {
             title: "Failed to connect GitHub", 
             description: err.message 
           });
-          window.history.replaceState({}, '', '/settings?tab=integrations');
+          window.history.replaceState({}, '', '/dashboard/integrations');
         });
     }
   }, [connect, toast]);
@@ -82,7 +81,7 @@ export function GitHubIntegration() {
   const handleConnectGitHub = () => {
     if (!clientId) return;
     
-    const redirectUri = `${window.location.origin}/settings?tab=integrations`;
+    const redirectUri = `${window.location.origin}/dashboard/integrations`;
     const scope = 'repo read:user';
     
     const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;

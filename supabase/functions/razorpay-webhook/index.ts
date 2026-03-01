@@ -54,12 +54,15 @@ Deno.serve(async (req) => {
 
     console.log(`Processing Razorpay webhook: ${event}`, { eventId });
 
+    // M13: Ensure eventId is always present for idempotency
+    const effectiveEventId = eventId || `${event}_${entity?.id || 'unknown'}_${Date.now()}`;
+
     // Atomic idempotency guard: INSERT first, catch unique violation
-    if (eventId) {
+    {
       const { error: idempotencyError } = await supabase
         .from("subscription_events")
         .insert({
-          event_id: eventId,
+          event_id: effectiveEventId,
           event_type: event,
           subscription_id: entity?.id || "unknown",
           status: "processing",
@@ -68,7 +71,7 @@ Deno.serve(async (req) => {
 
       if (idempotencyError) {
         if (idempotencyError.code === "23505") {
-          console.log("Webhook already processed:", eventId);
+          console.log("Webhook already processed:", effectiveEventId);
           return new Response(
             JSON.stringify({ success: true, already_processed: true }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -143,19 +146,42 @@ Deno.serve(async (req) => {
       }
 
       case "payment.failed": {
-        const orderId = entity?.order_id;
-        if (orderId) {
-          const { data: order } = await supabase
+        const rzOrderId = entity?.order_id;
+        const paymentLinkId = entity?.payment_link_id;
+        const notes = entity?.notes || {};
+        let order = null;
+
+        if (rzOrderId) {
+          const { data } = await supabase
             .from("payment_orders")
             .select("order_id")
-            .eq("rz_order_id", orderId)
+            .eq("rz_order_id", rzOrderId)
             .single();
+          order = data;
+        }
 
-          if (order) {
-            await supabase.rpc("mark_payment_failed", {
-              p_order_id: order.order_id,
-            });
-          }
+        if (!order && paymentLinkId) {
+          const { data } = await supabase
+            .from("payment_orders")
+            .select("order_id")
+            .eq("rz_payment_link_id", paymentLinkId)
+            .single();
+          order = data;
+        }
+
+        if (!order && notes.reference_id) {
+          const { data } = await supabase
+            .from("payment_orders")
+            .select("order_id")
+            .eq("order_id", notes.reference_id)
+            .single();
+          order = data;
+        }
+
+        if (order) {
+          await supabase.rpc("mark_payment_failed", {
+            p_order_id: order.order_id,
+          });
         }
         break;
       }
@@ -170,17 +196,15 @@ Deno.serve(async (req) => {
     }
 
     // Update final status for events that don't set it in their handler
-    if (eventId) {
-      await supabase
-        .from("subscription_events")
-        .update({
-          status: "processed",
-          payment_id: entity?.id,
-          amount_cents: entity?.amount,
-        })
-        .eq("event_id", eventId)
-        .eq("status", "processing"); // Only update if still in initial state
-    }
+    await supabase
+      .from("subscription_events")
+      .update({
+        status: "processed",
+        payment_id: entity?.id,
+        amount_cents: entity?.amount,
+      })
+      .eq("event_id", effectiveEventId)
+      .eq("status", "processing");
 
     return new Response(
       JSON.stringify({ success: true }),
