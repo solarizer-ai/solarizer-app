@@ -35,7 +35,7 @@ const POWER_UP_RATES: Record<string, number> = {
   business: 220,
 };
 
-const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://solarizer-app.lovable.app";
+const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://solarizer.io";
 
 function getRazorpayAuth(): string {
   const keyId = Deno.env.get("RAZORPAY_KEY_ID");

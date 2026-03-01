@@ -282,7 +282,7 @@ export default function PaymentSuccess() {
             )}
 
             <div className="flex flex-col gap-2">
-              <Button onClick={() => navigate("/audits")} className="w-full">
+              <Button onClick={() => navigate("/dashboard")} className="w-full">
                 Go to Dashboard
               </Button>
               {hasError && (
