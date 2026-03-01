@@ -18,7 +18,6 @@ import ComingSoon from "./pages/ComingSoon";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import PaymentSuccess from "./pages/PaymentSuccess";
-import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import Report from "./pages/Report";
 import PublicReport from "./pages/PublicReport";
 
@@ -79,7 +78,7 @@ const App = () => (
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
-                <Route path="/subscription-success" element={<ProtectedRoute><SubscriptionSuccess /></ProtectedRoute>} />
+                <Route path="/subscription-success" element={<Navigate to="/pricing" replace />} />
 
                 {/* Docs (sidebar layout, public) */}
                 <Route path="/docs" element={<DocsLayout />}>
