@@ -135,6 +135,19 @@ Deno.serve(async (req) => {
         })
         .eq("user_id", user.id);
 
+      // Record coupon redemption for zero-amount upgrades
+      if (couponId) {
+        await adminSupabase.rpc("increment_coupon_used_count", { p_coupon_id: couponId });
+        await adminSupabase.from("coupon_redemptions").insert({
+          coupon_id: couponId,
+          user_id: user.id,
+          original_amount_cents: upgradeAmount,
+          discounted_amount_cents: finalAmount,
+          discount_applied_cents: upgradeAmount - finalAmount,
+        });
+        console.log("Coupon redemption recorded for direct upgrade:", couponId);
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
