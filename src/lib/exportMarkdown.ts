@@ -214,7 +214,7 @@ export const generateMarkdownReport = (options: ExportOptions): string => {
 
   // 9. Disclaimer
   md += `## Disclaimer\n\n`;
-  md += `This report is provided by Solarizer, a product of Eryonix Techlabs, for informational purposes only. The analysis was performed using automated AI-powered tools and does not constitute a formal security audit, legal advice, or a guarantee of security.\n\n`;
+  md += `This report is provided by Solarizer for informational purposes only. The analysis was performed using automated AI-powered tools and does not constitute a formal security audit, legal advice, or a guarantee of security.\n\n`;
   md += `**Important limitations:**\n\n`;
   md += `- **No automated analysis can guarantee 100% security.** This report identifies potential vulnerabilities within the scope of the contracts analyzed but may not detect all possible issues, including novel attack vectors, economic exploits, or vulnerabilities arising from deployment configuration or off-chain components.\n`;
   md += `- **This report is not a substitute for a comprehensive manual security audit** by qualified security professionals. Critical protocols should undergo independent manual review in addition to automated analysis.\n`;
