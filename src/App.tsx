@@ -98,7 +98,8 @@ const App = () => (
                   <Route index element={<DashboardHome />} />
                   <Route path="analyses" element={<AnalysesPage />} />
                   <Route path="credits" element={<CreditActivityPage />} />
-                  <Route path="api-keys" element={<ApiKeysPage />} />
+                   {/* API Keys hidden until CLI release */}
+                   {/* <Route path="api-keys" element={<ApiKeysPage />} /> */}
                   <Route path="billing" element={<BillingPage />} />
                   <Route path="profile" element={<ProfilePage />} />
                   <Route path="security" element={<SecurityPage />} />
