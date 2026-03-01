@@ -246,7 +246,9 @@ export function PurchasePowerUpModal({
           >
             {checkoutLoading
               ? "Processing..."
-              : `Buy for $${formatPrice(finalPriceDollars)}`}
+              : finalPriceCents < 100
+                ? "Confirm Purchase"
+                : `Buy for $${formatPrice(finalPriceDollars)}`}
           </Button>
         </div>
       </DialogContent>

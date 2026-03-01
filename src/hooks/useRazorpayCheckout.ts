@@ -14,8 +14,9 @@ interface CreateOrderParams {
 interface CreateOrderResponse {
   success: boolean;
   orderId: string;
-  paymentLinkId: string;
-  paymentUrl: string;
+  paymentLinkId?: string;
+  paymentUrl?: string;
+  flowType?: string;
   amountCents: number;
   currency: string;
   description: string;
@@ -54,12 +55,17 @@ export function useRazorpayCheckout() {
         return false;
       }
 
+      // Free checkout (100% coupon) — no redirect needed
+      if (data.flowType === "free_checkout") {
+        toast({
+          title: "Purchase Complete",
+          description: "Your credits have been added with the coupon discount!",
+        });
+        return true;
+      }
+
       // Full-page redirect to Razorpay hosted checkout
-      // This navigates the user away from our site to Razorpay's payment page
       window.location.href = data.paymentUrl;
-      
-      // Return true since we successfully initiated the checkout
-      // (the page will navigate away)
       return true;
     } catch (error) {
       if (import.meta.env.DEV) console.error("Checkout error:", error);

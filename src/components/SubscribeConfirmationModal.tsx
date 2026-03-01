@@ -98,7 +98,7 @@ export function SubscribeConfirmationModal({
               onClick={handleConfirm}
               disabled={isLoading}
             >
-              {isLoading ? "Processing..." : `Pay $${finalDollars} & Subscribe`}
+              {isLoading ? "Processing..." : finalCents < 100 ? "Confirm & Subscribe" : `Pay $${finalDollars} & Subscribe`}
             </Button>
             <Button
               variant="ghost"
