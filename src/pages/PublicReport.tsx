@@ -3,13 +3,14 @@ import { useParams } from "react-router-dom";
 import { usePublicAudit, usePublicFindings } from "@/hooks/usePublicAudit";
 import CodeBlock from "@/components/CodeBlock";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
-  Loader2, Shield, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle,
-  Info, Zap, Fuel, CheckCircle2, XCircle, ChevronDown, FileCode, Lightbulb,
+  Shield, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle,
+  Info, Fuel, CheckCircle2, XCircle, ChevronDown, FileCode, Lightbulb,
   Calendar, Code2, Bug, CircleCheckBig,
+  Clock, Scale, Cpu, RefreshCcw, Eye, ExternalLink,
 } from "lucide-react";
-import { ReportSkeleton } from "@/components/AuditCardSkeleton";
 import { format } from "date-fns";
 import solarLogo from "@/assets/solarizer-logo.png";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -229,7 +230,7 @@ const PublicFindingItem = ({ finding }: { finding: any }) => {
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <div className="border-t border-border p-4 space-y-4 bg-muted/20">
+        <div className="border-t border-border p-5 space-y-5 bg-muted/10">
           {/* Description */}
           <div>
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
@@ -308,6 +309,26 @@ const PublicFindingItem = ({ finding }: { finding: any }) => {
   );
 };
 
+// ── Branded Header (shared across loading/error/main) ───────────────
+const BrandedHeader = () => (
+  <>
+    <header className="border-b border-primary/20 bg-background/90 backdrop-blur-md sticky top-0 z-50">
+      <div className="container mx-auto px-4 sm:px-6 max-w-4xl py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src={solarLogo} alt="Solarizer" className="h-7 w-auto" />
+          <div className="h-5 w-px bg-border" />
+          <span className="terminal-pill">Security Audit Report</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-primary/70 font-mono tracking-wide border border-primary/20 rounded px-2.5 py-1 uppercase">
+          <Shield className="w-3.5 h-3.5" />
+          Public Report
+        </div>
+      </div>
+    </header>
+    <div className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+  </>
+);
+
 // ── Main Public Report Component ────────────────────────────────────
 const PublicReport = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -315,25 +336,85 @@ const PublicReport = () => {
   const { data: findings } = usePublicFindings(audit?.id || null);
   const [scopeExpanded, setScopeExpanded] = useState(false);
 
+  // ── Loading State ──────────────────────────────────
   if (auditLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-6 py-8">
-          <ReportSkeleton />
+        <BrandedHeader />
+        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl space-y-8">
+          {/* Hero skeleton */}
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-24 rounded" />
+            <Skeleton className="h-9 w-72" />
+            <div className="flex gap-3">
+              <Skeleton className="h-7 w-32 rounded-full" />
+              <Skeleton className="h-7 w-28 rounded-full" />
+              <Skeleton className="h-7 w-24 rounded-full" />
+              <Skeleton className="h-7 w-28 rounded-full" />
+            </div>
+          </div>
+          {/* Executive Summary skeleton */}
+          <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+            <Skeleton className="h-5 w-40" />
+            <div className="flex items-center gap-6">
+              <Skeleton className="h-20 w-20 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-2 w-full rounded-full" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-px w-full" />
+            <Skeleton className="h-2.5 w-full rounded-full" />
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <Skeleton key={i} className="h-8 w-20 rounded-lg" />
+              ))}
+            </div>
+          </div>
+          {/* Findings skeleton */}
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-card border border-border rounded-lg p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-6 w-16 rounded-md" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
+  // ── Error State ────────────────────────────────────
   if (auditError || !audit) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Shield className="w-12 h-12 text-muted-foreground mx-auto" />
-          <h1 className="text-xl font-semibold text-foreground">Report Not Found</h1>
-          <p className="text-sm text-muted-foreground max-w-md">
-            This report may have been made private or the link is invalid.
-          </p>
+      <div className="min-h-screen bg-background">
+        <BrandedHeader />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 60px)' }}>
+          <div className="text-center space-y-4 px-6">
+            <div className="w-16 h-16 rounded-full border-2 border-muted flex items-center justify-center mx-auto">
+              <Shield className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h1 className="text-xl font-semibold text-foreground">Report Not Found</h1>
+            <p className="text-sm text-muted-foreground max-w-md leading-relaxed">
+              This report may have been made private, the link may be invalid,
+              or the audit may still be in progress.
+            </p>
+            <a
+              href="https://solarizer.eryonix.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              Visit Solarizer
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -370,121 +451,141 @@ const PublicReport = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* ── Sticky Header ────────────────────────────────── */}
-      <header className="border-b border-primary/20 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={solarLogo} alt="Solarizer" className="h-7 w-auto" />
-            <div className="h-5 w-px bg-border" />
-            <span className="terminal-pill">Security Audit Report</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-primary/70 border border-primary/20 rounded px-2.5 py-1">
-            <Shield className="w-3.5 h-3.5" />
-            Public Report
-          </div>
-        </div>
-      </header>
+      <BrandedHeader />
 
       <main className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl space-y-8">
 
-        {/* ── Project Metadata Header ────────────────────── */}
-        <div className="space-y-3">
+        {/* ── Hero: Project Metadata ─────────────────────── */}
+        <div className="space-y-4">
           <span className="terminal-pill">Audit Report</span>
           <h1 className="heading-section font-bold text-gradient">{audit.project_name}</h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{format(new Date(audit.created_at), "MMM d, yyyy")}</span>
-            {audit.nloc_count && <span className="flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5" />{audit.nloc_count.toLocaleString()} nLOC</span>}
-            <span className="flex items-center gap-1.5"><Bug className="w-3.5 h-3.5" />{totalFindings} findings</span>
-            <span className="flex items-center gap-1.5"><CircleCheckBig className="w-3.5 h-3.5" />{resolvedCount} resolved</span>
-          </div>
-        </div>
-
-        {/* ── Score Card with Grade Ring ──────────────────── */}
-        <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-          {/* Grade + Rating */}
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0",
-              !grade ? "border-muted" :
-              grade === "A" || grade === "B" ? "border-success" :
-              grade === "C" || grade === "D" ? "border-warning" : "border-critical"
-            )}>
-              <span className={cn("text-xl font-bold", gConfig?.color || "text-muted-foreground")}>
-                {grade || "--"}
+          <p className="text-sm text-muted-foreground">
+            {format(new Date(audit.created_at), "MMMM d, yyyy")}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-full px-3 py-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              {format(new Date(audit.created_at), "MMM d, yyyy")}
+            </span>
+            {audit.nloc_count && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-full px-3 py-1.5">
+                <Code2 className="w-3.5 h-3.5" />
+                {audit.nloc_count.toLocaleString()} nLOC
               </span>
-            </div>
-            <div>
-              <div className="flex items-baseline gap-2">
-                <span className={cn("text-lg font-semibold", gConfig?.color || "text-muted-foreground")}>
-                  {gConfig?.label || "Pending"}
-                </span>
-                <span className="text-sm text-muted-foreground">Security Rating</span>
-              </div>
-              <p className="text-xs text-muted-foreground">{gConfig?.description || "Analysis in progress"}</p>
-            </div>
-          </div>
-
-          {/* Vulnerability Matrix Bar */}
-          <div className="pt-3 border-t border-border">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Matrix</h4>
-              <span className="text-xs text-muted-foreground">{totalFindings} findings</span>
-            </div>
-            <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
-              {SEVERITY_ORDER.map(sev => {
-                const width = totalFindings > 0 ? (severityCounts[sev] / totalFindings) * 100 : 0;
-                return width > 0 ? (
-                  <div key={sev} className={cn("h-full transition-all duration-500", severityConfig[sev].barColor)} style={{ width: `${width}%` }} />
-                ) : null;
-              })}
-            </div>
-            {/* Category Pills */}
-            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-              {SEVERITY_ORDER.map(sev => {
-                const config = severityConfig[sev];
-                const Icon = config.icon;
-                return (
-                  <div key={sev} className={cn("flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border", config.className)}>
-                    <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="text-xs sm:text-sm font-medium">{severityCounts[sev]}</span>
-                    <span className="text-xs text-muted-foreground hidden sm:inline">{config.label}</span>
-                    <span className="text-[11px] text-muted-foreground sm:hidden">{config.label.slice(0, 3)}</span>
-                  </div>
-                );
-              })}
-            </div>
+            )}
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-full px-3 py-1.5">
+              <Bug className="w-3.5 h-3.5" />
+              {totalFindings} {totalFindings === 1 ? "finding" : "findings"}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-full px-3 py-1.5">
+              <CircleCheckBig className="w-3.5 h-3.5" />
+              {resolvedCount} resolved
+            </span>
           </div>
         </div>
 
-        {/* ── Remediation Progress Widget ─────────────────── */}
-        {totalFindings > 0 && (
-          <div className="bg-card border border-border rounded-lg p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                <CircleCheckBig className="w-4 h-4 text-success" />
-                Remediation Progress
-              </h4>
-              <span className="text-sm font-semibold text-foreground">{resolvedPct}%</span>
-            </div>
-            <Progress value={resolvedPct} className="h-2 mb-2" />
-            <p className="text-xs text-muted-foreground">
-              {resolvedCount} of {totalFindings} findings resolved
-            </p>
+        {/* ── Executive Summary (Grade + Remediation + Vuln Matrix) ── */}
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          {/* Card header bar */}
+          <div className="px-5 py-3 bg-muted/30 border-b border-border flex items-center gap-2">
+            <Shield className="w-4 h-4 text-primary" />
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Executive Summary</h3>
           </div>
-        )}
+
+          <div className="p-6 space-y-5">
+            {/* Top row: Grade + Remediation */}
+            <div className="flex flex-col sm:flex-row gap-6">
+              {/* Grade Ring */}
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  "w-20 h-20 rounded-full border-[3px] flex items-center justify-center shrink-0",
+                  !grade ? "border-muted" :
+                  grade === "A" || grade === "B" ? "border-success" :
+                  grade === "C" || grade === "D" ? "border-warning" : "border-critical"
+                )}>
+                  <span className={cn("text-3xl font-bold", gConfig?.color || "text-muted-foreground")}>
+                    {grade || "--"}
+                  </span>
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className={cn("text-lg font-semibold", gConfig?.color || "text-muted-foreground")}>
+                      {gConfig?.label || "Pending"}
+                    </span>
+                    <span className="text-sm text-muted-foreground">Security Rating</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{gConfig?.description || "Analysis in progress"}</p>
+                </div>
+              </div>
+
+              {/* Remediation Progress */}
+              {totalFindings > 0 && (
+                <div className="flex-1 sm:border-l sm:border-border sm:pl-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <CircleCheckBig className="w-4 h-4 text-success" />
+                      Remediation Progress
+                    </h4>
+                    <span className="text-sm font-semibold text-foreground">{resolvedPct}%</span>
+                  </div>
+                  <Progress value={resolvedPct} className="h-2 mb-2" />
+                  <p className="text-xs text-muted-foreground">
+                    {resolvedCount} of {totalFindings} {totalFindings === 1 ? "finding" : "findings"} resolved
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-border" />
+
+            {/* Vulnerability Distribution */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Distribution</h4>
+                <span className="text-xs text-muted-foreground">{totalFindings} {totalFindings === 1 ? "finding" : "findings"}</span>
+              </div>
+              <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
+                {SEVERITY_ORDER.map(sev => {
+                  const width = totalFindings > 0 ? (severityCounts[sev] / totalFindings) * 100 : 0;
+                  return width > 0 ? (
+                    <div key={sev} className={cn("h-full transition-all duration-500", severityConfig[sev].barColor)} style={{ width: `${width}%` }} />
+                  ) : null;
+                })}
+              </div>
+              {/* Category Pills */}
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+                {SEVERITY_ORDER.map(sev => {
+                  const config = severityConfig[sev];
+                  const SevIcon = config.icon;
+                  return (
+                    <div key={sev} className={cn("flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border", config.className)}>
+                      <SevIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      <span className="text-xs sm:text-sm font-medium">{severityCounts[sev]}</span>
+                      <span className="text-xs text-muted-foreground hidden sm:inline">{config.label}</span>
+                      <span className="text-[11px] text-muted-foreground sm:hidden">{config.label.slice(0, 3)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* ── Scope Section ──────────────────────────────── */}
         {scopeFiles.length > 0 && (
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-5 py-3 bg-primary/5 border-b border-border flex items-center justify-between">
-              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+            <div className="px-5 py-3 bg-muted/30 border-b border-border flex items-center justify-between">
+              <h3 className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-primary" />
-                Audit Scope
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Audit Scope</span>
               </h3>
               <span className="text-xs text-muted-foreground font-mono">{scopeFiles.length} files</span>
             </div>
             <div className="divide-y divide-border/50">
               {visibleScopeFiles.map((file, i) => (
-                <div key={i} className={cn("px-5 py-2 text-sm font-mono text-muted-foreground", i % 2 === 0 ? "bg-card" : "bg-muted/20")}>
+                <div key={i} className={cn("px-5 py-2 text-sm font-mono text-muted-foreground flex items-center gap-2", i % 2 === 0 ? "bg-card" : "bg-muted/20")}>
+                  <FileCode className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
                   {file}
                 </div>
               ))}
@@ -492,70 +593,248 @@ const PublicReport = () => {
             {showScopeToggle && (
               <button
                 onClick={() => setScopeExpanded(!scopeExpanded)}
-                className="w-full py-2.5 text-xs text-primary hover:text-primary/80 transition-colors border-t border-border"
+                className="w-full py-2.5 text-xs text-primary hover:text-primary/80 transition-colors border-t border-border flex items-center justify-center gap-1"
               >
+                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", scopeExpanded && "rotate-180")} />
                 {scopeExpanded ? "Show less" : `Show all ${scopeFiles.length} files`}
               </button>
             )}
           </div>
         )}
 
-        {/* ── Findings by Severity ────────────────────────── */}
-        {groupedFindings.map(({ severity, findings: groupFindings }) => {
-          const config = severityConfig[severity];
-          const Icon = config.icon;
-          return (
-            <div key={severity} className="space-y-3">
-              <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
-                <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border", config.className)}>
-                  <Icon className="w-4 h-4" />
-                  {config.label}
-                </div>
-                <span className="text-muted-foreground text-sm font-normal">({groupFindings.length})</span>
-              </h2>
-              <div className="space-y-2">
-                {groupFindings.map(finding => (
-                  <div key={finding.id} className={cn(
-                    "border border-border rounded-lg overflow-hidden bg-card/50 border-l-2",
-                    severity === "critical" ? "border-l-critical" :
-                    severity === "high" ? "border-l-destructive" :
-                    severity === "medium" ? "border-l-warning" :
-                    severity === "low" ? "border-l-low" :
-                    severity === "info" ? "border-l-slate-400" : "border-l-green-500"
-                  )}>
-                    <PublicFindingItem finding={finding} />
+        {/* ── Detailed Findings by Severity ───────────────── */}
+        {groupedFindings.length > 0 && (
+          <div className="space-y-8">
+            <h2 className="text-lg font-semibold text-foreground">Detailed Findings</h2>
+            {groupedFindings.map(({ severity, findings: groupFindings }) => {
+              const config = severityConfig[severity];
+              const SevIcon = config.icon;
+              return (
+                <div key={severity} className="space-y-3">
+                  <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border", config.className)}>
+                      <SevIcon className="w-4 h-4" />
+                      {config.label}
+                    </div>
+                    <span className="text-muted-foreground text-sm font-normal">
+                      ({groupFindings.length} {groupFindings.length === 1 ? "finding" : "findings"})
+                    </span>
+                  </h3>
+                  <div className="space-y-2">
+                    {groupFindings.map(finding => (
+                      <div key={finding.id} className={cn(
+                        "border border-border rounded-lg overflow-hidden bg-card/50 border-l-2",
+                        severity === "critical" ? "border-l-critical" :
+                        severity === "high" ? "border-l-destructive" :
+                        severity === "medium" ? "border-l-warning" :
+                        severity === "low" ? "border-l-low" :
+                        severity === "info" ? "border-l-slate-400" : "border-l-green-500"
+                      )}>
+                        <PublicFindingItem finding={finding} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-
-        {/* No findings */}
-        {totalFindings === 0 && (
-          <div className="text-center py-16 bg-card border border-border rounded-lg">
-            <ShieldCheck className="w-12 h-12 text-success mx-auto mb-4" />
-            <p className="text-lg font-medium text-foreground">No Vulnerabilities Found</p>
-            <p className="text-sm text-muted-foreground mt-1">This project passed security analysis with no issues.</p>
+                </div>
+              );
+            })}
           </div>
         )}
+
+        {/* ── No Findings State ──────────────────────────── */}
+        {totalFindings === 0 && (
+          <div className="text-center py-20 bg-card border border-border rounded-lg relative overflow-hidden">
+            <div className="bg-radial-glow absolute inset-0 pointer-events-none" />
+            <div className="relative">
+              <ShieldCheck className="w-16 h-16 text-success mx-auto mb-4" />
+              <p className="text-lg font-medium text-foreground">No Vulnerabilities Found</p>
+              <p className="text-sm text-muted-foreground mt-1">This project passed security analysis with no issues detected.</p>
+              <p className="text-xs text-muted-foreground/60 mt-3 max-w-md mx-auto">
+                This does not guarantee the absence of vulnerabilities — see the disclaimer below.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Disclaimer & Limitations ───────────────────── */}
+        <div className="border border-amber-500/20 bg-amber-500/[0.03] rounded-lg overflow-hidden">
+          <div className="px-5 py-3 bg-amber-500/[0.05] border-b border-amber-500/20 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <h3 className="text-xs font-medium text-amber-500/90 uppercase tracking-wider">Important Disclaimer & Limitations</h3>
+          </div>
+
+          <div className="p-6 space-y-6">
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              This report was generated by Solarizer, an AI-powered smart contract security analysis engine
+              by Eryonix Techlabs. It is provided for informational purposes only and is subject to the
+              following important limitations:
+            </p>
+
+            <div className="grid gap-5">
+              {/* 1. No Security Guarantee */}
+              <div className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <ShieldAlert className="w-[18px] h-[18px] text-amber-500/70" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">No Security Guarantee</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    No automated analysis can guarantee 100% security. This report identifies potential
+                    vulnerabilities within the scope of the contracts analyzed but may not detect all possible
+                    issues, including novel attack vectors, economic exploits, or vulnerabilities arising from
+                    deployment configuration or off-chain components. The absence of findings does not imply the
+                    absence of vulnerabilities.
+                  </p>
+                </div>
+              </div>
+
+              {/* 2. AI-Powered Automated Analysis */}
+              <div className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <Cpu className="w-[18px] h-[18px] text-amber-500/70" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">AI-Powered Automated Analysis</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    This report was produced using a multi-model AI engine, not a manual human audit.
+                    While the engine employs multiple specialized models for vulnerability hunting, validation,
+                    and quality assurance, critical protocols should still undergo independent manual review
+                    by qualified security professionals.
+                  </p>
+                </div>
+              </div>
+
+              {/* 3. Point-in-Time Assessment */}
+              <div className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <Clock className="w-[18px] h-[18px] text-amber-500/70" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">Point-in-Time Assessment</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Findings reflect the state of the code at the time of analysis. Any subsequent
+                    modifications to the contracts may introduce new vulnerabilities not covered by this report.
+                    Re-auditing is recommended after significant code changes.
+                  </p>
+                </div>
+              </div>
+
+              {/* 4. Scope-Limited Coverage */}
+              <div className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <Eye className="w-[18px] h-[18px] text-amber-500/70" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">Scope-Limited Coverage</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Only the files listed in the Audit Scope section above were analyzed. This report does not
+                    cover deployment configurations, operational procedures, frontend code, oracle
+                    dependencies, or external contract interactions beyond the defined scope.
+                  </p>
+                </div>
+              </div>
+
+              {/* 5. Not Financial or Legal Advice */}
+              <div className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <Scale className="w-[18px] h-[18px] text-amber-500/70" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">Not Financial or Legal Advice</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    This report does not constitute an endorsement of the analyzed project or any associated
+                    tokens. It is not investment advice, financial advice, or legal advice. Deployment
+                    decisions remain the sole responsibility of the contract developers and deployers.
+                  </p>
+                </div>
+              </div>
+
+              {/* 6. Ongoing Security Recommended */}
+              <div className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <RefreshCcw className="w-[18px] h-[18px] text-amber-500/70" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-1">Ongoing Security Recommended</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Security is an ongoing process, not a one-time event. Bug bounty programs, periodic
+                    re-audits, real-time monitoring, and responsible disclosure policies are strongly
+                    recommended alongside any audit report.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Liability footnote */}
+            <div className="pt-4 border-t border-amber-500/10">
+              <p className="text-xs text-muted-foreground/60 leading-relaxed">
+                Solarizer expressly disclaims liability for any losses, damages, or exploits arising from
+                the use or deployment of analyzed contracts. For the full terms governing the use of this
+                report, see our{" "}
+                <a
+                  href="https://solarizer.eryonix.com/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
+                >
+                  Terms of Service
+                </a>.
+              </p>
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* ── Footer ────────────────────────────────────────── */}
-      <footer className="border-t border-border mt-12 relative overflow-hidden">
+      <footer className="border-t border-border mt-16 relative overflow-hidden">
         <div className="bg-radial-glow absolute inset-0 pointer-events-none" />
-        <div className="container mx-auto px-4 sm:px-6 py-10 text-center space-y-3 relative">
-          <div className="flex items-center justify-center gap-2">
-            <img src={solarLogo} alt="Solarizer" className="h-5 w-auto opacity-50" />
+        <div className="container mx-auto px-4 sm:px-6 py-12 max-w-4xl relative">
+          <div className="flex flex-col items-center text-center space-y-4">
+            {/* Brand */}
+            <div className="flex items-center gap-2">
+              <img src={solarLogo} alt="Solarizer" className="h-5 w-auto opacity-60" />
+              <span className="text-sm font-medium text-muted-foreground">Solarizer</span>
+            </div>
+
+            {/* Condensed disclaimer */}
+            <p className="text-xs text-muted-foreground/70 max-w-lg leading-relaxed">
+              This report was generated by Solarizer, an AI-powered smart contract security analysis engine.
+              It is an automated analysis and does not constitute a formal security audit, legal advice, or a
+              guarantee of security. See the full disclaimer above.
+            </p>
+
+            {/* Links */}
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground/50">
+              <span>&copy; {new Date().getFullYear()} Eryonix Techlabs</span>
+              <span className="hidden sm:inline">&middot;</span>
+              <a
+                href="https://solarizer.eryonix.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 hover:text-muted-foreground transition-colors"
+              >
+                solarizer.eryonix.com
+                <ExternalLink className="w-3 h-3" />
+              </a>
+              <span className="hidden sm:inline">&middot;</span>
+              <a
+                href="https://solarizer.eryonix.com/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-muted-foreground transition-colors"
+              >
+                Terms
+              </a>
+              <span className="hidden sm:inline">&middot;</span>
+              <a
+                href="https://solarizer.eryonix.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-muted-foreground transition-colors"
+              >
+                Privacy
+              </a>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground font-medium">Powered by Solarizer</p>
-          <p className="text-xs text-muted-foreground/70 max-w-lg mx-auto leading-relaxed">
-            This report was generated by Solarizer, an AI-powered smart contract security analysis engine by Eryonix Techlabs.
-            This is an automated analysis and should be reviewed by security professionals before making critical decisions.
-          </p>
-          <p className="text-xs text-muted-foreground/40">
-            © {new Date().getFullYear()} Eryonix Techlabs · solarizer.eryonix.com
-          </p>
         </div>
       </footer>
     </div>
