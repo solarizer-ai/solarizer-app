@@ -180,7 +180,7 @@ const Index = () => {
           )}
 
           {/* Low Credit Warning */}
-          {subscription && (subscription.plan === 'pro' || subscription.plan === 'business') && 
+          {subscription &&
            (credits?.credits_remaining ?? 0) < 70 && (
             <LowCreditPrompt 
               creditsRemaining={credits?.credits_remaining ?? 0}

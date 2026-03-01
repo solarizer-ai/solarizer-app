@@ -49,9 +49,9 @@ export function CreditBalance() {
           </TooltipTrigger>
           <TooltipContent side="bottom" className="max-w-xs">
             <p>
-              {isPaid 
-                ? "Credits remaining. Purchase more for additional capacity." 
-                : `Spark plan: ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit max, 1 file per scan`}
+              {isPaid
+                ? "Credits remaining. Purchase more for additional capacity."
+                : `Spark plan: ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit max. Purchase more for additional capacity.`}
             </p>
           </TooltipContent>
         </Tooltip>

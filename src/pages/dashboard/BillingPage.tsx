@@ -197,16 +197,10 @@ const BillingPage = () => {
                     </CardDescription>
                   </div>
                 </div>
-                {isPaid ? (
-                  <Button size="sm" variant="outline" onClick={() => setShowPowerUpModal(true)}
-                    className="gap-1.5 hover:glow-orange-sm transition-all">
-                    <Zap className="w-3.5 h-3.5" /> Buy Credits
-                  </Button>
-                ) : (
-                  <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
-                    <Zap className="w-3.5 h-3.5" /> Upgrade
-                  </Button>
-                )}
+                <Button size="sm" variant="outline" onClick={() => setShowPowerUpModal(true)}
+                  className="gap-1.5 hover:glow-orange-sm transition-all">
+                  <Zap className="w-3.5 h-3.5" /> Buy Credits
+                </Button>
               </div>
             </CardHeader>
 
