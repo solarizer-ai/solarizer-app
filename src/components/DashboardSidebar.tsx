@@ -63,7 +63,8 @@ const navGroups = [
   {
     label: "MANAGE",
     items: [
-      { title: "API Keys", url: "/dashboard/api-keys", icon: Key },
+      // API Keys hidden until CLI release
+      // { title: "API Keys", url: "/dashboard/api-keys", icon: Key },
       { title: "Integrations", url: "/dashboard/integrations", icon: Plug },
       { title: "Sharing", url: "/dashboard/sharing", icon: Users },
     ],
