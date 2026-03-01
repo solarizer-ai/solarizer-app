@@ -8,6 +8,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Loader2, Zap, ArrowUpRight, CreditCard, Receipt, ChevronLeft, ChevronRight, X, CalendarIcon } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
@@ -134,13 +135,11 @@ const BillingPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-3 rounded-xl bg-primary/10"><Receipt className="h-6 w-6 text-primary" /></div>
-        <div>
-          <h1 className="text-lg sm:text-2xl font-semibold text-foreground">Billing & Subscription</h1>
-          <p className="text-sm text-muted-foreground">Manage your plan, credits, and view transaction history</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Receipt}
+        title="Billing & Subscription"
+        subtitle="Manage your plan, credits, and view transaction history"
+      />
 
       {/* Unified Plan Card */}
       <Card>

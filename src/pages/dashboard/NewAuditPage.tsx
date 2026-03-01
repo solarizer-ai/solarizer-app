@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Lock, Zap, Loader2 } from "lucide-react";
+import { ArrowLeft, FileCode, Lock, Zap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,11 +34,19 @@ const NewAuditPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Security Analysis</h1>
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <FileCode className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-2xl font-semibold text-foreground">New Security Analysis</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Configure and launch your audit</p>
+          </div>
         </div>
         <Card className="max-w-md mx-auto">
-          <CardContent className="flex flex-col items-center text-center py-10 space-y-4">
-            <Loader2 className="w-10 h-10 text-muted-foreground animate-spin" />
+          <CardContent className="flex flex-col items-center text-center py-12 space-y-4">
+            <div className="p-4 rounded-2xl bg-muted/50">
+              <Loader2 className="w-10 h-10 text-muted-foreground animate-spin" />
+            </div>
             <Skeleton className="h-5 w-48" />
             <Skeleton className="h-4 w-64" />
           </CardContent>
@@ -58,13 +66,21 @@ const NewAuditPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Security Analysis</h1>
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <FileCode className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-2xl font-semibold text-foreground">New Security Analysis</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Configure and launch your audit</p>
+          </div>
         </div>
         <Card className="max-w-md mx-auto">
-          <CardContent className="flex flex-col items-center text-center py-10 space-y-4">
-            <Lock className="w-10 h-10 text-muted-foreground" />
+          <CardContent className="flex flex-col items-center text-center py-12 space-y-4">
+            <div className="p-4 rounded-2xl bg-muted/50">
+              <Lock className="w-10 h-10 text-muted-foreground" />
+            </div>
             <h2 className="text-xl font-semibold">Subscription Required</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground max-w-xs">
               A Spark, Blaze, or Inferno plan is required to run security audits.
             </p>
             <Button onClick={() => navigate("/pricing")}>View Plans</Button>
@@ -82,13 +98,21 @@ const NewAuditPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Security Analysis</h1>
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <FileCode className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-2xl font-semibold text-foreground">New Security Analysis</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Configure and launch your audit</p>
+          </div>
         </div>
         <Card className="max-w-md mx-auto">
-          <CardContent className="flex flex-col items-center text-center py-10 space-y-4">
-            <Zap className="w-10 h-10 text-muted-foreground" />
+          <CardContent className="flex flex-col items-center text-center py-12 space-y-4">
+            <div className="p-4 rounded-2xl bg-muted/50">
+              <Zap className="w-10 h-10 text-muted-foreground" />
+            </div>
             <h2 className="text-xl font-semibold">Insufficient Credits</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground max-w-xs">
               You need credits to run security audits. Purchase credits to get started.
             </p>
             <Button onClick={() => setShowPowerUpModal(true)}>Purchase Credits</Button>

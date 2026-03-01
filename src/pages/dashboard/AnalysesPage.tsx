@@ -4,7 +4,8 @@ import AuditCard from "@/components/AuditCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, FileCode, Trash2, Plus } from "lucide-react";
+import { Search, FileSearch, FileCode, Trash2, Plus } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { AuditListSkeleton } from "@/components/AuditCardSkeleton";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useAuth } from "@/hooks/useAuth";
@@ -75,15 +76,20 @@ const AnalysesPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">History</h2>
-          <p className="text-sm text-muted-foreground mt-1">{audits?.length || 0} security assessments</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={FileSearch}
+        title="History"
+        subtitle={`${audits?.length || 0} security assessments`}
+        actions={
+          <Button onClick={() => navigate("/dashboard/new-audit")} className="gap-1.5">
+            <Plus className="w-4 h-4" />
+            New Audit
+          </Button>
+        }
+      />
 
       {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="p-3 rounded-xl bg-card border border-border flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="relative w-full sm:flex-1 sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
@@ -153,7 +159,7 @@ const AnalysesPage = () => {
           })}
         </div>
       ) : (
-        <div className="text-center py-20 border border-dashed border-border rounded-lg">
+        <div className="text-center py-16 rounded-xl border border-border bg-card/50">
           <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">
             {searchQuery || statusFilter !== "all" || ownershipFilter !== "all" ? "No matching assessments" : "No assessments yet"}

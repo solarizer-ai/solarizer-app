@@ -9,7 +9,7 @@ import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 import { SecurityTrend } from "@/components/SecurityTrend";
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
 import { Button } from "@/components/ui/button";
-import { FileCode, Trash2, ChevronRight, Zap, Plus } from "lucide-react";
+import { LayoutDashboard, FileCode, Trash2, ChevronRight, Zap, Plus } from "lucide-react";
 import { AuditListSkeleton } from "@/components/AuditCardSkeleton";
 import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
@@ -85,13 +85,18 @@ const DashboardHome = () => {
     <div className="space-y-6">
       {/* Dashboard Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
-            {getTimeBasedGreeting()}{displayName ? `, ${displayName}` : ""}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Overview of your security analysis activity
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <LayoutDashboard className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-2xl font-semibold text-foreground">
+              {getTimeBasedGreeting()}{displayName ? `, ${displayName}` : ""}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Overview of your security analysis activity
+            </p>
+          </div>
         </div>
         <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
           {subscription && (
@@ -109,10 +114,15 @@ const DashboardHome = () => {
 
       {/* Subscribe Prompt for users with no plan */}
       {!subscription && (
-        <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-foreground">No active plan</p>
-            <p className="text-xs text-muted-foreground">Subscribe to start running security analyses</p>
+        <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">No active plan</p>
+              <p className="text-xs text-muted-foreground">Subscribe to start running security analyses</p>
+            </div>
           </div>
           <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
             <Zap className="w-3.5 h-3.5" />
@@ -186,7 +196,7 @@ const DashboardHome = () => {
               })}
             </div>
           ) : (
-            <div className="text-center py-16 border border-dashed border-border rounded-lg">
+            <div className="text-center py-16 rounded-xl border border-border bg-card/50">
               <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">No assessments yet</h3>
               <p className="text-sm text-muted-foreground mb-4">

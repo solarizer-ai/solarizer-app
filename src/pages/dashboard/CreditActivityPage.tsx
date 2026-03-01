@@ -1,14 +1,15 @@
+import { Coins } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { CreditActivityLog } from "@/components/settings/CreditActivityLog";
 
 const CreditActivityPage = () => {
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg sm:text-2xl font-semibold text-foreground">Credit Activity</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Track your credit usage and transactions
-        </p>
-      </div>
+      <PageHeader
+        icon={Coins}
+        title="Credit Activity"
+        subtitle="Track your credit usage and transactions"
+      />
       <CreditActivityLog />
     </div>
   );

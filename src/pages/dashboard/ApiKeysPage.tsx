@@ -1,14 +1,15 @@
+import { Key } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { ApiKeyManager } from "@/components/settings/ApiKeyManager";
 
 const ApiKeysPage = () => {
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg sm:text-2xl font-semibold text-foreground">API Keys</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage your API keys for CLI access
-        </p>
-      </div>
+      <PageHeader
+        icon={Key}
+        title="API Keys"
+        subtitle="Manage your API keys for CLI access"
+      />
       <ApiKeyManager />
     </div>
   );

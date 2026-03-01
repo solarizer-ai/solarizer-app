@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Loader2, Check, LogOut } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { User, Loader2, Check } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +17,7 @@ interface Profile {
 }
 
 const ProfilePage = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,6 +58,16 @@ const ProfilePage = () => {
     }
   };
 
+  const getInitials = () => {
+    if (displayName) {
+      return displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return "U";
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -66,38 +78,44 @@ const ProfilePage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg sm:text-2xl font-semibold text-foreground">Profile</h2>
-        <p className="text-sm text-muted-foreground mt-1">Manage your personal information</p>
-      </div>
+      <PageHeader
+        icon={User}
+        title="Profile"
+        subtitle="Manage your personal information"
+      />
 
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <CardDescription>Update your personal information</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={profile?.email || user?.email || ""} disabled className="bg-muted" />
-            <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+        <CardContent className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={displayName || "Avatar"} />}
+              <AvatarFallback className="text-lg bg-primary/10 text-primary">{getInitials()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium text-foreground">{displayName || "No name set"}</p>
+              <p className="text-sm text-muted-foreground">{profile?.email || user?.email}</p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
-            <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" />
-          </div>
-          <div className="flex items-center justify-between">
+
+          <div className="h-px bg-border" />
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={profile?.email || user?.email || ""} disabled className="bg-muted" />
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" />
+            </div>
             <Button onClick={handleSaveProfile} disabled={saving} className="gap-2">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               Save Changes
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => signOut()}
-              className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
             </Button>
           </div>
         </CardContent>

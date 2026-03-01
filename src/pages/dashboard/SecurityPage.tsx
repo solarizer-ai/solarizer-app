@@ -1,32 +1,88 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Shield, KeyRound, Smartphone, CheckCircle2, Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const SecurityPage = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [resetSent, setResetSent] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const handleResetPassword = async () => {
+    if (!user?.email) return;
+    setResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      });
+      if (error) throw error;
+      setResetSent(true);
+      toast({ title: "Email sent", description: "Check your inbox for the password reset link." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Failed to send email", description: "Please try again." });
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg sm:text-2xl font-semibold text-foreground">Security</h2>
-        <p className="text-sm text-muted-foreground mt-1">Manage your account security settings</p>
-      </div>
+      <PageHeader
+        icon={Shield}
+        title="Security"
+        subtitle="Manage your account security settings"
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Security Settings</CardTitle>
-          <CardDescription>Manage your account security</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 rounded-lg bg-muted/50 border border-border">
-            <h4 className="font-medium mb-2">Password</h4>
-            <p className="text-sm text-muted-foreground mb-3">Change your account password</p>
-            <Button variant="outline" size="sm">Change Password</Button>
-          </div>
-          <div className="p-4 rounded-lg bg-muted/50 border border-border">
-            <h4 className="font-medium mb-2">Two-Factor Authentication</h4>
-            <p className="text-sm text-muted-foreground mb-3">Add an extra layer of security to your account</p>
-            <Button variant="outline" size="sm" disabled>Coming Soon</Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4">
+        {/* Password Reset */}
+        <Card>
+          <CardContent className="flex items-center justify-between gap-4 py-5">
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-primary/10">
+                <KeyRound className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground">Password</h3>
+                <p className="text-sm text-muted-foreground">Reset your account password via email</p>
+              </div>
+            </div>
+            {resetSent ? (
+              <div className="flex items-center gap-2 text-sm text-primary shrink-0">
+                <CheckCircle2 className="h-4 w-4" />
+                Email Sent
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" onClick={handleResetPassword} disabled={resetting} className="shrink-0">
+                {resetting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Reset Password
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 2FA — Coming Soon */}
+        <Card className="opacity-60">
+          <CardContent className="flex items-center justify-between gap-4 py-5">
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-muted">
+                <Smartphone className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground">Two-Factor Authentication</h3>
+                <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" disabled className="shrink-0">
+              Coming Soon
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
