@@ -462,7 +462,7 @@ const DashboardAuditDemo = () => {
             </div>
 
             {/* ── Findings list */}
-            <div className="overflow-y-auto flex-1 min-h-0 space-y-2.5">
+            <div className="overflow-hidden flex-1 min-h-0 space-y-2.5">
               {visibleFindings.length === 0 ? (
                 <div className="flex items-center justify-center py-8 text-xs text-muted-foreground/40">
                   <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />

@@ -437,7 +437,7 @@ const PublicReport = () => {
   const grade = audit.grade as string | null;
   const gConfig = grade ? gradeConfig[grade] : null;
 
-  // Scope files
+  // Scope files (in-scope = analysed for vulnerabilities, context = reference only)
   const scopeFiles: string[] = (() => {
     try {
       const sm = audit.scope_metadata;
@@ -445,8 +445,19 @@ const PublicReport = () => {
       return [];
     } catch { return []; }
   })();
-  const showScopeToggle = scopeFiles.length > 10;
-  const visibleScopeFiles = scopeExpanded ? scopeFiles : scopeFiles.slice(0, 10);
+  const contextFiles: string[] = (() => {
+    try {
+      const cm = (audit as any).context_metadata;
+      if (Array.isArray(cm)) return cm.map((f: any) => f.name || f.path || f).filter(Boolean);
+      return [];
+    } catch { return []; }
+  })();
+  const allScopeFiles = [
+    ...scopeFiles.map(f => ({ path: f, inScope: true })),
+    ...contextFiles.map(f => ({ path: f, inScope: false })),
+  ];
+  const showScopeToggle = allScopeFiles.length > 10;
+  const visibleScopeFiles = scopeExpanded ? allScopeFiles : allScopeFiles.slice(0, 10);
 
   return (
     <div className="min-h-screen bg-background">
@@ -457,11 +468,7 @@ const PublicReport = () => {
 
         {/* ── Hero: Project Metadata ─────────────────────── */}
         <div className="space-y-4">
-          <span className="terminal-pill">Audit Report</span>
           <h1 className="heading-section font-bold text-gradient">{audit.project_name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {format(new Date(audit.created_at), "MMMM d, yyyy")}
-          </p>
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-full px-3 py-1.5">
               <Calendar className="w-3.5 h-3.5" />
@@ -573,20 +580,35 @@ const PublicReport = () => {
         </div>
 
         {/* ── Scope Section ──────────────────────────────── */}
-        {scopeFiles.length > 0 && (
+        {allScopeFiles.length > 0 && (
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             <div className="px-5 py-3 bg-muted/30 border-b border-border flex items-center justify-between">
               <h3 className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-primary" />
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Audit Scope</span>
               </h3>
-              <span className="text-xs text-muted-foreground font-mono">{scopeFiles.length} files</span>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
+                <span>{scopeFiles.length} in scope</span>
+                {contextFiles.length > 0 && <span>{contextFiles.length} context</span>}
+              </div>
             </div>
+            {contextFiles.length > 0 && (
+              <div className="px-5 py-2.5 bg-muted/10 border-b border-border/50">
+                <p className="text-xs text-muted-foreground/70">
+                  Findings are reported only for <strong className="text-foreground/80">in-scope</strong> contracts. Context files are included for reference during cross-contract analysis but are not directly audited.
+                </p>
+              </div>
+            )}
             <div className="divide-y divide-border/50">
               {visibleScopeFiles.map((file, i) => (
                 <div key={i} className={cn("px-5 py-2 text-sm font-mono text-muted-foreground flex items-center gap-2", i % 2 === 0 ? "bg-card" : "bg-muted/20")}>
                   <FileCode className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
-                  {file}
+                  <span className="flex-1 truncate">{file.path}</span>
+                  {file.inScope ? (
+                    <span className="text-[10px] font-medium text-primary bg-primary/10 border border-primary/20 rounded px-1.5 py-0.5 shrink-0">In Scope</span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-muted-foreground/50 bg-muted/50 border border-border rounded px-1.5 py-0.5 shrink-0">Context</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -596,7 +618,7 @@ const PublicReport = () => {
                 className="w-full py-2.5 text-xs text-primary hover:text-primary/80 transition-colors border-t border-border flex items-center justify-center gap-1"
               >
                 <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", scopeExpanded && "rotate-180")} />
-                {scopeExpanded ? "Show less" : `Show all ${scopeFiles.length} files`}
+                {scopeExpanded ? "Show less" : `Show all ${allScopeFiles.length} files`}
               </button>
             )}
           </div>
@@ -604,39 +626,22 @@ const PublicReport = () => {
 
         {/* ── Detailed Findings by Severity ───────────────── */}
         {groupedFindings.length > 0 && (
-          <div className="space-y-8">
+          <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Detailed Findings</h2>
-            {groupedFindings.map(({ severity, findings: groupFindings }) => {
-              const config = severityConfig[severity];
-              const SevIcon = config.icon;
-              return (
-                <div key={severity} className="space-y-3">
-                  <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-                    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border", config.className)}>
-                      <SevIcon className="w-4 h-4" />
-                      {config.label}
-                    </div>
-                    <span className="text-muted-foreground text-sm font-normal">
-                      ({groupFindings.length} {groupFindings.length === 1 ? "finding" : "findings"})
-                    </span>
-                  </h3>
-                  <div className="space-y-2">
-                    {groupFindings.map(finding => (
-                      <div key={finding.id} className={cn(
-                        "border border-border rounded-lg overflow-hidden bg-card/50 border-l-2",
-                        severity === "critical" ? "border-l-critical" :
-                        severity === "high" ? "border-l-destructive" :
-                        severity === "medium" ? "border-l-warning" :
-                        severity === "low" ? "border-l-low" :
-                        severity === "info" ? "border-l-slate-400" : "border-l-green-500"
-                      )}>
-                        <PublicFindingItem finding={finding} />
-                      </div>
-                    ))}
-                  </div>
+            {groupedFindings.flatMap(({ severity, findings: groupFindings }) =>
+              groupFindings.map(finding => (
+                <div key={finding.id} className={cn(
+                  "border border-border rounded-lg overflow-hidden bg-card/50 border-l-2",
+                  severity === "critical" ? "border-l-critical" :
+                  severity === "high" ? "border-l-destructive" :
+                  severity === "medium" ? "border-l-warning" :
+                  severity === "low" ? "border-l-low" :
+                  severity === "info" ? "border-l-slate-400" : "border-l-green-500"
+                )}>
+                  <PublicFindingItem finding={finding} />
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
         )}
 

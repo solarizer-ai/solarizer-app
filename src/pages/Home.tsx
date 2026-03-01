@@ -82,7 +82,7 @@ const phases = [
 
 const capabilities = [
   {
-    title: "Invariant Identification",
+    title: "Invariant-Guided Analysis",
     copy: "Discovers your protocol's fundamental invariants — the balance equations, access rules, and state assumptions that must always hold. Every finding is checked against these properties to surface truly critical violations.",
     demo: "invariant",
   },
@@ -97,7 +97,7 @@ const capabilities = [
     demo: "hunting",
   },
   {
-    title: "AI-Powered Validation",
+    title: "Robust Validation",
     copy: "A separate AI engine independently re-examines every finding against your actual source code. It reads functions, traces guard conditions, and checks preconditions — filtering false positives before they reach you.",
     demo: "validation",
   },
@@ -691,11 +691,11 @@ const Home = () => {
 
         <div className="relative z-20 max-w-6xl mx-auto text-center px-5 md:px-6">
           <h1 className="mx-auto font-black leading-[1.15] tracking-tight text-center">
-            <FitText as="span" max={88} min={22} className="block text-foreground">
-              AI-Powered Smart Contract Audits
-            </FitText>
             <FitText as="span" max={88} min={22} className="block text-gradient">
-              That Find Real Exploits
+              Smart Contract Security
+            </FitText>
+            <FitText as="span" max={88} min={22} className="block text-foreground">
+              Reimagined with AI
             </FitText>
           </h1>
 
@@ -713,7 +713,7 @@ const Home = () => {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
-            {["Multi-Phase Analysis", "AI-Powered Validation", "Line-Accurate Fixes"].map((pill) => (
+            {["Multi-Phase Analysis", "Robust Validation", "Line-Accurate Fixes"].map((pill) => (
               <span
                 key={pill}
                 className="bg-foreground/[0.03] border border-border/10 rounded-full px-3 py-1 text-[11px] font-mono text-muted-foreground/50"
@@ -758,10 +758,10 @@ const Home = () => {
           <ScrollReveal>
             <div className="text-center">
               <FitText as="h2" max={56} min={19} className="font-black tracking-tight leading-[1.15]">
-                The Engine
+                Seven Phases. Zero Guesswork.
               </FitText>
               <p className="text-[clamp(0.7rem,calc(0.5rem+0.55vw),1rem)] text-muted-foreground/60 mt-3 md:mt-4 max-w-xl mx-auto">
-                7 phases from scoping to report
+                Every contract through the same structured pipeline
               </p>
             </div>
           </ScrollReveal>
@@ -819,10 +819,10 @@ const Home = () => {
           <ScrollReveal>
             <div className="text-center">
               <FitText as="h2" max={56} min={19} className="font-black tracking-tight leading-[1.15]">
-                Real Findings
+                Real Exploits. Real Fixes.
               </FitText>
               <p className="text-[clamp(0.7rem,calc(0.5rem+0.55vw),1rem)] text-muted-foreground/60 mt-3 md:mt-4 max-w-lg mx-auto">
-                From known exploits to protocol-specific logic
+                From known attack patterns to protocol-specific logic flaws
               </p>
             </div>
           </ScrollReveal>
@@ -898,7 +898,7 @@ const Home = () => {
         <div className="max-w-5xl mx-auto px-5 md:px-6">
           <ScrollReveal>
             <FitText as="h2" max={56} min={19} className="text-center font-black tracking-tight leading-[1.15]">
-              Under the Hood
+              Engineered for Trust
             </FitText>
           </ScrollReveal>
 
@@ -929,8 +929,8 @@ const Home = () => {
         <ScrollReveal>
           <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
             <h2 className="font-black tracking-tight leading-[1.15]">
-              <FitText as="span" max={88} min={22} className="block">Professional Security</FitText>
-              <FitText as="span" max={88} min={22} className="block text-gradient mt-1 md:mt-2">Fraction of the Cost</FitText>
+              <FitText as="span" max={88} min={22} className="block text-gradient">Professional Security</FitText>
+              <FitText as="span" max={88} min={22} className="block mt-1 md:mt-2">Fraction of the Cost</FitText>
             </h2>
 
             <p className="text-[clamp(0.75rem,calc(0.6rem+0.7vw),1.125rem)] text-muted-foreground/60 mt-4 md:mt-6 max-w-lg mx-auto leading-relaxed">
