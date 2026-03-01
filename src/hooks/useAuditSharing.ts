@@ -137,6 +137,49 @@ export const useAuditShareCount = (auditId: string | null) => {
   });
 };
 
+// Fetch all shares created by the current user (for Sharing page overview)
+export interface MyShareWithAudit extends AuditShare {
+  project_name: string;
+}
+
+export const useAllMyShares = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['all-my-shares'],
+    queryFn: async () => {
+      if (!user) return [];
+
+      // Step 1: Get all shares where I'm the owner
+      const { data: shares, error: sharesError } = await supabase
+        .from('audit_shares')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (sharesError) throw sharesError;
+      if (!shares || shares.length === 0) return [];
+
+      // Step 2: Batch-fetch audit project names
+      const auditIds = [...new Set(shares.map((s) => s.audit_id))];
+      const { data: audits, error: auditsError } = await supabase
+        .from('audits')
+        .select('id, project_name')
+        .in('id', auditIds);
+
+      if (auditsError) throw auditsError;
+
+      const auditMap = new Map(audits?.map((a) => [a.id, a.project_name]) ?? []);
+
+      return shares.map((s) => ({
+        ...s,
+        project_name: auditMap.get(s.audit_id) ?? 'Unknown Project',
+      })) as MyShareWithAudit[];
+    },
+    enabled: !!user,
+  });
+};
+
 // Check if current user is the owner of an audit
 export const useIsAuditOwner = (auditUserId: string | undefined) => {
   const { user } = useAuth();
