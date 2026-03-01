@@ -65,23 +65,3 @@ export async function verifyPaymentLinkSignature(
   );
 }
 
-/**
- * Verify Razorpay standard order/payment signature.
- * Formula: HMAC-SHA256(order_id|payment_id, secret)
- */
-export async function verifyOrderSignature(
-  orderId: string,
-  paymentId: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  const data = `${orderId}|${paymentId}`;
-  const key = await importHmacKey(secret);
-  const signatureBytes = hexToUint8Array(signature);
-  return crypto.subtle.verify(
-    "HMAC",
-    key,
-    signatureBytes,
-    encoder.encode(data)
-  );
-}
