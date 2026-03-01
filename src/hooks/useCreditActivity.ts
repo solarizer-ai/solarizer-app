@@ -31,6 +31,7 @@ export function useCreditActivity(options: UseCreditActivityOptions = {}) {
       let query = supabase
         .from('credit_txns')
         .select('id, type, amount, balance_after, description, audit_id, created_at', { count: 'exact' })
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
 
       if (startDate) {

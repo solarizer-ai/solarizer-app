@@ -80,6 +80,23 @@ export default function AdminAuditDetailPage() {
     );
   }
 
+  if (!audit) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-lg font-medium text-foreground mb-2">Audit not found</p>
+            <p className="text-sm text-muted-foreground mb-4">The audit you're looking for doesn't exist or has been removed.</p>
+            <Button variant="outline" onClick={() => navigate("/dashboard/admin/audits")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Audits
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const progress = orchestration?.progress as Record<string, any> | null;
 
   return (

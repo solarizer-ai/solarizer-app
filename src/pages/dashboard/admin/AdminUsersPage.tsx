@@ -36,6 +36,7 @@ export default function AdminUsersPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
+  const [allUsers, setAllUsers] = useState<AdminUser[]>([]);
   const [adjustTarget, setAdjustTarget] = useState<AdminUser | null>(null);
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
@@ -51,7 +52,13 @@ export default function AdminUsersPage() {
         p_search: debouncedSearch || null,
       });
       if (error) throw error;
-      return data as AdminUser[];
+      const fetched = data as AdminUser[];
+      if (offset === 0) {
+        setAllUsers(fetched);
+      } else {
+        setAllUsers((prev) => [...prev, ...fetched]);
+      }
+      return fetched;
     },
   });
 
@@ -88,7 +95,7 @@ export default function AdminUsersPage() {
           className="pl-9"
           placeholder="Search by email or name..."
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
+          onChange={(e) => { setSearch(e.target.value); setOffset(0); setAllUsers([]); }}
         />
       </div>
 
@@ -117,7 +124,7 @@ export default function AdminUsersPage() {
                         </td>
                       </tr>
                     ))
-                  : users.map((u) => (
+                  : allUsers.map((u) => (
                       <tr
                         key={u.user_id}
                         className="border-b border-border/50 hover:bg-muted/30 cursor-pointer"

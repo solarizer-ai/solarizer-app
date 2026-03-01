@@ -18,7 +18,7 @@ export function useAdminRole() {
       return { role: data?.role ?? null };
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60_000,
   });
 
   return {

@@ -45,7 +45,7 @@ export function useRazorpayCheckout() {
       });
 
       if (error || !data?.success) {
-        console.error("Create order error:", error || data?.error);
+        if (import.meta.env.DEV) console.error("Create order error:", error || data?.error);
         toast({
           title: "Order Creation Failed",
           description: data?.error || "Please try again later.",
@@ -62,7 +62,7 @@ export function useRazorpayCheckout() {
       // (the page will navigate away)
       return true;
     } catch (error) {
-      console.error("Checkout error:", error);
+      if (import.meta.env.DEV) console.error("Checkout error:", error);
       toast({
         title: "Checkout Error",
         description: "An unexpected error occurred. Please try again.",

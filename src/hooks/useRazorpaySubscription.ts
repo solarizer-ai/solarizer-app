@@ -72,7 +72,7 @@ export function useRazorpaySubscription() {
       );
 
       if (error || !data?.success) {
-        console.error("Create subscription error:", error || data?.error);
+        if (import.meta.env.DEV) console.error("Create subscription error:", error || data?.error);
         toast({
           title: "Subscription Failed",
           description: data?.error || "Please try again later.",
@@ -93,7 +93,7 @@ export function useRazorpaySubscription() {
       });
       return false;
     } catch (error) {
-      console.error("Subscription error:", error);
+      if (import.meta.env.DEV) console.error("Subscription error:", error);
       toast({
         title: "Subscription Error",
         description: "An unexpected error occurred. Please try again.",
@@ -126,7 +126,7 @@ export function useRazorpaySubscription() {
       );
 
       if (error || !data?.success) {
-        console.error("Upgrade error:", error || data?.error);
+        if (import.meta.env.DEV) console.error("Upgrade error:", error || data?.error);
         toast({
           title: "Upgrade Failed",
           description: data?.error || "Please try again later.",
@@ -158,7 +158,7 @@ export function useRazorpaySubscription() {
       });
       return false;
     } catch (error) {
-      console.error("Upgrade error:", error);
+      if (import.meta.env.DEV) console.error("Upgrade error:", error);
       toast({
         title: "Upgrade Error",
         description: "An unexpected error occurred. Please try again.",
@@ -263,7 +263,7 @@ export function useRazorpaySubscription() {
       queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
       return true;
     } catch (error) {
-      console.error("Cancellation error:", error);
+      if (import.meta.env.DEV) console.error("Cancellation error:", error);
       toast({
         title: "Cancellation Failed",
         description: "An unexpected error occurred. Please try again.",
