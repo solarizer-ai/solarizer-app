@@ -1088,6 +1088,7 @@ export type Database = {
             Returns: Json
           }
       expire_overdue_subscriptions: { Args: never; Returns: undefined }
+      expire_stale_orders: { Args: never; Returns: undefined }
       get_audit_access_context: { Args: { p_audit_id: string }; Returns: Json }
       get_audit_owner_info: {
         Args: { owner_user_id: string }

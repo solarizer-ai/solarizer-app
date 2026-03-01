@@ -89,7 +89,7 @@ const SharingPage = () => {
                       <TableRow key={share.id}>
                         <TableCell>
                           <Link
-                            to={`/report/${share.audit_id}`}
+                            to={`/dashboard/reports/${share.audit_id}`}
                             className="font-medium text-primary hover:underline"
                           >
                             {share.project_name}
