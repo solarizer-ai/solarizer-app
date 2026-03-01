@@ -89,9 +89,9 @@ const BillingPage = () => {
         : "[&>div]:bg-destructive";
 
   const getPricePerCreditCents = () => {
-    if (plan === "business") return 220;
-    if (plan === "pro") return 250;
-    return 280;
+    if (plan === "business") return 350;
+    if (plan === "pro") return 370;
+    return 400;
   };
   const pricePerCreditDollars = getPricePerCreditCents() / 100;
 
