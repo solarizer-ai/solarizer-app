@@ -1,7 +1,37 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  Zap,
+  Search,
+  FolderUp,
+  BarChart3,
+  FileDown,
+  Radar,
+  GitBranch,
+  ShieldCheck,
+  Bug,
+  Wrench,
+  Lightbulb,
+  Share2,
+  ListChecks,
+  Lock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -14,42 +44,33 @@ import { useToast } from "@/hooks/use-toast";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { formatPlanName } from "@/lib/planNames";
 
-interface PricingSpec {
-  label: string;
-  value: string;
-}
+/* ------------------------------------------------------------------ */
+/*  Plan data                                                          */
+/* ------------------------------------------------------------------ */
 
-interface PricingPlan {
-  id: 'starter' | 'pro' | 'business';
+type PlanId = 'starter' | 'pro' | 'business';
+
+interface Plan {
+  id: PlanId;
   name: string;
   tagline: string;
   monthlyPrice: number;
   monthlyCredits: number;
-  powerUpPrice: number;
-  specs: PricingSpec[];
+  creditRate: number;
+  nlocLimit: string;
   popular: boolean;
-  gradient: string;
 }
 
-const pricingPlans: PricingPlan[] = [
+const plans: Plan[] = [
   {
     id: 'starter',
     name: 'Spark',
     tagline: 'Essentials',
     monthlyPrice: 149,
     monthlyCredits: 50,
-    powerUpPrice: 2.8,
+    creditRate: 2.8,
+    nlocLimit: '500',
     popular: false,
-    gradient: 'bg-gradient-to-br from-zinc-700 to-zinc-800',
-    specs: [
-      { label: 'Scan depth', value: 'Single-pass' },
-      { label: 'Complexity levels', value: 'L1, L2, L3' },
-      { label: 'Severity coverage', value: 'Critical, High, Medium' },
-      { label: 'nLOC limit per audit', value: '500' },
-      { label: 'Reports', value: 'Local markdown' },
-      { label: 'Dashboard reports', value: 'Free' },
-      { label: 'Credit rate', value: '$2.80/credit' },
-    ],
   },
   {
     id: 'pro',
@@ -57,20 +78,9 @@ const pricingPlans: PricingPlan[] = [
     tagline: 'Most Popular',
     monthlyPrice: 199,
     monthlyCredits: 50,
-    powerUpPrice: 2.5,
+    creditRate: 2.5,
+    nlocLimit: '3,000',
     popular: true,
-    gradient: 'bg-gradient-to-br from-orange-600 to-amber-500',
-    specs: [
-      { label: 'Includes', value: 'Everything in Spark, plus:' },
-      { label: 'Scan depth', value: 'Deep scan' },
-      { label: 'Severity coverage', value: 'All (+ Low, Info, Gas)' },
-      { label: 'nLOC limit per audit', value: '3,000' },
-      { label: 'Cross-contract', value: 'Included' },
-      { label: 'AI validation', value: 'Included' },
-      { label: 'Remediation guidance', value: 'Included' },
-      { label: 'Dashboard reports', value: 'Free' },
-      { label: 'Credit rate', value: '$2.50/credit' },
-    ],
   },
   {
     id: 'business',
@@ -78,49 +88,138 @@ const pricingPlans: PricingPlan[] = [
     tagline: 'Full Power',
     monthlyPrice: 499,
     monthlyCredits: 50,
-    powerUpPrice: 2.2,
+    creditRate: 2.2,
+    nlocLimit: '9,999',
     popular: false,
-    gradient: 'bg-gradient-to-br from-orange-700 via-red-600 to-purple-700',
-    specs: [
-      { label: 'Includes', value: 'Everything in Blaze, plus:' },
-      { label: 'nLOC limit per audit', value: '9,999' },
-      { label: 'Report sharing', value: 'Up to 5 collaborators' },
-      { label: 'Remediation tracking', value: 'Included' },
-      { label: 'Credit rate', value: '$2.20/credit' },
-    ],
   },
 ];
 
+/* ------------------------------------------------------------------ */
+/*  Feature card data                                                  */
+/* ------------------------------------------------------------------ */
+
+interface Feature {
+  icon: typeof Search;
+  title: string;
+  description: string;
+  plans: PlanId[];
+}
+
+const features: Feature[] = [
+  {
+    icon: Search,
+    title: "Vulnerability Scan",
+    description: "Single-pass hunter identifies critical, high, and medium severity issues.",
+    plans: ['starter', 'pro', 'business'],
+  },
+  {
+    icon: FolderUp,
+    title: "Multi-File Upload",
+    description: "Upload entire project folders or import from GitHub.",
+    plans: ['starter', 'pro', 'business'],
+  },
+  {
+    icon: BarChart3,
+    title: "Dashboard Reports",
+    description: "Save audit reports to your cloud dashboard for reference.",
+    plans: ['starter', 'pro', 'business'],
+  },
+  {
+    icon: FileDown,
+    title: "Local Markdown Export",
+    description: "Download complete audit reports as markdown files.",
+    plans: ['starter', 'pro', 'business'],
+  },
+  {
+    icon: Radar,
+    title: "Deep Scan",
+    description: "Second-pass analysis on L2+ contracts catches deeper vulnerabilities.",
+    plans: ['pro', 'business'],
+  },
+  {
+    icon: GitBranch,
+    title: "Cross-Contract Analysis",
+    description: "Detect vulnerabilities across contract interactions and dependencies.",
+    plans: ['pro', 'business'],
+  },
+  {
+    icon: ShieldCheck,
+    title: "AI Validation",
+    description: "AI-powered false positive elimination for higher accuracy.",
+    plans: ['pro', 'business'],
+  },
+  {
+    icon: Bug,
+    title: "QA Scan",
+    description: "Uncover Low, Info, and Gas optimization findings.",
+    plans: ['pro', 'business'],
+  },
+  {
+    icon: Wrench,
+    title: "Remediation Guidance",
+    description: "Actionable fix suggestions with code examples for each finding.",
+    plans: ['pro', 'business'],
+  },
+  {
+    icon: Lightbulb,
+    title: "Architecture Insights",
+    description: "Protocol design review, dependency graphs, and composability risk analysis.",
+    plans: ['business'],
+  },
+  {
+    icon: Share2,
+    title: "Report Sharing",
+    description: "Share reports with up to 5 team collaborators.",
+    plans: ['business'],
+  },
+  {
+    icon: ListChecks,
+    title: "Remediation Tracking",
+    description: "Track fix progress, comment on findings, and monitor resolution.",
+    plans: ['business'],
+  },
+];
+
+const planDisplayName: Record<PlanId, string> = {
+  starter: 'Spark',
+  pro: 'Blaze',
+  business: 'Inferno',
+};
+
+/* ------------------------------------------------------------------ */
+/*  Page component                                                     */
+/* ------------------------------------------------------------------ */
+
 const Pricing = () => {
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>('pro');
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'business'>('pro');
-  const [targetSubscribePlan, setTargetSubscribePlan] = useState<'starter' | 'pro' | 'business'>('starter');
-  
+  const [targetSubscribePlan, setTargetSubscribePlan] = useState<PlanId>('starter');
+
   const { user, loading: authLoading } = useAuth();
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    createSubscription, 
-    upgradeSubscription, 
-    scheduleDowngrade, 
+  const {
+    createSubscription,
+    upgradeSubscription,
+    scheduleDowngrade,
     cancelPendingDowngrade,
     isLoading: subscriptionActionLoading,
-    isSchedulingDowngrade 
+    isSchedulingDowngrade,
   } = useRazorpaySubscription();
 
-  const planOrder = { starter: 1, pro: 2, business: 3 };
+  const planOrder: Record<PlanId, number> = { starter: 1, pro: 2, business: 3 };
 
   const getPlanPrice = (planId: string) => {
-    const plan = pricingPlans.find(p => p.id === planId);
-    if (!plan) return 0;
-    return plan.monthlyPrice;
+    const plan = plans.find(p => p.id === planId);
+    return plan?.monthlyPrice ?? 0;
   };
 
-  const handleSubscribeClick = (planId: 'starter' | 'pro' | 'business') => {
+  const handleSubscribeClick = (planId: PlanId) => {
     setTargetSubscribePlan(planId);
     setSubscribeModalOpen(true);
   };
@@ -139,7 +238,7 @@ const Pricing = () => {
     await upgradeSubscription({ toPlan: targetUpgradePlan, coupon_code: couponCode });
   };
 
-  const getButtonConfig = (planId: 'starter' | 'pro' | 'business') => {
+  const getButtonConfig = (planId: PlanId) => {
     if (!user) {
       return {
         text: "Get Started",
@@ -159,13 +258,13 @@ const Pricing = () => {
       };
     }
 
-    const currentOrder = planOrder[currentPlan] || 0;
+    const currentOrder = planOrder[currentPlan as PlanId] || 0;
     const targetOrder = planOrder[planId] || 0;
 
     if (subscription?.pending_plan === planId) {
       return {
         text: "Downgrade Scheduled",
-        variant: "outline" as "outline",
+        variant: "outline" as const,
         action: () => cancelPendingDowngrade(),
         disabled: isSchedulingDowngrade,
         showPendingBadge: true,
@@ -177,7 +276,7 @@ const Pricing = () => {
       if (subscription?.cancel_at_period_end) {
         return {
           text: "Cancelling",
-          variant: "outline" as "outline",
+          variant: "outline" as const,
           action: null,
           disabled: true,
           showCancelBadge: true,
@@ -186,7 +285,7 @@ const Pricing = () => {
       }
       return {
         text: "Current Plan",
-        variant: "outline" as "outline",
+        variant: "outline" as const,
         action: null,
         disabled: true,
       };
@@ -195,7 +294,7 @@ const Pricing = () => {
     if (targetOrder > currentOrder) {
       return {
         text: "Upgrade",
-        variant: "default" as "default",
+        variant: "default" as const,
         action: () => {
           setTargetUpgradePlan(planId as 'pro' | 'business');
           setUpgradeModalOpen(true);
@@ -206,7 +305,7 @@ const Pricing = () => {
 
     return {
       text: "Switch at Renewal",
-      variant: "outline" as "outline",
+      variant: "outline" as const,
       action: () => {
         toast({
           title: "Plan Change",
@@ -226,12 +325,12 @@ const Pricing = () => {
 
   const getDiscountedPrice = () => {
     const currentPlan = subscription?.plan || 'starter';
-    const plan = pricingPlans.find(p => p.id === currentPlan);
-    return plan?.powerUpPrice || 5.5;
+    const plan = plans.find(p => p.id === currentPlan);
+    return plan?.creditRate || 5.5;
   };
 
-  const getCurrentPlanForModal = (): 'starter' | 'pro' | 'business' => {
-    return subscription?.plan || 'starter';
+  const getCurrentPlanForModal = (): PlanId => {
+    return (subscription?.plan as PlanId) || 'starter';
   };
 
   const isLoading = authLoading || subscriptionLoading || creditsLoading || subscriptionActionLoading;
@@ -240,88 +339,103 @@ const Pricing = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
 
-      <main className="container mx-auto px-4 pt-32 md:pt-40 pb-16 md:pb-24">
-        {/* Header Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            Security That Scales
+      <main className="container mx-auto px-4">
+        {/* ── Hero ── */}
+        <section className="pt-28 pb-12 md:pt-40 md:pb-14 text-center">
+          <h1 className="text-4xl md:text-5xl font-black mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            Security That{" "}
+            <span className="text-gradient">Scales</span>
           </h1>
           <p
-            className="text-lg text-muted-foreground max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
+            className="text-lg text-muted-foreground/60 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
             style={{ animationDelay: "100ms" }}
           >
-            From solo devs to full teams. One engine, three intensities.
+            From solo devs to security teams. One engine, three intensities.
           </p>
+        </section>
+
+        {/* ── Billing toggle ── */}
+        <div className="flex items-center justify-center gap-3 mb-10">
+          <span className="text-sm font-medium">Monthly</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Switch disabled checked={false} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Annual billing coming soon</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <span className="text-sm text-muted-foreground/50">Annual</span>
+          <Badge className="bg-primary/10 text-primary border-primary/20">
+            Save ~16%
+          </Badge>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
-          {pricingPlans.map((plan, index) => {
+        {/* ── Plan selector cards ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {plans.map((plan, index) => {
             const buttonConfig = getButtonConfig(plan.id);
+            const isSelected = selectedPlan === plan.id;
 
             return (
               <div
                 key={plan.id}
+                onClick={() => setSelectedPlan(plan.id)}
                 className={cn(
-                  "relative rounded-2xl border overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-6 duration-700 fill-mode-both",
-                  plan.popular
-                    ? "border-primary/50 bg-card scale-[1.02]"
-                    : "border-border bg-card/50"
+                  "relative rounded-2xl border overflow-hidden flex flex-col cursor-pointer",
+                  "bg-foreground/[0.02] transition-colors duration-200",
+                  "animate-in fade-in slide-in-from-bottom-6 duration-700 fill-mode-both",
+                  isSelected
+                    ? "border-primary/40 glow-orange-border"
+                    : "border-border/10 hover:border-primary/20"
                 )}
                 style={{ animationDelay: `${300 + index * 100}ms` }}
               >
-                {/* Gradient Banner */}
-                <div className={cn("px-6 pt-6 pb-5", plan.gradient)}>
-                  <p className="text-sm font-medium text-white/70 mb-1">{plan.tagline}</p>
-                  <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
-                  {plan.popular && (
-                    <span className="inline-flex items-center gap-1 mt-3 px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
-                      <Zap className="h-3 w-3" />
-                      Most Popular
-                    </span>
-                  )}
-                </div>
+                <div className="p-6 flex flex-col flex-grow">
+                  {/* Tagline */}
+                  <p className="text-xs font-mono uppercase tracking-widest text-primary/60 mb-1">
+                    {plan.tagline}
+                  </p>
 
-                {/* Spec Rows */}
-                <div className="flex flex-col flex-grow p-6">
-                  {/* Price row */}
-                  <div className="py-3 border-b border-border">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Monthly price</p>
-                    <p className="text-2xl font-bold">${plan.monthlyPrice}</p>
+                  {/* Plan name + badge */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-2xl font-bold">{plan.name}</h3>
+                    {plan.popular && (
+                      <Badge className="bg-primary/10 text-primary border-primary/20">
+                        <Zap className="h-3 w-3 mr-1" />
+                        Most Popular
+                      </Badge>
+                    )}
                   </div>
 
-                  {/* Credits row - only for Spark */}
-                  {plan.id === 'starter' && (
-                    <div className="py-3 border-b border-border">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Credits included</p>
-                      <p className="text-sm font-semibold text-foreground">{plan.monthlyCredits}</p>
-                    </div>
-                  )}
+                  {/* Price */}
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-4xl font-black">${plan.monthlyPrice}</span>
+                    <span className="text-sm text-muted-foreground/60">/month</span>
+                  </div>
 
-                  {/* Feature spec rows */}
-                  {plan.specs.map((spec, specIdx) => (
-                    <div key={specIdx} className={cn("py-3", specIdx < plan.specs.length - 1 && "border-b border-border")}>
-                      {spec.label === 'Includes' ? (
-                        <p className="text-sm font-semibold text-primary">{spec.value}</p>
-                      ) : (
-                        <>
-                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{spec.label}</p>
-                          <p className="text-sm font-semibold text-foreground">{spec.value}</p>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                  {/* Key stats row */}
+                  <p className="text-xs text-muted-foreground/50 mb-6">
+                    {plan.monthlyCredits} credits/mo&nbsp;&middot;&nbsp;Up to {plan.nlocLimit} nLOC&nbsp;&middot;&nbsp;${plan.creditRate.toFixed(2)}/credit
+                  </p>
 
                   {/* Spacer */}
                   <div className="flex-grow" />
 
                   {/* CTA Button */}
                   <Button
-                    className="w-full mt-6"
+                    className="w-full h-12"
                     size="lg"
                     variant={buttonConfig.variant}
                     disabled={buttonConfig.disabled || isLoading}
-                    onClick={buttonConfig.action || undefined}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      buttonConfig.action?.();
+                    }}
                   >
                     {isLoading ? "Loading..." : buttonConfig.text}
                   </Button>
@@ -331,29 +445,138 @@ const Pricing = () => {
           })}
         </div>
 
-        {/* Credit explainer */}
-        <p className="text-sm text-muted-foreground/60 text-center mt-8 mb-16">
+        {/* ── Credit explainer ── */}
+        <p className="text-sm text-muted-foreground/50 text-center mt-8 mb-4">
           50 monthly credits included with every plan. Unused credits carry forward — they never expire.
         </p>
 
-        {/* Additional Credits Purchase Section */}
-        <div
-          className="max-w-lg mx-auto mb-16 p-6 rounded-2xl border border-primary/30 bg-card/50 animate-in fade-in slide-in-from-bottom-4 duration-500"
-          style={{ animationDelay: "600ms" }}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <Zap className="h-6 w-6 text-primary" />
-            <h3 className="text-xl font-bold">Need More Credits?</h3>
+        {/* ── Feature card grid ── */}
+        <section className="py-12 max-w-6xl mx-auto">
+          <h2 className="text-2xl font-bold text-center mb-8">What's included</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {features.map((feature) => {
+              const isActive = feature.plans.includes(selectedPlan);
+              const Icon = feature.icon;
+
+              return (
+                <div
+                  key={feature.title}
+                  className={cn(
+                    "relative rounded-2xl border p-4 transition-all duration-300",
+                    isActive
+                      ? "border-primary/20 bg-foreground/[0.02]"
+                      : "border-border/10 opacity-30"
+                  )}
+                >
+                  {/* Lock hint for inactive features */}
+                  {!isActive && (
+                    <div className="absolute top-3 right-3">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    </div>
+                  )}
+
+                  {/* Icon */}
+                  <div
+                    className={cn(
+                      "w-9 h-9 rounded-lg flex items-center justify-center mb-3 transition-colors duration-300",
+                      isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    <Icon className="h-4.5 w-4.5" />
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-sm font-semibold mb-1">{feature.title}</h3>
+
+                  {/* Description */}
+                  <p className="text-xs text-muted-foreground/60 mb-3 leading-relaxed">
+                    {feature.description}
+                  </p>
+
+                  {/* Plan pills */}
+                  <div className="flex flex-wrap gap-1">
+                    {feature.plans.map((pid) => (
+                      <span
+                        key={pid}
+                        className={cn(
+                          "px-1.5 py-0.5 text-[10px] rounded-full font-medium",
+                          isActive
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {planDisplayName[pid]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <p className="text-muted-foreground mb-4">
-            {user && subscription
-              ? `Purchase additional credits at $${getDiscountedPrice()}/credit based on your ${formatPlanName(subscription.plan)} plan.`
-              : `Purchase additional credits starting at $2.20/credit with a subscription.`
-            }
+        </section>
+
+        {/* ── FAQ ── */}
+        <section className="max-w-2xl mx-auto py-12">
+          <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+          <Accordion type="single" collapsible className="space-y-3">
+            <AccordionItem value="q1" className="bg-foreground/[0.02] border border-border/10 rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                What is a credit?
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground/60">
+                1 credit &asymp; 1 nLOC (normalized line of code), modified by contract complexity.
+                L1 contracts cost 0.83&times; credits, L2 cost 1&times;, and L3 cost 1.2&times;.
+                Every plan includes 50 credits per month.
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="q2" className="bg-foreground/[0.02] border border-border/10 rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                Can I switch plans?
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground/60">
+                Yes. Upgrades are immediate with prorated billing. Downgrades take effect
+                at the end of your current billing period.
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="q3" className="bg-foreground/[0.02] border border-border/10 rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                Do credits expire?
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground/60">
+                No. Unused credits carry forward indefinitely as long as you maintain an
+                active subscription.
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="q4" className="bg-foreground/[0.02] border border-border/10 rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                What happens if I run out of credits?
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground/60">
+                Purchase additional credits at your plan's rate — Spark at $2.80, Blaze at $2.50,
+                or Inferno at $2.20 per credit.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          <p className="text-center mt-6">
+            <Link
+              to="/docs/plans-and-costing"
+              className="text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              Learn more about how credits work &rarr;
+            </Link>
           </p>
+        </section>
+
+        {/* ── Need more credits? ── */}
+        <div className="flex items-center justify-center gap-3 py-8">
+          <span className="text-sm text-muted-foreground/50">Need more credits? Purchase at your plan rate.</span>
           <Button
-            variant="solarGlow"
-            className="w-full"
+            variant="link"
+            className="text-primary px-0"
             onClick={() => {
               if (!user) {
                 navigate('/login?redirect=/pricing');
@@ -369,14 +592,14 @@ const Pricing = () => {
               setPowerUpModalOpen(true);
             }}
           >
-            {!user ? "Sign in to Purchase" : "Purchase Power up Credits"}
+            Buy Credits
           </Button>
         </div>
-
       </main>
 
       <Footer />
 
+      {/* ── Modals (untouched) ── */}
       <PurchasePowerUpModal
         open={powerUpModalOpen}
         onOpenChange={setPowerUpModalOpen}
