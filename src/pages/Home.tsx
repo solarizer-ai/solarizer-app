@@ -97,6 +97,11 @@ const capabilities = [
     copy: "A separate AI engine independently re-examines every finding against your actual source code. It reads functions, traces guard conditions, and checks preconditions — filtering false positives before they reach you.",
     demo: "validation",
   },
+  {
+    title: "Security Coverage",
+    copy: "Generates targeted hypothesis tests for every contract — probing withdrawal logic, access controls, yield accounting, and state transitions. Passed tests confirm safe behavior. Failed tests become findings with full traceability.",
+    demo: "coverage",
+  },
 ];
 
 
@@ -365,6 +370,40 @@ const ValidationDemo = () => (
   </div>
 );
 
+const CoverageDemo = () => (
+  <div className="bg-[hsl(0_0%_4%)] border border-border/10 rounded-lg px-4 py-3 font-mono text-[11px]">
+    <div className="flex items-center justify-between text-muted-foreground/50 mb-2.5">
+      <span>Vault.sol</span>
+      <span>5/7 · 71%</span>
+    </div>
+    <div className="border-t border-border/10 pt-2.5 space-y-1.5">
+      <div className="flex items-start gap-2">
+        <span className="text-red-400 shrink-0">✗</span>
+        <span className="text-muted-foreground/70">test_withdraw_does_not_subtract_lockedAssets</span>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="text-red-400 shrink-0">✗</span>
+        <span className="text-muted-foreground/70">test_getPricePerShare_stable_during_callback</span>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="text-green-400 shrink-0">✓</span>
+        <span className="text-muted-foreground/70">test_deposit_correctly_accrues_yield_before_minting</span>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="text-green-400 shrink-0">✓</span>
+        <span className="text-muted-foreground/70">test_totalSupply_equals_sum_of_balances</span>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="text-green-400 shrink-0">✓</span>
+        <span className="text-muted-foreground/70">test_onlyOwner_can_update_fee_basis</span>
+      </div>
+    </div>
+    <div className="border-t border-border/10 mt-2.5 pt-2 text-muted-foreground/40">
+      2 failed → linked to findings
+    </div>
+  </div>
+);
+
 const AgentsDemo = () => (
   <div className="bg-[hsl(0_0%_4%)] border border-border/10 rounded-lg px-4 py-3 font-mono text-[11px]">
     <div className="flex items-center justify-between gap-2">
@@ -572,6 +611,7 @@ const demoMap: Record<string, JSX.Element> = {
   crossContract: <CrossContractDemo />,
   hunting: <HuntingDemo />,
   validation: <ValidationDemo />,
+  coverage: <CoverageDemo />,
   agents: <AgentsDemo />,
   pipeline: <PipelineTimingDemo />,
   progress: <ProgressDemo />,

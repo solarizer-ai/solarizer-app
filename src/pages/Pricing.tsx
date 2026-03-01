@@ -17,6 +17,7 @@ import {
   ListChecks,
   Lock,
   Globe,
+  TestTubes,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -140,6 +141,12 @@ const features: Feature[] = [
     icon: ShieldCheck,
     title: "AI Validation",
     description: "AI-powered false positive elimination for higher accuracy.",
+    plans: ['pro', 'business'],
+  },
+  {
+    icon: TestTubes,
+    title: "Security Coverage",
+    description: "AI-generated hypothesis tests prove code safety or surface vulnerabilities — with pass/fail traceability per contract.",
     plans: ['pro', 'business'],
   },
   {
