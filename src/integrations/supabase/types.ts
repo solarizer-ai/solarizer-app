@@ -1115,10 +1115,7 @@ export type Database = {
         Args: { p_nloc_amount: number; p_price_cents: number }
         Returns: Json
       }
-      purchase_subscription: {
-        Args: { p_billing_period: string; p_plan: string }
-        Returns: Json
-      }
+      reactivate_subscription: { Args: never; Returns: Json }
       refund_credits: {
         Args: {
           p_is_starter?: boolean
@@ -1138,6 +1135,10 @@ export type Database = {
       toggle_audit_public: {
         Args: { p_audit_id: string; p_is_public: boolean }
         Returns: string
+      }
+      user_has_plan: {
+        Args: { _plans: string[]; _user_id: string }
+        Returns: boolean
       }
       validate_coupon: {
         Args: { p_amount_cents: number; p_code: string; p_order_type: string }

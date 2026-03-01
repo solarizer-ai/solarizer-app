@@ -170,48 +170,5 @@ export function usePurchasePowerUp() {
   });
 }
 
-// Response type for subscription purchase
-interface SubscriptionPurchaseResponse {
-  success: boolean;
-  error?: string;
-  credits_remaining?: number;
-  credits_added?: number;
-  plan?: string;
-  billing_period?: string;
-}
-
-export function usePurchaseSubscription() {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-
-  return useMutation({
-    mutationFn: async ({ 
-      plan, 
-      billingPeriod 
-    }: { 
-      plan: 'starter' | 'pro' | 'business'; 
-      billingPeriod: 'monthly';
-    }) => {
-      if (!user?.id) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase.rpc('purchase_subscription', {
-        p_plan: plan,
-        p_billing_period: billingPeriod,
-      });
-
-      if (error) throw error;
-      
-      const result = data as unknown as SubscriptionPurchaseResponse;
-      
-      if (!result?.success) {
-        throw new Error(result?.error || 'Failed to purchase subscription');
-      }
-
-      return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['nloc-credits', user?.id] });
-    },
-  });
-}
+// purchase_subscription RPC removed — subscriptions are now provisioned
+// exclusively via process_payment_success after verified payment.
