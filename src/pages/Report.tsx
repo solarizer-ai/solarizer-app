@@ -281,8 +281,8 @@ const Report = () => {
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {/* Public/Private Toggle */}
-                {isOwner && !isFailedOrCancelled && currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
+                {/* Public/Private Toggle — Inferno only */}
+                {canShareReports && !isFailedOrCancelled && currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
                   <div className="flex items-center gap-2 pl-2 border-l border-border ml-1">
                     <TooltipProvider>
                       <Tooltip>
@@ -340,6 +340,22 @@ const Report = () => {
                       </Button>
                     )}
                   </div>
+                )}
+                {/* Locked public toggle for non-Inferno owners */}
+                {isOwner && !canShareReports && !isFailedOrCancelled && currentAudit?.status !== 'analyzing' && currentAudit?.status !== 'pending' && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2 pl-2 border-l border-border ml-1 opacity-50 cursor-not-allowed">
+                          <LockKeyhole className="w-4 h-4 text-muted-foreground" />
+                          <Switch checked={false} disabled />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Upgrade to Inferno to make reports public</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             </div>

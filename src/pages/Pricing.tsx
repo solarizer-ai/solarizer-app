@@ -16,16 +16,10 @@ import {
   Share2,
   ListChecks,
   Lock,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Accordion,
   AccordionContent,
@@ -176,6 +170,12 @@ const features: Feature[] = [
     icon: ListChecks,
     title: "Remediation Tracking",
     description: "Track fix progress, comment on findings, and monitor resolution.",
+    plans: ['business'],
+  },
+  {
+    icon: Globe,
+    title: "Public Reports",
+    description: "Generate a public link for any audit report — share it with anyone.",
     plans: ['business'],
   },
 ];
@@ -354,26 +354,10 @@ const Pricing = () => {
           </p>
         </section>
 
-        {/* ── Billing toggle ── */}
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <span className="text-sm font-medium">Monthly</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <Switch disabled checked={false} />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Annual billing coming soon</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <span className="text-sm text-muted-foreground/50">Annual</span>
-          <Badge className="bg-primary/10 text-primary border-primary/20">
-            Save ~16%
-          </Badge>
-        </div>
+        {/* ── Billing note ── */}
+        <p className="text-sm text-muted-foreground/50 text-center mb-10">
+          Monthly billing&nbsp;&middot;&nbsp;Annual subscriptions coming soon
+        </p>
 
         {/* ── Plan selector cards ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -557,6 +541,17 @@ const Pricing = () => {
               <AccordionContent className="text-sm text-muted-foreground/60">
                 Purchase additional credits at your plan's rate — Spark at $2.80, Blaze at $2.50,
                 or Inferno at $2.20 per credit.
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="q5" className="bg-foreground/[0.02] border border-border/10 rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                Is the nLOC limit per audit or a monthly total?
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground/60">
+                Per audit. Each plan's nLOC limit (Spark: 500, Blaze: 3,000, Inferno: 9,999)
+                applies to each individual audit run. You can run as many audits as your credits
+                allow — the limit only constrains the scope of a single audit.
               </AccordionContent>
             </AccordionItem>
           </Accordion>

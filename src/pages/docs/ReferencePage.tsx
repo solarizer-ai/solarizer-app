@@ -53,7 +53,7 @@ const ReferencePage = () => (
           [
             <strong className="text-foreground">Toggle Public</strong>,
             <span className="text-sm text-muted-foreground/60">Report page</span>,
-            <span className="text-sm text-muted-foreground/60">Make a report publicly accessible via a shareable link</span>,
+            <span className="text-sm text-muted-foreground/60">Make a report publicly accessible via a shareable link (Inferno)</span>,
           ],
         ]}
       />

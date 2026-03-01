@@ -217,6 +217,7 @@ export default function PlansAndCostingPage() {
             ["Local markdown report", <Yes />, <Yes />, <Yes />],
             ["Dashboard report", "Free", "Free", "Free"],
             ["Share reports with team", <No />, <No />, <Yes />],
+            ["Public report link", <No />, <No />, <Yes />],
             [
               <span className="font-semibold text-foreground text-xs uppercase tracking-wider">Collaboration</span>,
               "", "", "",
