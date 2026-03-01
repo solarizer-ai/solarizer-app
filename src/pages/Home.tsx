@@ -701,7 +701,7 @@ const Home = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
             <Button asChild variant="solarGlow" size="lg">
-              <Link to="/signup">Start Auditing</Link>
+              <Link to="/login">Start Auditing</Link>
             </Button>
             <Button variant="ghost" size="lg" className="text-muted-foreground/70 hover:text-foreground" onClick={scrollToHowItWorks}>
               See How It Works →
@@ -931,7 +931,7 @@ const Home = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
               <Button asChild variant="solarGlow" size="lg">
-                <Link to="/signup">Start Auditing</Link>
+                <Link to="/login">Start Auditing</Link>
               </Button>
               <Link to="/pricing" className="text-sm text-primary hover:underline">
                 View Pricing →

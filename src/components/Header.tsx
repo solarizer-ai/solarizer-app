@@ -24,6 +24,13 @@ const Header = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -59,12 +66,26 @@ const Header = () => {
 
   return (
     <>
-      {/* Floating glass pill header */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] max-w-2xl w-[calc(100%-2rem)]">
-        <div className="rounded-2xl bg-black/70 backdrop-blur-2xl border border-primary/40 shadow-[0_0_30px_rgba(0,0,0,0.3)] px-6 h-14 flex items-center justify-between">
+      {/* Scroll-morphing header */}
+      <header className={cn(
+        "fixed top-0 left-1/2 -translate-x-1/2 z-[60] w-full transition-all duration-300",
+        scrolled ? "pt-3 max-w-2xl px-3" : "pt-4 sm:pt-5 max-w-5xl px-4"
+      )}>
+        <div className={cn(
+          "transition-all duration-300 flex items-center justify-between h-12 rounded-2xl",
+          scrolled
+            ? "bg-black/70 backdrop-blur-2xl border border-border/20 shadow-[0_0_30px_rgba(0,0,0,0.3)] px-4 sm:px-6"
+            : "bg-transparent px-4 sm:px-6"
+        )}>
           {/* Left: Logo + Brand */}
-          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
-            <img src={solarizerLogo} alt="Solarizer" className="w-8 h-8 rounded-lg object-cover" decoding="sync" />
+          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5">
+            <img src={solarizerLogo} alt="Solarizer" className="w-7 h-7 rounded-lg object-cover" decoding="sync" />
+            <span className={cn(
+              "text-sm font-semibold tracking-tight text-gradient transition-all duration-300 overflow-hidden whitespace-nowrap",
+              scrolled ? "max-w-0 opacity-0" : "max-w-[120px] opacity-100"
+            )}>
+              Solarizer
+            </span>
           </Link>
 
           {/* Center: Nav links (desktop) */}
@@ -74,9 +95,9 @@ const Header = () => {
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "text-[13px] transition-colors",
+                  "text-[13px] rounded-full px-3 py-1 transition-all duration-200",
                   isActive(link.href)
-                    ? "font-medium text-foreground"
+                    ? "bg-foreground/[0.08] text-foreground font-medium"
                     : "text-muted-foreground/60 hover:text-foreground"
                 )}
               >
@@ -100,8 +121,8 @@ const Header = () => {
                   </button>
                 ) : (
                   <Link
-                    to="/signup"
-                    className="rounded-full bg-primary text-primary-foreground text-xs px-4 py-1.5 font-medium hover:bg-primary/90 transition-colors"
+                    to="/login"
+                    className="rounded-full bg-primary text-primary-foreground text-xs px-4 py-1.5 font-medium hover:bg-primary/90 hover:shadow-[0_0_20px_hsla(24,95%,53%,0.3)] transition-all duration-200"
                   >
                     Start Auditing
                   </Link>
@@ -158,7 +179,7 @@ const Header = () => {
                         <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
                       </Button>
                       <Button asChild variant="solarGlow" className="w-full">
-                        <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>Start Auditing</Link>
+                        <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Start Auditing</Link>
                       </Button>
                     </div>
                   )}

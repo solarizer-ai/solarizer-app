@@ -213,7 +213,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* ── Left Panel (Desktop Only) ── */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[48%] relative overflow-hidden flex-col items-center justify-center">
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[48%] relative overflow-hidden flex-col items-center justify-center pb-20">
         <HeroBackground />
 
         <div className="relative z-20 flex flex-col items-center gap-6 px-12">
@@ -236,7 +236,7 @@ const Auth = () => {
         </div>
 
         {/* Security badge at bottom */}
-        <div className="relative z-20 absolute bottom-8 flex items-center gap-2 text-xs text-muted-foreground/60">
+        <div className="absolute z-20 bottom-8 flex items-center gap-2 text-xs text-muted-foreground/60">
           <Shield className="w-3.5 h-3.5 text-primary/50" />
           <span className="font-mono tracking-wide">Encrypted authentication</span>
         </div>
