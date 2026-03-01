@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     // Get current subscription
     const { data: subscription, error: subError } = await supabase
       .from("subscriptions")
-      .select("plan, current_period_start, current_period_end, rz_subscription_id")
+      .select("plan, current_period_start, current_period_end")
       .eq("user_id", user.id)
       .single();
 
