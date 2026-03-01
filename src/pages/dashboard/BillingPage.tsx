@@ -382,7 +382,7 @@ const BillingPage = () => {
         fromPlan={plan}
         toPlan={targetUpgradePlan}
         prorationAmount={getProrationAmount()}
-        onConfirm={async () => { setShowUpgradeModal(false); await upgradeSubscription({ toPlan: targetUpgradePlan }); }}
+        onConfirm={async (couponCode?: string) => { setShowUpgradeModal(false); await upgradeSubscription({ toPlan: targetUpgradePlan, coupon_code: couponCode }); }}
         isLoading={subscriptionActionLoading}
       />
       <DowngradeWarningModal
