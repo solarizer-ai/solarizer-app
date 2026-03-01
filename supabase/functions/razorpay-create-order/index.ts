@@ -86,6 +86,12 @@ Deno.serve(async (req) => {
       amountCents = PLAN_PRICES[plan];
       description = `Solarizer ${plan.charAt(0).toUpperCase() + plan.slice(1)} Monthly Subscription`;
     } else if (orderType === "power_up" && creditsAmount) {
+      if (creditsAmount > 1800) {
+        return new Response(
+          JSON.stringify({ error: "Maximum 1,800 credits per transaction" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const { data: subscription } = await supabase
         .from("subscriptions")
         .select("plan")
