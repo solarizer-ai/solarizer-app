@@ -1,37 +1,46 @@
 
 
-# Tier Feature Adjustments — 5 Changes
+# Sharing Page: Show Shared Reports Overview
 
-## Change 1: Architecture Insights — Inferno Only
-**File: `src/pages/Report.tsx`**
-- Line 448: Change `effectivePlan === 'starter'` to `effectivePlan !== 'business'` for the Insights tab lock icon
-- Lines 608-614: Change condition from `effectivePlan === 'starter'` to `effectivePlan !== 'business'` and update `requiredPlan="pro"` to `requiredPlan="business"`
+## What Changes
 
-## Change 2: Dashboard Reports — Free for All Plans
-- **`src/pages/Pricing.tsx` line 50**: `'5 credits each'` -> `'Free'`
-- **`src/pages/docs/PlansAndCostingPage.tsx` line 342**: `"5 credits each"` -> `"Free"`
-- **`src/pages/docs/PlansAndCostingPage.tsx` line 526**: `"5 credits per report"` -> `"Free"`
-- **`src/pages/docs/PlansAndCostingPage.tsx` lines 531-534**: Replace paragraph with "Dashboard reports are free on all plans. Your local markdown report is also always available."
-- **`src/components/UpgradeConfirmationModal.tsx` line 42**: Remove `"Free dashboard report access"` from pro features array
+Replace the static info-only Sharing page with a live table showing all reports the user has shared, who they're shared with, and the invitation status.
 
-## Change 3: Multi-File Upload — All Plans
-- **`src/components/wizard/UploadMethodStep.tsx`**: Remove all `isStarterPlan` logic, tooltip wrappers, and `Lock` import. Simplify to always-enabled cards.
-- **`src/components/AuditWizard.tsx` line 89**: Remove `isStarterPlan` prop from `UploadMethodStep`
-- **`src/components/UpgradeToProModal.tsx`**:
-  - Line 15: Remove `'file_limit'` from reason type
-  - Lines 39-43: Remove file_limit conditional, show only nLOC message
-  - Line 27: Change text to `"Up to 3,000 nLOC per audit"` (remove "Multi-file analysis")
+## UI Layout
 
-## Change 4: Remove POWER_UP_OPTIONS
-**File: `src/lib/nlocCalculator.ts` lines 72-81**: Delete the `POWER_UP_OPTIONS` constant (confirmed no imports elsewhere).
+For users with sharing access (Inferno plan):
+1. Keep the existing PageHeader
+2. Add a new **"Shared Reports"** card above the existing info card
+3. The card contains a table with columns:
+   - **Report** (project name, linked to the report)
+   - **Shared With** (email)
+   - **Status** (badge: pending / accepted / expired)
+   - **Shared On** (relative date)
+   - **Action** (Revoke button)
+4. Empty state: "You haven't shared any reports yet. Use the Share button on any report to invite collaborators."
 
-## Change 5: Initial Credits
-No changes needed — already correct at 50.
+For users without sharing access: keep the existing upgrade prompt (no changes).
 
-## Pre-existing Build Errors
-The 16 TypeScript errors in the build output are all in edge function files (`_shared/`, `cli-*`) and are pre-existing type issues unrelated to these changes. They will not be affected by this work.
+## Technical Approach
 
-### Technical Details
-- 8 files modified total across all changes
-- No database migrations needed
-- No new dependencies
+**File: `src/hooks/useAuditSharing.ts`**
+- Add a new `useAllMyShares` hook that queries `audit_shares` where `owner_id = auth.uid()`, joining with `audits` to get `project_name`. Since we can't do a Supabase join across tables without a foreign key reference being exposed in the types, we'll query `audit_shares` first, then batch-fetch audit names from `audits` table using the audit IDs.
+
+**File: `src/pages/dashboard/SharingPage.tsx`**
+- Import `useAllMyShares`, `useRemoveShare` from the sharing hook
+- Import Table components, Badge, Button, formatDistanceToNow
+- For Inferno users: render the shared reports table with revoke functionality
+- Keep the feature bullet points below as a secondary info card
+- Show loading skeleton while data loads
+- Show empty state when no shares exist
+
+## Data Flow
+
+1. Query `audit_shares` filtered by `owner_id` (RLS policy already handles this)
+2. Query `audits` for the matching audit IDs to get project names
+3. Display combined data in the table
+4. Revoke uses the existing `useRemoveShare` mutation + invalidates the new query key
+
+## Files Modified
+- `src/hooks/useAuditSharing.ts` -- add `useAllMyShares` hook
+- `src/pages/dashboard/SharingPage.tsx` -- rebuild with shared reports table
