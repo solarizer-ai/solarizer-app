@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Shield, AlertTriangle, AlertCircle, Info, Fuel } from "lucide-react";
+
 
 type Grade = "A" | "B" | "C" | "D" | "F" | null;
 
@@ -47,12 +47,12 @@ const SecurityScoreCard = ({
   const config = isPending ? pendingConfig : gradeConfig[grade];
 
   const categories = [
-    { label: "Critical", count: counts.critical, icon: AlertTriangle, bgColor: "bg-critical/10", textColor: "text-critical", borderColor: "border-critical/30", barColor: "bg-critical" },
-    { label: "High", count: counts.high, icon: AlertTriangle, bgColor: "bg-destructive/10", textColor: "text-destructive", borderColor: "border-destructive/30", barColor: "bg-destructive" },
-    { label: "Medium", count: counts.medium, icon: AlertCircle, bgColor: "bg-warning/10", textColor: "text-warning", borderColor: "border-warning/30", barColor: "bg-warning" },
-    { label: "Low", count: counts.low, icon: Info, bgColor: "bg-low/10", textColor: "text-low", borderColor: "border-low/30", barColor: "bg-low" },
-    { label: "Info", count: counts.info, icon: Info, bgColor: "bg-slate-400/10", textColor: "text-slate-400", borderColor: "border-slate-400/30", barColor: "bg-slate-400" },
-    { label: "Gas", count: counts.gas ?? 0, icon: Fuel, bgColor: "bg-green-500/10", textColor: "text-green-500", borderColor: "border-green-500/30", barColor: "bg-green-500" },
+    { label: "Critical", count: counts.critical, textColor: "text-critical", barColor: "bg-critical" },
+    { label: "High", count: counts.high, textColor: "text-destructive", barColor: "bg-destructive" },
+    { label: "Medium", count: counts.medium, textColor: "text-warning", barColor: "bg-warning" },
+    { label: "Low", count: counts.low, textColor: "text-low", barColor: "bg-low" },
+    { label: "Info", count: counts.info, textColor: "text-slate-400", barColor: "bg-slate-400" },
+    { label: "Gas", count: counts.gas ?? 0, textColor: "text-green-500", barColor: "bg-green-500" },
   ];
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -71,21 +71,15 @@ const SecurityScoreCard = ({
             {isPending ? "--" : grade}
           </span>
         </div>
-        <div>
-          <div className="flex items-baseline gap-2">
-            <span className={cn("text-base font-semibold", config.color)}>{config.label}</span>
-            <span className="text-sm text-muted-foreground">Security Rating</span>
-          </div>
-          <p className="text-xs text-muted-foreground">{config.description}</p>
+        <div className="flex items-baseline gap-2">
+          <span className={cn("text-base font-semibold", config.color)}>{config.label}</span>
+          <span className="text-sm text-muted-foreground">· {total} findings</span>
         </div>
       </div>
 
       {/* Vulnerability Matrix Bar */}
       <div className="pt-3 border-t border-border">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Matrix</h4>
-          <span className="text-xs text-muted-foreground">{total} findings</span>
-        </div>
+        <h4 className="text-xs font-medium text-muted-foreground mb-2">Vulnerability Matrix</h4>
 
         <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
           {categories.map((cat) => {
@@ -96,22 +90,19 @@ const SecurityScoreCard = ({
           })}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
           {categories.map((cat) => (
-            <div
+            <span
               key={cat.label}
               onClick={() => onSeverityClick?.(cat.label.toLowerCase())}
               className={cn(
-                "flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border",
-                cat.bgColor, cat.borderColor,
+                "text-xs sm:text-sm font-medium",
+                cat.textColor,
                 onSeverityClick ? "cursor-pointer hover:opacity-75 transition-opacity" : ""
               )}
             >
-              <cat.icon className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5", cat.textColor)} />
-              <span className={cn("text-xs sm:text-sm font-medium", cat.textColor)}>{cat.count}</span>
-              <span className="text-xs text-muted-foreground hidden sm:inline">{cat.label}</span>
-              <span className="text-[11px] text-muted-foreground sm:hidden">{cat.label.slice(0, 3)}</span>
-            </div>
+              {cat.label} {cat.count}
+            </span>
           ))}
         </div>
       </div>

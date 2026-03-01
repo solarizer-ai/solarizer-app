@@ -213,23 +213,19 @@ const DashboardAuditDemo = () => {
               )}>
                 <span className="text-sm font-bold text-critical">{state.grade}</span>
               </div>
-              <div>
+              <div className="flex items-baseline gap-1.5">
                 <span className="text-sm font-semibold text-critical">Critical</span>
-                <p className="text-[10px] text-muted-foreground">Security Rating</p>
+                <span className="text-[10px] text-muted-foreground">· {total} findings</span>
               </div>
             </div>
           </div>
         )}
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
           {VULN_CATEGORIES.filter(cat => state.counts[cat.key] > 0).map(cat => (
-            <div key={cat.key} className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-md border text-[10px]",
-              cat.bgColor, cat.borderColor
-            )}>
-              <span className={cn("font-medium", cat.textColor)}>{state.counts[cat.key]}</span>
-              <span className="text-muted-foreground">{cat.label}</span>
-            </div>
+            <span key={cat.key} className={cn("text-[10px] font-medium", cat.textColor)}>
+              {cat.label} {state.counts[cat.key]}
+            </span>
           ))}
         </div>
       </div>
@@ -389,22 +385,16 @@ const DashboardAuditDemo = () => {
                       {state.grade === "—" ? "--" : state.grade}
                     </span>
                   </div>
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <span className={cn("text-lg font-semibold", state.gradeColor)}>
-                        {GRADE_LABELS[state.grade] ?? "Pending"}
-                      </span>
-                      <span className="text-sm text-muted-foreground">Security Rating</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{GRADE_DESCRIPTIONS[state.grade] ?? ""}</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className={cn("text-lg font-semibold", state.gradeColor)}>
+                      {GRADE_LABELS[state.grade] ?? "Pending"}
+                    </span>
+                    <span className="text-sm text-muted-foreground">· {total} findings</span>
                   </div>
                 </div>
 
                 <div className="pt-3 border-t border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Matrix</h4>
-                    <span className="text-xs text-muted-foreground">{total} findings</span>
-                  </div>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Vulnerability Matrix</h4>
                   <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
                     {VULN_CATEGORIES.map(cat => {
                       const count = state.counts[cat.key];
@@ -414,20 +404,12 @@ const DashboardAuditDemo = () => {
                       ) : null;
                     })}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {VULN_CATEGORIES.map(cat => {
-                      const CatIcon = cat.icon;
-                      return (
-                        <div key={cat.key} className={cn(
-                          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border",
-                          cat.bgColor, cat.borderColor
-                        )}>
-                          <CatIcon className={cn("w-3.5 h-3.5", cat.textColor)} />
-                          <span className={cn("text-sm font-medium", cat.textColor)}>{state.counts[cat.key]}</span>
-                          <span className="text-xs text-muted-foreground">{cat.label}</span>
-                        </div>
-                      );
-                    })}
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    {VULN_CATEGORIES.map(cat => (
+                      <span key={cat.key} className={cn("text-sm font-medium", cat.textColor)}>
+                        {cat.label} {state.counts[cat.key]}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>

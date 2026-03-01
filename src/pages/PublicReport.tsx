@@ -514,14 +514,11 @@ const PublicReport = () => {
                     {grade || "--"}
                   </span>
                 </div>
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className={cn("text-lg font-semibold", gConfig?.color || "text-muted-foreground")}>
-                      {gConfig?.label || "Pending"}
-                    </span>
-                    <span className="text-sm text-muted-foreground">Security Rating</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{gConfig?.description || "Analysis in progress"}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className={cn("text-lg font-semibold", gConfig?.color || "text-muted-foreground")}>
+                    {gConfig?.label || "Pending"}
+                  </span>
+                  <span className="text-sm text-muted-foreground">· {totalFindings} findings</span>
                 </div>
               </div>
 
@@ -548,10 +545,7 @@ const PublicReport = () => {
 
             {/* Vulnerability Distribution */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vulnerability Distribution</h4>
-                <span className="text-xs text-muted-foreground">{totalFindings} {totalFindings === 1 ? "finding" : "findings"}</span>
-              </div>
+              <h4 className="text-xs font-medium text-muted-foreground mb-2">Vulnerability Matrix</h4>
               <div className="h-2.5 rounded-full bg-muted flex overflow-hidden mb-3">
                 {SEVERITY_ORDER.map(sev => {
                   const width = totalFindings > 0 ? (severityCounts[sev] / totalFindings) * 100 : 0;
@@ -560,18 +554,15 @@ const PublicReport = () => {
                   ) : null;
                 })}
               </div>
-              {/* Category Pills */}
-              <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+              {/* Severity Labels */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
                 {SEVERITY_ORDER.map(sev => {
                   const config = severityConfig[sev];
-                  const SevIcon = config.icon;
+                  const textColor = config.className.split(" ")[0];
                   return (
-                    <div key={sev} className={cn("flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg border", config.className)}>
-                      <SevIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      <span className="text-xs sm:text-sm font-medium">{severityCounts[sev]}</span>
-                      <span className="text-xs text-muted-foreground hidden sm:inline">{config.label}</span>
-                      <span className="text-[11px] text-muted-foreground sm:hidden">{config.label.slice(0, 3)}</span>
-                    </div>
+                    <span key={sev} className={cn("text-xs sm:text-sm font-medium", textColor)}>
+                      {config.label} {severityCounts[sev]}
+                    </span>
                   );
                 })}
               </div>
