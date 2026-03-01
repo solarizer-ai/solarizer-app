@@ -25,7 +25,6 @@ import PublicReport from "./pages/PublicReport";
 // Dashboard pages
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import AnalysesPage from "./pages/dashboard/AnalysesPage";
-import CreditActivityPage from "./pages/dashboard/CreditActivityPage";
 import ApiKeysPage from "./pages/dashboard/ApiKeysPage";
 import BillingPage from "./pages/dashboard/BillingPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
@@ -97,7 +96,7 @@ const App = () => (
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                   <Route index element={<DashboardHome />} />
                   <Route path="analyses" element={<AnalysesPage />} />
-                  <Route path="credits" element={<CreditActivityPage />} />
+                  <Route path="credits" element={<Navigate to="/dashboard/billing?tab=activity" replace />} />
                    {/* API Keys hidden until CLI release */}
                    {/* <Route path="api-keys" element={<ApiKeysPage />} /> */}
                   <Route path="billing" element={<BillingPage />} />

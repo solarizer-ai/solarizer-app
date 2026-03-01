@@ -25,7 +25,7 @@ const typeConfig: Record<string, { icon: typeof ArrowDown; color: string; label:
 
 export function CreditActivityLog() {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
@@ -36,6 +36,9 @@ export function CreditActivityLog() {
   const transactions = result?.data || [];
   const totalCount = result?.count || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  const paginationFrom = (page - 1) * pageSize + 1;
+  const paginationTo = Math.min(page * pageSize, totalCount);
 
   const clearFilters = () => {
     setStartDate(undefined);
@@ -101,7 +104,42 @@ export function CreditActivityLog() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile card view */}
+            <div className="sm:hidden divide-y divide-border">
+              {transactions.map((txn) => {
+                const config = typeConfig[txn.type] || typeConfig.deduction;
+                const isPositive = txn.amount > 0;
+                return (
+                  <div key={txn.id} className="p-4 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <Badge variant={config.badgeVariant} className="text-[10px]">
+                        {config.label}
+                      </Badge>
+                      <span className={cn(
+                        "font-mono text-sm font-semibold tabular-nums",
+                        isPositive ? "text-success" : "text-destructive"
+                      )}>
+                        {isPositive ? "+" : "−"}{Math.abs(txn.amount).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="truncate max-w-[60%]">
+                        {txn.description?.replace(/^(?:CLI Audit|Audit):\s*/i, "").replace(/\s*\(.*\)\s*$/, "") || config.label}
+                      </span>
+                      <span>{txn.created_at ? format(new Date(txn.created_at), "MMM d") : "—"}</span>
+                    </div>
+                    {txn.balance_after !== null && (
+                      <p className="text-[10px] text-muted-foreground/70 text-right font-mono tabular-nums">
+                        Bal: {txn.balance_after.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden sm:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -109,7 +147,7 @@ export function CreditActivityLog() {
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Type</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Description</TableHead>
                   <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right">Amount</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right hidden sm:table-cell">Balance</TableHead>
+                  <TableHead className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right">Balance</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -119,8 +157,7 @@ export function CreditActivityLog() {
                   return (
                     <TableRow key={txn.id}>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        <span className="hidden sm:inline">{txn.created_at ? format(new Date(txn.created_at), "dd-MM-yyyy HH:mm:ss") : "—"}</span>
-                        <span className="sm:hidden">{txn.created_at ? format(new Date(txn.created_at), "dd-MM-yy") : "—"}</span>
+                        {txn.created_at ? format(new Date(txn.created_at), "dd-MM-yyyy HH:mm:ss") : "—"}
                       </TableCell>
                       <TableCell>
                         <Badge variant={config.badgeVariant} className="text-[10px] font-medium">
@@ -132,10 +169,10 @@ export function CreditActivityLog() {
                           ? txn.description.replace(/^(?:CLI Audit|Audit):\s*/i, "").replace(/\s*\(.*\)\s*$/, "")
                           : config.label}
                       </TableCell>
-                      <TableCell className={cn("text-xs font-semibold text-right whitespace-nowrap", isPositive ? "text-success" : "text-destructive")}>
+                      <TableCell className={cn("text-xs font-semibold text-right whitespace-nowrap font-mono tabular-nums", isPositive ? "text-success" : "text-destructive")}>
                         {Math.abs(txn.amount).toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-xs text-foreground text-right whitespace-nowrap hidden sm:table-cell">
+                      <TableCell className="text-xs text-foreground text-right whitespace-nowrap font-mono tabular-nums">
                         {txn.balance_after !== null ? txn.balance_after.toLocaleString() : "—"}
                       </TableCell>
                     </TableRow>
@@ -144,18 +181,24 @@ export function CreditActivityLog() {
               </TableBody>
             </Table>
             </div>
+
             {/* Pagination */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  Showing {paginationFrom}–{paginationTo} of {totalCount}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">Lines Per Page</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Rows</span>
                 <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
                   <SelectTrigger className="h-8 w-[70px] text-xs">
                     <SelectValue />

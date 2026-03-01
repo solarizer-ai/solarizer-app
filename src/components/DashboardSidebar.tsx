@@ -57,7 +57,7 @@ const navGroups = [
     items: [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, end: true },
       { title: "Audits", url: "/dashboard/analyses", icon: FileSearch },
-      { title: "Credit Activity", url: "/dashboard/credits", icon: Coins },
+      { title: "Credits", url: "/dashboard/credits", icon: Coins },
     ],
   },
   {

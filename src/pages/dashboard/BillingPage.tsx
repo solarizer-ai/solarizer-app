@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Loader2, Zap, ArrowUpRight, CreditCard, Receipt, ChevronLeft, ChevronRight, X, CalendarIcon } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Loader2, Zap, ArrowUpRight, Receipt, ChevronLeft, ChevronRight, X, CalendarIcon } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
-import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 import { formatPlanName } from "@/lib/planNames";
 import { useBillingHistory, BillingEvent } from "@/hooks/useBillingHistory";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
@@ -20,11 +21,15 @@ import { CancelSubscriptionModal } from "@/components/CancelSubscriptionModal";
 import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlanSelector";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { DowngradeWarningModal } from "@/components/DowngradeWarningModal";
+import { CreditActivityLog } from "@/components/settings/CreditActivityLog";
 
-const DEFAULT_HISTORY_PAGE_SIZE = 5;
+const DEFAULT_HISTORY_PAGE_SIZE = 10;
 
 const BillingPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") === "activity" ? "activity" : "overview";
+
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -72,6 +77,24 @@ const BillingPage = () => {
   const historyTotalPages = Math.max(1, Math.ceil(totalCount / historyPageSize));
   const hasHistoryFilters = historyStartDate || historyEndDate;
 
+  // Credit balance calculations
+  const totalCredits = creditsRemaining + creditsUsed;
+  const remainingPercent = totalCredits > 0 ? (creditsRemaining / totalCredits) * 100 : 100;
+
+  const progressColorClass =
+    remainingPercent > 50
+      ? "[&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-orange-400"
+      : remainingPercent > 20
+        ? "[&>div]:bg-warning"
+        : "[&>div]:bg-destructive";
+
+  const getPricePerCreditCents = () => {
+    if (plan === "business") return 220;
+    if (plan === "pro") return 250;
+    return 280;
+  };
+  const pricePerCreditDollars = getPricePerCreditCents() / 100;
+
   const getPlanPrice = (planId: string) => {
     const prices: Record<string, number> = { starter: 149, pro: 199, business: 499 };
     return prices[planId] || 0;
@@ -86,6 +109,10 @@ const BillingPage = () => {
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
   };
+
+  // Pagination info
+  const historyFrom = (historyPage - 1) * historyPageSize + 1;
+  const historyTo = Math.min(historyPage * historyPageSize, totalCount);
 
   const renderEvent = (event: BillingEvent) => {
     if (event.type === "power_up") {
@@ -137,151 +164,213 @@ const BillingPage = () => {
     <div className="space-y-6">
       <PageHeader
         icon={Receipt}
-        title="Billing & Subscription"
+        title="Billing"
         subtitle="Manage your plan, credits, and view transaction history"
       />
 
-      {/* Unified Plan Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <SubscriptionPlanSelector
-            currentPlan={subscription?.plan || null}
-            pendingPlan={subscription?.pending_plan || null}
-            pendingPlanDate={subscription?.pending_plan_effective_date || null}
-            hasPendingCancellation={hasPendingCancellation}
-            onUpgrade={(p) => { setTargetUpgradePlan(p); setShowUpgradeModal(true); }}
-            onDowngrade={(p) => { setTargetDowngradePlan(p); setShowDowngradeModal(true); }}
-            onSubscribe={() => navigate("/pricing")}
-            onCancelPendingDowngrade={() => cancelPendingDowngrade()}
-            isLoading={subscriptionActionLoading || isSchedulingDowngrade}
-            isCancellingDowngrade={isCancellingDowngrade}
-            onCancelSubscription={isPaid && !hasPendingCancellation ? () => setShowCancelModal(true) : undefined}
-            renewalDate={subscription?.current_period_end || null}
-            onReactivate={() => reactivateSubscription()}
-            isReactivating={isReactivating}
-            onRenew={(planId) => createSubscription({ plan: planId as "starter" | "pro" | "business", billingPeriod: "monthly" })}
-          />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue={defaultTab} className="space-y-6">
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-card">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="data-[state=active]:bg-card">
+            Credit Activity
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Credits — compact */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Credits</CardTitle>
-              <CardDescription className="text-xs">{isPaid ? "Your credit balance" : "Your Spark plan credit balance"}</CardDescription>
-            </div>
-            {isPaid && (
-              <Button size="sm" variant="outline" onClick={() => setShowPowerUpModal(true)} className="gap-1.5">
-                <Zap className="w-3.5 h-3.5" />Buy Credits
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isPaid ? (
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="text-xl font-bold text-foreground">{creditsRemaining.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Remaining</p>
-              </div>
-              <div className="w-px h-8 bg-border" />
-              <div>
-                <p className="text-xl font-bold text-foreground">{creditsUsed.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Used</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div>
-                <p className="text-xl font-bold text-foreground">{creditsRemaining.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Remaining</p>
-              </div>
-              <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
-                <Zap className="w-3.5 h-3.5" />Upgrade for more
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Credit Balance Hero Card */}
+          <Card className="overflow-hidden relative">
+            {/* Ambient glow */}
+            <div className="absolute inset-0 bg-radial-glow opacity-30 pointer-events-none" />
 
-      {/* Transaction History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-          <CardDescription>All your power-up purchases and plan changes</CardDescription>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 flex-wrap">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-8 w-full sm:w-[160px] justify-start text-left text-xs font-normal", !historyStartDate && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                  {historyStartDate ? format(historyStartDate, "dd-MM-yyyy") : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarPicker mode="single" selected={historyStartDate} onSelect={(d) => { setHistoryStartDate(d); setHistoryPage(1); }} initialFocus className="p-3 pointer-events-auto" />
-              </PopoverContent>
-            </Popover>
-            <span className="text-xs text-muted-foreground">to</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-8 w-full sm:w-[160px] justify-start text-left text-xs font-normal", !historyEndDate && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                  {historyEndDate ? format(historyEndDate, "dd-MM-yyyy") : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarPicker mode="single" selected={historyEndDate} onSelect={(d) => { setHistoryEndDate(d); setHistoryPage(1); }} initialFocus className="p-3 pointer-events-auto" />
-              </PopoverContent>
-            </Popover>
-            {hasHistoryFilters && (
-              <Button variant="ghost" size="sm" onClick={() => { setHistoryStartDate(undefined); setHistoryEndDate(undefined); setHistoryPage(1); }} className="h-8 px-2 text-xs gap-1">
-                <X className="w-3 h-3" /> Clear
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {eventsLoading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-          ) : events.length === 0 ? (
-            <div className="text-center py-12">
-              <Receipt className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-muted-foreground">No billing history yet</p>
-              <p className="text-sm text-muted-foreground/70">Your purchases and plan changes will appear here</p>
-            </div>
-          ) : (
-            <>
-              <div className="divide-y divide-border">{events.map((event) => renderEvent(event))}</div>
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setHistoryPage(p => Math.max(1, p - 1))} disabled={historyPage <= 1}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))} disabled={historyPage >= historyTotalPages}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+            <CardHeader className="relative pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10">
+                    <Zap className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Credits</CardTitle>
+                    <CardDescription className="text-xs">
+                      {isPaid ? "Your credit balance" : "Spark plan balance"}
+                    </CardDescription>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">Lines Per Page</span>
-                  <Select value={String(historyPageSize)} onValueChange={(v) => { setHistoryPageSize(Number(v)); setHistoryPage(1); }}>
-                    <SelectTrigger className="h-8 w-[70px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {isPaid ? (
+                  <Button size="sm" variant="outline" onClick={() => setShowPowerUpModal(true)}
+                    className="gap-1.5 hover:glow-orange-sm transition-all">
+                    <Zap className="w-3.5 h-3.5" /> Buy Credits
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
+                    <Zap className="w-3.5 h-3.5" /> Upgrade
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+
+            <CardContent className="relative space-y-4">
+              {/* Hero number */}
+              <p className="text-4xl sm:text-5xl font-bold font-mono tabular-nums text-foreground tracking-tight">
+                {creditsRemaining.toLocaleString()}
+              </p>
+
+              {/* Progress bar */}
+              <div className="space-y-1.5">
+                <Progress
+                  value={remainingPercent}
+                  className={cn("h-2", progressColorClass)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {Math.round(remainingPercent)}% remaining
+                </p>
+              </div>
+
+              {/* Stats row */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div className="flex sm:block items-center justify-between sm:justify-start
+                                py-2 sm:py-0 border-b sm:border-b-0 sm:border-r border-border last:border-0">
+                  <p className="text-xs text-muted-foreground font-medium">Remaining</p>
+                  <p className="text-lg font-semibold font-mono tabular-nums">
+                    {creditsRemaining.toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex sm:block items-center justify-between sm:justify-start
+                                py-2 sm:py-0 border-b sm:border-b-0 sm:border-r border-border last:border-0 sm:pl-3">
+                  <p className="text-xs text-muted-foreground font-medium">Used This Period</p>
+                  <p className="text-lg font-semibold font-mono tabular-nums">
+                    {creditsUsed.toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex sm:block items-center justify-between sm:justify-start
+                                py-2 sm:py-0 sm:pl-3">
+                  <p className="text-xs text-muted-foreground font-medium">Rate</p>
+                  <p className="text-lg font-semibold font-mono tabular-nums">
+                    ${pricePerCreditDollars.toFixed(2)}<span className="text-xs text-muted-foreground">/ea</span>
+                  </p>
                 </div>
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+
+              {/* Renewal info */}
+              {subscription?.current_period_end && (
+                <p className="text-xs text-muted-foreground">
+                  50 credits included · Renews {format(new Date(subscription.current_period_end), "MMM d")}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Plan Card */}
+          <Card>
+            <CardContent className="pt-6">
+              <SubscriptionPlanSelector
+                currentPlan={subscription?.plan || null}
+                pendingPlan={subscription?.pending_plan || null}
+                pendingPlanDate={subscription?.pending_plan_effective_date || null}
+                hasPendingCancellation={hasPendingCancellation}
+                onUpgrade={(p) => { setTargetUpgradePlan(p); setShowUpgradeModal(true); }}
+                onDowngrade={(p) => { setTargetDowngradePlan(p); setShowDowngradeModal(true); }}
+                onSubscribe={() => navigate("/pricing")}
+                onCancelPendingDowngrade={() => cancelPendingDowngrade()}
+                isLoading={subscriptionActionLoading || isSchedulingDowngrade}
+                isCancellingDowngrade={isCancellingDowngrade}
+                onCancelSubscription={isPaid && !hasPendingCancellation ? () => setShowCancelModal(true) : undefined}
+                renewalDate={subscription?.current_period_end || null}
+                onReactivate={() => reactivateSubscription()}
+                isReactivating={isReactivating}
+                onRenew={(planId) => createSubscription({ plan: planId as "starter" | "pro" | "business", billingPeriod: "monthly" })}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Transaction History */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Transaction History</CardTitle>
+              <CardDescription>All your power-up purchases and plan changes</CardDescription>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 flex-wrap">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("h-8 w-full sm:w-[160px] justify-start text-left text-xs font-normal", !historyStartDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                      {historyStartDate ? format(historyStartDate, "dd-MM-yyyy") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarPicker mode="single" selected={historyStartDate} onSelect={(d) => { setHistoryStartDate(d); setHistoryPage(1); }} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-xs text-muted-foreground">to</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn("h-8 w-full sm:w-[160px] justify-start text-left text-xs font-normal", !historyEndDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                      {historyEndDate ? format(historyEndDate, "dd-MM-yyyy") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarPicker mode="single" selected={historyEndDate} onSelect={(d) => { setHistoryEndDate(d); setHistoryPage(1); }} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+                {hasHistoryFilters && (
+                  <Button variant="ghost" size="sm" onClick={() => { setHistoryStartDate(undefined); setHistoryEndDate(undefined); setHistoryPage(1); }} className="h-8 px-2 text-xs gap-1">
+                    <X className="w-3 h-3" /> Clear
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {eventsLoading ? (
+                <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+              ) : events.length === 0 ? (
+                <div className="text-center py-12">
+                  <Receipt className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                  <p className="text-muted-foreground">No billing history yet</p>
+                  <p className="text-sm text-muted-foreground/70">Your purchases and plan changes will appear here</p>
+                </div>
+              ) : (
+                <>
+                  <div className="divide-y divide-border">{events.map((event) => renderEvent(event))}</div>
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setHistoryPage(p => Math.max(1, p - 1))} disabled={historyPage <= 1}>
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setHistoryPage(p => Math.min(historyTotalPages, p + 1))} disabled={historyPage >= historyTotalPages}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        Showing {historyFrom}–{historyTo} of {totalCount}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">Rows</span>
+                      <Select value={String(historyPageSize)} onValueChange={(v) => { setHistoryPageSize(Number(v)); setHistoryPage(1); }}>
+                        <SelectTrigger className="h-8 w-[70px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activity">
+          <CreditActivityLog />
+        </TabsContent>
+      </Tabs>
 
       {/* Modals */}
       <PurchasePowerUpModal open={showPowerUpModal} onOpenChange={setShowPowerUpModal} />
