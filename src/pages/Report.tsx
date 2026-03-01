@@ -590,6 +590,7 @@ const Report = () => {
                                   remediation: f.remediation || undefined,
                                   is_resolved: f.is_resolved,
                                 }}
+                                isArchived
                                 canViewRemediation={canViewRemediation}
                                 canCommentOnFindings={false}
                                 currentUserId={user?.id}
