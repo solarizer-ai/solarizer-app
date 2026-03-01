@@ -79,18 +79,18 @@ export default function AdminCouponsPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("coupons").insert({
-        code: code.toUpperCase().trim(),
-        description: description || null,
-        discount_type: discountType,
-        discount_value: parseFloat(discountValue),
-        applicable_to: applyTo,
-        max_uses: maxUses ? parseInt(maxUses, 10) : null,
-        min_amount_cents: minAmount ? Math.round(parseFloat(minAmount) * 100) : null,
-        expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
-        created_by: user?.id,
+      const { data, error } = await supabase.rpc("admin_create_coupon", {
+        p_code: code.toUpperCase().trim(),
+        p_description: description || null,
+        p_discount_type: discountType,
+        p_discount_value: parseFloat(discountValue),
+        p_applicable_to: applyTo,
+        p_max_uses: maxUses ? parseInt(maxUses, 10) : null,
+        p_min_amount_cents: minAmount ? Math.round(parseFloat(minAmount) * 100) : null,
+        p_expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
       });
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast.success("Coupon created");
@@ -103,8 +103,12 @@ export default function AdminCouponsPage() {
 
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase.from("coupons").update({ is_active }).eq("id", id);
+      const { data, error } = await supabase.rpc("admin_toggle_coupon", {
+        p_coupon_id: id,
+        p_active: is_active,
+      });
       if (error) throw error;
+      return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-coupons"] }),
     onError: () => toast.error("Failed to update coupon"),
@@ -112,8 +116,11 @@ export default function AdminCouponsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("coupons").delete().eq("id", id);
+      const { data, error } = await supabase.rpc("admin_delete_coupon", {
+        p_coupon_id: id,
+      });
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast.success("Coupon deleted");

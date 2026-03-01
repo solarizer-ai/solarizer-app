@@ -42,24 +42,22 @@ export function useStatusHistory(findingId: string | undefined) {
         .order('changed_at', { ascending: false });
       
       if (error) throw error;
+      if (!data.length) return [];
       
-      // Fetch user emails for history entries
-      const historyWithEmails: StatusHistoryEntry[] = [];
+      // Batch-fetch profiles to avoid N+1
+      const userIds = [...new Set(data.map(e => e.changed_by))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, email')
+        .in('user_id', userIds);
       
-      for (const entry of data) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('id', entry.changed_by)
-          .single();
-        
-        historyWithEmails.push({
-          ...entry,
-          user_email: profile?.email || 'Unknown User'
-        });
-      }
+      const emailMap = new Map<string, string>();
+      profiles?.forEach(p => emailMap.set(p.user_id, p.email || 'Unknown User'));
       
-      return historyWithEmails;
+      return data.map(entry => ({
+        ...entry,
+        user_email: emailMap.get(entry.changed_by) || 'Unknown User'
+      })) as StatusHistoryEntry[];
     },
     enabled: !!findingId,
   });

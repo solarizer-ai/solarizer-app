@@ -972,6 +972,20 @@ export type Database = {
         Args: { p_amount: number; p_reason: string; p_target_user_id: string }
         Returns: undefined
       }
+      admin_create_coupon: {
+        Args: {
+          p_applicable_to?: string[]
+          p_code: string
+          p_description?: string
+          p_discount_type?: string
+          p_discount_value?: number
+          p_expires_at?: string
+          p_max_uses?: number
+          p_min_amount_cents?: number
+        }
+        Returns: Json
+      }
+      admin_delete_coupon: { Args: { p_coupon_id: string }; Returns: Json }
       admin_get_audits: {
         Args: {
           p_limit?: number
@@ -1011,6 +1025,10 @@ export type Database = {
           total_credits_spent: number
           user_id: string
         }[]
+      }
+      admin_toggle_coupon: {
+        Args: { p_active: boolean; p_coupon_id: string }
+        Returns: Json
       }
       auto_settle_stale_sessions: { Args: never; Returns: undefined }
       cancel_pending_downgrade: { Args: never; Returns: Json }
