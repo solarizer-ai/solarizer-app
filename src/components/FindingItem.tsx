@@ -33,6 +33,7 @@ interface FindingItemProps {
   forceExpanded?: boolean;
   canViewRemediation?: boolean;
   canCommentOnFindings?: boolean;
+  isArchived?: boolean;
   currentUserId?: string;
   onUpgradeClick?: () => void;
   onRefReady?: (el: HTMLDivElement | null) => void;
@@ -427,6 +428,7 @@ const FindingItem = ({
   forceExpanded = false,
   canViewRemediation = true,
   canCommentOnFindings = false,
+  isArchived = false,
   currentUserId,
   onUpgradeClick,
   onRefReady 
@@ -605,8 +607,8 @@ const FindingItem = ({
             </div>
           )}
 
-          {/* Remediation Status Toggle - Business only */}
-          {canCommentOnFindings ? (
+          {/* Remediation Status Toggle - Business only (hidden for archived findings) */}
+          {!isArchived && (canCommentOnFindings ? (
             <RemediationStatusToggle
               findingId={finding.id}
               isResolved={finding.is_resolved ?? false}
@@ -633,10 +635,10 @@ const FindingItem = ({
                 onUpgrade={onUpgradeClick}
               />
             </div>
-          )}
+          ))}
 
-          {/* Comments Section - Business only */}
-          {canCommentOnFindings ? (
+          {/* Comments Section - Business only (hidden for archived findings) */}
+          {!isArchived && (canCommentOnFindings ? (
             <FindingComments 
               findingId={finding.id} 
               currentUserId={currentUserId}
@@ -659,7 +661,7 @@ const FindingItem = ({
                 onUpgrade={onUpgradeClick}
               />
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>
