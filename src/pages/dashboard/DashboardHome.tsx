@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import WelcomeGreeting from "@/components/WelcomeGreeting";
 import { useNavigate } from "react-router-dom";
 import AuditCard from "@/components/AuditCard";
 import { CreditBalance } from "@/components/CreditBalance";
@@ -40,6 +41,7 @@ const DashboardHome = () => {
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const { user } = useAuth();
 
@@ -48,10 +50,13 @@ const DashboardHome = () => {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("display_name")
+        .select("display_name, onboarding_completed")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data) setDisplayName(data.display_name);
+      if (data) {
+        setDisplayName(data.display_name);
+        if (!data.onboarding_completed) setShowWelcome(true);
+      }
     };
     fetchProfile();
   }, [user]);
@@ -259,6 +264,14 @@ const DashboardHome = () => {
         requiredCredits={0}
         currentCredits={credits?.credits_remaining || 0}
       />
+      {/* Welcome Greeting Overlay */}
+      {showWelcome && user && (
+        <WelcomeGreeting
+          displayName={displayName}
+          userId={user.id}
+          onComplete={() => setShowWelcome(false)}
+        />
+      )}
     </div>
   );
 };
