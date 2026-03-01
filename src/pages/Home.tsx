@@ -43,7 +43,6 @@ const phases = [
     num: "03",
     pill: "Multi-Pass Hunting",
     icon: Shield,
-    pro: true,
     description:
       "Broad reconnaissance across all contracts, then deep-dive on complex contracts. Self-adversarial verification on every finding.",
   },
@@ -51,7 +50,6 @@ const phases = [
     num: "04",
     pill: "Cross-Contract",
     icon: GitBranch,
-    pro: true,
     description:
       "Attack paths traced across contract boundaries — shared state, callback ordering, flash loan cascades.",
   },
@@ -59,7 +57,6 @@ const phases = [
     num: "05",
     pill: "Validation",
     icon: CheckCircle2,
-    pro: true,
     description:
       "Independent AI re-examines every finding against actual source code. False positives filtered before they reach you.",
   },
@@ -67,7 +64,6 @@ const phases = [
     num: "06",
     pill: "QA Scan",
     icon: Zap,
-    pro: true,
     description:
       "Gas optimizations, floating pragmas, missing events, unchecked returns, input validation — the details that matter.",
   },
@@ -712,20 +708,21 @@ const Home = () => {
             </Button>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
-            {["Multi-Phase Analysis", "Robust Validation", "Line-Accurate Fixes"].map((pill) => (
-              <span
-                key={pill}
-                className="bg-foreground/[0.03] border border-border/10 rounded-full px-3 py-1 text-[11px] font-mono text-muted-foreground/50"
-              >
-                {pill}
-              </span>
-            ))}
-          </div>
         </div>
 
         <div className="relative z-20 mt-10 sm:mt-16 max-w-5xl mx-auto px-5 md:px-6">
           <DashboardAuditDemo />
+        </div>
+
+        <div className="relative z-20 flex flex-wrap items-center justify-center gap-2 mt-6">
+          {["Multi-Phase Analysis", "Robust Validation", "Line-Accurate Fixes"].map((pill) => (
+            <span
+              key={pill}
+              className="bg-foreground/[0.03] border border-border/10 rounded-full px-3 py-1 text-[11px] font-mono text-muted-foreground/50"
+            >
+              {pill}
+            </span>
+          ))}
         </div>
       </section>
 
@@ -795,11 +792,6 @@ const Home = () => {
                     <div className="flex-1 pt-1">
                       <div className="flex items-center gap-2">
                         <span className="terminal-pill">{phase.pill}</span>
-                        {phase.pro && (
-                          <span className="text-[9px] font-mono text-primary/40 bg-primary/5 border border-primary/10 px-1.5 py-0.5 rounded">
-                            Pro
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs md:text-sm text-muted-foreground/60 mt-1.5 leading-relaxed">
                         {phase.description}
