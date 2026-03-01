@@ -100,36 +100,56 @@ export const useAudits = () => {
   return useQuery({
     queryKey: ['audits', user?.id],
     queryFn: async () => {
-      // Fetch audits
-      const { data: audits, error } = await supabase
+      // 1. Fetch own audits
+      const { data: ownAudits, error: e1 } = await supabase
         .from('audits')
         .select('*')
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
+      if (e1) throw e1;
+
+      // 2. Fetch shared audit IDs (accepted shares only)
+      const { data: shares } = await supabase
+        .from('audit_shares')
+        .select('audit_id')
+        .eq('shared_with_user_id', user!.id)
+        .eq('status', 'accepted');
+
+      let sharedAudits: typeof ownAudits = [];
+      const sharedIds = (shares || []).map(s => s.audit_id);
+      if (sharedIds.length > 0) {
+        const { data, error: e2 } = await supabase
+          .from('audits')
+          .select('*')
+          .in('id', sharedIds)
+          .order('created_at', { ascending: false });
+        if (e2) throw e2;
+        sharedAudits = data || [];
+      }
+
+      const audits = [...(ownAudits || []), ...sharedAudits];
+
       // Fetch share counts for owned audits
-      const ownedAuditIds = (audits || [])
-        .filter(a => a.user_id === user?.id)
+      const ownedAuditIds = audits
+        .filter(a => a.user_id === user!.id)
         .map(a => a.id);
-      
+
       let shareCounts: Record<string, number> = {};
       if (ownedAuditIds.length > 0) {
-        const { data: shares } = await supabase
+        const { data: acceptedShares } = await supabase
           .from('audit_shares')
           .select('audit_id')
           .in('audit_id', ownedAuditIds)
           .eq('status', 'accepted');
-        
-        if (shares) {
-          shares.forEach(share => {
+
+        if (acceptedShares) {
+          acceptedShares.forEach(share => {
             shareCounts[share.audit_id] = (shareCounts[share.audit_id] || 0) + 1;
           });
         }
       }
-      
-      // Merge share counts into audits
-      return (audits || []).map(audit => ({
+
+      return audits.map(audit => ({
         ...audit,
         share_count: shareCounts[audit.id] || 0,
       })) as unknown as Audit[];
