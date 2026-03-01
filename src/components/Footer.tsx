@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Twitter } from "lucide-react";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 
 const footerLinks = {
@@ -41,6 +42,15 @@ const Footer = () => {
               className="text-xs text-muted-foreground/40 hover:text-primary transition-colors font-mono"
             >
               hello@solarizer.io
+            </a>
+            <a
+              href="https://x.com/solarizer_io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/40 hover:text-primary transition-colors"
+            >
+              <Twitter className="w-3.5 h-3.5" />
+              <span className="font-mono">@solarizer_io</span>
             </a>
           </div>
 
