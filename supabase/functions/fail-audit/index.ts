@@ -70,12 +70,12 @@ Deno.serve(async (req) => {
       .in('status', ['queued', 'running']);
 
     // Atomic CAS lock — only one caller (fail, cancel, or complete) gets through
+    // Step 1: Lock without zeroing credits_deducted so we can read the original value
     const { data: locked, error: lockError } = await supabase
       .from('audits')
       .update({
         status: 'failed',
         is_locked: true,
-        credits_deducted: 0,
         error_message: errorMsg,
         updated_at: new Date().toISOString(),
       })
@@ -117,6 +117,11 @@ Deno.serve(async (req) => {
             .eq('id', auditId);
         } else {
           creditsRefunded = creditsToRefund;
+          // Step 2: Zero out credits_deducted only after successful refund
+          await supabase
+            .from('audits')
+            .update({ credits_deducted: 0 })
+            .eq('id', auditId);
         }
       }
 
