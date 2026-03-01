@@ -1,41 +1,43 @@
 
 
-# Fix: Post-OAuth Redirect to Dashboard
+# First-Time Welcome Greeting
 
-## Problem
-After signing up/in with Google OAuth via the Lovable managed flow, users are redirected to the home page (`/`) instead of the dashboard. They have to manually navigate to sign in again, which is confusing.
+## What You'll See
+When any user signs in for the first time (email or OAuth), the dashboard will display a beautiful full-screen overlay with the dashboard blurred behind it. It shows a warm, personalized greeting like "Welcome to Solarizer, [Name]!" with a brief message and a "Get Started" button. One click dismisses it and reveals the dashboard.
 
-**Root cause**: The Lovable OAuth flow uses `redirect_uri: window.location.origin` (i.e., `https://solarizer.io/`), which lands on the Home page. The Auth page has redirect logic for logged-in users, but only when they're ON the Auth page -- not when they land on Home.
+Since email signups already provide their display name and OAuth users get their name from Google/Apple, there's no need to ask for a name -- just greet them warmly.
 
-The custom domain flow already does this correctly with `redirectTo: .../dashboard`.
+## Implementation Steps
 
-## Solution
-Add a simple redirect in the Home page: if the user is authenticated, navigate them to `/dashboard` automatically.
+### 1. Database: Add `onboarding_completed` flag to profiles
+Add a boolean column `onboarding_completed` (default `false`) to the `profiles` table. This tracks whether the user has seen the welcome screen.
 
-### File: `src/pages/Home.tsx`
+### 2. New Component: `WelcomeGreeting.tsx`
+A full-screen overlay component with:
+- `backdrop-blur-lg` over the entire dashboard
+- Centered card with fade-in + scale animation
+- Solarizer logo
+- Personalized greeting: "Welcome to Solarizer, [display_name]!"
+- A short message about what they can do
+- "Get Started" button that sets `onboarding_completed = true` and dismisses with a fade-out animation
 
-Add at the top of the component:
+### 3. Integrate into `DashboardHome.tsx`
+- Query `profiles.onboarding_completed` for the current user
+- If `false`, render `WelcomeGreeting` overlay on top of the dashboard (dashboard renders normally behind it, just blurred via CSS)
+- On dismiss, update the flag and remove the overlay
 
-```typescript
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+## Technical Details
 
-// Inside the component:
-const { user, loading } = useAuth();
-const navigate = useNavigate();
-
-useEffect(() => {
-  if (!loading && user) {
-    navigate('/dashboard', { replace: true });
-  }
-}, [user, loading, navigate]);
+**Migration SQL:**
+```sql
+ALTER TABLE public.profiles
+ADD COLUMN onboarding_completed boolean NOT NULL DEFAULT false;
 ```
 
-This ensures that:
-- After OAuth callback lands on `/`, the auth state listener picks up the session, `user` becomes non-null, and the redirect fires automatically
-- Direct visits to `/` by logged-in users also go straight to the dashboard
-- The `loading` guard prevents a flash redirect before auth state is resolved
+**Files to create:**
+- `src/components/WelcomeGreeting.tsx`
 
-## Files Modified
-- `src/pages/Home.tsx` -- add authenticated user redirect to dashboard
+**Files to modify:**
+- `src/pages/dashboard/DashboardHome.tsx` -- fetch onboarding status, conditionally render overlay
 
+**No RLS changes needed** -- users can already update their own profile via existing policies.
