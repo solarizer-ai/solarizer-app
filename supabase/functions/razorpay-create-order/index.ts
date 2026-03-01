@@ -15,14 +15,11 @@ const corsHeaders = {
 };
 
 interface CreateOrderRequest {
-  orderType: "subscription" | "power_up" | "upgrade";
+  orderType: "subscription" | "power_up";
   plan?: "starter" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
-  fromPlan?: string;
-  toPlan?: string;
-  prorationAmount?: number;
-  coupon_code?: string; // NEW
+  coupon_code?: string;
 }
 
 const PLAN_PRICES: Record<string, number> = {
@@ -76,7 +73,7 @@ Deno.serve(async (req) => {
     }
 
     const body: CreateOrderRequest = await req.json();
-    const { orderType, plan, creditsAmount, prorationAmount } = body;
+    const { orderType, plan, creditsAmount } = body;
 
     // Calculate base amount
     let amountCents: number;
@@ -101,9 +98,6 @@ Deno.serve(async (req) => {
       const ratePerCredit = POWER_UP_RATES[userPlan] || POWER_UP_RATES.starter;
       amountCents = creditsAmount * ratePerCredit;
       description = `${creditsAmount} Credits Power-up`;
-    } else if (orderType === "upgrade" && prorationAmount) {
-      amountCents = prorationAmount;
-      description = `Upgrade to ${body.toPlan?.charAt(0).toUpperCase()}${body.toPlan?.slice(1)} Plan`;
     } else {
       return new Response(
         JSON.stringify({ error: "Invalid order parameters" }),
@@ -198,7 +192,6 @@ Deno.serve(async (req) => {
 
     // Store coupon info in metadata if coupon was applied
     const metadata: Record<string, any> = {};
-    if (body.fromPlan) metadata.from_plan = body.fromPlan;
     if (couponId) {
       metadata.coupon_id = couponId;
       metadata.original_amount_cents = amountCents;

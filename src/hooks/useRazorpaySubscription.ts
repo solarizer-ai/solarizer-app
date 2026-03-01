@@ -275,15 +275,13 @@ export function useRazorpaySubscription() {
     }
   };
 
-  // Reactivate subscription (re-purchase flow — no RPC needed, user just renews)
+  // Reactivate subscription via server-side RPC
   const reactivateSubscription = useMutation({
     mutationFn: async (): Promise<{ success: boolean }> => {
-      // With one-time payments, "reactivate" simply means undo the cancel_at_period_end flag
-      const { error } = await supabase
-        .from("subscriptions")
-        .update({ cancel_at_period_end: false, updated_at: new Date().toISOString() })
-        .eq("user_id", user?.id);
+      const { data, error } = await supabase.rpc("reactivate_subscription");
       if (error) throw error;
+      const result = data as unknown as { success: boolean; error?: string };
+      if (!result?.success) throw new Error(result?.error || "Failed to reactivate");
       return { success: true };
     },
     onSuccess: () => {

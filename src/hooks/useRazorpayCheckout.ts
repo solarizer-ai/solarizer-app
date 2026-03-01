@@ -4,14 +4,10 @@ import { toast } from "@/hooks/use-toast";
 import { invokeWithRefresh } from "@/lib/sessionRefresh";
 
 interface CreateOrderParams {
-  orderType: "subscription" | "power_up" | "upgrade";
+  orderType: "subscription" | "power_up";
   plan?: "starter" | "pro" | "business";
   billingPeriod?: "monthly";
   creditsAmount?: number;
-  // For upgrades
-  fromPlan?: string;
-  toPlan?: string;
-  prorationAmount?: number;
   coupon_code?: string;
 }
 
