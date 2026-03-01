@@ -1,43 +1,67 @@
 
 
-# First-Time Welcome Greeting
+# Fix Google OAuth Display Name
 
-## What You'll See
-When any user signs in for the first time (email or OAuth), the dashboard will display a beautiful full-screen overlay with the dashboard blurred behind it. It shows a warm, personalized greeting like "Welcome to Solarizer, [Name]!" with a brief message and a "Get Started" button. One click dismisses it and reveals the dashboard.
+## Problem
+When users sign in with Google, their full name (e.g., "Eryonix Techlabs") is available in `raw_user_meta_data` as `full_name` and `name`, but the `handle_new_user()` database trigger only checks for `display_name` -- which is only set by email signups. Google users fall back to the email prefix (e.g., "eryonixtechlabs"), which looks wrong.
 
-Since email signups already provide their display name and OAuth users get their name from Google/Apple, there's no need to ask for a name -- just greet them warmly.
+## Solution
+Update the `handle_new_user()` trigger to check multiple metadata fields in priority order:
 
-## Implementation Steps
-
-### 1. Database: Add `onboarding_completed` flag to profiles
-Add a boolean column `onboarding_completed` (default `false`) to the `profiles` table. This tracks whether the user has seen the welcome screen.
-
-### 2. New Component: `WelcomeGreeting.tsx`
-A full-screen overlay component with:
-- `backdrop-blur-lg` over the entire dashboard
-- Centered card with fade-in + scale animation
-- Solarizer logo
-- Personalized greeting: "Welcome to Solarizer, [display_name]!"
-- A short message about what they can do
-- "Get Started" button that sets `onboarding_completed = true` and dismisses with a fade-out animation
-
-### 3. Integrate into `DashboardHome.tsx`
-- Query `profiles.onboarding_completed` for the current user
-- If `false`, render `WelcomeGreeting` overlay on top of the dashboard (dashboard renders normally behind it, just blurred via CSS)
-- On dismiss, update the flag and remove the overlay
+1. `display_name` (set by email signup)
+2. `full_name` (set by Google OAuth)
+3. `name` (also set by Google OAuth)
+4. Fall back to email prefix
 
 ## Technical Details
 
-**Migration SQL:**
+### Database Migration
+Update the `handle_new_user()` function with an expanded COALESCE chain:
+
 ```sql
-ALTER TABLE public.profiles
-ADD COLUMN onboarding_completed boolean NOT NULL DEFAULT false;
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+BEGIN
+  INSERT INTO public.profiles (user_id, email, display_name, avatar_url)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(
+      NEW.raw_user_meta_data ->> 'display_name',
+      NEW.raw_user_meta_data ->> 'full_name',
+      NEW.raw_user_meta_data ->> 'name',
+      split_part(NEW.email, '@', 1)
+    ),
+    NEW.raw_user_meta_data ->> 'avatar_url'
+  );
+
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, 'user');
+
+  RETURN NEW;
+END;
+$function$;
 ```
 
-**Files to create:**
-- `src/components/WelcomeGreeting.tsx`
+This also saves the Google avatar URL into `avatar_url` while we're at it.
 
-**Files to modify:**
-- `src/pages/dashboard/DashboardHome.tsx` -- fetch onboarding status, conditionally render overlay
+### Fix existing Google users
+Run a one-time update to fix the display name for the existing Google user whose name was incorrectly set:
 
-**No RLS changes needed** -- users can already update their own profile via existing policies.
+```sql
+UPDATE public.profiles p
+SET display_name = u.raw_user_meta_data ->> 'full_name'
+FROM auth.users u
+WHERE p.user_id = u.id
+  AND u.raw_user_meta_data ->> 'full_name' IS NOT NULL
+  AND (p.display_name = split_part(u.email, '@', 1)
+       OR p.display_name IS NULL);
+```
+
+### Files modified
+- One database migration (no frontend code changes needed)
+
