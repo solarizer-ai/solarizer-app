@@ -49,14 +49,16 @@ const WelcomeGreeting = ({ displayName, userId, onComplete }: WelcomeGreetingPro
 
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-            Welcome to Solarizer{name !== "there" ? "," : "!"}{" "}
-            {name !== "there" && (
-              <span className="text-primary">{name}!</span>
+            {name !== "there" ? (
+              <><span className="text-primary">{name}</span>, welcome.</>
+            ) : (
+              <>Welcome.</>
             )}
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Your smart contract security command center is ready. Run audits,
-            track vulnerabilities, and strengthen your code — all in one place.
+            You just upgraded your security stack. Solarizer runs five AI models
+            against your contracts simultaneously — the kind of coverage that
+            used to require an entire audit firm.
           </p>
         </div>
 
