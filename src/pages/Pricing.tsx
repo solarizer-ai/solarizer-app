@@ -47,7 +47,7 @@ const pricingPlans: PricingPlan[] = [
       { label: 'Severity coverage', value: 'Critical, High, Medium' },
       { label: 'nLOC limit per audit', value: '500' },
       { label: 'Reports', value: 'Local markdown' },
-      { label: 'Dashboard reports', value: '5 credits each' },
+      { label: 'Dashboard reports', value: 'Free' },
       { label: 'Credit rate', value: '$2.80/credit' },
     ],
   },

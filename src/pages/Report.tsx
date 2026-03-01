@@ -445,7 +445,7 @@ const Report = () => {
                       <TabsTrigger value="insights" className="flex-1 flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Insights
-                        {effectivePlan === 'starter' && <Lock className="w-3 h-3 text-muted-foreground" />}
+{effectivePlan !== 'business' && <Lock className="w-3 h-3 text-muted-foreground" />}
                       </TabsTrigger>
                       <TabsTrigger value="invariants" className="flex-1 flex items-center justify-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2">
                         <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -605,10 +605,10 @@ const Report = () => {
                     </TabsContent>
 
                     <TabsContent value="insights" className="mt-4">
-                      {effectivePlan === 'starter' ? (
+                      {effectivePlan !== 'business' ? (
                         <FeatureLockedOverlay
                           featureName="Architecture Insights"
-                          requiredPlan="pro"
+                          requiredPlan="business"
                           description="Architecture insights provide a high-level review of protocol design and composability risks."
                           onUpgrade={() => setUpgradeModalOpen(true)}
                         />

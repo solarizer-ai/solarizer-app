@@ -12,7 +12,7 @@ import { PLAN_LIMITS } from "@/lib/nlocCalculator";
 interface UpgradeToProModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  reason?: 'nloc_limit' | 'file_limit';
+  reason?: 'nloc_limit';
   currentNloc?: number;
 }
 
@@ -24,7 +24,7 @@ export function UpgradeToProModal({
 }: UpgradeToProModalProps) {
   const features = [
     { icon: Shield, text: "50 credits monthly allowance" },
-    { icon: Code2, text: "Multi-file analysis up to 3,000 nLOC per audit" },
+    { icon: Code2, text: "Up to 3,000 nLOC per audit" },
     { icon: Zap, text: "Purchase credits for larger projects" },
   ];
 
@@ -37,10 +37,7 @@ export function UpgradeToProModal({
             Upgrade to Blaze
           </DialogTitle>
           <DialogDescription>
-            {reason === 'file_limit' 
-              ? "Spark plan only supports 1 file per scan. Upgrade to Blaze for multi-file analysis."
-              : `Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit limit for Spark.`
-            }
+            {`Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit limit for Spark.`}
           </DialogDescription>
         </DialogHeader>
 

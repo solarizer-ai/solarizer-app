@@ -86,7 +86,7 @@ const AuditWizard = ({ onComplete, onCancel, isSubmitting = false, subscription,
 
       <div className="min-h-[300px] sm:min-h-[400px]">
         {step === 'name' && <ProjectNameStep projectName={projectName} onProjectNameChange={handleProjectNameChange} onContinue={() => setStep('method')} />}
-        {step === 'method' && <UploadMethodStep onSelectMethod={handleMethodSelect} onBack={handleBack} isStarterPlan={subscription?.plan === 'starter' || !subscription} />}
+        {step === 'method' && <UploadMethodStep onSelectMethod={handleMethodSelect} onBack={handleBack} />}
         {step === 'input' && uploadMethod === 'folder' && (
           <div className="space-y-6">
             <div className="text-center space-y-2"><h2 className="text-2xl font-semibold text-foreground">Upload your project</h2><p className="text-sm text-muted-foreground">Drag & drop your project folder or click to browse</p></div>
