@@ -224,12 +224,13 @@ const Pricing = () => {
     setSubscribeModalOpen(true);
   };
 
-  const handleSubscribeConfirm = async (couponCode?: string) => {
+  const handleSubscribeConfirm = async (couponCode?: string, accessTokenCode?: string) => {
     setSubscribeModalOpen(false);
     await createSubscription({
       plan: targetSubscribePlan,
       billingPeriod: 'monthly',
       coupon_code: couponCode,
+      access_token_code: accessTokenCode,
     });
   };
 

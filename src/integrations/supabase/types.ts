@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_token_redemptions: {
+        Row: {
+          id: string
+          redeemed_at: string
+          token_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          redeemed_at?: string
+          token_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          redeemed_at?: string
+          token_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_token_redemptions_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "access_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      access_tokens: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string | null
@@ -972,6 +1034,15 @@ export type Database = {
         Args: { p_amount: number; p_reason: string; p_target_user_id: string }
         Returns: undefined
       }
+      admin_create_access_token: {
+        Args: {
+          p_code: string
+          p_description?: string
+          p_expires_at?: string
+          p_max_uses?: number
+        }
+        Returns: Json
+      }
       admin_create_coupon: {
         Args: {
           p_applicable_to?: string[]
@@ -985,6 +1056,7 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_delete_access_token: { Args: { p_token_id: string }; Returns: Json }
       admin_delete_coupon: { Args: { p_coupon_id: string }; Returns: Json }
       admin_get_audits: {
         Args: {
@@ -1025,6 +1097,10 @@ export type Database = {
           total_credits_spent: number
           user_id: string
         }[]
+      }
+      admin_toggle_access_token: {
+        Args: { p_active: boolean; p_token_id: string }
+        Returns: Json
       }
       admin_toggle_coupon: {
         Args: { p_active: boolean; p_coupon_id: string }
@@ -1135,6 +1211,10 @@ export type Database = {
         Returns: Json
       }
       reactivate_subscription: { Args: never; Returns: Json }
+      redeem_access_token: {
+        Args: { p_code: string; p_user_id: string }
+        Returns: Json
+      }
       refund_credits: {
         Args: {
           p_is_starter?: boolean
@@ -1159,6 +1239,7 @@ export type Database = {
         Args: { _plans: string[]; _user_id: string }
         Returns: boolean
       }
+      validate_access_token: { Args: { p_code: string }; Returns: Json }
       validate_coupon: {
         Args: { p_amount_cents: number; p_code: string; p_order_type: string }
         Returns: Json

@@ -1,11 +1,3 @@
-// Full replacement for supabase/functions/razorpay-create-order/index.ts
-// Changes from original:
-//   - Added optional `coupon_code` to CreateOrderRequest
-//   - After calculating amountCents, calls validate_coupon RPC
-//   - Creates Razorpay Payment Link with discounted amount
-//   - Stores coupon_id + original_amount_cents in payment_orders.metadata
-//   - Returns discountApplied + originalAmountCents in response
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -20,6 +12,7 @@ interface CreateOrderRequest {
   billingPeriod?: "monthly";
   creditsAmount?: number;
   coupon_code?: string;
+  access_token_code?: string;
 }
 
 const PLAN_PRICES: Record<string, number> = {
@@ -105,6 +98,27 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Access token gate: required for new subscriptions
+    if (orderType === "subscription") {
+      if (!body.access_token_code) {
+        return new Response(
+          JSON.stringify({ error: "Access token required for new subscriptions" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: tokenResult, error: tokenError } = await supabase.rpc("validate_access_token", {
+        p_code: body.access_token_code.toUpperCase().trim(),
+      });
+
+      if (tokenError || !(tokenResult as any)?.valid) {
+        return new Response(
+          JSON.stringify({ error: (tokenResult as any)?.error || "Invalid access token" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Apply coupon discount if provided
     let couponId: string | undefined;
     let finalAmountCents = amountCents;
@@ -121,18 +135,18 @@ Deno.serve(async (req) => {
         finalAmountCents = couponResult.final_amount_cents;
         console.log("Coupon applied:", body.coupon_code, "discount:", amountCents - finalAmountCents);
       } else {
-        // Invalid coupon — proceed without discount (don't block checkout)
         console.warn("Invalid coupon provided, ignoring:", body.coupon_code);
       }
     }
 
     const orderId = `order_${Date.now()}_${user.id.slice(0, 8)}`;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
 
     // ── Zero-amount bypass: fulfill directly without Razorpay ──
     if (finalAmountCents < 100) {
       const syntheticPaymentId = `coupon_free_${orderId}`;
 
-      // Create payment order record
       const { error: orderError } = await supabase.rpc("create_payment_order", {
         p_user_id: user.id,
         p_order_id: orderId,
@@ -152,11 +166,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Fulfill directly via process_payment_success
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
-
-      const { data: fulfillResult, error: fulfillError } = await adminSupabase.rpc(
+      const { error: fulfillError } = await adminSupabase.rpc(
         "process_payment_success",
         { p_order_id: orderId, p_cf_payment_id: syntheticPaymentId }
       );
@@ -181,11 +191,31 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Store coupon metadata
+      // Redeem access token
+      if (body.access_token_code) {
+        try {
+          await adminSupabase.rpc("redeem_access_token", {
+            p_code: body.access_token_code.toUpperCase().trim(),
+            p_user_id: user.id,
+          });
+        } catch (tokenErr) {
+          console.error("Failed to redeem access token:", tokenErr);
+        }
+      }
+
+      // Store metadata
+      const metadataObj: Record<string, any> = {};
       if (couponId) {
+        metadataObj.coupon_id = couponId;
+        metadataObj.original_amount_cents = amountCents;
+      }
+      if (body.access_token_code) {
+        metadataObj.access_token_code = body.access_token_code.toUpperCase().trim();
+      }
+      if (Object.keys(metadataObj).length > 0) {
         await adminSupabase
           .from("payment_orders")
-          .update({ metadata: { coupon_id: couponId, original_amount_cents: amountCents } })
+          .update({ metadata: metadataObj })
           .eq("order_id", orderId);
       }
 
@@ -230,6 +260,7 @@ Deno.serve(async (req) => {
           order_type: orderType,
           plan: plan || "",
           credits_amount: String(creditsAmount || 0),
+          access_token_code: body.access_token_code || "",
         },
         expire_by: Math.floor(Date.now() / 1000) + 3600,
       }),
@@ -265,13 +296,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
-
     const metadata: Record<string, any> = {};
     if (couponId) {
       metadata.coupon_id = couponId;
       metadata.original_amount_cents = amountCents;
+    }
+    if (body.access_token_code) {
+      metadata.access_token_code = body.access_token_code.toUpperCase().trim();
     }
 
     await adminSupabase

@@ -41,6 +41,7 @@ import AdminAuditsPage from "./pages/dashboard/admin/AdminAuditsPage";
 import AdminAuditDetailPage from "./pages/dashboard/admin/AdminAuditDetailPage";
 import AdminCouponsPage from "./pages/dashboard/admin/AdminCouponsPage";
 import AdminCreditsPage from "./pages/dashboard/admin/AdminCreditsPage";
+import AdminAccessTokensPage from "./pages/dashboard/admin/AdminAccessTokensPage";
 
 // Docs pages
 import SetupPage from "./pages/docs/SetupPage";
@@ -111,6 +112,7 @@ const App = () => (
                   <Route path="admin/audits/:id" element={<AdminRoute><AdminAuditDetailPage /></AdminRoute>} />
                   <Route path="admin/coupons" element={<AdminRoute><AdminCouponsPage /></AdminRoute>} />
                   <Route path="admin/credits" element={<AdminRoute><AdminCreditsPage /></AdminRoute>} />
+                  <Route path="admin/access-tokens" element={<AdminRoute><AdminAccessTokensPage /></AdminRoute>} />
                   <Route path="reports/:auditId" element={<Report />} />
                   <Route path="docs" element={<Navigate to="/docs/setup" replace />} />
                   <Route path="subscription" element={<Navigate to="/dashboard/billing" replace />} />
