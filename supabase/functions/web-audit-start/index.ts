@@ -241,6 +241,7 @@ Deno.serve(async (req) => {
       .from('audit_orchestration').select('session_id, status').eq('user_id', userId).in('status', ['queued', 'running']);
 
     if (existingAudits && existingAudits.length > 0) {
+      console.warn(`web-audit-start: Conflict – user ${userId} already has active session ${existingAudits[0].session_id} (status: ${existingAudits[0].status})`);
       return new Response(JSON.stringify({ error: 'An audit is already running', sessionId: existingAudits[0].session_id }), { status: 409, headers: corsHeaders });
     }
 
@@ -393,7 +394,10 @@ Deno.serve(async (req) => {
       } catch (cleanupErr) { console.error('web-audit-start: Failed to refund credits:', cleanupErr); }
     }
     if (createdSessionId) {
-      try { await supabase.from('audits').delete().eq('id', createdSessionId); } catch (cleanupErr) { console.error('web-audit-start: Failed to delete orphan audit:', cleanupErr); }
+      try {
+        await supabase.from('audit_orchestration').delete().eq('session_id', createdSessionId);
+        await supabase.from('audits').delete().eq('id', createdSessionId);
+      } catch (cleanupErr) { console.error('web-audit-start: Failed to delete orphan audit/orchestration:', cleanupErr); }
     }
 
     return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: corsHeaders });
