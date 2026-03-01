@@ -92,3 +92,6 @@ verify_jwt = false
 [functions.web-estimate]
 verify_jwt = false
 
+[functions.audit-session-ops]
+verify_jwt = false
+
