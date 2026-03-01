@@ -85,6 +85,7 @@ const adminNavItems = [
   { title: "Audits", url: "/dashboard/admin/audits", icon: FileSearch },
   { title: "Coupons", url: "/dashboard/admin/coupons", icon: Tag },
   { title: "Credits", url: "/dashboard/admin/credits", icon: CreditCard },
+  { title: "Access Tokens", url: "/dashboard/admin/access-tokens", icon: UserCheck },
 ];
 
 export function DashboardSidebar() {

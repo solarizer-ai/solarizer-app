@@ -9,6 +9,7 @@ interface CreateSubscriptionParams {
   plan: "starter" | "pro" | "business";
   billingPeriod: "monthly";
   coupon_code?: string;
+  access_token_code?: string;
 }
 
 interface UpgradeParams {
@@ -68,7 +69,7 @@ export function useRazorpaySubscription() {
 
       const { data, error } = await invokeWithRefresh<SubscriptionResponse>(
         "razorpay-create-order",
-        { body: { orderType: "subscription", plan: params.plan, billingPeriod: params.billingPeriod, coupon_code: params.coupon_code } }
+        { body: { orderType: "subscription", plan: params.plan, billingPeriod: params.billingPeriod, coupon_code: params.coupon_code, access_token_code: params.access_token_code } }
       );
 
       if (error || !data?.success) {
