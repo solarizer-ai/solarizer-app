@@ -27,26 +27,22 @@ export function useFindingComments(findingId: string | undefined) {
         .order('created_at', { ascending: true });
       
       if (error) throw error;
+      if (!data.length) return [];
       
-      // Fetch user emails for comments
+      // Batch-fetch profiles to avoid N+1
       const userIds = [...new Set(data.map(c => c.user_id))];
-      const commentsWithEmails: FindingComment[] = [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, email')
+        .in('user_id', userIds);
       
-      for (const comment of data) {
-        // Use the profile lookup for each user
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('id', comment.user_id)
-          .single();
-        
-        commentsWithEmails.push({
-          ...comment,
-          user_email: profile?.email || 'Unknown User'
-        });
-      }
+      const emailMap = new Map<string, string>();
+      profiles?.forEach(p => emailMap.set(p.user_id, p.email || 'Unknown User'));
       
-      return commentsWithEmails;
+      return data.map(comment => ({
+        ...comment,
+        user_email: emailMap.get(comment.user_id) || 'Unknown User'
+      })) as FindingComment[];
     },
     enabled: !!findingId,
   });
