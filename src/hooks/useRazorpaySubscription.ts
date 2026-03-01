@@ -81,6 +81,16 @@ export function useRazorpaySubscription() {
         return false;
       }
 
+      // Free checkout (100% coupon)
+      if (data.flowType === "free_checkout") {
+        toast({
+          title: "Subscription Activated",
+          description: "Your plan has been activated with the coupon discount!",
+        });
+        queryClient.invalidateQueries({ queryKey: ["subscription", user?.id] });
+        return true;
+      }
+
       if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
         return true;

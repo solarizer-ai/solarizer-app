@@ -127,6 +127,84 @@ Deno.serve(async (req) => {
     }
 
     const orderId = `order_${Date.now()}_${user.id.slice(0, 8)}`;
+
+    // ── Zero-amount bypass: fulfill directly without Razorpay ──
+    if (finalAmountCents < 100) {
+      const syntheticPaymentId = `coupon_free_${orderId}`;
+
+      // Create payment order record
+      const { error: orderError } = await supabase.rpc("create_payment_order", {
+        p_user_id: user.id,
+        p_order_id: orderId,
+        p_order_type: orderType,
+        p_amount_cents: finalAmountCents,
+        p_payment_session_id: syntheticPaymentId,
+        p_plan: plan || null,
+        p_billing_period: "monthly",
+        p_credits_amount: creditsAmount || null,
+      });
+
+      if (orderError) {
+        console.error("Failed to store free order:", orderError);
+        return new Response(
+          JSON.stringify({ error: "Failed to store payment order" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Fulfill directly via process_payment_success
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
+
+      const { data: fulfillResult, error: fulfillError } = await adminSupabase.rpc(
+        "process_payment_success",
+        { p_order_id: orderId, p_cf_payment_id: syntheticPaymentId }
+      );
+
+      if (fulfillError) {
+        console.error("Failed to fulfill free order:", fulfillError);
+        return new Response(
+          JSON.stringify({ error: "Failed to fulfill order" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Record coupon redemption
+      if (couponId) {
+        await adminSupabase.rpc("increment_coupon_used_count", { p_coupon_id: couponId });
+        await adminSupabase.from("coupon_redemptions").insert({
+          coupon_id: couponId,
+          user_id: user.id,
+          original_amount_cents: amountCents,
+          discounted_amount_cents: finalAmountCents,
+          discount_applied_cents: amountCents - finalAmountCents,
+        });
+      }
+
+      // Store coupon metadata
+      if (couponId) {
+        await adminSupabase
+          .from("payment_orders")
+          .update({ metadata: { coupon_id: couponId, original_amount_cents: amountCents } })
+          .eq("order_id", orderId);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          flowType: "free_checkout",
+          orderId,
+          amountCents: finalAmountCents,
+          originalAmountCents: amountCents,
+          discountApplied: amountCents - finalAmountCents,
+          currency: "USD",
+          description,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── Normal Razorpay flow ──
     const callbackUrl = `${FRONTEND_URL}/payment-success`;
 
     const rzResponse = await fetch("https://api.razorpay.com/v1/payment_links", {
@@ -136,7 +214,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: finalAmountCents, // discounted amount
+        amount: finalAmountCents,
         currency: "USD",
         accept_partial: false,
         description: description,
@@ -190,7 +268,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Store coupon info in metadata if coupon was applied
     const metadata: Record<string, any> = {};
     if (couponId) {
       metadata.coupon_id = couponId;

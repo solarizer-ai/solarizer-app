@@ -139,7 +139,7 @@ export function UpgradeConfirmationModal({
               onClick={() => onConfirm(appliedCoupon?.code)}
               disabled={isLoading}
             >
-              {isLoading ? "Processing..." : `Pay $${finalDollars} & Upgrade`}
+              {isLoading ? "Processing..." : finalCents < 100 ? "Confirm & Upgrade" : `Pay $${finalDollars} & Upgrade`}
             </Button>
             <Button
               variant="ghost"
