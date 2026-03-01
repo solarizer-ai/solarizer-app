@@ -1,46 +1,85 @@
 
+# Fix Google OAuth on Custom Domain
 
-# Sharing Page: Show Shared Reports Overview
+## Problem
+Google OAuth fails with "doesn't comply with Google's OAuth 2.0 policy" because the auth-bridge redirect URI (`solarizer-app.lovable.app/~oauth/callback`) conflicts with the custom domain (`solarizer.io`). The managed Lovable OAuth flow sets a state cookie on one domain but the callback arrives on another, causing the "OAuth state parameter missing" error.
 
-## What Changes
+## Solution
+When users access the app via the custom domain (`solarizer.io`), bypass the Lovable auth-bridge and use Supabase's native OAuth flow with `skipBrowserRedirect: true`. On the default Lovable domain, keep using the managed flow.
 
-Replace the static info-only Sharing page with a live table showing all reports the user has shared, who they're shared with, and the invitation status.
+## Changes
 
-## UI Layout
+### File: `src/pages/Auth.tsx`
 
-For users with sharing access (Inferno plan):
-1. Keep the existing PageHeader
-2. Add a new **"Shared Reports"** card above the existing info card
-3. The card contains a table with columns:
-   - **Report** (project name, linked to the report)
-   - **Shared With** (email)
-   - **Status** (badge: pending / accepted / expired)
-   - **Shared On** (relative date)
-   - **Action** (Revoke button)
-4. Empty state: "You haven't shared any reports yet. Use the Share button on any report to invite collaborators."
+Update `handleGoogleSignIn` (and `handleAppleSignIn`) to detect custom domains and use a direct OAuth flow:
 
-For users without sharing access: keep the existing upgrade prompt (no changes).
+```typescript
+const handleGoogleSignIn = async () => {
+  if (!isLogin && !acceptedTerms) {
+    triggerTermsWarning();
+    return;
+  }
 
-## Technical Approach
+  setIsGoogleLoading(true);
+  try {
+    const isCustomDomain =
+      !window.location.hostname.includes("lovable.app") &&
+      !window.location.hostname.includes("lovableproject.com");
 
-**File: `src/hooks/useAuditSharing.ts`**
-- Add a new `useAllMyShares` hook that queries `audit_shares` where `owner_id = auth.uid()`, joining with `audits` to get `project_name`. Since we can't do a Supabase join across tables without a foreign key reference being exposed in the types, we'll query `audit_shares` first, then batch-fetch audit names from `audits` table using the audit IDs.
+    if (isCustomDomain) {
+      // Bypass auth-bridge for custom domains
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        const oauthUrl = new URL(data.url);
+        const allowedHosts = ["accounts.google.com"];
+        if (!allowedHosts.some((h) => oauthUrl.hostname === h)) {
+          throw new Error("Invalid OAuth redirect URL");
+        }
+        window.location.href = data.url;
+      }
+    } else {
+      // Standard Lovable managed flow
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) throw error;
+    }
+  } catch (error: any) {
+    toast({
+      variant: 'destructive',
+      title: 'Google sign-in failed',
+      description: error?.message || 'An unexpected error occurred.',
+    });
+  } finally {
+    setIsGoogleLoading(false);
+  }
+};
+```
 
-**File: `src/pages/dashboard/SharingPage.tsx`**
-- Import `useAllMyShares`, `useRemoveShare` from the sharing hook
-- Import Table components, Badge, Button, formatDistanceToNow
-- For Inferno users: render the shared reports table with revoke functionality
-- Keep the feature bullet points below as a secondary info card
-- Show loading skeleton while data loads
-- Show empty state when no shares exist
+Same pattern for `handleAppleSignIn` (with `"appleid.apple.com"` in allowed hosts).
 
-## Data Flow
+## Steps You Need to Do (Google Cloud Console)
 
-1. Query `audit_shares` filtered by `owner_id` (RLS policy already handles this)
-2. Query `audits` for the matching audit IDs to get project names
-3. Display combined data in the table
-4. Revoke uses the existing `useRemoveShare` mutation + invalidates the new query key
+Since you're on a custom domain, you need your own Google OAuth credentials:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) and select/create a project
+2. Navigate to **APIs & Services > OAuth consent screen** -- configure it, add `solarizer.io` to Authorized domains
+3. Go to **APIs & Services > Credentials > Create Credentials > OAuth Client ID**
+   - Application type: **Web application**
+   - **Authorized JavaScript origins**: add `https://solarizer.io` and `https://www.solarizer.io`
+   - **Authorized redirect URIs**: add `https://xylfnqrtzqfduutdcxvu.supabase.co/auth/v1/callback`
+4. Copy the **Client ID** and **Client Secret**
+5. In Lovable, go to **Cloud > Users > Authentication Settings > Sign In Methods > Google** and paste your Client ID and Secret there
+6. In **Cloud > Users > Authentication Settings**, set:
+   - **Site URL** to `https://solarizer.io`
+   - **Redirect URLs**: add `https://solarizer.io/**`
 
 ## Files Modified
-- `src/hooks/useAuditSharing.ts` -- add `useAllMyShares` hook
-- `src/pages/dashboard/SharingPage.tsx` -- rebuild with shared reports table
+- `src/pages/Auth.tsx` -- add custom domain detection and direct OAuth flow
