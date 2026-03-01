@@ -72,7 +72,7 @@ const Auth = () => {
         if (error) throw error;
         if (data?.url) {
           const oauthUrl = new URL(data.url);
-          if (!["accounts.google.com"].some((h) => oauthUrl.hostname === h)) {
+          if (!["accounts.google.com", "xylfnqrtzqfduutdcxvu.supabase.co"].some((h) => oauthUrl.hostname === h)) {
             throw new Error("Invalid OAuth redirect URL");
           }
           window.location.href = data.url;
@@ -113,7 +113,7 @@ const Auth = () => {
         if (error) throw error;
         if (data?.url) {
           const oauthUrl = new URL(data.url);
-          if (!["appleid.apple.com"].some((h) => oauthUrl.hostname === h)) {
+          if (!["appleid.apple.com", "xylfnqrtzqfduutdcxvu.supabase.co"].some((h) => oauthUrl.hostname === h)) {
             throw new Error("Invalid OAuth redirect URL");
           }
           window.location.href = data.url;
