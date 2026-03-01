@@ -49,6 +49,10 @@ const Auth = () => {
     setTimeout(() => setShowTermsWarning(false), 2000);
   };
 
+  const isCustomDomain =
+    !window.location.hostname.includes("lovable.app") &&
+    !window.location.hostname.includes("lovableproject.com");
+
   const handleGoogleSignIn = async () => {
     if (!isLogin && !acceptedTerms) {
       triggerTermsWarning();
@@ -57,21 +61,33 @@ const Auth = () => {
     
     setIsGoogleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Google sign-in failed',
-          description: error.message,
+      if (isCustomDomain) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: `${window.location.origin}/dashboard`,
+            skipBrowserRedirect: true,
+          },
         });
+        if (error) throw error;
+        if (data?.url) {
+          const oauthUrl = new URL(data.url);
+          if (!["accounts.google.com"].some((h) => oauthUrl.hostname === h)) {
+            throw new Error("Invalid OAuth redirect URL");
+          }
+          window.location.href = data.url;
+        }
+      } else {
+        const { error } = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: window.location.origin,
+        });
+        if (error) throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Google sign-in failed',
-        description: 'An unexpected error occurred. Please try again.',
+        description: error?.message || 'An unexpected error occurred.',
       });
     } finally {
       setIsGoogleLoading(false);
@@ -86,21 +102,33 @@ const Auth = () => {
     
     setIsAppleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("apple", {
-        redirect_uri: window.location.origin,
-      });
-      if (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Apple sign-in failed',
-          description: error.message,
+      if (isCustomDomain) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "apple",
+          options: {
+            redirectTo: `${window.location.origin}/dashboard`,
+            skipBrowserRedirect: true,
+          },
         });
+        if (error) throw error;
+        if (data?.url) {
+          const oauthUrl = new URL(data.url);
+          if (!["appleid.apple.com"].some((h) => oauthUrl.hostname === h)) {
+            throw new Error("Invalid OAuth redirect URL");
+          }
+          window.location.href = data.url;
+        }
+      } else {
+        const { error } = await lovable.auth.signInWithOAuth("apple", {
+          redirect_uri: window.location.origin,
+        });
+        if (error) throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Apple sign-in failed',
-        description: 'An unexpected error occurred. Please try again.',
+        description: error?.message || 'An unexpected error occurred.',
       });
     } finally {
       setIsAppleLoading(false);
