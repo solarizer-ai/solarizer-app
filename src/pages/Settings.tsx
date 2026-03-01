@@ -218,24 +218,24 @@ const Settings = () => {
 
           <Tabs defaultValue={initialTab} className="space-y-6">
             <TabsList className="flex flex-wrap justify-start gap-1.5 h-auto p-1.5 bg-muted/50">
-              <TabsTrigger value="profile" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+              <TabsTrigger value="profile" title="Profile" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="subscription" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+              <TabsTrigger value="subscription" title="Subscription" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
                 <CreditCard className="w-4 h-4" />
                 <span className="hidden sm:inline">Subscription</span>
               </TabsTrigger>
-              <TabsTrigger value="security" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+              <TabsTrigger value="security" title="Security" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
                 <Shield className="w-4 h-4" />
                 <span className="hidden sm:inline">Security</span>
               </TabsTrigger>
-              <TabsTrigger value="sharing" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+              <TabsTrigger value="sharing" title="Sharing" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:inline">Sharing</span>
                 {!canShareReports && <Lock className="w-3 h-3 text-muted-foreground" />}
               </TabsTrigger>
-              <TabsTrigger value="integrations" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
+              <TabsTrigger value="integrations" title="Integrations" className="gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm data-[state=active]:bg-background">
                 <Link2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Integrations</span>
               </TabsTrigger>
@@ -272,24 +272,14 @@ const Settings = () => {
                       placeholder="Your name"
                     />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <Button onClick={handleSaveProfile} disabled={saving} className="gap-2">
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Check className="w-4 h-4" />
-                      )}
-                      Save Changes
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => signOut()}
-                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </Button>
-                  </div>
+                  <Button onClick={handleSaveProfile} disabled={saving} className="gap-2">
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
+                    Save Changes
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -352,7 +342,7 @@ const Settings = () => {
                           <div className="flex-1">
                             <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Downgrade Scheduled</p>
                             <p className="text-xs text-muted-foreground">
-                              Changes to {subscription?.pending_plan} on {subscription?.pending_plan_effective_date && format(new Date(subscription.pending_plan_effective_date), "MMM d, yyyy")}
+                              Changes to {formatPlanName(subscription?.pending_plan)} on {subscription?.pending_plan_effective_date && format(new Date(subscription.pending_plan_effective_date), "MMM d, yyyy")}
                             </p>
                           </div>
                           <Button 
@@ -389,7 +379,7 @@ const Settings = () => {
                           <span>
                               {isPro ? "$199" : "$499"}/month
                               {subscription?.current_period_end && (
-                                <> • Expires: {format(new Date(subscription.current_period_end), "MMM d, yyyy")}</>
+                                <> • Expires on {format(new Date(subscription.current_period_end), "MMM d, yyyy")}</>
                               )}
                             </span>
                           </div>
@@ -534,7 +524,11 @@ const Settings = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Change your account password
                     </p>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={async () => {
+                      if (!user?.email) return;
+                      await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: `${window.location.origin}/settings` });
+                      toast({ title: "Password reset email sent", description: "Check your inbox for the reset link" });
+                    }}>
                       Change Password
                     </Button>
                   </div>

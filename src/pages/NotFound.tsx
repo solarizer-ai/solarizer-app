@@ -1,21 +1,17 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { FileQuestion } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="text-center px-6">
+        <FileQuestion className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+        <h1 className="mb-2 text-4xl font-bold text-foreground">404</h1>
+        <p className="mb-6 text-lg text-muted-foreground">Page not found</p>
+        <Button asChild variant="outline">
+          <Link to="/">Return to Home</Link>
+        </Button>
       </div>
     </div>
   );

@@ -94,7 +94,7 @@ const DashboardHome = () => {
               {getTimeBasedGreeting()}{displayName ? `, ${displayName}` : ""}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Overview of your security analysis activity
+              Overview of your security audit activity
             </p>
           </div>
         </div>
@@ -148,7 +148,7 @@ const DashboardHome = () => {
         {/* Recent Audits - Takes 2 columns */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Analysis</h3>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Audits</h3>
             {audits && audits.length > 4 && (
               <Button
                 variant="ghost"
@@ -182,11 +182,12 @@ const DashboardHome = () => {
                     />
                     {isOwned && (
                       <button
+                        aria-label="Delete audit"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDeleteAuditId(audit.id);
                         }}
-                        className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                        className="absolute top-3 right-3 p-1.5 rounded-md bg-destructive/10 text-destructive opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -198,7 +199,7 @@ const DashboardHome = () => {
           ) : (
             <div className="text-center py-16 rounded-xl border border-border bg-card/50">
               <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No assessments yet</h3>
+              <h3 className="text-lg font-medium text-foreground mb-2">No audits yet</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {subscription ? "Start a new audit to analyze your smart contracts" : "Subscribe to start running security analyses"}
               </p>
@@ -234,9 +235,9 @@ const DashboardHome = () => {
       <AlertDialog open={!!deleteAuditId} onOpenChange={() => setDeleteAuditId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
+            <AlertDialogTitle>Delete Audit</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this assessment? This action cannot be undone.
+              Are you sure you want to delete this audit? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

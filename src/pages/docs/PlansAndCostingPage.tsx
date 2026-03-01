@@ -71,7 +71,7 @@ export default function PlansAndCostingPage() {
               [
                 <strong className="text-foreground">L1</strong>,
                 "Standard",
-                "0.83x",
+                "0.8x",
                 "ERC-20 tokens, basic vaults, simple access control. Well-understood patterns with established security guarantees.",
               ],
               [
@@ -156,7 +156,7 @@ export default function PlansAndCostingPage() {
             rows={[
               ["LendingPool.sol", "Scope", "420", "L2", "1.0x", "420"],
               ["InterestModel.sol", "Scope", "180", "L3", "1.2x", "216"],
-              ["PriceOracle.sol", "Scope", "95", "L1", "0.83x", "79"],
+              ["PriceOracle.sol", "Scope", "95", "L1", "0.8x", "76"],
               ["IERC20.sol", "Context", "45", "\u2014", "0.15x", "7"],
               ["SafeMath.sol", "Context", "120", "\u2014", "0.15x", "18"],
               [
@@ -165,13 +165,13 @@ export default function PlansAndCostingPage() {
                 <strong className="text-foreground">860</strong>,
                 "",
                 "",
-                <strong className="text-foreground">740</strong>,
+                <strong className="text-foreground">737</strong>,
               ],
             ]}
           />
           <p>
             With 50 included credits, this audit costs{" "}
-            <strong className="text-foreground">690 credits</strong> from your balance —
+            <strong className="text-foreground">687 credits</strong> from your balance —
             or zero extra if you've accumulated credits over multiple months.
           </p>
         </div>
@@ -371,12 +371,12 @@ export default function PlansAndCostingPage() {
           <DocTable
             headers={["File", "nLOC", "Complexity", "Rate", "Credits"]}
             rows={[
-              ["FeeToken.sol", "280", "L1", "0.83x", "233"],
+              ["FeeToken.sol", "280", "L1", "0.8x", "224"],
             ]}
           />
           <p>
-            <strong className="text-foreground">Total: 233 credits.</strong> With 50 monthly
-            credits, you need 183 Power-Up credits ($2.80 each = $512.40).
+            <strong className="text-foreground">Total: 224 credits.</strong> With 50 monthly
+            credits, you need 174 Power-Up credits ($2.80 each = $487.20).
             Or wait 5 months to accumulate 250 credits and run it for free.
           </p>
           <p className="font-medium text-foreground">What happens during the audit:</p>
@@ -417,7 +417,7 @@ export default function PlansAndCostingPage() {
             rows={[
               ["LendingPool.sol", "Scope", "920", "L2", "1.0x", "920"],
               ["LiquidationEngine.sol", "Scope", "640", "L3", "1.2x", "768"],
-              ["InterestRateModel.sol", "Scope", "240", "L1", "0.83x", "200"],
+              ["InterestRateModel.sol", "Scope", "240", "L1", "0.8x", "192"],
               ["ILendingPool.sol", "Context", "85", "\u2014", "0.15x", "13"],
               ["IERC20.sol", "Context", "45", "\u2014", "0.15x", "7"],
               [
@@ -426,12 +426,12 @@ export default function PlansAndCostingPage() {
                 <strong className="text-foreground">1,930</strong>,
                 "",
                 "",
-                <strong className="text-foreground">1,908</strong>,
+                <strong className="text-foreground">1,900</strong>,
               ],
             ]}
           />
           <p>
-            <strong className="text-foreground">Total: 1,908 credits</strong> (scope: 1,800 nLOC
+            <strong className="text-foreground">Total: 1,900 credits</strong> (scope: 1,800 nLOC
             — well within Blaze's 3,000 limit).
           </p>
           <p className="font-medium text-foreground">What happens during the audit:</p>

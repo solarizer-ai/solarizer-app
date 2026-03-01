@@ -406,7 +406,7 @@ const PublicReport = () => {
               or the audit may still be in progress.
             </p>
             <a
-              href="https://solarizer.eryonix.com"
+              href="https://solarizer.io"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors"
@@ -642,8 +642,8 @@ const PublicReport = () => {
             <div className="bg-radial-glow absolute inset-0 pointer-events-none" />
             <div className="relative">
               <ShieldCheck className="w-16 h-16 text-success mx-auto mb-4" />
-              <p className="text-lg font-medium text-foreground">No Vulnerabilities Found</p>
-              <p className="text-sm text-muted-foreground mt-1">This project passed security analysis with no issues detected.</p>
+              <p className="text-lg font-medium text-foreground">No Vulnerabilities Detected</p>
+              <p className="text-sm text-muted-foreground mt-1">No issues were identified during automated analysis.</p>
               <p className="text-xs text-muted-foreground/60 mt-3 max-w-md mx-auto">
                 This does not guarantee the absence of vulnerabilities — see the disclaimer below.
               </p>
@@ -767,7 +767,7 @@ const PublicReport = () => {
                 the use or deployment of analyzed contracts. For the full terms governing the use of this
                 report, see our{" "}
                 <a
-                  href="https://solarizer.eryonix.com/terms"
+                  href="https://solarizer.io/terms"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
@@ -803,17 +803,17 @@ const PublicReport = () => {
               <span>&copy; {new Date().getFullYear()} Solarizer</span>
               <span className="hidden sm:inline">&middot;</span>
               <a
-                href="https://solarizer.eryonix.com"
+                href="https://solarizer.io"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 hover:text-muted-foreground transition-colors"
               >
-                solarizer.eryonix.com
+                solarizer.io
                 <ExternalLink className="w-3 h-3" />
               </a>
               <span className="hidden sm:inline">&middot;</span>
               <a
-                href="https://solarizer.eryonix.com/terms"
+                href="https://solarizer.io/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-muted-foreground transition-colors"
@@ -822,7 +822,7 @@ const PublicReport = () => {
               </a>
               <span className="hidden sm:inline">&middot;</span>
               <a
-                href="https://solarizer.eryonix.com/privacy"
+                href="https://solarizer.io/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-muted-foreground transition-colors"

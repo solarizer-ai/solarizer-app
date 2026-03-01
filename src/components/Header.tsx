@@ -114,6 +114,7 @@ const Header = () => {
               {!loading && (
                 user ? (
                   <button
+                    aria-label="Account settings"
                     onClick={() => navigate("/settings")}
                     className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
                   >
@@ -133,7 +134,7 @@ const Header = () => {
             {/* Mobile menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground hover:text-foreground h-8 w-8">
+                <Button variant="ghost" size="icon" aria-label="Open menu" className="md:hidden text-muted-foreground hover:text-foreground h-8 w-8">
                   <Menu className="w-4 h-4" />
                 </Button>
               </SheetTrigger>

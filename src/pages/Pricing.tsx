@@ -431,7 +431,7 @@ const Pricing = () => {
 
         {/* ── Credit explainer ── */}
         <p className="text-sm text-muted-foreground/50 text-center mt-8 mb-4">
-          50 monthly credits included with every plan. Unused credits carry forward — they never expire.
+          50 monthly credits included with every plan. Unused credits carry forward — they never expire. Maintain an active subscription to use them.
         </p>
 
         {/* ── Feature card grid ── */}
@@ -508,8 +508,8 @@ const Pricing = () => {
                 What is a credit?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground/60">
-                1 credit &asymp; 1 nLOC (normalized line of code), modified by contract complexity.
-                L1 contracts cost 0.83&times; credits, L2 cost 1&times;, and L3 cost 1.2&times;.
+                1 credit ≈ 1 nLOC (normalized line of code), modified by contract complexity.
+                L1 contracts cost 0.8× credits, L2 cost 1×, and L3 cost 1.2×.
                 Every plan includes 50 credits per month.
               </AccordionContent>
             </AccordionItem>

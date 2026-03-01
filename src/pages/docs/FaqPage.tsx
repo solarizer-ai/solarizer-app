@@ -9,7 +9,7 @@ const faqs = [
   {
     question: "What is a credit?",
     answer:
-      "Credits are the currency for running audits. Each credit covers one normalized line of code (nLOC) — that's your source code excluding comments and blank lines. The actual cost per audit also depends on complexity: L1 contracts use 0.83× credits, L2 use 1.0×, and L3 use 1.2×. Context files are charged at a reduced 0.15× rate.",
+      "Credits are the currency for running audits. Each credit covers one normalized line of code (nLOC) — that's your source code excluding comments and blank lines. The actual cost per audit also depends on complexity: L1 contracts use 0.8× credits, L2 use 1.0×, and L3 use 1.2×. Context files are charged at a reduced 0.15× rate.",
   },
   {
     question: "What exactly counts towards my credit cost?",

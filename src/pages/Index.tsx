@@ -246,7 +246,7 @@ const Index = () => {
               ) : (
                 <div className="text-center py-16 border border-dashed border-border rounded-lg">
                   <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">No assessments yet</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-2">No audits yet</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     {subscription ? "Start a new audit to analyze your smart contracts" : "Subscribe to start running security analyses"}
                   </p>
@@ -284,9 +284,9 @@ const Index = () => {
       <AlertDialog open={!!deleteAuditId} onOpenChange={() => setDeleteAuditId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
+            <AlertDialogTitle>Delete Audit</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this assessment? This action cannot be undone.
+              Are you sure you want to delete this audit? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

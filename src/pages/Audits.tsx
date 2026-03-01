@@ -105,12 +105,12 @@ const Audits = () => {
             <div>
               <h2 className="text-2xl font-semibold text-foreground">History</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {audits?.length || 0} security assessments
+                {audits?.length || 0} security audits
               </p>
             </div>
-            <Button onClick={() => navigate("/dashboard?new=true")} className="gap-2">
+            <Button onClick={() => navigate("/dashboard/new-audit")} className="gap-2">
               <Plus className="w-4 h-4" />
-              Run Analysis
+              New Audit
             </Button>
           </div>
 
@@ -185,6 +185,7 @@ const Audits = () => {
                     />
                     {isOwned && (
                       <button
+                        aria-label="Delete audit"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDeleteAuditId(audit.id);
@@ -202,7 +203,7 @@ const Audits = () => {
             <div className="text-center py-20 border border-dashed border-border rounded-lg">
               <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                {searchQuery || statusFilter !== "all" || ownershipFilter !== "all" ? "No matching assessments" : "No assessments yet"}
+                {searchQuery || statusFilter !== "all" || ownershipFilter !== "all" ? "No matching audits" : "No audits yet"}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {searchQuery || statusFilter !== "all" || ownershipFilter !== "all"
@@ -210,9 +211,9 @@ const Audits = () => {
                   : "Start your first smart contract security analysis"}
               </p>
               {!searchQuery && statusFilter === "all" && ownershipFilter === "all" && (
-                <Button onClick={() => navigate("/dashboard?new=true")} className="gap-2">
+                <Button onClick={() => navigate("/dashboard/new-audit")} className="gap-2">
                   <Plus className="w-4 h-4" />
-                  Run Analysis
+                  New Audit
                 </Button>
               )}
             </div>
@@ -226,9 +227,9 @@ const Audits = () => {
       <AlertDialog open={!!deleteAuditId} onOpenChange={() => setDeleteAuditId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
+            <AlertDialogTitle>Delete Audit</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this assessment? This action cannot be undone.
+              Are you sure you want to delete this audit? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

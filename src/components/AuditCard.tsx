@@ -73,7 +73,10 @@ const AuditCard = ({ projectName, contractCount, grade, status, timestamp, onCli
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
       className={cn(
         "group relative bg-card border border-border rounded-lg p-4 sm:p-5 cursor-pointer",
         "hover:border-primary/20 transition-colors",

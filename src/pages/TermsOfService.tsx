@@ -238,7 +238,7 @@ const TermsOfService = () => {
                   </code>
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  Complexity multipliers are: L1 (Standard) = 0.83×, L2 (Complex) = 1.0×, L3 (Novel) = 1.2×. Context files — interfaces, libraries, and dependencies included for analysis context — are charged at a discounted rate of 0.15×.
+                  Complexity multipliers are: L1 (Standard) = 0.8×, L2 (Complex) = 1.0×, L3 (Novel) = 1.2×. Context files — interfaces, libraries, and dependencies included for analysis context — are charged at a discounted rate of 0.15×.
                 </p>
               </div>
 

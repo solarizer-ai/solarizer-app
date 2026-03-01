@@ -79,7 +79,7 @@ const AnalysesPage = () => {
       <PageHeader
         icon={FileSearch}
         title="History"
-        subtitle={`${audits?.length || 0} security assessments`}
+        subtitle={`${audits?.length || 0} security audits`}
         actions={
           <Button onClick={() => navigate("/dashboard/new-audit")} className="gap-1.5">
             <Plus className="w-4 h-4" />
@@ -162,7 +162,7 @@ const AnalysesPage = () => {
         <div className="text-center py-16 rounded-xl border border-border bg-card/50">
           <FileCode className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">
-            {searchQuery || statusFilter !== "all" || ownershipFilter !== "all" ? "No matching assessments" : "No assessments yet"}
+            {searchQuery || statusFilter !== "all" || ownershipFilter !== "all" ? "No matching audits" : "No audits yet"}
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
             {searchQuery || statusFilter !== "all" || ownershipFilter !== "all"
@@ -175,8 +175,8 @@ const AnalysesPage = () => {
       <AlertDialog open={!!deleteAuditId} onOpenChange={() => setDeleteAuditId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
-            <AlertDialogDescription>Are you sure you want to delete this assessment? This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogTitle>Delete Audit</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to delete this audit? This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

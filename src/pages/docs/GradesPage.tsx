@@ -10,7 +10,7 @@ const grades = [
 ];
 
 const guidance = [
-  { grade: "A", color: "text-success", text: "Your contracts are clean. Deploy with confidence — consider a final manual review for business logic." },
+  { grade: "A", color: "text-success", text: "Your contracts look clean. Consider a final manual review for business logic before deployment." },
   { grade: "B", color: "text-success", text: "Only low-severity issues found. Review each finding and address any that affect your specific use case." },
   { grade: "C", color: "text-warning", text: "Medium-severity issues present. Fix these before deployment — they may not be immediately exploitable but weaken your security posture." },
   { grade: "D", color: "text-warning", text: "High-severity vulnerabilities detected. These are exploitable under certain conditions — prioritize fixes before any mainnet deployment." },

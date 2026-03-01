@@ -179,7 +179,7 @@ const builtDifferentFeatures = [
   {
     title: "Reproducible Results",
     icon: Workflow,
-    copy: "Every audit follows the same structured multi-phase pipeline. Reproducible results. No randomness. Same engine, same depth, every time.",
+    copy: "Every audit follows the same structured multi-phase pipeline. Consistent results. Same structured pipeline, same depth, every time.",
     demo: "pipeline",
   },
   {
@@ -696,7 +696,7 @@ const Home = () => {
           </h1>
 
           <p className="text-[clamp(0.75rem,calc(0.6rem+0.7vw),1.125rem)] text-muted-foreground/70 mt-3 md:mt-8 max-w-xl mx-auto leading-relaxed">
-            Multi-agent security engine that hunts vulnerabilities across your entire protocol — from known exploit patterns to protocol-specific logic flaws. Results in minutes, not weeks.
+            Multi-agent security engine that hunts vulnerabilities across your smart contracts — from known exploit patterns to protocol-specific logic flaws. Results in minutes, not weeks.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
@@ -921,7 +921,7 @@ const Home = () => {
         <ScrollReveal>
           <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
             <h2 className="font-black tracking-tight leading-[1.15]">
-              <FitText as="span" max={88} min={22} className="block text-gradient">Professional Security</FitText>
+              <FitText as="span" max={88} min={22} className="block text-gradient">AI-Powered Security</FitText>
               <FitText as="span" max={88} min={22} className="block mt-1 md:mt-2">Fraction of the Cost</FitText>
             </h2>
 

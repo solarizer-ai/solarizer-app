@@ -22,6 +22,16 @@ import InvariantsTab from "@/components/InvariantsTab";
 import InsightsTab from "@/components/InsightsTab";
 import { generateMarkdownReport, downloadMarkdown } from "@/lib/exportMarkdown";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAudit, useFindings, useArchivedFindings } from "@/hooks/useAudits";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuditShareCount, useAuditOwnerInfo } from "@/hooks/useAuditSharing";
@@ -42,6 +52,7 @@ const Report = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [publicLinkCopied, setPublicLinkCopied] = useState(false);
+  const [confirmPublicOpen, setConfirmPublicOpen] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<FindingSeverity | null>(null);
   const findingRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const togglePublicMutation = useTogglePublicReport();
@@ -188,7 +199,7 @@ const Report = () => {
 
   const handleShareClick = () => {
     if (!canShareReports) {
-      toast.info("Sharing reports requires a Business plan");
+      toast.info("Sharing reports requires an Inferno plan");
       return;
     }
     setShareModalOpen(true);
@@ -297,21 +308,17 @@ const Report = () => {
                               checked={(currentAudit as any)?.is_public || false}
                               disabled={togglePublicMutation.isPending}
                               onCheckedChange={(checked) => {
-                                togglePublicMutation.mutate(
-                                  { auditId: currentAudit!.id, isPublic: checked },
-                                  {
-                                    onSuccess: (slug) => {
-                                      if (checked && slug) {
-                                        toast.success("Report is now public", {
-                                          description: "Anyone with the link can view this report",
-                                        });
-                                      } else {
-                                        toast.success("Report is now private");
-                                      }
-                                    },
-                                    onError: () => toast.error("Failed to update visibility"),
-                                  }
-                                );
+                                if (checked) {
+                                  setConfirmPublicOpen(true);
+                                } else {
+                                  togglePublicMutation.mutate(
+                                    { auditId: currentAudit!.id, isPublic: false },
+                                    {
+                                      onSuccess: () => toast.success("Report is now private"),
+                                      onError: () => toast.error("Failed to update visibility"),
+                                    }
+                                  );
+                                }
                               }}
                             />
                           </div>
@@ -362,12 +369,12 @@ const Report = () => {
             {isLive ? (
               <p className="text-sm text-muted-foreground animate-pulse">
                 {orchestration?.phase
-                  ? `Analysing · ${PHASE_LABELS[orchestration.phase] || orchestration.phase}`
-                  : 'Analysing...'}
+                  ? `Analyzing · ${PHASE_LABELS[orchestration.phase] || orchestration.phase}`
+                  : 'Analyzing...'}
               </p>
             ) : currentAudit ? (
               <p className="text-sm text-muted-foreground">
-                Analysed {formatTimestamp(currentAudit.created_at)}
+                Analyzed {formatTimestamp(currentAudit.created_at)}
               </p>
             ) : null}
           </div>
@@ -383,7 +390,7 @@ const Report = () => {
                     <XCircle className="w-8 h-8 text-muted-foreground" />
                   </div>
                   <h3 className="text-lg font-medium text-foreground mb-2">
-                    {currentAudit.status === 'cancelled' ? 'Analysis Cancelled' : 'Analysis Failed'}
+                    {currentAudit.status === 'cancelled' ? 'Audit Cancelled' : 'Audit Failed'}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-md mb-4">
                     {currentAudit.status === 'cancelled'
@@ -402,7 +409,7 @@ const Report = () => {
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                       <span>
                         Your credits couldn't be refunded automatically.{" "}
-                        <a href="mailto:support@solarizer.io" className="font-medium underline">
+                        <a href="mailto:hello@solarizer.io" className="font-medium underline">
                           Contact support
                         </a>{" "}
                         with audit ID:{" "}
@@ -411,10 +418,10 @@ const Report = () => {
                     </div>
                   )}
                   <Button 
-                    onClick={() => navigate("/dashboard?new=true")} 
+                    onClick={() => navigate("/dashboard/new-audit")} 
                     className="gap-2"
                   >
-                    Start New Analysis
+                    New Audit
                   </Button>
                 </div>
               ) : (
@@ -644,7 +651,10 @@ const Report = () => {
             </>
           ) : (
             <div className="text-center py-20">
-              <p className="text-muted-foreground">Audit not found</p>
+              <Shield className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Audit not found</h3>
+              <p className="text-sm text-muted-foreground mb-4">This audit may have been deleted or you may not have access.</p>
+              <Button variant="outline" onClick={() => navigate("/dashboard")}>Back to Dashboard</Button>
             </div>
           )}
         </div>
@@ -658,6 +668,39 @@ const Report = () => {
           ownerEmail={currentUserEmail}
         />
       )}
+
+      {/* Confirm Public Dialog */}
+      <AlertDialog open={confirmPublicOpen} onOpenChange={setConfirmPublicOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Make report public?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anyone with the link will be able to view this audit report, including all findings and remediation details.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setConfirmPublicOpen(false);
+              togglePublicMutation.mutate(
+                { auditId: currentAudit!.id, isPublic: true },
+                {
+                  onSuccess: (slug) => {
+                    if (slug) {
+                      toast.success("Report is now public", {
+                        description: "Anyone with the link can view this report",
+                      });
+                    }
+                  },
+                  onError: () => toast.error("Failed to update visibility"),
+                }
+              );
+            }}>
+              Make Public
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Upgrade Modal */}
       <UpgradeToProModal
