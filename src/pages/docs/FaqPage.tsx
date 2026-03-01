@@ -1,11 +1,9 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { HelpCircle } from "lucide-react";
 
 const faqs = [
   {
@@ -36,43 +34,57 @@ const faqs = [
   {
     question: "Why can't I see remediation recommendations on the Spark plan?",
     answer:
-      "Spark is a starter tier designed to help you identify vulnerabilities. To access AI-driven remediation guidance, report exports, and Low/Info/Gas severity findings, upgrade to the Blaze plan.",
+      "Spark is a starter tier designed to help you identify vulnerabilities. You can download your report as a local markdown file on all plans. To access AI-driven remediation guidance, Low/Info/Gas severity findings, and deeper analysis phases, upgrade to Blaze.",
+  },
+  {
+    question: "How long does an audit take?",
+    answer:
+      "Most audits complete in 3-8 minutes for contracts under 500 nLOC. Larger scopes with multiple contracts can take up to 15 minutes. The 7-phase analysis engine runs automatically — you can close the browser and check back later.",
+  },
+  {
+    question: "What file formats are supported?",
+    answer:
+      "Solarizer analyzes Solidity (.sol) files. You can upload a folder of contracts directly or import from a GitHub repository.",
+  },
+  {
+    question: "Can I re-run an audit on the same contracts?",
+    answer:
+      "Yes. Each audit run is independent and costs credits based on the scope at the time. If you've updated your contracts, simply start a new audit to analyze the latest version.",
+  },
+  {
+    question: "What is nLOC?",
+    answer:
+      "Normalized Lines of Code — your source code with comments and blank lines removed. This is the metric used to calculate audit costs, ensuring you only pay for actual code.",
+  },
+  {
+    question: "Is my source code stored after the audit?",
+    answer:
+      "No. Your source code is processed in memory during the audit and purged after completion. Only the audit report and metadata are retained in your dashboard.",
   },
 ];
 
 const FaqPage = () => (
   <div className="space-y-6">
     <div>
-      <h2 className="text-2xl font-semibold text-foreground">Frequently Asked Questions</h2>
-      <p className="text-sm text-muted-foreground mt-1">Common questions about Solarizer and credits</p>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Frequently Asked Questions</h1>
+      <p className="text-muted-foreground mt-1">Common questions about Solarizer and credits</p>
     </div>
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <HelpCircle className="w-5 h-5 text-primary" />
-          FAQ
-        </CardTitle>
-        <CardDescription>Find answers to common questions</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Accordion type="single" collapsible className="space-y-3">
-          {faqs.map((faq, index) => (
-            <AccordionItem
-              key={index}
-              value={`faq-${index}`}
-              className="border border-border/50 rounded-lg px-4 bg-muted/20 hover:border-primary/30 transition-colors data-[state=open]:border-primary/50 data-[state=open]:bg-muted/40"
-            >
-              <AccordionTrigger className="text-left font-medium py-4 hover:text-primary hover:no-underline">
-                {faq.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground text-sm pb-4">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </CardContent>
-    </Card>
+    <Accordion type="single" collapsible className="space-y-3">
+      {faqs.map((faq, index) => (
+        <AccordionItem
+          key={index}
+          value={`faq-${index}`}
+          className="border border-border/10 rounded-lg px-4 bg-foreground/[0.02]"
+        >
+          <AccordionTrigger className="text-left font-medium py-4 hover:text-primary hover:no-underline">
+            {faq.question}
+          </AccordionTrigger>
+          <AccordionContent className="text-sm text-muted-foreground/60 pb-4">
+            {faq.answer}
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
   </div>
 );
 

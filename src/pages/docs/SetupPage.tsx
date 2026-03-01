@@ -1,58 +1,82 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import { CheckCircle2, Rocket } from "lucide-react";
 
 const SetupPage = () => (
   <div className="space-y-6">
     <div>
-      <h2 className="text-2xl font-semibold text-foreground">Getting Started</h2>
-      <p className="text-sm text-muted-foreground mt-1">Get up and running in under 2 minutes</p>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Getting Started</h1>
+      <p className="text-muted-foreground mt-1">Get up and running in under 2 minutes</p>
     </div>
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-primary" />
-          Quick Start
-        </CardTitle>
-        <CardDescription>Follow these steps to start your first security audit</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex gap-4">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-medium text-primary">1</span>
-            </div>
-            <div>
-              <h4 className="font-medium">Create Your Account</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                Sign up at <strong className="text-foreground">solarizer.io</strong> to create your account and access the dashboard.
-              </p>
-            </div>
+
+    {/* What You'll Need */}
+    <div className="bg-foreground/[0.02] border border-border/10 rounded-2xl p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <CheckCircle2 className="w-5 h-5 text-primary" />
+        <h2 className="text-lg font-semibold">What You'll Need</h2>
+      </div>
+      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground/60">
+        <li>An active Solarizer subscription (Spark, Blaze, or Inferno)</li>
+        <li>Solidity source files (.sol) — either as a local folder or in a GitHub repository</li>
+      </ul>
+    </div>
+
+    {/* Quick Start */}
+    <div className="bg-foreground/[0.02] border border-border/10 rounded-2xl p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Rocket className="w-5 h-5 text-primary" />
+        <h2 className="text-lg font-semibold">Quick Start</h2>
+      </div>
+      <div className="space-y-4">
+        <div className="flex gap-4">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-primary">1</span>
           </div>
-          <div className="flex gap-4">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-medium text-primary">2</span>
-            </div>
-            <div>
-              <h4 className="font-medium">Choose a Plan</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                Subscribe to a plan — <strong className="text-foreground">Spark</strong>, <strong className="text-foreground">Blaze</strong>, or <strong className="text-foreground">Inferno</strong> — to unlock the analysis engine. Each plan includes 50 monthly credits.
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-medium text-primary">3</span>
-            </div>
-            <div>
-              <h4 className="font-medium">Start Your First Audit</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                Click <strong className="text-foreground">New Audit</strong> from the dashboard, upload your Solidity contracts, and follow the guided wizard to begin your security analysis.
-              </p>
-            </div>
+          <div>
+            <h4 className="font-medium">Create Your Account</h4>
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              Sign up at <strong className="text-foreground">solarizer.io</strong> to create your account and access the dashboard.
+            </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        <div className="flex gap-4">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-primary">2</span>
+          </div>
+          <div>
+            <h4 className="font-medium">Choose a Plan</h4>
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              Subscribe to <strong className="text-foreground">Spark ($149/mo)</strong>, <strong className="text-foreground">Blaze ($199/mo)</strong>, or <strong className="text-foreground">Inferno ($499/mo)</strong> to unlock the analysis engine. Every plan includes 50 monthly credits.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-4">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-primary">3</span>
+          </div>
+          <div>
+            <h4 className="font-medium">Start Your First Audit</h4>
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              Click <strong className="text-foreground">New Audit</strong> from the dashboard. Upload a folder of Solidity contracts or import directly from a GitHub repository, then follow the guided wizard.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-4">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-primary">4</span>
+          </div>
+          <div>
+            <h4 className="font-medium">Review Your Report</h4>
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              Once the analysis completes, your dashboard shows the audit grade, findings summary, and full report. You can also download the report as a local markdown file.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p className="text-sm text-muted-foreground/60">
+      Ready to dive deeper? Learn about the{" "}
+      <a href="/docs/audits" className="text-primary hover:underline">audit wizard and analysis phases</a>.
+    </p>
   </div>
 );
 

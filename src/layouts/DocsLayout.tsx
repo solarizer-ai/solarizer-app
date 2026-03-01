@@ -11,7 +11,7 @@ export default function DocsLayout() {
           <div className="sticky top-0 z-10 flex items-center h-12 px-4 bg-background/80 backdrop-blur-sm border-b border-border md:hidden">
             <SidebarTrigger />
           </div>
-          <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-4xl mx-auto">
+          <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-4xl mx-auto">
             <Outlet />
           </div>
         </main>
