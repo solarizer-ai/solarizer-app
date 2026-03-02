@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { usePublicAudit, usePublicFindings } from "@/hooks/usePublicAudit";
 import CodeBlock from "@/components/CodeBlock";
-import { Progress } from "@/components/ui/progress";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   Shield, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle,
-  Info, Fuel, CheckCircle2, XCircle, ChevronDown, FileCode, Lightbulb,
-  Calendar, Code2, Bug, CircleCheckBig,
+  Info, Fuel, ChevronDown, FileCode, Lightbulb,
+  Calendar, Code2, Bug,
   Clock, Scale, Cpu, RefreshCcw, Eye, ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -216,13 +217,6 @@ const PublicFindingItem = ({ finding }: { finding: any }) => {
                   <span className="font-mono truncate max-w-[180px]">{finding.location}</span>
                 </div>
               )}
-              <div className="shrink-0">
-                {finding.is_resolved ? (
-                  <div className="flex items-center gap-1 text-xs text-success"><CheckCircle2 className="w-3.5 h-3.5" />Resolved</div>
-                ) : (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground"><XCircle className="w-3.5 h-3.5" />Open</div>
-                )}
-              </div>
               <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
             </div>
           </div>
@@ -284,25 +278,6 @@ const PublicFindingItem = ({ finding }: { finding: any }) => {
             </div>
           )}
 
-          {/* Resolved Status */}
-          <div className="flex items-center gap-2 pt-2 border-t border-border">
-            {finding.is_resolved ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                <span className="text-sm text-success font-medium">Resolved</span>
-                {finding.resolved_at && (
-                  <span className="text-xs text-muted-foreground ml-1">
-                    on {format(new Date(finding.resolved_at), "MMM d, yyyy")}
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <XCircle className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Open</span>
-              </>
-            )}
-          </div>
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -313,16 +288,15 @@ const PublicFindingItem = ({ finding }: { finding: any }) => {
 const BrandedHeader = () => (
   <>
     <header className="border-b border-primary/20 bg-background/90 backdrop-blur-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 sm:px-6 max-w-5xl py-3 flex items-center justify-between">
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src={solarLogo} alt="Solarizer" className="h-7 w-auto" />
           <div className="h-5 w-px bg-border" />
           <span className="terminal-pill">Security Audit Report</span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-primary/70 font-mono tracking-wide border border-primary/20 rounded px-2.5 py-1 uppercase">
-          <Shield className="w-3.5 h-3.5" />
-          Public Report
-        </div>
+        <Button asChild variant="solarGlow" size="sm">
+          <Link to="/login">Start Auditing</Link>
+        </Button>
       </div>
     </header>
     <div className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
@@ -341,7 +315,7 @@ const PublicReport = () => {
     return (
       <div className="min-h-screen bg-background">
         <BrandedHeader />
-        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-5xl space-y-8">
+        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl space-y-8">
           {/* Hero skeleton */}
           <div className="space-y-3">
             <Skeleton className="h-5 w-24 rounded" />
@@ -427,9 +401,6 @@ const PublicReport = () => {
     return acc;
   }, {} as Record<Severity, number>);
   const totalFindings = allFindings.length;
-  const resolvedCount = allFindings.filter(f => f.is_resolved).length;
-  const resolvedPct = totalFindings > 0 ? Math.round((resolvedCount / totalFindings) * 100) : 0;
-
   const groupedFindings = SEVERITY_ORDER
     .filter(sev => severityCounts[sev] > 0)
     .map(sev => ({ severity: sev, findings: allFindings.filter(f => f.severity === sev) }));
@@ -464,7 +435,7 @@ const PublicReport = () => {
       {/* ── Sticky Header ────────────────────────────────── */}
       <BrandedHeader />
 
-      <main className="container mx-auto px-4 sm:px-6 py-8 max-w-5xl space-y-8">
+      <main className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl space-y-8">
 
         {/* ── Hero: Project Metadata ─────────────────────── */}
         <div className="space-y-4">
@@ -483,10 +454,6 @@ const PublicReport = () => {
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-full px-3 py-1.5">
               <Bug className="w-3.5 h-3.5" />
               {totalFindings} {totalFindings === 1 ? "finding" : "findings"}
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 border border-border rounded-full px-3 py-1.5">
-              <CircleCheckBig className="w-3.5 h-3.5" />
-              {resolvedCount} resolved
             </span>
           </div>
         </div>
@@ -522,22 +489,6 @@ const PublicReport = () => {
                 </div>
               </div>
 
-              {/* Remediation Progress */}
-              {totalFindings > 0 && (
-                <div className="flex-1 sm:border-l sm:border-border sm:pl-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <CircleCheckBig className="w-4 h-4 text-success" />
-                      Remediation Progress
-                    </h4>
-                    <span className="text-sm font-semibold text-foreground">{resolvedPct}%</span>
-                  </div>
-                  <Progress value={resolvedPct} className="h-2 mb-2" />
-                  <p className="text-xs text-muted-foreground">
-                    {resolvedCount} of {totalFindings} {totalFindings === 1 ? "finding" : "findings"} resolved
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Divider */}
@@ -783,7 +734,7 @@ const PublicReport = () => {
       {/* ── Footer ────────────────────────────────────────── */}
       <footer className="border-t border-border mt-16 relative overflow-hidden">
         <div className="bg-radial-glow absolute inset-0 pointer-events-none" />
-        <div className="container mx-auto px-4 sm:px-6 py-12 max-w-5xl relative">
+        <div className="container mx-auto px-4 sm:px-6 py-12 max-w-6xl relative">
           <div className="flex flex-col items-center text-center space-y-4">
             {/* Brand */}
             <div className="flex items-center gap-2">
