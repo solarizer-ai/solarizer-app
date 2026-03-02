@@ -200,7 +200,7 @@ const builtDifferentFeatures = [
     demo: "container",
   },
   {
-    title: "No Data Retention",
+    title: "No Code Retention",
     icon: EyeOff,
     copy: "We never store your source code beyond the active scan. We never train our models on your codebase. When the audit ends, everything is purged. Your code is yours — period.",
     demo: "dataLifecycle",
@@ -539,7 +539,7 @@ const DataLifecycleDemo = () => (
       ))}
     </div>
     <div className="border-t border-border/10 mt-2.5 pt-2 space-y-1">
-      {["No code stored", "No model training", "No logs retained"].map((text) => (
+      {["No code stored", "No model training"].map((text) => (
         <div key={text} className="flex items-center gap-1.5 text-red-400/60">
           <span className="text-[10px]">✗</span>
           <span>{text}</span>
