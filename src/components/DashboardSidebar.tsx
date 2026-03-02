@@ -13,6 +13,7 @@ import {
   Plug,
   BookOpen,
   LogOut,
+  LifeBuoy,
   ChevronUp,
   BarChart3,
   CreditCard,
@@ -75,6 +76,7 @@ const navGroups = [
       { title: "Profile", url: "/dashboard/profile", icon: User },
       { title: "Security", url: "/dashboard/security", icon: Shield },
       { title: "Billing", url: "/dashboard/billing", icon: Receipt },
+      { title: "Support", url: "/dashboard/support", icon: LifeBuoy },
     ],
   },
 ];
