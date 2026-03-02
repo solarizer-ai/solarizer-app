@@ -371,31 +371,31 @@ const ValidationDemo = () => (
 );
 
 const CoverageDemo = () => (
-  <div className="bg-[hsl(0_0%_4%)] border border-border/10 rounded-lg px-4 py-3 font-mono text-[11px]">
+  <div className="bg-[hsl(0_0%_4%)] border border-border/10 rounded-lg px-4 py-3 font-mono text-[11px] overflow-hidden">
     <div className="flex items-center justify-between text-muted-foreground/50 mb-2.5">
       <span>Vault.sol</span>
-      <span>5/7 · 71%</span>
+      <span className="shrink-0">5/7 · 71%</span>
     </div>
-    <div className="border-t border-border/10 pt-2.5 space-y-1.5">
-      <div className="flex items-start gap-2">
+    <div className="border-t border-border/10 pt-2.5 space-y-1.5 overflow-hidden">
+      <div className="flex items-start gap-2 min-w-0">
         <span className="text-red-400 shrink-0">✗</span>
-        <span className="text-muted-foreground/70">test_withdraw_does_not_subtract_lockedAssets</span>
+        <span className="text-muted-foreground/70 truncate">test_withdraw_does_not_subtract_lockedAssets</span>
       </div>
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 min-w-0">
         <span className="text-red-400 shrink-0">✗</span>
-        <span className="text-muted-foreground/70">test_getPricePerShare_stable_during_callback</span>
+        <span className="text-muted-foreground/70 truncate">test_getPricePerShare_stable_during_callback</span>
       </div>
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 min-w-0">
         <span className="text-green-400 shrink-0">✓</span>
-        <span className="text-muted-foreground/70">test_deposit_correctly_accrues_yield_before_minting</span>
+        <span className="text-muted-foreground/70 truncate">test_deposit_correctly_accrues_yield_before_minting</span>
       </div>
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 min-w-0">
         <span className="text-green-400 shrink-0">✓</span>
-        <span className="text-muted-foreground/70">test_totalSupply_equals_sum_of_balances</span>
+        <span className="text-muted-foreground/70 truncate">test_totalSupply_equals_sum_of_balances</span>
       </div>
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2 min-w-0">
         <span className="text-green-400 shrink-0">✓</span>
-        <span className="text-muted-foreground/70">test_onlyOwner_can_update_fee_basis</span>
+        <span className="text-muted-foreground/70 truncate">test_onlyOwner_can_update_fee_basis</span>
       </div>
     </div>
     <div className="border-t border-border/10 mt-2.5 pt-2 text-muted-foreground/40">
