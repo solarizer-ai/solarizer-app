@@ -31,6 +31,7 @@ import SecurityPage from "./pages/dashboard/SecurityPage";
 import SharingPage from "./pages/dashboard/SharingPage";
 import IntegrationsPage from "./pages/dashboard/IntegrationsPage";
 import NewAuditPage from "./pages/dashboard/NewAuditPage";
+import SupportPage from "./pages/dashboard/SupportPage";
 
 // Admin pages
 import { AdminRoute } from "./components/AdminRoute";
@@ -105,6 +106,7 @@ const App = () => (
                   <Route path="sharing" element={<SharingPage />} />
                   <Route path="integrations" element={<IntegrationsPage />} />
                   <Route path="new-audit" element={<NewAuditPage />} />
+                  <Route path="support" element={<SupportPage />} />
                   <Route path="admin" element={<AdminRoute><AdminOverviewPage /></AdminRoute>} />
                   <Route path="admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
                   <Route path="admin/users/:id" element={<AdminRoute><AdminUserDetailPage /></AdminRoute>} />

@@ -5,8 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Send } from "lucide-react";
 
 const statusColor: Record<string, string> = {
   secured: "text-success",
@@ -22,6 +24,7 @@ export default function AdminUserDetailPage() {
   const queryClient = useQueryClient();
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
+  const [responseTexts, setResponseTexts] = useState<Record<string, string>>({});
 
   const { data: userInfo } = useQuery({
     queryKey: ["admin-user-detail", id],
@@ -69,6 +72,20 @@ export default function AdminUserDetailPage() {
     enabled: !!id,
   });
 
+  const { data: tickets = [] } = useQuery({
+    queryKey: ["admin-user-tickets", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("*")
+        .eq("user_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
   const adjustMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.rpc("admin_adjust_credits", {
@@ -86,6 +103,27 @@ export default function AdminUserDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-credit-history", id] });
     },
     onError: () => toast.error("Failed to adjust credits"),
+  });
+
+  const respondMutation = useMutation({
+    mutationFn: async ({ ticketId, response }: { ticketId: string; response: string }) => {
+      const { error } = await supabase
+        .from("support_tickets")
+        .update({
+          admin_response: response,
+          status: "resolved",
+          responded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", ticketId);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast.success("Response sent");
+      setResponseTexts((prev) => ({ ...prev, [vars.ticketId]: "" }));
+      queryClient.invalidateQueries({ queryKey: ["admin-user-tickets", id] });
+    },
+    onError: () => toast.error("Failed to respond"),
   });
 
   return (
@@ -214,6 +252,59 @@ export default function AdminUserDetailPage() {
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Support Tickets */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Support Tickets ({(tickets as any[]).length})</CardTitle></CardHeader>
+        <CardContent>
+          {(tickets as any[]).length === 0 ? (
+            <p className="text-sm text-muted-foreground">No support tickets.</p>
+          ) : (
+            <div className="space-y-4">
+              {(tickets as any[]).map((t) => (
+                <div key={t.id} className="border border-border rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">{t.subject}</p>
+                    <Badge variant={t.status === "resolved" ? "default" : "outline"} className="capitalize text-xs">
+                      {t.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{t.message}</p>
+                  <p className="text-xs text-muted-foreground/60">{new Date(t.created_at).toLocaleDateString()}</p>
+
+                  {t.admin_response && (
+                    <div className="p-3 bg-primary/5 border border-primary/10 rounded-md">
+                      <p className="text-xs font-medium text-primary mb-1">Your Response</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{t.admin_response}</p>
+                    </div>
+                  )}
+
+                  {t.status === "open" && (
+                    <div className="flex gap-2 mt-2">
+                      <Textarea
+                        placeholder="Write a response..."
+                        value={responseTexts[t.id] || ""}
+                        onChange={(e) => setResponseTexts((prev) => ({ ...prev, [t.id]: e.target.value }))}
+                        rows={2}
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        className="gap-1 self-end"
+                        disabled={!responseTexts[t.id]?.trim() || respondMutation.isPending}
+                        onClick={() => respondMutation.mutate({ ticketId: t.id, response: responseTexts[t.id].trim() })}
+                      >
+                        <Send className="w-3 h-3" />
+                        Send
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
