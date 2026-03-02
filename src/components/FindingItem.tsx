@@ -299,10 +299,32 @@ const renderWithCodeFormatting = (text: string, useHighlighting = false) => {
       }
     
     // Handle inline formatting (bold, italic, code) for non-list text
+    // Split on double newlines into paragraphs for structured rendering
+    const paragraphs = textSegment.split(/\n\n+/).filter(p => p.trim());
+    if (paragraphs.length <= 1) {
+      return (
+        <span key={segmentIndex}>
+          {parseInlineFormatting(textSegment, `segment-${segmentIndex}`)}
+        </span>
+      );
+    }
     return (
-      <span key={segmentIndex}>
-        {parseInlineFormatting(textSegment, `segment-${segmentIndex}`)}
-      </span>
+      <div key={segmentIndex} className="space-y-3">
+        {paragraphs.map((para, pIdx) => {
+          const labelMatch = para.match(/^([A-Z][A-Za-z\s]+):\s*/);
+          if (labelMatch) {
+            const label = labelMatch[1];
+            const rest = para.slice(labelMatch[0].length);
+            return (
+              <p key={pIdx}>
+                <strong className="font-semibold text-foreground">{label}:</strong>{' '}
+                {parseInlineFormatting(rest, `segment-${segmentIndex}-p-${pIdx}`)}
+              </p>
+            );
+          }
+          return <p key={pIdx}>{parseInlineFormatting(para.trim(), `segment-${segmentIndex}-p-${pIdx}`)}</p>;
+        })}
+      </div>
     );
   });
 };

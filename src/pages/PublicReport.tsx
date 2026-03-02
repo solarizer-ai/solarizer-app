@@ -184,7 +184,29 @@ const renderWithCodeFormatting = (text: string) => {
         );
       }
     }
-    return <span key={segmentIndex}>{parseInlineFormatting(textSegment, `seg-${segmentIndex}`)}</span>;
+    // Split on double newlines into paragraphs for structured rendering
+    const paragraphs = textSegment.split(/\n\n+/).filter(p => p.trim());
+    if (paragraphs.length <= 1) {
+      return <span key={segmentIndex}>{parseInlineFormatting(textSegment, `seg-${segmentIndex}`)}</span>;
+    }
+    return (
+      <div key={segmentIndex} className="space-y-3">
+        {paragraphs.map((para, pIdx) => {
+          const labelMatch = para.match(/^([A-Z][A-Za-z\s]+):\s*/);
+          if (labelMatch) {
+            const label = labelMatch[1];
+            const rest = para.slice(labelMatch[0].length);
+            return (
+              <p key={pIdx}>
+                <strong className="font-semibold text-foreground">{label}:</strong>{' '}
+                {parseInlineFormatting(rest, `seg-${segmentIndex}-p-${pIdx}`)}
+              </p>
+            );
+          }
+          return <p key={pIdx}>{parseInlineFormatting(para.trim(), `seg-${segmentIndex}-p-${pIdx}`)}</p>;
+        })}
+      </div>
+    );
   });
 };
 
