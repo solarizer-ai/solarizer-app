@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Twitter } from "lucide-react";
+import { Mail } from "lucide-react";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 
 const footerLinks = {
@@ -37,21 +37,26 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground/50 max-w-[220px] leading-relaxed">
               AI-powered smart contract security analysis
             </p>
-            <a
-              href="mailto:hello@solarizer.io"
-              className="text-xs text-muted-foreground/40 hover:text-primary transition-colors font-mono"
-            >
-              hello@solarizer.io
-            </a>
-            <a
-              href="https://x.com/solarizer_io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/40 hover:text-primary transition-colors"
-            >
-              <Twitter className="w-3.5 h-3.5" />
-              <span className="font-mono">@solarizer_io</span>
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href="mailto:hello@solarizer.io"
+                className="text-muted-foreground/40 hover:text-primary transition-colors"
+                aria-label="Email"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
+              <a
+                href="https://x.com/solarizer_io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground/40 hover:text-primary transition-colors"
+                aria-label="X (Twitter)"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
+            </div>
           </div>
 
           {/* Link columns — mobile: 3-col row; desktop: inline with brand */}
