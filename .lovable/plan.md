@@ -1,114 +1,80 @@
 
-# Access Token Gate for First-Time Subscriptions
+# Support Tickets Feature
 
-Gate new subscriptions behind a valid invite code (access token). Admin can create/manage tokens. Users must enter a valid token before subscribing.
-
----
-
-## Task 1: Database Migration
-
-Create tables and RPC functions:
-
-- **`access_tokens`** table: `id`, `code` (unique), `description`, `max_uses`, `used_count`, `expires_at`, `is_active`, `created_at`
-- **`access_token_redemptions`** table: `id`, `token_id`, `user_id`, `redeemed_at` (unique on token_id + user_id)
-- RLS: admin-only management for both tables
-- **RPCs:**
-  - `validate_access_token(p_code)` -- checks validity, returns `{valid, token_id}` or `{valid: false, error}`
-  - `redeem_access_token(p_code, p_user_id)` -- SECURITY DEFINER, idempotent redemption
-  - `admin_create_access_token`, `admin_toggle_access_token`, `admin_delete_access_token` -- admin CRUD with role checks
+Add a support request system where users can submit tickets from the dashboard sidebar, and admins can view them in the admin user detail page.
 
 ---
 
-## Task 2: AccessTokenInput Component
+## Task 1: Database Migration -- `support_tickets` Table
 
-**New file:** `src/components/AccessTokenInput.tsx`
+Create `supabase/migrations/..._support_tickets.sql`:
 
-Modeled after `CouponInput.tsx`:
-- Text input with KeyRound icon, uppercase, mono font
-- "Verify" button calls `validate_access_token` RPC
-- Shows green check or red error message
-- Reports result (including code string) via `onValidate` callback
-- Clear button to reset
+```sql
+CREATE TABLE IF NOT EXISTS public.support_tickets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  subject text NOT NULL,
+  message text NOT NULL,
+  status text NOT NULL DEFAULT 'open',
+  admin_response text,
+  responded_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
----
+ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
 
-## Task 3: Update SubscribeConfirmationModal
+-- Users can view and create their own tickets
+CREATE POLICY "users_select_own_tickets" ON public.support_tickets
+  FOR SELECT USING (auth.uid() = user_id);
 
-**Modify:** `src/components/SubscribeConfirmationModal.tsx`
+CREATE POLICY "users_insert_own_tickets" ON public.support_tickets
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-- Import and render `AccessTokenInput` above the coupon input
-- Track `validatedTokenCode` state
-- Disable Pay button until a valid token is entered
-- Update `onConfirm` signature to `(couponCode?, accessTokenCode?) => void`
-- Pass `validatedTokenCode` in `handleConfirm`
-
----
-
-## Task 4: Update useRazorpaySubscription Hook
-
-**Modify:** `src/hooks/useRazorpaySubscription.ts`
-
-- Add `access_token_code?: string` to `CreateSubscriptionParams`
-- Pass it in the edge function invocation body
-
----
-
-## Task 5: Update Pricing.tsx Call Site
-
-**Modify:** `src/pages/Pricing.tsx`
-
-- Update `handleSubscribeConfirm` to accept and forward `accessTokenCode`
+-- Admins full access
+CREATE POLICY "admins_manage_tickets" ON public.support_tickets
+  FOR ALL USING (public.has_role(auth.uid(), 'admin'));
+```
 
 ---
 
-## Task 6: Update razorpay-create-order Edge Function
+## Task 2: Support Page for Users
 
-**Modify:** `supabase/functions/razorpay-create-order/index.ts`
+Create `src/pages/dashboard/SupportPage.tsx`:
 
-- Add `access_token_code` to request interface
-- For `orderType === "subscription"`: require and validate access token (403 without)
-- Store `access_token_code` in payment_orders metadata
-- In zero-amount flow: redeem token after fulfillment
-- Add token code to Razorpay payment link notes
-
----
-
-## Task 7: Update razorpay-verify-payment Edge Function
-
-**Modify:** `supabase/functions/razorpay-verify-payment/index.ts`
-
-- After coupon redemption block: check metadata for `access_token_code`
-- Call `redeem_access_token` RPC (non-fatal on error)
+- Form with subject (text input) and message (textarea) fields
+- Submit inserts into `support_tickets` table
+- Below the form, list the user's past tickets with status (open/resolved/closed)
+- Show admin response inline if one exists
+- Uses standard Card/Input/Textarea/Button components
 
 ---
 
-## Task 8: Admin Access Tokens Page
+## Task 3: Sidebar + Routing
 
-**New file:** `src/pages/dashboard/admin/AdminAccessTokensPage.tsx`
+**`src/components/DashboardSidebar.tsx`:**
+- Add `{ title: "Support", url: "/dashboard/support", icon: LifeBuoy }` to the ACCOUNT nav group
+- Import `LifeBuoy` from lucide-react
 
-Following the `AdminCouponsPage` pattern:
-- Create form: code, description, max uses, expires at
-- Tokens table with code, description, used/max, expires, active toggle, delete (with confirmation)
-- Redemptions drawer (Sheet) showing user_id + timestamp
-- All mutations via admin RPCs
-
----
-
-## Task 9: Routing and Sidebar
-
-**Modify:** `src/App.tsx`
-- Import `AdminAccessTokensPage`
-- Add route: `admin/access-tokens`
-
-**Modify:** `src/components/DashboardSidebar.tsx`
-- Add "Access Tokens" to `adminNavItems` array with `UserCheck` icon (already imported)
+**`src/App.tsx`:**
+- Import `SupportPage`
+- Add route: `<Route path="support" element={<SupportPage />} />`
 
 ---
 
-## Technical Details
+## Task 4: Admin User Detail -- Support Tickets Section
 
-- `POWER_UP_RATES` in `razorpay-create-order` still uses old rates (280/250/220) -- note: the credit rate change was UI-only; these are payment rates per credit for power-ups. The plan specifies NOT updating these as the user only asked to update display rates.
-- The `validate_access_token` RPC uses SECURITY DEFINER so it works for authenticated users calling from the frontend (no RLS needed on the table for validation)
-- Token redemption is idempotent -- re-redeeming the same token by the same user is a no-op
-- Delete with redemptions deactivates instead of deleting to preserve audit trail
-- Types file (`src/integrations/supabase/types.ts`) will auto-update after migration; no manual edit needed
+**`src/pages/dashboard/admin/AdminUserDetailPage.tsx`:**
+- Add a query to fetch `support_tickets` for the viewed user (filtered by `user_id`)
+- Render a "Support Tickets" card at the bottom showing subject, status, message, and created date
+- Add ability for admin to respond (text input + button) which updates `admin_response` and sets `status = 'resolved'`
+- Admin response uses direct Supabase update (admin has ALL policy)
+
+---
+
+## Technical Notes
+
+- RLS ensures users only see their own tickets; admins see all via the `admins_manage_tickets` policy
+- No new edge functions needed -- direct table operations via the Supabase client
+- Admin response updates both `admin_response`, `responded_at`, and `status` fields in a single update
+- The user's Support page shows the admin response so they can see the resolution
