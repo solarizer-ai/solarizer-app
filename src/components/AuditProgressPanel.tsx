@@ -6,6 +6,7 @@ import type { AuditOrchestrationProgress } from "@/hooks/useAuditProgress";
 
 const PHASES = [
   { key: "preparing", label: "Preparing" },
+  { key: "invariants", label: "Invariant Analysis" },
   { key: "hunting", label: "Hunting" },
   { key: "cross_contract", label: "Cross-Contract" },
   { key: "validation", label: "Validation" },
