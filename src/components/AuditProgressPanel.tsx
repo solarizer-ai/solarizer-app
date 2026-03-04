@@ -119,7 +119,8 @@ const AuditProgressPanel = ({ orchestration, scopeMetadata, liveFindings = [] }:
     return paths.map((path, idx) => {
       const meta = scopeMap.get(path);
       const prog = contractProgress[path];
-      const done = prog?.done || idx < effectiveIdx || activePhaseIdx > 1;
+      const huntingPhaseIdx = getPhaseIndex("hunting");
+      const done = prog?.done || idx < effectiveIdx || activePhaseIdx > huntingPhaseIdx;
       const isActive = orchestration.progress.currentContract === path && !done;
       return { path, meta, done, error: prog?.error, isActive };
     });
