@@ -95,7 +95,21 @@ const AuditWizard = ({ onComplete, onCancel, isSubmitting = false, subscription,
             </div>
           </div>
         )}
-        {step === 'input' && uploadMethod === 'github' && <GitHubImportStep onFilesImported={handleGitHubFilesImported} onBack={handleBack} />}
+        {step === 'input' && uploadMethod === 'github' && (
+          files.length === 0
+            ? <GitHubImportStep onFilesImported={handleGitHubFilesImported} onBack={handleBack} />
+            : <div className="space-y-6">
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-semibold text-foreground">Imported from GitHub</h2>
+                  <p className="text-sm text-muted-foreground">Review your files before continuing</p>
+                </div>
+                <FolderUploader onFilesUploaded={setFiles} uploadedFiles={files} onClear={() => setFiles([])} />
+                <div className="flex items-center justify-between">
+                  <Button variant="ghost" onClick={() => setFiles([])} className="gap-2"><ArrowLeft className="w-4 h-4" />Re-import</Button>
+                  <Button onClick={handleProceedToScope} disabled={getAllFiles(files).length === 0} className="gap-2"><Play className="w-4 h-4" />Continue</Button>
+                </div>
+              </div>
+        )}
         {step === 'scope' && <ScopeSelectionStep fileTree={files} selectedScope={selectedScope} onScopeChange={setSelectedScope} onBack={handleBack} onProceed={() => setStep('estimate')} />}
         {step === 'estimate' && <EstimatorStep scopeFiles={getScopeFilesForEstimation()} contextFiles={getContextFilesForEstimation()} onBack={handleBack} onProceed={handleEstimateComplete} onUpgradeNeeded={(r, n) => onUpgradeNeeded?.(r, n)} onPowerUpNeeded={(n) => onPowerUpNeeded?.(n)} subscription={subscription} credits={credits} isSubmitting={false} />}
         {step === 'context' && <ContextStep additionalContext={additionalContext} onContextChange={setAdditionalContext} onBack={handleBack} onProceed={handleContextComplete} isSubmitting={isSubmitting} nloc={combinedClocResult?.totalCredits || 0} />}
