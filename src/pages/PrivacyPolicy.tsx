@@ -43,7 +43,7 @@ const PrivacyPolicy = () => {
               1. Introduction & Scope
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Eryonix Techlabs ("Solarizer," "we," "our," or "us") is the data controller responsible for your personal information. This Privacy Policy describes how we collect, use, store, share, and protect information when you use the Solarizer platform, including:
+              Solarizer ("we," "our," or "us") is the data controller responsible for your personal information. Solarizer is currently a brand name; the operating entity is in the process of incorporation. This Privacy Policy describes how we collect, use, store, share, and protect information when you use the Solarizer platform, including:
             </p>
             <ul className="text-muted-foreground text-sm space-y-2 ml-2 mb-4">
               <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span>The Solarizer CLI (command-line interface)</span></li>
@@ -78,7 +78,7 @@ const PrivacyPolicy = () => {
                 <strong className="text-foreground">"Processing"</strong> means any operation performed on data, including collection, storage, use, analysis, transmission, and deletion.
               </p>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                <strong className="text-foreground">"Controller"</strong> means the entity that determines the purposes and means of Processing Personal Data. For data processed through the Service, Eryonix Techlabs is the Controller.
+                <strong className="text-foreground">"Controller"</strong> means the entity that determines the purposes and means of Processing Personal Data. For data processed through the Service, Solarizer is the Controller.
               </p>
             </div>
           </section>
@@ -268,7 +268,7 @@ const PrivacyPolicy = () => {
               8. International Data Transfers
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Solarizer is operated by Eryonix Techlabs. Your information may be processed in jurisdictions other than your country of residence, including countries that may not provide the same level of data protection as your home jurisdiction.
+              Solarizer is operated by Solarizer. Your information may be processed in jurisdictions other than your country of residence, including countries that may not provide the same level of data protection as your home jurisdiction.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-3">
               Where we transfer Personal Data outside of the European Economic Area (EEA), the United Kingdom, or other jurisdictions with data transfer restrictions, we rely on appropriate safeguards, including:
@@ -492,7 +492,7 @@ const PrivacyPolicy = () => {
               For questions about this Privacy Policy, to exercise your privacy rights, or to raise a concern about our data practices, contact:
             </p>
             <div className="bg-muted/30 border border-border rounded-lg p-4 mb-4">
-              <p className="text-foreground font-medium">Eryonix Techlabs</p>
+              <p className="text-foreground font-medium">Solarizer</p>
               <p className="text-muted-foreground text-sm">
                 Email:{" "}
                 <a href="mailto:hello@solarizer.io" className="text-primary hover:underline">hello@solarizer.io</a>

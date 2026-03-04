@@ -48,7 +48,7 @@ const TermsOfService = () => {
             </p>
             <div className="bg-muted/30 border border-border rounded-lg p-4 space-y-3">
               <p className="text-muted-foreground text-sm leading-relaxed">
-                <strong className="text-foreground">"Service"</strong> means the Solarizer platform, including the Solarizer CLI (command-line interface), the Solarizer web dashboard, all associated APIs, and any related documentation, tools, or features made available by Eryonix Techlabs.
+                <strong className="text-foreground">"Service"</strong> means the Solarizer platform, including the Solarizer CLI (command-line interface), the Solarizer web dashboard, all associated APIs, and any related documentation, tools, or features made available by Solarizer.
               </p>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 <strong className="text-foreground">"Content"</strong> or <strong className="text-foreground">"Your Content"</strong> means any smart contract source code, files, metadata, or other materials you submit to the Service for analysis.
@@ -77,7 +77,7 @@ const TermsOfService = () => {
               2. Acceptance of Terms
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              By accessing, installing, or using any part of the Service — including creating an account, running the Solarizer CLI, or accessing the web dashboard — you acknowledge that you have read, understood, and agree to be bound by these Terms of Service ("Terms"). These Terms constitute a legally binding agreement between you (individually, or on behalf of the entity you represent) and Eryonix Techlabs ("Solarizer," "we," "our," or "us").
+              By accessing, installing, or using any part of the Service — including creating an account, running the Solarizer CLI, or accessing the web dashboard — you acknowledge that you have read, understood, and agree to be bound by these Terms of Service ("Terms"). These Terms constitute a legally binding agreement between you (individually, or on behalf of the entity you represent) and Solarizer ("we," "our," or "us"). Solarizer is currently a brand name; the operating entity is in the process of incorporation. These Terms will be updated to reflect the incorporated entity once established.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-4">
               If you are entering into these Terms on behalf of an organization, you represent and warrant that you have the authority to bind that organization to these Terms. If you do not have such authority, or if you do not agree with these Terms, you must not use the Service.
@@ -308,7 +308,7 @@ const TermsOfService = () => {
               <div>
                 <h3 className="text-lg font-medium text-foreground mb-2">6.3 Solarizer Intellectual Property</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The Service, including its analysis engine, AI models, detection patterns, algorithms, user interface, branding, and documentation, is owned by Eryonix Techlabs and protected by intellectual property laws. Nothing in these Terms grants you any right, title, or interest in the Service beyond the limited right to use it in accordance with these Terms.
+                  The Service, including its analysis engine, AI models, detection patterns, algorithms, user interface, branding, and documentation, is owned by Solarizer and protected by intellectual property laws. Nothing in these Terms grants you any right, title, or interest in the Service beyond the limited right to use it in accordance with these Terms.
                 </p>
               </div>
               <div>
@@ -439,7 +439,7 @@ const TermsOfService = () => {
               11. Indemnification
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              You agree to indemnify, defend, and hold harmless Eryonix Techlabs, its officers, directors, employees, agents, and affiliates from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to:
+              You agree to indemnify, defend, and hold harmless Solarizer, its officers, directors, employees, agents, and affiliates from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to:
             </p>
             <ol className="text-muted-foreground text-sm space-y-2 ml-6 list-decimal">
               <li>Your use of the Service or any activity under your account.</li>
@@ -612,7 +612,7 @@ const TermsOfService = () => {
               For questions about these Terms, contact:
             </p>
             <div className="bg-muted/30 border border-border rounded-lg p-4">
-              <p className="text-foreground font-medium">Eryonix Techlabs</p>
+              <p className="text-foreground font-medium">Solarizer</p>
               <p className="text-muted-foreground text-sm">
                 Email:{" "}
                 <a href="mailto:hello@solarizer.io" className="text-primary hover:underline">hello@solarizer.io</a>
