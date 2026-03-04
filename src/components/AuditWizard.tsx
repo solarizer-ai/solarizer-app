@@ -62,8 +62,6 @@ const AuditWizard = ({ onComplete, onCancel, isSubmitting = false, subscription,
 
   const handleGitHubFilesImported = (importedFiles: FileNode[]) => {
     setFiles(importedFiles);
-    setSelectedScope(getAllFiles(importedFiles).filter(f => f.name.endsWith('.sol')).map(f => f.path));
-    setStep('scope');
   };
 
   const getScopeFilesForEstimation = () => getAllFiles(files).filter(f => selectedScope.includes(f.path)).map(f => ({ name: f.name, content: f.content || '' }));
