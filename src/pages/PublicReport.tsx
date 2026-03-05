@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import {
   Shield, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle,
   Info, Fuel, ChevronDown, FileCode, Lightbulb,
-  Calendar, Code2, Bug, Layers,
+  Calendar, Code2, Bug,
   Clock, Scale, Cpu, RefreshCcw, Eye, ExternalLink,
 } from "lucide-react";
 import type { Invariant, ArchitectureInsight, CoverageData } from "@/hooks/useAudits";
