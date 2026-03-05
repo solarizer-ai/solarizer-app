@@ -549,86 +549,134 @@ const PublicReport = () => {
           </div>
         </div>
 
-        {/* ── Scope Section ──────────────────────────────── */}
-        {allScopeFiles.length > 0 && (
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-5 py-3 bg-muted/30 border-b border-border flex items-center justify-between">
-              <h3 className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Audit Scope</span>
-              </h3>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
-                <span>{scopeFiles.length} in scope</span>
-                {contextFiles.length > 0 && <span>{contextFiles.length} context</span>}
-              </div>
-            </div>
-            {contextFiles.length > 0 && (
-              <div className="px-5 py-2.5 bg-muted/10 border-b border-border/50">
-                <p className="text-xs text-muted-foreground/70">
-                  Findings are reported only for <strong className="text-foreground/80">in-scope</strong> contracts. Context files are included for reference during cross-contract analysis but are not directly audited.
-                </p>
-              </div>
-            )}
-            <div className="divide-y divide-border/50">
-              {visibleScopeFiles.map((file, i) => (
-                <div key={i} className={cn("px-5 py-2 text-sm font-mono text-muted-foreground flex items-center gap-2", i % 2 === 0 ? "bg-card" : "bg-muted/20")}>
-                  <FileCode className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
-                  <span className="flex-1 truncate">{file.path}</span>
-                  {file.inScope ? (
-                    <span className="text-[10px] font-medium text-primary bg-primary/10 border border-primary/20 rounded px-1.5 py-0.5 shrink-0">In Scope</span>
-                  ) : (
-                    <span className="text-[10px] font-medium text-muted-foreground/50 bg-muted/50 border border-border rounded px-1.5 py-0.5 shrink-0">Context</span>
-                  )}
-                </div>
-              ))}
-            </div>
-            {showScopeToggle && (
-              <button
-                onClick={() => setScopeExpanded(!scopeExpanded)}
-                className="w-full py-2.5 text-xs text-primary hover:text-primary/80 transition-colors border-t border-border flex items-center justify-center gap-1"
-              >
-                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", scopeExpanded && "rotate-180")} />
-                {scopeExpanded ? "Show less" : `Show all ${allScopeFiles.length} files`}
-              </button>
-            )}
-          </div>
-        )}
+        {/* ── Tabbed Content ─────────────────────────────── */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full grid grid-cols-5 h-11">
+            <TabsTrigger value="findings" className="gap-1.5 text-xs sm:text-sm">
+              <Bug className="w-3.5 h-3.5 hidden sm:block" />
+              Findings
+            </TabsTrigger>
+            <TabsTrigger value="invariants" className="gap-1.5 text-xs sm:text-sm">
+              <Shield className="w-3.5 h-3.5 hidden sm:block" />
+              Invariants
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="gap-1.5 text-xs sm:text-sm">
+              <Lightbulb className="w-3.5 h-3.5 hidden sm:block" />
+              Insights
+            </TabsTrigger>
+            <TabsTrigger value="coverage" className="gap-1.5 text-xs sm:text-sm">
+              <ShieldCheck className="w-3.5 h-3.5 hidden sm:block" />
+              Coverage
+            </TabsTrigger>
+            <TabsTrigger value="scope" className="gap-1.5 text-xs sm:text-sm">
+              <FileCode className="w-3.5 h-3.5 hidden sm:block" />
+              Scope
+            </TabsTrigger>
+          </TabsList>
 
-        {/* ── Detailed Findings by Severity ───────────────── */}
-        {groupedFindings.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Detailed Findings</h2>
-            {groupedFindings.flatMap(({ severity, findings: groupFindings }) =>
-              groupFindings.map(finding => (
-                <div key={finding.id} className={cn(
-                  "border border-border rounded-lg overflow-hidden bg-card/50 border-l-2",
-                  severity === "critical" ? "border-l-critical" :
-                  severity === "high" ? "border-l-destructive" :
-                  severity === "medium" ? "border-l-warning" :
-                  severity === "low" ? "border-l-low" :
-                  severity === "info" ? "border-l-slate-400" : "border-l-green-500"
-                )}>
-                  <PublicFindingItem finding={finding} />
+          {/* Findings Tab */}
+          <TabsContent value="findings" className="mt-6">
+            {groupedFindings.length > 0 ? (
+              <div className="space-y-4">
+                {groupedFindings.flatMap(({ severity, findings: groupFindings }) =>
+                  groupFindings.map(finding => (
+                    <div key={finding.id} className={cn(
+                      "border border-border rounded-lg overflow-hidden bg-card/50 border-l-2",
+                      severity === "critical" ? "border-l-critical" :
+                      severity === "high" ? "border-l-destructive" :
+                      severity === "medium" ? "border-l-warning" :
+                      severity === "low" ? "border-l-low" :
+                      severity === "info" ? "border-l-slate-400" : "border-l-green-500"
+                    )}>
+                      <PublicFindingItem finding={finding} />
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-card border border-border rounded-lg relative overflow-hidden">
+                <div className="bg-radial-glow absolute inset-0 pointer-events-none" />
+                <div className="relative">
+                  <ShieldCheck className="w-16 h-16 text-success mx-auto mb-4" />
+                  <p className="text-lg font-medium text-foreground">No Vulnerabilities Detected</p>
+                  <p className="text-sm text-muted-foreground mt-1">No issues were identified during automated analysis.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-3 max-w-md mx-auto">
+                    This does not guarantee the absence of vulnerabilities — see the disclaimer below.
+                  </p>
                 </div>
-              ))
+              </div>
             )}
-          </div>
-        )}
+          </TabsContent>
 
-        {/* ── No Findings State ──────────────────────────── */}
-        {totalFindings === 0 && (
-          <div className="text-center py-20 bg-card border border-border rounded-lg relative overflow-hidden">
-            <div className="bg-radial-glow absolute inset-0 pointer-events-none" />
-            <div className="relative">
-              <ShieldCheck className="w-16 h-16 text-success mx-auto mb-4" />
-              <p className="text-lg font-medium text-foreground">No Vulnerabilities Detected</p>
-              <p className="text-sm text-muted-foreground mt-1">No issues were identified during automated analysis.</p>
-              <p className="text-xs text-muted-foreground/60 mt-3 max-w-md mx-auto">
-                This does not guarantee the absence of vulnerabilities — see the disclaimer below.
-              </p>
-            </div>
-          </div>
-        )}
+          {/* Invariants Tab */}
+          <TabsContent value="invariants" className="mt-6">
+            <InvariantsTab invariants={((audit.system_hologram as any)?.invariants as Invariant[]) || null} />
+          </TabsContent>
+
+          {/* Insights Tab */}
+          <TabsContent value="insights" className="mt-6">
+            <InsightsTab insights={((audit.system_hologram as any)?.insights as ArchitectureInsight[]) || null} />
+          </TabsContent>
+
+          {/* Coverage Tab */}
+          <TabsContent value="coverage" className="mt-6">
+            <SecurityCoverageTab coverageData={(audit.coverage_data as unknown as CoverageData) || null} />
+          </TabsContent>
+
+          {/* Scope Tab */}
+          <TabsContent value="scope" className="mt-6">
+            {allScopeFiles.length > 0 ? (
+              <div className="bg-card border border-border rounded-lg overflow-hidden">
+                <div className="px-5 py-3 bg-muted/30 border-b border-border flex items-center justify-between">
+                  <h3 className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Audit Scope</span>
+                  </h3>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
+                    <span>{scopeFiles.length} in scope</span>
+                    {contextFiles.length > 0 && <span>{contextFiles.length} context</span>}
+                  </div>
+                </div>
+                {contextFiles.length > 0 && (
+                  <div className="px-5 py-2.5 bg-muted/10 border-b border-border/50">
+                    <p className="text-xs text-muted-foreground/70">
+                      Findings are reported only for <strong className="text-foreground/80">in-scope</strong> contracts. Context files are included for reference during cross-contract analysis but are not directly audited.
+                    </p>
+                  </div>
+                )}
+                <div className="divide-y divide-border/50">
+                  {visibleScopeFiles.map((file, i) => (
+                    <div key={i} className={cn("px-5 py-2 text-sm font-mono text-muted-foreground flex items-center gap-2", i % 2 === 0 ? "bg-card" : "bg-muted/20")}>
+                      <FileCode className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
+                      <span className="flex-1 truncate">{file.path}</span>
+                      {file.inScope ? (
+                        <span className="text-[10px] font-medium text-primary bg-primary/10 border border-primary/20 rounded px-1.5 py-0.5 shrink-0">In Scope</span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-muted-foreground/50 bg-muted/50 border border-border rounded px-1.5 py-0.5 shrink-0">Context</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {showScopeToggle && (
+                  <button
+                    onClick={() => setScopeExpanded(!scopeExpanded)}
+                    className="w-full py-2.5 text-xs text-primary hover:text-primary/80 transition-colors border-t border-border flex items-center justify-center gap-1"
+                  >
+                    <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", scopeExpanded && "rotate-180")} />
+                    {scopeExpanded ? "Show less" : `Show all ${allScopeFiles.length} files`}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-14 h-14 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                  <FileCode className="w-7 h-7 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">No scope information available</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* ── Disclaimer & Limitations ───────────────────── */}
         <div className="border border-amber-500/20 bg-amber-500/[0.03] rounded-lg overflow-hidden">
