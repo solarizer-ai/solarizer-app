@@ -1,38 +1,29 @@
 
 
-# Add Launch Pricing Banner to Pricing Page
+# Add Invariants, Insights & Coverage Tabs to Public Report
 
-## Design Concept
+## Current State
 
-A slim, full-width banner placed between the hero subtitle and the billing note. It uses a subtle warm gradient border (orange → amber) with a near-transparent dark fill, a small flame/sparkle accent, and tight typography — feels premium and urgent without being aggressive or salesy.
+The public report page (`PublicReport.tsx`) renders findings in a flat list grouped by severity, with a static scope section. It has no tabbed interface and no Invariants, Insights, or Coverage views.
 
-**Visual treatment:**
-- Rounded pill shape, centered, max-width ~600px
-- 1px border using a linear gradient (orange-500 → amber-400 → orange-500)
-- Inner background: `bg-primary/[0.04]` (barely-there warm tint)
-- Small `Zap` icon in orange as a subtle accent
-- Copy: "Launch pricing — lock in these rates before they go up."
-- A secondary muted line: "Limited period only"
+The private Report page already uses `InvariantsTab`, `InsightsTab`, and `SecurityCoverageTab` components with data from `audit.system_hologram` (JSONB) and `audit.coverage_data`. The public audit query (`usePublicAudit`) already fetches `*` from the audits table, so `system_hologram` and `coverage_data` are available.
 
 ## Changes
 
-**`src/pages/Pricing.tsx`** — Insert a new banner element between the hero `</section>` (line 363) and the billing note `<p>` (line 366).
+**`src/pages/PublicReport.tsx`**
 
-```tsx
-{/* ── Launch banner ── */}
-<div
-  className="flex items-center justify-center gap-2 mx-auto max-w-xl mb-6 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/[0.04] animate-in fade-in slide-in-from-bottom-4 duration-600"
-  style={{ animationDelay: "200ms" }}
->
-  <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
-  <p className="text-sm font-medium">
-    Launch pricing
-    <span className="text-muted-foreground/50 font-normal">
-      {" "}— lock in these rates before they go up.
-    </span>
-  </p>
-</div>
-```
+1. Add imports for `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `InvariantsTab`, `InsightsTab`, `SecurityCoverageTab`, and the `Shield` icon (already imported).
 
-Single insertion, no other files affected. Uses the existing `Zap` icon already imported on line 5.
+2. Replace the current flat layout (Scope section + Detailed Findings + No Findings state) with a tabbed interface containing:
+   - **Findings** tab (default) — the existing grouped findings list
+   - **Invariants** tab — renders `<InvariantsTab>` with data from `audit.system_hologram.invariants`
+   - **Insights** tab — renders `<InsightsTab>` with data from `audit.system_hologram.insights`
+   - **Coverage** tab — renders `<SecurityCoverageTab>` with `audit.coverage_data`
+   - **Scope** tab — the existing scope files section (moved into a tab)
+
+3. Add a `useState` for active tab, defaulting to `"findings"`.
+
+4. The tab bar styling will match the private report: equally spaced triggers with icons.
+
+No database or hook changes needed — the data is already fetched.
 
