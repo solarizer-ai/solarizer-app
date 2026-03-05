@@ -5,13 +5,18 @@ import CodeBlock from "@/components/CodeBlock";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import InvariantsTab from "@/components/InvariantsTab";
+import InsightsTab from "@/components/InsightsTab";
+import SecurityCoverageTab from "@/components/SecurityCoverageTab";
 import { cn } from "@/lib/utils";
 import {
   Shield, ShieldCheck, ShieldAlert, AlertTriangle, AlertCircle,
   Info, Fuel, ChevronDown, FileCode, Lightbulb,
-  Calendar, Code2, Bug,
+  Calendar, Code2, Bug, Layers,
   Clock, Scale, Cpu, RefreshCcw, Eye, ExternalLink,
 } from "lucide-react";
+import type { Invariant, ArchitectureInsight, CoverageData } from "@/hooks/useAudits";
 import { format } from "date-fns";
 import solarLogo from "@/assets/solarizer-logo.png";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
