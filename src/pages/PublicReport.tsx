@@ -336,6 +336,7 @@ const PublicReport = () => {
   const { data: audit, isLoading: auditLoading, error: auditError } = usePublicAudit(slug || null);
   const { data: findings } = usePublicFindings(audit?.id || null);
   const [scopeExpanded, setScopeExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState("findings");
 
   // ── Loading State ──────────────────────────────────
   if (auditLoading) {
