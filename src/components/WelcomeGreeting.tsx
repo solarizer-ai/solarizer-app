@@ -54,11 +54,11 @@ const WelcomeGreeting = ({ displayName, userId, onComplete }: WelcomeGreetingPro
             ) : (
               <>Welcome.</>
             )}
+            {" "}Your security team just got an upgrade.
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            You just upgraded your security stack. Solarizer runs five AI models
-            against your contracts simultaneously — the kind of coverage that
-            used to require an entire audit firm.
+            Seven AI-driven audit phases work your contracts simultaneously
+            — delivering line-accurate findings with fix suggestions in minutes.
           </p>
         </div>
 
