@@ -7,7 +7,7 @@ import { LowCreditPrompt } from "@/components/LowCreditPrompt";
 import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
 import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
-import { SecurityTrend } from "@/components/SecurityTrend";
+
 import { ShareInvitationBanner } from "@/components/ShareInvitationBanner";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, FileCode, Trash2, ChevronRight, Zap, Plus } from "lucide-react";
@@ -222,17 +222,11 @@ const DashboardHome = () => {
             </div>
           )}
 
-          <div className="lg:hidden">
-            <SecurityTrend />
-          </div>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-3 order-first lg:order-last">
           <SeverityBreakdown />
-          <div className="hidden lg:block">
-            <SecurityTrend />
-          </div>
         </div>
       </div>
 
