@@ -8,6 +8,7 @@ import solarizerLogo from "@/assets/solarizer-logo.png";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { ScanProvider } from "@/contexts/ScanContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ScrollToTop from "@/components/ScrollToTop";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import DocsLayout from "@/layouts/DocsLayout";
 import Home from "./pages/Home";
@@ -70,6 +71,7 @@ const App = () => (
             {/* Persistent hidden logo keeps decoded bitmap in memory across route changes */}
             <img src={solarizerLogo} alt="" aria-hidden className="hidden" decoding="sync" />
             <BrowserRouter>
+              <ScrollToTop />
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
