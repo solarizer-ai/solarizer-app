@@ -1,34 +1,13 @@
 
 
-# Auto Scroll-to-Top on Route Changes
+# Remove Score Trend Widget from Dashboard Home
 
-## Problem
-When navigating between pages, the scroll position persists from the previous page, causing poor UX.
+## Changes
 
-## Solution
-Add a `ScrollToTop` component inside `BrowserRouter` in `App.tsx` that listens to `location.pathname` changes and calls `window.scrollTo(0, 0)`.
+**`src/pages/dashboard/DashboardHome.tsx`**:
+- Remove the `SecurityTrend` import (line 9)
+- Remove the mobile `SecurityTrend` block (lines 175-177: `<div className="lg:hidden"><SecurityTrend /></div>`)
+- Remove the desktop `SecurityTrend` block in the sidebar (lines 183-185: `<div className="hidden lg:block"><SecurityTrend /></div>`)
 
-### Changes
-
-**New component: `src/components/ScrollToTop.tsx`**
-```tsx
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-
-const ScrollToTop = () => {
-  const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-  return null;
-};
-
-export default ScrollToTop;
-```
-
-**`src/App.tsx`**
-- Import `ScrollToTop`
-- Place `<ScrollToTop />` as the first child inside `<BrowserRouter>`
-
-This covers all route changes globally — Home, Pricing, Docs, Dashboard, etc.
+After this, the `SecurityTrend` component file can be deleted since it won't be used anywhere.
 
