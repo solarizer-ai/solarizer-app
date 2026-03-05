@@ -620,7 +620,7 @@ const PublicReport = () => {
 
           {/* Coverage Tab */}
           <TabsContent value="coverage" className="mt-6">
-            <SecurityCoverageTab coverageData={(audit.coverage_data as unknown as CoverageData) || null} />
+            <SecurityCoverageTab coverageData={(audit.coverage_data as unknown as CoverageData) || null} onViewIssue={() => {}} />
           </TabsContent>
 
           {/* Scope Tab */}
