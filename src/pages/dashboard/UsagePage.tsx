@@ -1,5 +1,4 @@
 import { DashboardStats } from "@/components/DashboardStats";
-import { SecurityTrend } from "@/components/SecurityTrend";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 
 const UsagePage = () => {
@@ -14,10 +13,7 @@ const UsagePage = () => {
 
       <DashboardStats />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SeverityBreakdown />
-        <SecurityTrend />
-      </div>
+      <SeverityBreakdown />
     </div>
   );
 };
