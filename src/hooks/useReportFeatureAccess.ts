@@ -62,10 +62,12 @@ export function useReportFeatureAccess(auditId: string | null): ReportFeatureAcc
   
   // Determine effective plan
   let effectivePlan: ExtendedSubscriptionPlan = (ownSubscription?.plan || 'starter') as ExtendedSubscriptionPlan;
+  if ((effectivePlan as string) === 'trial') effectivePlan = 'business';
   
   // If viewing a shared report, inherit owner's plan (if higher)
   if (!isOwner && accessContext?.owner_plan) {
-    const ownerPlan = accessContext.owner_plan as ExtendedSubscriptionPlan;
+    let ownerPlan = accessContext.owner_plan as ExtendedSubscriptionPlan;
+    if ((ownerPlan as string) === 'trial') ownerPlan = 'business';
     const planHierarchy: ExtendedSubscriptionPlan[] = ['starter', 'pro', 'business'];
     const ownerPlanIndex = planHierarchy.indexOf(ownerPlan);
     const userPlanIndex = planHierarchy.indexOf(effectivePlan);

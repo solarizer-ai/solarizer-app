@@ -195,7 +195,7 @@ const NewAuditPage = () => {
         onComplete={handleWizardComplete}
         onCancel={() => navigate("/dashboard")}
         isSubmitting={runAudit.isPending}
-        subscription={subscription ? { plan: subscription.plan as 'starter' | 'pro' | 'business' } : null}
+        subscription={subscription ? { plan: (subscription.plan === 'trial' ? 'business' : subscription.plan) as 'starter' | 'pro' | 'business' } : null}
         credits={credits ? { credits_remaining: credits.credits_remaining, scans_remaining: credits.scans_remaining } : null}
         onUpgradeNeeded={handleUpgradeNeeded}
         onPowerUpNeeded={(creditsNeeded) => { setRequiredCredits(creditsNeeded); setShowPowerUpModal(true); }}
