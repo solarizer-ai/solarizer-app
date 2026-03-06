@@ -222,6 +222,13 @@ Deno.serve(async (req) => {
 
     const tier = subscription.plan;
 
+    // Map internal plan names to proxy-recognized tiers
+    const TIER_MAP: Record<string, string> = {
+      starter: 'starter', pro: 'pro', business: 'business',
+      trial: 'business',  // Trial gets Inferno-tier access
+    };
+    const proxyTier = TIER_MAP[tier] ?? 'starter';
+
     // Calculate estimated cost with per-contract complexity multipliers
     const COMPLEXITY_RATES: Record<string, number> = { L1: 0.8, L2: 1.0, L3: 1.2 };
     const scopeNloc = scopeFiles.reduce((sum: number, f: ScopeFile) => sum + f.nLOC, 0);
@@ -233,7 +240,7 @@ Deno.serve(async (req) => {
     const estimatedCost = Math.ceil(scopeCost + contextNloc * 0.15);
 
     // Plan nLOC limit check
-    const PLAN_NLOC_LIMITS: Record<string, number> = { starter: 500, pro: 3000, business: 9999 };
+    const PLAN_NLOC_LIMITS: Record<string, number> = { starter: 500, pro: 3000, business: 9999, trial: 9999 };
     const totalNlocCheck = scopeNloc + contextNloc;
     const planNlocLimit = PLAN_NLOC_LIMITS[tier] ?? 500;
 
@@ -333,7 +340,7 @@ Deno.serve(async (req) => {
         // A9: Strip file content from stored payload
         request_payload: {
           projectName,
-          tier,
+          tier: proxyTier,
           scopeFiles: scopeFiles.map(
             ({ path, nLOC, complexity }: ScopeFile) => ({ path, nLOC, complexity })
           ),
@@ -389,7 +396,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             sessionId,
             userId,
-            tier,
+            tier: proxyTier,
             projectName,
             scopeFiles,
             contextFiles: contextFiles || [],
