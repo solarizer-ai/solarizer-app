@@ -38,7 +38,7 @@ interface SubscriptionPlanSelectorProps {
   isExpired?: boolean;
 }
 
-const PLAN_ORDER = { starter: 0, pro: 1, business: 2 };
+const PLAN_ORDER: Record<string, number> = { starter: 0, pro: 1, business: 2, trial: 2 };
 
 export function SubscriptionPlanSelector({
   currentPlan,
