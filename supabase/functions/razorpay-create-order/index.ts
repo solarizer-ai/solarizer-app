@@ -22,10 +22,11 @@ const PLAN_PRICES: Record<string, number> = {
 };
 
 const POWER_UP_RATES: Record<string, number> = {
-  starter: 280,
-  launch: 280,
-  pro: 250,
-  business: 220,
+  starter: 100,
+  launch: 100,
+  pro: 100,
+  business: 100,
+  trial: 100,
 };
 
 const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://solarizer.io";

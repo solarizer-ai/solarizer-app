@@ -52,6 +52,7 @@ export type Database = {
           id: string
           is_active: boolean
           max_uses: number | null
+          token_type: string
           used_count: number
         }
         Insert: {
@@ -62,6 +63,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          token_type?: string
           used_count?: number
         }
         Update: {
@@ -72,6 +74,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          token_type?: string
           used_count?: number
         }
         Relationships: []
@@ -862,6 +865,7 @@ export type Database = {
           email: string | null
           id: string
           onboarding_completed: boolean
+          trial_activated_at: string | null
           updated_at: string
           user_id: string
         }
@@ -872,6 +876,7 @@ export type Database = {
           email?: string | null
           id?: string
           onboarding_completed?: boolean
+          trial_activated_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -882,6 +887,7 @@ export type Database = {
           email?: string | null
           id?: string
           onboarding_completed?: boolean
+          trial_activated_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1062,6 +1068,7 @@ export type Database = {
     }
     Functions: {
       accept_share_invitation: { Args: { p_share_id: string }; Returns: Json }
+      activate_trial: { Args: { p_code: string }; Returns: Json }
       add_renewal_credits: {
         Args: { p_credits: number; p_user_id: string }
         Returns: number
@@ -1297,7 +1304,7 @@ export type Database = {
         | "downgraded"
         | "false_positive"
       security_grade: "A" | "B" | "C" | "D" | "F"
-      subscription_plan: "starter" | "pro" | "business"
+      subscription_plan: "starter" | "pro" | "business" | "trial"
       subscription_status: "active" | "canceled" | "past_due" | "expired"
     }
     CompositeTypes: {
@@ -1443,7 +1450,7 @@ export const Constants = {
         "false_positive",
       ],
       security_grade: ["A", "B", "C", "D", "F"],
-      subscription_plan: ["starter", "pro", "business"],
+      subscription_plan: ["starter", "pro", "business", "trial"],
       subscription_status: ["active", "canceled", "past_due", "expired"],
     },
   },

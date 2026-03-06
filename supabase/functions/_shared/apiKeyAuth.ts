@@ -62,8 +62,7 @@ export async function validateApiKey(
           .from('api_keys')
           .update({ last_used_at: new Date().toISOString() })
           .eq('id', key.id)
-          .then(() => {})
-          .catch((err: Error) => console.error('apiKeyAuth: Failed to update last_used_at:', err));
+          .then(() => {}, (err: Error) => console.error('apiKeyAuth: Failed to update last_used_at:', err));
 
         return { valid: true, userId: key.user_id };
       }

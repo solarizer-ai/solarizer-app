@@ -73,8 +73,8 @@ const SubscriptionPage = () => {
       <Card>
         <CardContent className="pt-6">
           <SubscriptionPlanSelector
-            currentPlan={subscription?.plan || null}
-            pendingPlan={subscription?.pending_plan || null}
+            currentPlan={(subscription?.plan || null) as any}
+            pendingPlan={(subscription?.pending_plan || null) as any}
             pendingPlanDate={subscription?.pending_plan_effective_date || null}
             hasPendingCancellation={hasPendingCancellation}
             onUpgrade={(p) => { setTargetUpgradePlan(p); setShowUpgradeModal(true); }}

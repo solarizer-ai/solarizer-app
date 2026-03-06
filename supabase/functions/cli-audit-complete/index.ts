@@ -115,8 +115,8 @@ Deno.serve(async (req) => {
     const audit = locked[0];
 
     // 3. Calculate grade from findings
-    const severities = (body.findings || []).map(
-      (f: Record<string, unknown>) =>
+    const severities = ((body.findings || []) as Array<Record<string, unknown>>).map(
+      (f) =>
         typeof f.severity === 'string' ? f.severity.toLowerCase() : ''
     );
 

@@ -54,10 +54,21 @@ Deno.serve(async (req) => {
     // Fetch subscription
     const { data: subscription } = await supabase
       .from('subscriptions')
-      .select('plan, status')
+      .select('plan, status, current_period_end')
       .eq('user_id', userId)
       .eq('status', 'active')
       .maybeSingle();
+
+    // Check for expired trial
+    if (subscription?.plan === 'trial' && subscription?.current_period_end) {
+      const periodEnd = new Date(subscription.current_period_end);
+      if (periodEnd < new Date()) {
+        return new Response(
+          JSON.stringify({ error: 'Trial expired. Please purchase a subscription to continue.' }),
+          { status: 403, headers: corsHeaders }
+        );
+      }
+    }
 
     // Fetch credits
     const { data: credits } = await supabase
@@ -108,7 +119,7 @@ Deno.serve(async (req) => {
       activeAudit = activeAuditsList[0];
     }
 
-    const tier = subscription?.plan || 'free';
+    const tier = subscription?.plan === 'trial' ? 'business' : (subscription?.plan || 'free');
 
     console.log(`cli-auth: User ${userId} - tier: ${tier}, credits: ${credits?.credits_remaining || 0}`);
 

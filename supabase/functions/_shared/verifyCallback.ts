@@ -7,6 +7,18 @@ interface VerifyResult {
 }
 
 /**
+ * Constant-time comparison using XOR to prevent timing attacks.
+ */
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.byteLength !== b.byteLength) return false;
+  let result = 0;
+  for (let i = 0; i < a.byteLength; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
+}
+
+/**
  * Verifies per-audit callback token using constant-time comparison.
  * Falls back to global CALLBACK_SECRET for backward compatibility with
  * audits created before per-audit tokens were introduced.
@@ -47,12 +59,7 @@ export async function verifyCallback(
     const a = encoder.encode(callbackToken);
     const b = encoder.encode(audit.callback_token);
 
-    if (a.byteLength !== b.byteLength) {
-      return { valid: false, error: 'Unauthorized', status: 401 };
-    }
-
-    const isEqual = crypto.subtle.timingSafeEqual(a, b);
-    if (!isEqual) {
+    if (!timingSafeEqual(a, b)) {
       return { valid: false, error: 'Unauthorized', status: 401 };
     }
 
@@ -68,16 +75,10 @@ export async function verifyCallback(
 
   // Constant-time comparison to prevent timing attacks
   const enc = new TextEncoder();
-  const bufA = enc.encode(callbackSecret);
+  const bufA = enc.encode(callbackSecret!);
   const bufB = enc.encode(expectedSecret);
 
-  if (bufA.byteLength !== bufB.byteLength) {
-    // Dummy comparison to maintain constant time on length mismatch
-    crypto.subtle.timingSafeEqual(bufA, bufA);
-    return { valid: false, error: 'Unauthorized', status: 401 };
-  }
-
-  if (!crypto.subtle.timingSafeEqual(bufA, bufB)) {
+  if (!timingSafeEqual(bufA, bufB)) {
     return { valid: false, error: 'Unauthorized', status: 401 };
   }
 

@@ -37,8 +37,8 @@ export async function verifyWebhookSignature(
   return crypto.subtle.verify(
     "HMAC",
     key,
-    signatureBytes,
-    encoder.encode(rawBody)
+    signatureBytes as unknown as BufferSource,
+    encoder.encode(rawBody) as unknown as BufferSource
   );
 }
 
@@ -60,8 +60,8 @@ export async function verifyPaymentLinkSignature(
   return crypto.subtle.verify(
     "HMAC",
     key,
-    signatureBytes,
-    encoder.encode(data)
+    signatureBytes as unknown as BufferSource,
+    encoder.encode(data) as unknown as BufferSource
   );
 }
 
