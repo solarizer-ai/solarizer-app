@@ -24,6 +24,7 @@ interface SessionStartRequest {
   scope_metadata: ScopeFile[];
   context_metadata: ContextFile[];
   estimated_cost: number;
+  idempotency_key?: string;
 }
 
 async function signJWT(

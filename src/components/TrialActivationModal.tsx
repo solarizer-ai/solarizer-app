@@ -32,7 +32,7 @@ export function TrialActivationModal({ open, onOpenChange }: TrialActivationModa
     setError(null);
 
     try {
-      const { data, error: rpcError } = await supabase.rpc("activate_trial", {
+      const { data, error: rpcError } = await supabase.rpc("activate_trial" as any, {
         p_code: code.trim().toUpperCase(),
       });
 

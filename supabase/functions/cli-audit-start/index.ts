@@ -222,23 +222,6 @@ Deno.serve(async (req) => {
 
     const tier = subscription.plan;
 
-    // Plan nLOC limit check
-    const PLAN_NLOC_LIMITS: Record<string, number> = { starter: 500, pro: 3000, business: 9999 };
-    const totalNlocCheck = scopeNloc + contextNloc;
-    const planNlocLimit = PLAN_NLOC_LIMITS[tier] ?? 500;
-    if (totalNlocCheck > planNlocLimit) {
-      return new Response(
-        JSON.stringify({ error: `Total nLOC (${totalNlocCheck}) exceeds ${tier} plan limit of ${planNlocLimit} nLOC` }),
-        { status: 402, headers: corsHeaders }
-      );
-    }
-
-    const { data: credits } = await supabase
-      .from('nloc_credits')
-      .select('credits_remaining')
-      .eq('user_id', userId)
-      .maybeSingle();
-
     // Calculate estimated cost with per-contract complexity multipliers
     const COMPLEXITY_RATES: Record<string, number> = { L1: 0.8, L2: 1.0, L3: 1.2 };
     const scopeNloc = scopeFiles.reduce((sum: number, f: ScopeFile) => sum + f.nLOC, 0);
@@ -248,6 +231,11 @@ Deno.serve(async (req) => {
     }, 0);
     const contextNloc = (contextFiles || []).reduce((sum: number, f: ContextFile) => sum + f.nLOC, 0);
     const estimatedCost = Math.ceil(scopeCost + contextNloc * 0.15);
+
+    // Plan nLOC limit check
+    const PLAN_NLOC_LIMITS: Record<string, number> = { starter: 500, pro: 3000, business: 9999 };
+    const totalNlocCheck = scopeNloc + contextNloc;
+    const planNlocLimit = PLAN_NLOC_LIMITS[tier] ?? 500;
 
     const creditsRemaining = credits?.credits_remaining || 0;
     if (creditsRemaining < estimatedCost) {

@@ -262,7 +262,7 @@ const BillingPage = () => {
           <Card>
             <CardContent className="pt-6">
               <SubscriptionPlanSelector
-                currentPlan={subscription?.plan || null}
+                currentPlan={(subscription?.plan || null) as any}
                 pendingPlan={subscription?.pending_plan || null}
                 pendingPlanDate={subscription?.pending_plan_effective_date || null}
                 hasPendingCancellation={hasPendingCancellation}

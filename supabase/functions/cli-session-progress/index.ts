@@ -38,7 +38,7 @@ async function verifySessionJWT(
     );
 
     const signature = base64urlDecode(signatureB64);
-    const isValid = await crypto.subtle.verify('HMAC', key, signature, encoder.encode(data));
+    const isValid = await crypto.subtle.verify('HMAC', key, signature as unknown as BufferSource, encoder.encode(data) as unknown as BufferSource);
 
     if (!isValid) {
       return { valid: false, error: 'Invalid signature' };
