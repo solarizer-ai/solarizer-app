@@ -396,7 +396,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             sessionId,
             userId,
-            tier,
+            tier: proxyTier,
             projectName,
             scopeFiles,
             contextFiles: contextFiles || [],
