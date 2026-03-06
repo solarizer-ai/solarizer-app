@@ -1077,15 +1077,26 @@ export type Database = {
         Args: { p_amount: number; p_reason: string; p_target_user_id: string }
         Returns: undefined
       }
-      admin_create_access_token: {
-        Args: {
-          p_code: string
-          p_description?: string
-          p_expires_at?: string
-          p_max_uses?: number
-        }
-        Returns: Json
-      }
+      admin_create_access_token:
+        | {
+            Args: {
+              p_code: string
+              p_description?: string
+              p_expires_at?: string
+              p_max_uses?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_code: string
+              p_description?: string
+              p_expires_at?: string
+              p_max_uses?: number
+              p_token_type?: string
+            }
+            Returns: Json
+          }
       admin_create_coupon: {
         Args: {
           p_applicable_to?: string[]

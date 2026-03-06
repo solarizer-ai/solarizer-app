@@ -20,8 +20,9 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Trash2, Users } from "lucide-react";
-import { KeyRound } from "lucide-react";
+import { Plus, Trash2, Users, KeyRound } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface AccessToken {
   id: string;
@@ -32,6 +33,7 @@ interface AccessToken {
   expires_at: string | null;
   is_active: boolean;
   created_at: string;
+  token_type: string;
 }
 
 interface TokenRedemption {
@@ -48,6 +50,7 @@ export default function AdminAccessTokensPage() {
   const [description, setDescription] = useState("");
   const [maxUses, setMaxUses] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [tokenType, setTokenType] = useState<"subscription" | "trial">("subscription");
   const [selectedToken, setSelectedToken] = useState<AccessToken | null>(null);
 
   const { data: tokens = [], isLoading } = useQuery({
@@ -84,6 +87,7 @@ export default function AdminAccessTokensPage() {
         p_description: description || undefined,
         p_max_uses: maxUses ? parseInt(maxUses, 10) : undefined,
         p_expires_at: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+        p_token_type: tokenType,
       });
       if (error) throw error;
       return data;
@@ -94,6 +98,7 @@ export default function AdminAccessTokensPage() {
       setDescription("");
       setMaxUses("");
       setExpiresAt("");
+      setTokenType("subscription");
       queryClient.invalidateQueries({ queryKey: ["admin-access-tokens"] });
     },
     onError: (e: any) => toast.error(e.message || "Failed to create token"),
@@ -164,6 +169,14 @@ export default function AdminAccessTokensPage() {
             </div>
           </div>
 
+          <div>
+            <label className="text-sm font-medium mb-1 block">Token Type</label>
+            <ToggleGroup type="single" value={tokenType} onValueChange={(v) => v && setTokenType(v as "subscription" | "trial")} className="justify-start">
+              <ToggleGroupItem value="subscription" className="text-xs px-3">Subscription</ToggleGroupItem>
+              <ToggleGroupItem value="trial" className="text-xs px-3">Trial</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Max uses (blank = unlimited)</label>
@@ -193,6 +206,7 @@ export default function AdminAccessTokensPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Code</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Used / Max</TableHead>
                 <TableHead>Expires</TableHead>
@@ -210,6 +224,11 @@ export default function AdminAccessTokensPage() {
                 : tokens.map((t) => (
                     <TableRow key={t.id}>
                       <TableCell className="font-mono">{t.code}</TableCell>
+                      <TableCell>
+                        <Badge variant={t.token_type === "trial" ? "default" : "secondary"} className="text-[10px]">
+                          {t.token_type === "trial" ? "Trial" : "Subscription"}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{t.description || "—"}</TableCell>
                       <TableCell>{t.used_count} / {t.max_uses ?? "∞"}</TableCell>
                       <TableCell>{t.expires_at ? new Date(t.expires_at).toLocaleDateString() : "Never"}</TableCell>
