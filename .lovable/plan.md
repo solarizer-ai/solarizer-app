@@ -1,38 +1,33 @@
 
 
-# Add Launch Pricing Banner to Pricing Page
+# Redesign Free Trial CTA on Pricing Page
 
-## Design Concept
+## Current State
+The trial CTA has a title, subtitle with credits info, and two bare social icons with no context. Users won't know what the icons are for.
 
-A slim, full-width banner placed between the hero subtitle and the billing note. It uses a subtle warm gradient border (orange → amber) with a near-transparent dark fill, a small flame/sparkle accent, and tight typography — feels premium and urgent without being aggressive or salesy.
+## Proposed Design
+A cleaner, more intentional layout:
 
-**Visual treatment:**
-- Rounded pill shape, centered, max-width ~600px
-- 1px border using a linear gradient (orange-500 → amber-400 → orange-500)
-- Inner background: `bg-primary/[0.04]` (barely-there warm tint)
-- Small `Zap` icon in orange as a subtle accent
-- Copy: "Launch pricing — lock in these rates before they go up."
-- A secondary muted line: "Limited period only"
-
-## Changes
-
-**`src/pages/Pricing.tsx`** — Insert a new banner element between the hero `</section>` (line 363) and the billing note `<p>` (line 366).
-
-```tsx
-{/* ── Launch banner ── */}
-<div
-  className="flex items-center justify-center gap-2 mx-auto max-w-xl mb-6 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/[0.04] animate-in fade-in slide-in-from-bottom-4 duration-600"
-  style={{ animationDelay: "200ms" }}
->
-  <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
-  <p className="text-sm font-medium">
-    Launch pricing
-    <span className="text-muted-foreground/50 font-normal">
-      {" "}— lock in these rates before they go up.
-    </span>
-  </p>
-</div>
+```text
+┌─────────────────────────────────────────────┐
+│          ✦  Try Solarizer Free              │
+│   14 days · 300 credits · Full access       │
+│                                             │
+│       Request access to get started         │
+│           [Telegram]   [X/Twitter]          │
+└─────────────────────────────────────────────┘
 ```
 
-Single insertion, no other files affected. Uses the existing `Zap` icon already imported on line 5.
+### Changes to `src/pages/Pricing.tsx` (lines 379-414)
+
+Replace the current trial banner with a refined version:
+
+- **Accent icon**: Replace generic layout with a small `Sparkles` icon (from lucide) next to the title for a premium feel
+- **Title**: "Try Solarizer Free" — slightly larger, `text-base font-semibold`
+- **Subtitle**: "14 days · 300 credits · Full Inferno-tier access" — keep as `text-xs text-muted-foreground/60`
+- **Helper text**: Add `"Request access to get started"` in `text-xs text-muted-foreground/40` above the icons
+- **Icons**: Keep the Telegram and X icons but wrap each in a subtle pill-shaped hover target (`rounded-full border border-primary/10 p-2 hover:bg-primary/10 transition-all`) for better affordance
+- **Spacing**: Tighten vertical gaps (`gap-1` between title/subtitle, `mt-3` before helper text, `mt-2` before icons)
+
+Single file edit, ~30 lines replaced.
 
