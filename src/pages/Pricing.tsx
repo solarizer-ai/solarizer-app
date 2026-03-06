@@ -362,19 +362,6 @@ const Pricing = () => {
           </p>
         </section>
 
-        {/* ── Launch banner ── */}
-        <div
-          className="flex items-center justify-center gap-2 mx-auto max-w-xl mb-6 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/[0.04] animate-in fade-in slide-in-from-bottom-4 duration-600"
-          style={{ animationDelay: "200ms" }}
-        >
-          <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
-          <p className="text-sm font-medium">
-            Launch pricing
-            <span className="text-muted-foreground/50 font-normal">
-              {" "}— lock in these rates before they go up.
-            </span>
-          </p>
-        </div>
 
         {/* ── Trial banner ── */}
         {(!subscription || subscription.plan === 'trial') && (
