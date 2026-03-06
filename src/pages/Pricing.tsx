@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import {
-  Zap,
+  Zap, Sparkles,
   Search,
   FolderUp,
   BarChart3,
