@@ -98,6 +98,7 @@ export default function AdminAccessTokensPage() {
       setDescription("");
       setMaxUses("");
       setExpiresAt("");
+      setTokenType("subscription");
       queryClient.invalidateQueries({ queryKey: ["admin-access-tokens"] });
     },
     onError: (e: any) => toast.error(e.message || "Failed to create token"),
