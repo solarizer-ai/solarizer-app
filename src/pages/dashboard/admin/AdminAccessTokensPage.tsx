@@ -206,6 +206,7 @@ export default function AdminAccessTokensPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Code</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Used / Max</TableHead>
                 <TableHead>Expires</TableHead>
