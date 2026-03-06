@@ -374,7 +374,7 @@ const Pricing = () => {
               <p className="text-base font-semibold">Try Solarizer Free</p>
             </div>
             <p className="text-xs text-muted-foreground/60">
-              14 days &middot; 300 credits &middot; Full Inferno-tier access
+              <span className="text-primary font-semibold">14 days</span> &middot; <span className="text-primary font-semibold">$300 in credits</span> &middot; Full Inferno-tier access
             </p>
             <p className="text-xs text-muted-foreground/40 mt-3">
               Request access to get started
