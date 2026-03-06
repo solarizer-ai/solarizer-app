@@ -87,6 +87,7 @@ export default function AdminAccessTokensPage() {
         p_description: description || undefined,
         p_max_uses: maxUses ? parseInt(maxUses, 10) : undefined,
         p_expires_at: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+        p_token_type: tokenType,
       });
       if (error) throw error;
       return data;
