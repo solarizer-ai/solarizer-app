@@ -50,6 +50,7 @@ export default function AdminAccessTokensPage() {
   const [description, setDescription] = useState("");
   const [maxUses, setMaxUses] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [tokenType, setTokenType] = useState<"subscription" | "trial">("subscription");
   const [selectedToken, setSelectedToken] = useState<AccessToken | null>(null);
 
   const { data: tokens = [], isLoading } = useQuery({
