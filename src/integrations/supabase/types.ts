@@ -1068,6 +1068,7 @@ export type Database = {
     }
     Functions: {
       accept_share_invitation: { Args: { p_share_id: string }; Returns: Json }
+      activate_trial: { Args: { p_code: string }; Returns: Json }
       add_renewal_credits: {
         Args: { p_credits: number; p_user_id: string }
         Returns: number
