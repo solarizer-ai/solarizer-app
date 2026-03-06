@@ -256,10 +256,12 @@ const Auth = () => {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 mt-2">
-            <span className="terminal-pill">vulnerability detection</span>
-            <span className="terminal-pill">multi-model validation</span>
-            <span className="terminal-pill">automated reporting</span>
+          <div className="mt-6 text-center">
+            <p className="text-lg font-semibold text-foreground/90">Start your free trial</p>
+            <p className="text-sm text-muted-foreground/50 mt-1.5 leading-relaxed">
+              $300 in credits&ensp;·&ensp;14 days<br />
+              Full Inferno-tier access
+            </p>
           </div>
         </div>
 
@@ -296,7 +298,7 @@ const Auth = () => {
             <p className="mt-1 text-sm text-muted-foreground">
               {isLogin
                 ? 'Sign in to access your security dashboard'
-                : 'Start securing your smart contracts today'}
+                : '$300 in free credits to get started'}
             </p>
           </div>
 
@@ -490,11 +492,11 @@ const Auth = () => {
           {/* Trial note (signup only) */}
           {!isLogin && (
             <p className="mt-4 text-center text-xs text-muted-foreground/60">
-              Free trial available &mdash; contact us on{' '}
-              <a href="https://t.me/saboraud" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:underline">Telegram</a>
+              Need an invite code? Request one on{' '}
+              <a href="https://t.me/solarizer_ai" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:underline">Telegram</a>
               {' '}or{' '}
-              <a href="https://x.com/SolarizerAI" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:underline">X</a>
-              {' '}for an invite code.
+              <a href="https://x.com/solarizer_io" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:underline">X</a>
+              {' '}&mdash; activate it on your dashboard after signup.
             </p>
           )}
 

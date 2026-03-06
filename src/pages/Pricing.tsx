@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import {
-  Zap, Sparkles,
+  Zap,
   Search,
   FolderUp,
   BarChart3,
@@ -38,6 +38,7 @@ import { SubscribeConfirmationModal } from "@/components/SubscribeConfirmationMo
 import { useToast } from "@/hooks/use-toast";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { formatPlanName } from "@/lib/planNames";
+import { TrialActivationModal } from "@/components/TrialActivationModal";
 
 /* ------------------------------------------------------------------ */
 /*  Plan data                                                          */
@@ -204,6 +205,7 @@ const Pricing = () => {
   const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
   const [targetUpgradePlan, setTargetUpgradePlan] = useState<'pro' | 'business'>('pro');
   const [targetSubscribePlan, setTargetSubscribePlan] = useState<PlanId>('starter');
+  const [showTrialModal, setShowTrialModal] = useState(false);
 
   const { user, loading: authLoading } = useAuth();
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
@@ -364,45 +366,31 @@ const Pricing = () => {
 
 
         {/* ── Trial banner ── */}
-        {(!subscription || subscription.plan === 'trial') && (
+        {!subscription && (
           <div
-            className="max-w-md mx-auto mb-8 rounded-2xl border border-primary/20 bg-primary/[0.04] px-6 py-5 text-center animate-in fade-in slide-in-from-bottom-4 duration-600"
+            className="max-w-md mx-auto mb-8 rounded-2xl border border-primary/10 bg-primary/[0.03] px-6 py-5 text-center animate-in fade-in slide-in-from-bottom-4 duration-600"
             style={{ animationDelay: "150ms" }}
           >
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <p className="text-base font-semibold">Try Solarizer Free</p>
-            </div>
-            <p className="text-xs text-muted-foreground/60">
-              <span className="text-primary font-semibold">14 days</span> &middot; <span className="text-primary font-semibold">$300 in credits</span> &middot; Full Inferno-tier access
+            <p className="text-base font-semibold">Try Solarizer Free</p>
+            <p className="text-xs text-muted-foreground/50 mt-1">
+              <span className="text-foreground/70 font-medium">$300 in credits</span>
+              &ensp;·&ensp;14 days&ensp;·&ensp;Full Inferno-tier access
             </p>
-            <p className="text-xs text-muted-foreground/40 mt-3">
-              Request access to get started
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4 border-primary/20 text-primary hover:bg-primary/5"
+              onClick={() => setShowTrialModal(true)}
+            >
+              Enter Invite Code
+            </Button>
+            <p className="text-[11px] text-muted-foreground/30 mt-2.5">
+              DM us on{' '}
+              <a href="https://t.me/solarizer_ai" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">Telegram</a>
+              {' '}or{' '}
+              <a href="https://x.com/solarizer_io" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">X</a>
+              {' '}for a code
             </p>
-            <div className="flex items-center justify-center gap-3 mt-2">
-              <a
-                href="https://t.me/solarizer_ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-primary/10 p-2 text-primary hover:bg-primary/10 transition-all"
-                aria-label="Request on Telegram"
-              >
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true">
-                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-                </svg>
-              </a>
-              <a
-                href="https://x.com/solarizer_io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-primary/10 p-2 text-primary hover:bg-primary/10 transition-all"
-                aria-label="Request on X"
-              >
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-            </div>
           </div>
         )}
 
@@ -669,6 +657,8 @@ const Pricing = () => {
         isLoading={subscriptionActionLoading}
         currentPlan={subscription?.plan}
       />
+
+      <TrialActivationModal open={showTrialModal} onOpenChange={setShowTrialModal} />
     </div>
   );
 };

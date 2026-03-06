@@ -128,13 +128,13 @@ const DashboardHome = () => {
               <Zap className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">No active plan</p>
-              <p className="text-xs text-muted-foreground">Subscribe to start running security analyses</p>
+              <p className="text-sm font-medium text-foreground">Claim your free trial</p>
+              <p className="text-xs text-muted-foreground">$300 in credits · 14 days · Full Inferno-tier access</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={() => setShowTrialModal(true)}>
-              Activate Trial
+              Enter Invite Code
             </Button>
             <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
               <Zap className="w-3.5 h-3.5" />

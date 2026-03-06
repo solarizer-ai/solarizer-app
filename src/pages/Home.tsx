@@ -741,19 +741,21 @@ const Home = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
             <Button asChild variant="solarGlow" size="lg">
-              <Link to="/login">Start Auditing</Link>
+              <Link to="/signup">Start Free Trial</Link>
             </Button>
             <Button variant="ghost" size="lg" className="text-muted-foreground/70 hover:text-foreground" onClick={scrollToHowItWorks}>
               See How It Works →
             </Button>
           </div>
 
-          <p className="text-xs text-muted-foreground/50 mt-4 text-center">
-            Want to try before you buy?{' '}
-            <a href="https://t.me/saboraud" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary/80 underline">Telegram</a>
+          <p className="text-sm text-muted-foreground/60 mt-5 font-medium tracking-wide">
+            $300 in free credits&ensp;·&ensp;14 days&ensp;·&ensp;No card required
+          </p>
+          <p className="text-xs text-muted-foreground/40 mt-2">
+            Request an invite code on{' '}
+            <a href="https://t.me/solarizer_ai" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">Telegram</a>
             {' '}or{' '}
-            <a href="https://x.com/SolarizerAI" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary/80 underline">X</a>
-            {' '}&mdash; 14 days, 300 credits, full access.
+            <a href="https://x.com/solarizer_io" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">X</a>
           </p>
 
         </div>
@@ -977,9 +979,19 @@ const Home = () => {
               Multi-pass AI analysis, exploit-pattern matching, and line-accurate remediation — accessible to every team, at every stage.
             </p>
 
+            <p className="text-sm text-muted-foreground/60 mt-3 font-medium tracking-wide">
+              $300 in free credits&ensp;·&ensp;14 days&ensp;·&ensp;No card required
+            </p>
+            <p className="text-xs text-muted-foreground/40 mt-1.5">
+              Request an invite code on{' '}
+              <a href="https://t.me/solarizer_ai" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">Telegram</a>
+              {' '}or{' '}
+              <a href="https://x.com/solarizer_io" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">X</a>
+            </p>
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
               <Button asChild variant="solarGlow" size="lg">
-                <Link to="/login">Start Auditing</Link>
+                <Link to="/signup">Start Free Trial</Link>
               </Button>
               <Link to="/pricing" className="text-sm text-primary hover:underline">
                 View Pricing →
