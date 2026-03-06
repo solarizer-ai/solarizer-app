@@ -340,7 +340,7 @@ Deno.serve(async (req) => {
         // A9: Strip file content from stored payload
         request_payload: {
           projectName,
-          tier,
+          tier: proxyTier,
           scopeFiles: scopeFiles.map(
             ({ path, nLOC, complexity }: ScopeFile) => ({ path, nLOC, complexity })
           ),
