@@ -169,6 +169,14 @@ export default function AdminAccessTokensPage() {
             </div>
           </div>
 
+          <div>
+            <label className="text-sm font-medium mb-1 block">Token Type</label>
+            <ToggleGroup type="single" value={tokenType} onValueChange={(v) => v && setTokenType(v as "subscription" | "trial")} className="justify-start">
+              <ToggleGroupItem value="subscription" className="text-xs px-3">Subscription</ToggleGroupItem>
+              <ToggleGroupItem value="trial" className="text-xs px-3">Trial</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Max uses (blank = unlimited)</label>
