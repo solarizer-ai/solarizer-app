@@ -269,8 +269,15 @@ Deno.serve(async (req) => {
 
     const tier = subscription.plan;
 
+    // Map internal plan names to proxy-recognized tiers
+    const TIER_MAP: Record<string, string> = {
+      starter: 'starter', pro: 'pro', business: 'business',
+      trial: 'business',  // Trial gets Inferno-tier access
+    };
+    const proxyTier = TIER_MAP[tier] ?? 'starter';
+
     // Plan nLOC limit check
-    const PLAN_NLOC_LIMITS: Record<string, number> = { starter: 500, pro: 3000, business: 9999 };
+    const PLAN_NLOC_LIMITS: Record<string, number> = { starter: 500, pro: 3000, business: 9999, trial: 9999 };
     const totalNloc = scopeNloc + contextNloc;
     const planNlocLimit = PLAN_NLOC_LIMITS[tier] ?? 500;
     if (totalNloc > planNlocLimit) {
