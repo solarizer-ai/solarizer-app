@@ -20,8 +20,9 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Trash2, Users } from "lucide-react";
-import { KeyRound } from "lucide-react";
+import { Plus, Trash2, Users, KeyRound } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface AccessToken {
   id: string;
