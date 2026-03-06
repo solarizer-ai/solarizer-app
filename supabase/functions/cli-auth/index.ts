@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       activeAudit = activeAuditsList[0];
     }
 
-    const tier = subscription?.plan || 'free';
+    const tier = subscription?.plan === 'trial' ? 'business' : (subscription?.plan || 'free');
 
     console.log(`cli-auth: User ${userId} - tier: ${tier}, credits: ${credits?.credits_remaining || 0}`);
 
