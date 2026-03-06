@@ -377,7 +377,7 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-service-secret': sessionSecret },
       body: JSON.stringify({
-        sessionId, userId, tier, projectName,
+        sessionId, userId, tier: proxyTier, projectName,
         scopeFiles: scopeFileStats.map(f => ({ path: f.path, nLOC: f.nLOC, complexity: f.complexity, content: f.content })),
         contextFiles: contextFileStats.map(f => ({ path: f.path, nLOC: f.nLOC, content: f.content })),
         additionalContext: additionalContext || '',
