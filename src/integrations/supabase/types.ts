@@ -52,6 +52,7 @@ export type Database = {
           id: string
           is_active: boolean
           max_uses: number | null
+          token_type: string
           used_count: number
         }
         Insert: {
@@ -62,6 +63,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          token_type?: string
           used_count?: number
         }
         Update: {
@@ -72,6 +74,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          token_type?: string
           used_count?: number
         }
         Relationships: []
@@ -862,6 +865,7 @@ export type Database = {
           email: string | null
           id: string
           onboarding_completed: boolean
+          trial_activated_at: string | null
           updated_at: string
           user_id: string
         }
@@ -872,6 +876,7 @@ export type Database = {
           email?: string | null
           id?: string
           onboarding_completed?: boolean
+          trial_activated_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -882,6 +887,7 @@ export type Database = {
           email?: string | null
           id?: string
           onboarding_completed?: boolean
+          trial_activated_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1297,7 +1303,7 @@ export type Database = {
         | "downgraded"
         | "false_positive"
       security_grade: "A" | "B" | "C" | "D" | "F"
-      subscription_plan: "starter" | "pro" | "business"
+      subscription_plan: "starter" | "pro" | "business" | "trial"
       subscription_status: "active" | "canceled" | "past_due" | "expired"
     }
     CompositeTypes: {
@@ -1443,7 +1449,7 @@ export const Constants = {
         "false_positive",
       ],
       security_grade: ["A", "B", "C", "D", "F"],
-      subscription_plan: ["starter", "pro", "business"],
+      subscription_plan: ["starter", "pro", "business", "trial"],
       subscription_status: ["active", "canceled", "past_due", "expired"],
     },
   },
