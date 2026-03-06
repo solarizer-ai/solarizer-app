@@ -33,6 +33,7 @@ interface AccessToken {
   expires_at: string | null;
   is_active: boolean;
   created_at: string;
+  token_type: string;
 }
 
 interface TokenRedemption {
