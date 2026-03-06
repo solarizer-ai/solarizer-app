@@ -230,6 +230,7 @@ export default function AdminAccessTokensPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>{t.description || "—"}</TableCell>
+                      <TableCell>{t.used_count} / {t.max_uses ?? "∞"}</TableCell>
                       <TableCell>{t.expires_at ? new Date(t.expires_at).toLocaleDateString() : "Never"}</TableCell>
                       <TableCell>
                         <Switch
