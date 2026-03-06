@@ -224,8 +224,12 @@ export default function AdminAccessTokensPage() {
                 : tokens.map((t) => (
                     <TableRow key={t.id}>
                       <TableCell className="font-mono">{t.code}</TableCell>
+                      <TableCell>
+                        <Badge variant={t.token_type === "trial" ? "default" : "secondary"} className="text-[10px]">
+                          {t.token_type === "trial" ? "Trial" : "Subscription"}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{t.description || "—"}</TableCell>
-                      <TableCell>{t.used_count} / {t.max_uses ?? "∞"}</TableCell>
                       <TableCell>{t.expires_at ? new Date(t.expires_at).toLocaleDateString() : "Never"}</TableCell>
                       <TableCell>
                         <Switch
