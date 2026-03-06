@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Zap } from "lucide-react";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
-import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { PurchaseCreditsModal } from "@/components/PurchaseCreditsModal";
 import { CancelSubscriptionModal } from "@/components/CancelSubscriptionModal";
 import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlanSelector";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
@@ -135,7 +135,7 @@ const SubscriptionPage = () => {
         </CardContent>
       </Card>
 
-      <PurchasePowerUpModal open={showPowerUpModal} onOpenChange={setShowPowerUpModal} />
+      <PurchaseCreditsModal open={showPowerUpModal} onOpenChange={setShowPowerUpModal} />
       <CancelSubscriptionModal
         open={showCancelModal}
         onOpenChange={setShowCancelModal}

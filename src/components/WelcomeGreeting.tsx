@@ -2,7 +2,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import solarizerLogo from "@/assets/solarizer-logo.png";
-import { Rocket } from "lucide-react";
+import { Rocket, KeyRound } from "lucide-react";
+import { TrialActivationModal } from "@/components/TrialActivationModal";
 
 interface WelcomeGreetingProps {
   displayName: string | null;
@@ -13,6 +14,7 @@ interface WelcomeGreetingProps {
 const WelcomeGreeting = ({ displayName, userId, onComplete }: WelcomeGreetingProps) => {
   const [dismissing, setDismissing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showTrialModal, setShowTrialModal] = useState(false);
 
   const handleGetStarted = async () => {
     setSaving(true);
@@ -71,6 +73,17 @@ const WelcomeGreeting = ({ displayName, userId, onComplete }: WelcomeGreetingPro
           <Rocket className="w-4 h-4" />
           {saving ? "Setting up…" : "Get Started"}
         </Button>
+
+        <button
+          type="button"
+          onClick={() => setShowTrialModal(true)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <KeyRound className="w-3 h-3" />
+          Have a trial code?
+        </button>
+
+        <TrialActivationModal open={showTrialModal} onOpenChange={setShowTrialModal} />
       </div>
     </div>
   );

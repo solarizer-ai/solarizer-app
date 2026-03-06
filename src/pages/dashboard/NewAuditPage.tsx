@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import AuditWizard from "@/components/AuditWizard";
-import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { PurchaseCreditsModal } from "@/components/PurchaseCreditsModal";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRunAudit } from "@/hooks/useRunAudit";
@@ -57,6 +57,38 @@ const NewAuditPage = () => {
 
   const hasActivePlan = subscription?.status === 'active' && !isExpired;
   const hasCredits = credits && credits.credits_remaining > 0;
+
+  // Gate: trial expired
+  if (subscription?.plan === 'trial' && isExpired) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <FileCode className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-2xl font-semibold text-foreground">New Security Analysis</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Configure and launch your audit</p>
+          </div>
+        </div>
+        <Card className="max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center text-center py-12 space-y-4">
+            <div className="p-4 rounded-2xl bg-muted/50">
+              <Lock className="w-10 h-10 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-semibold">Trial Ended</h2>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              Your trial has ended — subscribe to continue running audits.
+            </p>
+            <Button onClick={() => navigate("/pricing")}>View Plans</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Gate: no active subscription
   if (!hasActivePlan) {
@@ -118,7 +150,7 @@ const NewAuditPage = () => {
             <Button onClick={() => setShowPowerUpModal(true)}>Purchase Credits</Button>
           </CardContent>
         </Card>
-        <PurchasePowerUpModal
+        <PurchaseCreditsModal
           open={showPowerUpModal}
           onOpenChange={setShowPowerUpModal}
         />
@@ -170,7 +202,7 @@ const NewAuditPage = () => {
         onProjectNameChange={setWizardProjectName}
       />
 
-      <PurchasePowerUpModal
+      <PurchaseCreditsModal
         open={showPowerUpModal}
         onOpenChange={setShowPowerUpModal}
         requiredCredits={requiredCredits}

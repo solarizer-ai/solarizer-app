@@ -748,6 +748,14 @@ const Home = () => {
             </Button>
           </div>
 
+          <p className="text-xs text-muted-foreground/50 mt-4 text-center">
+            Want to try before you buy?{' '}
+            <a href="https://t.me/saboraud" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary/80 underline">Telegram</a>
+            {' '}or{' '}
+            <a href="https://x.com/SolarizerAI" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary/80 underline">X</a>
+            {' '}&mdash; 14 days, 300 credits, full access.
+          </p>
+
         </div>
 
         <div className="relative z-20 mt-10 sm:mt-16 max-w-5xl mx-auto px-5 md:px-6">

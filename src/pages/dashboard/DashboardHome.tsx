@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 import AuditCard from "@/components/AuditCard";
 import { CreditBalance } from "@/components/CreditBalance";
 import { LowCreditPrompt } from "@/components/LowCreditPrompt";
-import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { PurchaseCreditsModal } from "@/components/PurchaseCreditsModal";
+import { TrialBanner } from "@/components/TrialBanner";
+import { TrialActivationModal } from "@/components/TrialActivationModal";
 import { DashboardStats } from "@/components/DashboardStats";
 import { SeverityBreakdown } from "@/components/SeverityBreakdown";
 
@@ -41,6 +43,7 @@ const DashboardHome = () => {
   const [deleteAuditId, setDeleteAuditId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [showPowerUpModal, setShowPowerUpModal] = useState(false);
+  const [showTrialModal, setShowTrialModal] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
   const { user } = useAuth();
@@ -129,12 +132,20 @@ const DashboardHome = () => {
               <p className="text-xs text-muted-foreground">Subscribe to start running security analyses</p>
             </div>
           </div>
-          <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
-            <Zap className="w-3.5 h-3.5" />
-            View Plans
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setShowTrialModal(true)}>
+              Activate Trial
+            </Button>
+            <Button size="sm" onClick={() => navigate("/pricing")} className="gap-1.5">
+              <Zap className="w-3.5 h-3.5" />
+              View Plans
+            </Button>
+          </div>
         </div>
       )}
+
+      {/* Trial Banner */}
+      <TrialBanner />
 
       {/* Low Credit Warning */}
       {subscription &&
@@ -142,6 +153,8 @@ const DashboardHome = () => {
           <LowCreditPrompt
             creditsRemaining={credits?.credits_remaining ?? 0}
             onPurchase={() => setShowPowerUpModal(true)}
+            isTrial={subscription?.plan === 'trial'}
+            onSubscribe={() => navigate('/dashboard/subscription')}
           />
         )}
 
@@ -251,13 +264,14 @@ const DashboardHome = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Power-Up Modal */}
-      <PurchasePowerUpModal
+      {/* Credits Modal */}
+      <PurchaseCreditsModal
         open={showPowerUpModal}
         onOpenChange={setShowPowerUpModal}
         requiredCredits={0}
         currentCredits={credits?.credits_remaining || 0}
       />
+      <TrialActivationModal open={showTrialModal} onOpenChange={setShowTrialModal} />
       {/* Welcome Greeting Overlay */}
       {showWelcome && user && (
         <WelcomeGreeting

@@ -71,7 +71,7 @@ const ReferencePage = () => (
           [
             <strong className="text-foreground">Buy Credits</strong>,
             <span className="text-sm text-muted-foreground/60">{"Dashboard \u2192 Billing"}</span>,
-            <span className="text-sm text-muted-foreground/60">Purchase additional power-up credits for larger audits</span>,
+            <span className="text-sm text-muted-foreground/60">Purchase additional credits for larger audits</span>,
           ],
           [
             <strong className="text-foreground">Manage Plan</strong>,

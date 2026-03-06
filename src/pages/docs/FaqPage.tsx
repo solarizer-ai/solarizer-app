@@ -29,7 +29,7 @@ const faqs = [
   {
     question: "Can I buy credits without a subscription?",
     answer:
-      "No. You need an active subscription (Spark, Blaze, or Inferno) to access the Solarizer analysis engine. However, you can purchase additional power-up credits at any time on top of your plan.",
+      "No. You need an active subscription (Spark, Blaze, or Inferno) to access the Solarizer analysis engine. However, you can purchase additional credits at any time on top of your plan.",
   },
   {
     question: "Why can't I see remediation recommendations on the Spark plan?",

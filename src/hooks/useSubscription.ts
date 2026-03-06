@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type SubscriptionPlan = 'starter' | 'pro' | 'business';
+export type SubscriptionPlan = 'starter' | 'pro' | 'business' | 'trial';
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'expired';
 
 export interface Subscription {

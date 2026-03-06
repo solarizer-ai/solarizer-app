@@ -8,6 +8,7 @@ interface AccessTokenResult {
   valid: boolean;
   token_id?: string;
   code?: string;
+  token_type?: string;
   error?: string;
 }
 

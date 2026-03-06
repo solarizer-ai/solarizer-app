@@ -34,6 +34,7 @@ interface SubscribeConfirmationModalProps {
   plan: "starter" | "pro" | "business";
   onConfirm: (couponCode?: string, accessTokenCode?: string) => void;
   isLoading?: boolean;
+  currentPlan?: string | null;
 }
 
 export function SubscribeConfirmationModal({
@@ -42,9 +43,13 @@ export function SubscribeConfirmationModal({
   plan,
   onConfirm,
   isLoading = false,
+  currentPlan = null,
 }: SubscribeConfirmationModalProps) {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponResult | null>(null);
   const [validatedTokenCode, setValidatedTokenCode] = useState<string | null>(null);
+
+  const isTrialUser = currentPlan === 'trial';
+  const needsAccessToken = !isTrialUser;
 
   const baseCents = PLAN_PRICES[plan] || 0;
   const finalCents = appliedCoupon?.final_amount_cents ?? baseCents;
@@ -85,10 +90,12 @@ export function SubscribeConfirmationModal({
             )}
           </div>
 
-          {/* Access Token Input */}
-          <AccessTokenInput
-            onValidate={(result) => setValidatedTokenCode(result?.code ?? null)}
-          />
+          {/* Access Token Input — skip for trial-to-paid conversion */}
+          {needsAccessToken && (
+            <AccessTokenInput
+              onValidate={(result) => setValidatedTokenCode(result?.code ?? null)}
+            />
+          )}
 
           {/* Coupon Input */}
           <CouponInput
@@ -103,7 +110,7 @@ export function SubscribeConfirmationModal({
               className="w-full"
               size="lg"
               onClick={handleConfirm}
-              disabled={isLoading || !validatedTokenCode}
+              disabled={isLoading || (needsAccessToken && !validatedTokenCode)}
             >
               {isLoading ? "Processing..." : finalCents < 100 ? "Confirm & Subscribe" : `Pay $${finalDollars} & Subscribe`}
             </Button>

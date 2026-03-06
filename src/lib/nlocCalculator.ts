@@ -34,39 +34,41 @@ export function isWithinNLocLimit(code: string, limit: number): boolean {
  */
 export const PLAN_LIMITS = {
   starter: { nlocPerScan: 500, initialCredits: 50 },
-  pro: { nlocPerScan: 3000, initialCredits: 50 },
-  business: { nlocPerScan: 9999, initialCredits: 50 },
+  pro: { nlocPerScan: 3000, initialCredits: 100 },
+  business: { nlocPerScan: 9999, initialCredits: 200 },
+  trial: { nlocPerScan: 9999, initialCredits: 300 },
 } as const;
 
 /**
- * Credits granted when purchasing a subscription
+ * Credits granted when purchasing/activating a plan
  */
 export const SUBSCRIPTION_CREDITS = {
   starter: 50,
-  pro: 50,
-  business: 50,
+  pro: 100,
+  business: 200,
+  trial: 300,
 } as const;
 
 /**
- * Credit rates per plan (in cents)
+ * Credit rates per plan (in cents) — flat $1.00 per credit across all plans
  */
 export const PLAN_CREDIT_RATES = {
-  starter: 400,  // $4.00 per credit (Spark plan)
-  pro: 370,      // $3.70 per credit (Blaze plan)
-  business: 350, // $3.50 per credit (Inferno plan)
+  starter: 100,  // $1.00 per credit
+  pro: 100,      // $1.00 per credit
+  business: 100, // $1.00 per credit
+  trial: 100,    // $1.00 per credit
 } as const;
 
 /**
- * Calculate credits after downgrade using fair usage formula
- * New Balance = Floor((Remaining Credits * Old Plan Rate) / New Plan Rate)
+ * Calculate credits after downgrade.
+ * With flat $1 pricing, credits transfer 1:1 across all plans.
+ * Kept for API compatibility.
  */
 export function calculateDowngradeCredits(
   currentCredits: number,
-  fromPlan: keyof typeof PLAN_CREDIT_RATES,
-  toPlan: keyof typeof PLAN_CREDIT_RATES
+  _fromPlan: keyof typeof PLAN_CREDIT_RATES,
+  _toPlan: keyof typeof PLAN_CREDIT_RATES
 ): number {
-  const oldRate = PLAN_CREDIT_RATES[fromPlan];
-  const newRate = PLAN_CREDIT_RATES[toPlan];
-  return Math.floor((currentCredits * oldRate) / newRate);
+  return currentCredits;
 }
 

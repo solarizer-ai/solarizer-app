@@ -19,7 +19,7 @@ const PLANS: Plan[] = [
 ];
 
 interface SubscriptionPlanSelectorProps {
-  currentPlan: "starter" | "pro" | "business" | null;
+  currentPlan: "starter" | "pro" | "business" | "trial" | null;
   pendingPlan: "starter" | "pro" | "business" | null;
   pendingPlanDate: string | null;
   hasPendingCancellation: boolean;
@@ -58,14 +58,16 @@ export function SubscriptionPlanSelector({
   onRenew,
   isExpired,
 }: SubscriptionPlanSelectorProps) {
-  const currentPlanOrder = currentPlan ? PLAN_ORDER[currentPlan] : -1;
+  // Treat trial users as unsubscribed for plan selection purposes
+  const effectivePlan = currentPlan === 'trial' ? null : currentPlan;
+  const currentPlanOrder = effectivePlan ? PLAN_ORDER[effectivePlan] : -1;
 
   const getPlanAction = (planId: Plan["id"]) => {
-    if (currentPlan === null) return "subscribe";
-    if (isExpired && planId === currentPlan) return "expired";
+    if (effectivePlan === null) return "subscribe";
+    if (isExpired && planId === effectivePlan) return "expired";
     if (isExpired) return "disabled";
     const planOrder = PLAN_ORDER[planId];
-    if (planId === currentPlan) return "current";
+    if (planId === effectivePlan) return "current";
     if (pendingPlan && planId === pendingPlan) return "pending";
     if (planOrder > currentPlanOrder) return "upgrade";
     if (planOrder < currentPlanOrder) return "downgrade";
@@ -176,16 +178,16 @@ export function SubscriptionPlanSelector({
       </div>
 
       {/* Expired banner */}
-      {isExpired && currentPlan && (
+      {isExpired && effectivePlan && (
         <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-3">
           <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-destructive">Subscription Expired</p>
             <p className="text-xs text-muted-foreground">
-              Renew your {formatPlanName(currentPlan)} plan to regain access to premium features.
+              Renew your {formatPlanName(effectivePlan)} plan to regain access to premium features.
             </p>
           </div>
-          <Button variant="default" size="sm" onClick={() => onRenew?.(currentPlan)}>
+          <Button variant="default" size="sm" onClick={() => onRenew?.(effectivePlan!)}>
             Renew Plan
           </Button>
         </div>

@@ -42,7 +42,7 @@ export default function PlansAndCostingPage() {
         <div className="space-y-2 text-sm text-muted-foreground/60">
           <p>
             Credits are the currency of Solarizer audits. Every plan
-            includes <strong className="text-foreground">50 credits per month</strong>, and unused
+            includes monthly credits that scale with your plan — <strong className="text-foreground">Spark 50, Blaze 100, Inferno 200</strong> — and unused
             credits carry forward indefinitely — they never expire and never
             reset.
           </p>
@@ -170,8 +170,7 @@ export default function PlansAndCostingPage() {
             ]}
           />
           <p>
-            With 50 included credits, this audit costs{" "}
-            <strong className="text-foreground">687 credits</strong> from your balance —
+            With your plan's included credits, this audit costs credits from your balance —
             or zero extra if you've accumulated credits over multiple months.
           </p>
         </div>
@@ -191,7 +190,7 @@ export default function PlansAndCostingPage() {
         <DocTable
           headers={["Feature", "Spark ($149/mo)", "Blaze ($199/mo)", "Inferno ($499/mo)"]}
           rows={[
-            [<strong className="text-foreground">Monthly credits</strong>, "50", "50", "50"],
+            [<strong className="text-foreground">Monthly credits</strong>, "50", "100", "200"],
             [<strong className="text-foreground">nLOC limit per audit</strong>, "500 nLOC", "3,000 nLOC", "9,999 nLOC"],
             [<strong className="text-foreground">Complexity levels</strong>, "L1, L2, L3", "L1, L2, L3", "L1, L2, L3"],
             [
@@ -224,7 +223,7 @@ export default function PlansAndCostingPage() {
             ],
             ["Invite collaborators (up to 5)", <No />, <No />, <Yes />],
             ["Comment and track remediation", <No />, <No />, <Yes />],
-            [<strong className="text-foreground">Credit rate</strong>, "$2.80/credit", "$2.50/credit", "$2.20/credit"],
+            [<strong className="text-foreground">Credit rate</strong>, "$1.00/credit", "$1.00/credit", "$1.00/credit"],
           ]}
         />
       </div>
@@ -332,17 +331,9 @@ export default function PlansAndCostingPage() {
         </div>
         <div className="space-y-3 text-sm text-muted-foreground/60">
           <p>
-            Every plan includes 50 credits per month. Need more? Purchase
-            additional credits at a rate that improves with your plan:
+            Monthly credits scale with your plan (Spark 50, Blaze 100, Inferno 200). Need more? Purchase
+            additional credits at a flat rate of <strong className="text-foreground">$1.00 per credit</strong>, regardless of plan.
           </p>
-          <DocTable
-            headers={["Plan", "Credit rate", "Savings"]}
-            rows={[
-              [<strong className="text-foreground">Spark</strong>, "$2.80/credit", <No />],
-              [<strong className="text-foreground">Blaze</strong>, "$2.50/credit", "~11% off"],
-              [<strong className="text-foreground">Inferno</strong>, "$2.20/credit", "~21% off"],
-            ]}
-          />
           <p>
             Additional credits stack with your monthly allocation and never
             expire as long as you maintain an active subscription.
@@ -375,9 +366,9 @@ export default function PlansAndCostingPage() {
             ]}
           />
           <p>
-            <strong className="text-foreground">Total: 224 credits.</strong> With 50 monthly
-            credits, you need 174 Power-Up credits ($2.80 each = $487.20).
-            Or wait 5 months to accumulate 250 credits and run it for free.
+            <strong className="text-foreground">Total: 224 credits.</strong> With your plan's monthly
+            credits, you can buy additional credits at $1.00 each to cover the difference,
+            or accumulate credits over multiple months and run it for free.
           </p>
           <p className="font-medium text-foreground">What happens during the audit:</p>
           <ol className="list-decimal pl-5 space-y-1">

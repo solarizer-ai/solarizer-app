@@ -60,7 +60,7 @@ const TermsOfService = () => {
                 <strong className="text-foreground">"Credits"</strong> means the unit of consumption used to measure and pay for analysis performed by the Service. One Credit corresponds to one normalized line of code (nLOC), subject to applicable complexity multipliers and discount rates.
               </p>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                <strong className="text-foreground">"Power-Up Credits"</strong> means additional Credits purchased separately from your subscription allocation.
+                <strong className="text-foreground">"Additional Credits"</strong> means additional Credits purchased separately from your subscription allocation.
               </p>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 <strong className="text-foreground">"Subscription Plan"</strong> means the tier of service you have selected (Spark, Blaze, or Inferno), each of which provides different feature access, scope limits, and Credit pricing.
@@ -192,7 +192,7 @@ const TermsOfService = () => {
                         <th className="text-left py-2 pr-4 text-foreground font-medium">Plan</th>
                         <th className="text-center py-2 px-4 text-foreground font-medium">Monthly Price</th>
                         <th className="text-center py-2 px-4 text-foreground font-medium">Monthly Credits</th>
-                        <th className="text-center py-2 px-4 text-foreground font-medium">Power-Up Rate</th>
+                        <th className="text-center py-2 px-4 text-foreground font-medium">Credit Rate</th>
                         <th className="text-center py-2 pl-4 text-foreground font-medium">Max Scope</th>
                       </tr>
                     </thead>
@@ -201,21 +201,21 @@ const TermsOfService = () => {
                         <td className="py-2 pr-4 font-medium text-foreground">Spark</td>
                         <td className="text-center py-2 px-4">$149/mo</td>
                         <td className="text-center py-2 px-4">50</td>
-                        <td className="text-center py-2 px-4">$2.80/credit</td>
+                        <td className="text-center py-2 px-4">$1.00/credit</td>
                         <td className="text-center py-2 pl-4">500 nLOC</td>
                       </tr>
                       <tr className="border-b border-border/50">
                         <td className="py-2 pr-4 font-medium text-foreground">Blaze</td>
                         <td className="text-center py-2 px-4">$199/mo</td>
-                        <td className="text-center py-2 px-4">50</td>
-                        <td className="text-center py-2 px-4">$2.50/credit</td>
+                        <td className="text-center py-2 px-4">100</td>
+                        <td className="text-center py-2 px-4">$1.00/credit</td>
                         <td className="text-center py-2 pl-4">3,000 nLOC</td>
                       </tr>
                       <tr>
                         <td className="py-2 pr-4 font-medium text-foreground">Inferno</td>
                         <td className="text-center py-2 px-4">$499/mo</td>
-                        <td className="text-center py-2 px-4">50</td>
-                        <td className="text-center py-2 px-4">$2.20/credit</td>
+                        <td className="text-center py-2 px-4">200</td>
+                        <td className="text-center py-2 px-4">$1.00/credit</td>
                         <td className="text-center py-2 pl-4">9,999 nLOC</td>
                       </tr>
                     </tbody>
@@ -230,7 +230,7 @@ const TermsOfService = () => {
               <div className="bg-muted/30 border border-border rounded-lg p-4">
                 <h3 className="text-lg font-medium text-foreground mb-2">5.2 Credits</h3>
                 <p className="text-muted-foreground leading-relaxed mb-3">
-                  Each Subscription Plan includes a monthly allocation of 50 Credits. Unused Credits carry forward indefinitely and do not expire as long as you maintain an active subscription. Credits are consumed based on the following formula:
+                  Each Subscription Plan includes a monthly allocation of Credits (Spark 50, Blaze 100, Inferno 200). Unused Credits carry forward indefinitely and do not expire as long as you maintain an active subscription. Credits are consumed based on the following formula:
                 </p>
                 <div className="bg-muted/50 border border-border rounded-lg p-4 my-3">
                   <code className="text-primary font-mono text-sm whitespace-pre-line">
@@ -243,9 +243,9 @@ const TermsOfService = () => {
               </div>
 
               <div className="bg-muted/30 border border-border rounded-lg p-4">
-                <h3 className="text-lg font-medium text-foreground mb-2">5.3 Power-Up Credits</h3>
+                <h3 className="text-lg font-medium text-foreground mb-2">5.3 Additional Credits</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  You may purchase additional Credits ("Power-Up Credits") at the rate associated with your current Subscription Plan. Power-Up Credits are added to your balance immediately upon purchase and do not expire as long as you maintain an active subscription.
+                  You may purchase additional Credits at a flat rate of $1.00 per credit, regardless of your Subscription Plan. Additional Credits are added to your balance immediately upon purchase and do not expire as long as you maintain an active subscription.
                 </p>
               </div>
 
@@ -259,7 +259,7 @@ const TermsOfService = () => {
               <div className="bg-muted/30 border border-border rounded-lg p-4">
                 <h3 className="text-lg font-medium text-foreground mb-2">5.5 Credit Conversion on Downgrade</h3>
                 <p className="text-muted-foreground leading-relaxed mb-3">
-                  Upon downgrading your Subscription Plan, the monetary value of your remaining Credits is preserved and converted to the credit rate of the new plan:
+                  Upon downgrading your Subscription Plan, your remaining Credits are preserved. Since all plans share a flat $1.00 per credit rate, no conversion is necessary:
                 </p>
                 <div className="bg-muted/50 border border-border rounded-lg p-4 my-3">
                   <code className="text-primary font-mono text-sm">
@@ -475,9 +475,9 @@ const TermsOfService = () => {
               <div>
                 <h3 className="text-lg font-medium text-foreground mb-2">12.3 Credits upon Termination</h3>
                 <ul className="text-muted-foreground text-sm space-y-2 ml-2">
-                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Termination for breach:</strong> All remaining Credits (subscription and Power-Up) are forfeited immediately.</span></li>
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Termination for breach:</strong> All remaining Credits (subscription and purchased) are forfeited immediately.</span></li>
                   <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Voluntary cancellation:</strong> Your remaining Credits remain available until the end of your current billing period, after which they expire.</span></li>
-                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Termination by Solarizer (non-breach):</strong> Remaining Credits are applied to any fees owed through the effective date of termination, after which they expire. If the value of remaining Credits exceeds fees owed, we will issue a pro-rated refund for unused Power-Up Credits purchased within the preceding 90 days, where required by applicable law.</span></li>
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Termination by Solarizer (non-breach):</strong> Remaining Credits are applied to any fees owed through the effective date of termination, after which they expire. If the value of remaining Credits exceeds fees owed, we will issue a pro-rated refund for unused purchased Credits bought within the preceding 90 days, where required by applicable law.</span></li>
                 </ul>
               </div>
               <div>

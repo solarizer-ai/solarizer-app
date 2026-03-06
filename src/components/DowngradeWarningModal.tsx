@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
-import { PLAN_CREDIT_RATES, calculateDowngradeCredits } from "@/lib/nlocCalculator";
+import { PLAN_CREDIT_RATES } from "@/lib/nlocCalculator";
 import { formatPlanName } from "@/lib/planNames";
 
 type PlanType = keyof typeof PLAN_CREDIT_RATES;
@@ -31,12 +31,6 @@ export function DowngradeWarningModal({
   toPlan,
   onConfirm,
 }: DowngradeWarningModalProps) {
-  const newCredits = calculateDowngradeCredits(currentCredits, fromPlan, toPlan);
-  const fromRate = PLAN_CREDIT_RATES[fromPlan] / 100;
-  const toRate = PLAN_CREDIT_RATES[toPlan] / 100;
-  const currentValue = currentCredits * fromRate;
-  const newValue = newCredits * toRate;
-
   const fromPlanLabel = formatPlanName(fromPlan);
   const toPlanLabel = formatPlanName(toPlan);
 
@@ -46,50 +40,35 @@ export function DowngradeWarningModal({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-warning">
             <AlertTriangle className="h-5 w-5" />
-            Credit Fair Usage Policy
+            Confirm Downgrade
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-4 text-left">
             <p>
               You are about to downgrade from <span className="font-medium text-foreground">{fromPlanLabel}</span> to{" "}
               <span className="font-medium text-foreground">{toPlanLabel}</span>.
             </p>
-            
+
             <p>
-              To preserve the monetary value of your credits, your balance will be adjusted:
+              Your plan will change at the end of the current billing period. Credits carry over at full value.
             </p>
 
             <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Current Balance:</span>
+                <span className="text-muted-foreground">Current Credits:</span>
                 <span className="font-medium text-foreground">
-                  {currentCredits.toLocaleString()} credits @ ${fromRate.toFixed(2)}/credit
+                  {currentCredits.toLocaleString()} credits
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Monetary Value:</span>
-                <span className="font-medium text-foreground">${currentValue.toFixed(2)}</span>
-              </div>
-              
-              <div className="border-t border-border my-2" />
-              
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">New Balance:</span>
+                <span className="text-muted-foreground">After Downgrade:</span>
                 <span className="font-medium text-primary">
-                  {newCredits.toLocaleString()} credits @ ${toRate.toFixed(2)}/credit
+                  {currentCredits.toLocaleString()} credits (unchanged)
                 </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Preserved Value:</span>
-                <span className="font-medium text-primary">${newValue.toFixed(2)}</span>
               </div>
             </div>
 
-            <p className="text-sm font-medium text-foreground">
-              Your {currentCredits.toLocaleString()} credits will be converted to {newCredits.toLocaleString()} credits on the new plan.
-            </p>
-
             <p className="text-xs text-muted-foreground">
-              ⓘ This conversion preserves your monetary investment.
+              Your nLOC-per-scan limit will change to match the {toPlanLabel} plan.
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>

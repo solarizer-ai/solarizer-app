@@ -8,6 +8,7 @@ export function formatPlanName(plan: string | null): string {
     starter: 'Spark',
     pro: 'Blaze',
     business: 'Inferno',
+    trial: 'Free Trial',
   };
   return names[plan] || plan.charAt(0).toUpperCase() + plan.slice(1);
 }

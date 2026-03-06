@@ -487,6 +487,17 @@ const Auth = () => {
             </button>
           </div>
 
+          {/* Trial note (signup only) */}
+          {!isLogin && (
+            <p className="mt-4 text-center text-xs text-muted-foreground/60">
+              Free trial available &mdash; contact us on{' '}
+              <a href="https://t.me/saboraud" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:underline">Telegram</a>
+              {' '}or{' '}
+              <a href="https://x.com/SolarizerAI" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:underline">X</a>
+              {' '}for an invite code.
+            </p>
+          )}
+
           {/* Legal footer */}
           <p className="mt-6 text-center text-xs text-muted-foreground/50">
             {isLogin ? (

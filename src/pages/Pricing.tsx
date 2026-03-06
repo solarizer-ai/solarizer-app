@@ -32,7 +32,7 @@ import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
-import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { PurchaseCreditsModal } from "@/components/PurchaseCreditsModal";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
 import { SubscribeConfirmationModal } from "@/components/SubscribeConfirmationModal";
 import { useToast } from "@/hooks/use-toast";
@@ -63,7 +63,7 @@ const plans: Plan[] = [
     tagline: 'Essentials',
     monthlyPrice: 149,
     monthlyCredits: 50,
-    creditRate: 4.0,
+    creditRate: 1.0,
     nlocLimit: '500',
     popular: false,
   },
@@ -72,8 +72,8 @@ const plans: Plan[] = [
     name: 'Blaze',
     tagline: 'Most Popular',
     monthlyPrice: 199,
-    monthlyCredits: 50,
-    creditRate: 3.7,
+    monthlyCredits: 100,
+    creditRate: 1.0,
     nlocLimit: '3,000',
     popular: true,
   },
@@ -82,8 +82,8 @@ const plans: Plan[] = [
     name: 'Inferno',
     tagline: 'Full Power',
     monthlyPrice: 499,
-    monthlyCredits: 50,
-    creditRate: 3.5,
+    monthlyCredits: 200,
+    creditRate: 1.0,
     nlocLimit: '9,999',
     popular: false,
   },
@@ -257,7 +257,7 @@ const Pricing = () => {
     }
 
     const currentPlan = subscription?.plan || null;
-    if (!currentPlan) {
+    if (!currentPlan || currentPlan === 'trial') {
       return {
         text: "Subscribe",
         variant: (planId === 'pro' ? "default" : "outline") as "default" | "outline",
@@ -376,6 +376,38 @@ const Pricing = () => {
           </p>
         </div>
 
+        {/* ── Trial banner ── */}
+        {(!subscription || subscription.plan === 'trial') && (
+          <div
+            className="max-w-2xl mx-auto mb-8 rounded-2xl border border-primary/20 bg-primary/[0.04] p-5 text-center animate-in fade-in slide-in-from-bottom-4 duration-600"
+            style={{ animationDelay: "150ms" }}
+          >
+            <p className="text-sm font-semibold mb-1">Try Solarizer Free</p>
+            <p className="text-xs text-muted-foreground/60 mb-3">
+              14 days &middot; 300 $ credits &middot; Full Inferno access
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <a
+                href="https://t.me/saboraud"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                Request on Telegram
+              </a>
+              <span className="text-muted-foreground/30">|</span>
+              <a
+                href="https://x.com/SolarizerAI"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                Request on X
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* ── Billing note ── */}
         <p className="text-sm text-muted-foreground/50 text-center mb-10">
           Monthly billing&nbsp;&middot;&nbsp;Annual subscriptions coming soon
@@ -453,7 +485,7 @@ const Pricing = () => {
 
         {/* ── Credit explainer ── */}
         <p className="text-sm text-muted-foreground/50 text-center mt-8 mb-4">
-          50 monthly credits included with every plan. Unused credits carry forward — they never expire. Maintain an active subscription to use them.
+          Monthly credits scale with your plan: Spark 50, Blaze 100, Inferno 200. Unused credits carry forward — they never expire. Maintain an active subscription to use them.
         </p>
 
         {/* ── Feature card grid ── */}
@@ -532,7 +564,7 @@ const Pricing = () => {
               <AccordionContent className="text-sm text-muted-foreground/60">
                 1 credit ≈ 1 nLOC (normalized line of code), modified by contract complexity.
                 L1 contracts cost 0.8× credits, L2 cost 1×, and L3 cost 1.2×.
-                Every plan includes 50 credits per month.
+                Monthly credits scale with your plan: Spark 50, Blaze 100, Inferno 200.
               </AccordionContent>
             </AccordionItem>
 
@@ -561,8 +593,7 @@ const Pricing = () => {
                 What happens if I run out of credits?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground/60">
-                Purchase additional credits at your plan's rate — Spark at $2.80, Blaze at $2.50,
-                or Inferno at $2.20 per credit.
+                Purchase additional credits at $1.00 per credit on any plan.
               </AccordionContent>
             </AccordionItem>
 
@@ -590,7 +621,7 @@ const Pricing = () => {
 
         {/* ── Need more credits? ── */}
         <div className="flex items-center justify-center gap-3 py-8">
-          <span className="text-sm text-muted-foreground/50">Need more credits? Purchase at your plan rate.</span>
+          <span className="text-sm text-muted-foreground/50">Need more credits? $1.00 per credit on any plan.</span>
           <Button
             variant="link"
             className="text-primary px-0"
@@ -617,7 +648,7 @@ const Pricing = () => {
       <Footer />
 
       {/* ── Modals (untouched) ── */}
-      <PurchasePowerUpModal
+      <PurchaseCreditsModal
         open={powerUpModalOpen}
         onOpenChange={setPowerUpModalOpen}
       />
@@ -638,6 +669,7 @@ const Pricing = () => {
         plan={targetSubscribePlan}
         onConfirm={handleSubscribeConfirm}
         isLoading={subscriptionActionLoading}
+        currentPlan={subscription?.plan}
       />
     </div>
   );

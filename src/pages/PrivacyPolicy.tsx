@@ -242,7 +242,7 @@ const PrivacyPolicy = () => {
                   We share information with third-party service providers who assist in delivering the Service, including:
                 </p>
                 <ul className="text-muted-foreground text-sm space-y-2 ml-2">
-                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Payment Processors:</strong> To process subscription payments and Power-Up Credit purchases. These providers have access to billing information necessary to complete transactions.</span></li>
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Payment Processors:</strong> To process subscription payments and credit purchases. These providers have access to billing information necessary to complete transactions.</span></li>
                   <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Infrastructure Providers:</strong> To host and operate the Service, including cloud computing and storage services. These providers process data on our behalf under contractual data protection obligations.</span></li>
                   <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span><span><strong className="text-foreground">Analytics Providers:</strong> To understand aggregate usage patterns and improve the Service. Analytics data is anonymized or pseudonymized where possible.</span></li>
                 </ul>

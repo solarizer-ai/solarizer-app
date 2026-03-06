@@ -248,7 +248,7 @@ const EstimatorStep = ({ scopeFiles, contextFiles, onBack, onProceed, onUpgradeN
         <Button variant="ghost" onClick={onBack} className="gap-2"><ArrowLeft className="w-4 h-4" />Back</Button>
         <Button onClick={handleProceed} disabled={isSubmitting} className="gap-2">
           {!validation.valid ? <Zap className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          {!validation.valid ? (validation.reason === 'credits' ? 'Get Power-Up' : 'Upgrade Plan') : 'Continue'}
+          {!validation.valid ? (validation.reason === 'credits' ? 'Buy Credits' : 'Upgrade Plan') : 'Continue'}
         </Button>
       </div>
     </div>

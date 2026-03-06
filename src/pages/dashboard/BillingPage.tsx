@@ -16,7 +16,7 @@ import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { formatPlanName } from "@/lib/planNames";
 import { useBillingHistory, BillingEvent } from "@/hooks/useBillingHistory";
-import { PurchasePowerUpModal } from "@/components/PurchasePowerUpModal";
+import { PurchaseCreditsModal } from "@/components/PurchaseCreditsModal";
 import { CancelSubscriptionModal } from "@/components/CancelSubscriptionModal";
 import { SubscriptionPlanSelector } from "@/components/settings/SubscriptionPlanSelector";
 import { UpgradeConfirmationModal } from "@/components/UpgradeConfirmationModal";
@@ -88,12 +88,8 @@ const BillingPage = () => {
         ? "[&>div]:bg-warning"
         : "[&>div]:bg-destructive";
 
-  const getPricePerCreditCents = () => {
-    if (plan === "business") return 350;
-    if (plan === "pro") return 370;
-    return 400;
-  };
-  const pricePerCreditDollars = getPricePerCreditCents() / 100;
+  const pricePerCreditDollars = 1.00;
+  const isTrial = plan === "trial";
 
   const getPlanPrice = (planId: string) => {
     const prices: Record<string, number> = { starter: 149, pro: 199, business: 499 };
@@ -121,7 +117,7 @@ const BillingPage = () => {
           <div className="flex items-center gap-4">
             <div className="p-2 rounded-lg bg-primary/10"><Zap className="h-5 w-5 text-primary" /></div>
             <div>
-              <p className="font-medium text-foreground">Power-Up Purchase</p>
+              <p className="font-medium text-foreground">Credit Purchase</p>
               <p className="text-sm text-muted-foreground">+{event.data.nloc_amount.toLocaleString()} nLOC credits</p>
             </div>
           </div>
@@ -193,14 +189,17 @@ const BillingPage = () => {
                   <div>
                     <CardTitle className="text-base">Credits</CardTitle>
                     <CardDescription className="text-xs">
-                      {isPaid ? "Your credit balance" : "Spark plan balance"}
+                      {isTrial ? "Trial · Inferno-tier" : isPaid ? "Your credit balance" : "Spark plan balance"}
                     </CardDescription>
                   </div>
+                  {isTrial && <Badge variant="secondary">Trial</Badge>}
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setShowPowerUpModal(true)}
-                  className="gap-1.5 hover:glow-orange-sm transition-all">
-                  <Zap className="w-3.5 h-3.5" /> Buy Credits
-                </Button>
+                {!isTrial && (
+                  <Button size="sm" variant="outline" onClick={() => setShowPowerUpModal(true)}
+                    className="gap-1.5 hover:glow-orange-sm transition-all">
+                    <Zap className="w-3.5 h-3.5" /> Buy Credits
+                  </Button>
+                )}
               </div>
             </CardHeader>
 
@@ -247,11 +246,15 @@ const BillingPage = () => {
               </div>
 
               {/* Renewal info */}
-              {subscription?.current_period_end && (
+              {isTrial && subscription?.current_period_end ? (
+                <p className="text-xs text-muted-foreground">
+                  Trial expires {format(new Date(subscription.current_period_end), "MMM d, yyyy")}
+                </p>
+              ) : subscription?.current_period_end ? (
                 <p className="text-xs text-muted-foreground">
                   50 credits included · Renews {format(new Date(subscription.current_period_end), "MMM d")}
                 </p>
-              )}
+              ) : null}
             </CardContent>
           </Card>
 
@@ -282,7 +285,7 @@ const BillingPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Transaction History</CardTitle>
-              <CardDescription>All your power-up purchases and plan changes</CardDescription>
+              <CardDescription>All your credit purchases and plan changes</CardDescription>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 flex-wrap">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -367,7 +370,7 @@ const BillingPage = () => {
       </Tabs>
 
       {/* Modals */}
-      <PurchasePowerUpModal open={showPowerUpModal} onOpenChange={setShowPowerUpModal} />
+      <PurchaseCreditsModal open={showPowerUpModal} onOpenChange={setShowPowerUpModal} />
       <CancelSubscriptionModal
         open={showCancelModal}
         onOpenChange={setShowCancelModal}

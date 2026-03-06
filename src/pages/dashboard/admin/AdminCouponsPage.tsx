@@ -211,7 +211,7 @@ export default function AdminCouponsPage() {
                       setApplyTo(checked ? [...applyTo, t] : applyTo.filter((x) => x !== t))
                     }
                   />
-                  <span className="text-sm text-foreground capitalize">{t.replace("_", " ")}</span>
+                  <span className="text-sm text-foreground capitalize">{t === "power_up" ? "Credit Purchase" : t.replace("_", " ")}</span>
                 </label>
               ))}
             </div>
@@ -272,7 +272,7 @@ export default function AdminCouponsPage() {
                       <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30">
                         <td className="p-3 font-mono font-medium text-foreground">{c.code}</td>
                         <td className="p-3 text-foreground">{formatDiscount(c)}</td>
-                        <td className="p-3 text-muted-foreground">{c.applicable_to.join(", ")}</td>
+                        <td className="p-3 text-muted-foreground">{c.applicable_to.map(t => t === "power_up" ? "Credit Purchase" : t).join(", ")}</td>
                         <td className="p-3 text-muted-foreground">{c.used_count} / {c.max_uses ?? "∞"}</td>
                         <td className="p-3 text-muted-foreground">{c.expires_at ? new Date(c.expires_at).toLocaleDateString() : "Never"}</td>
                         <td className="p-3">
