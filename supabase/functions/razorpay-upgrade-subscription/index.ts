@@ -13,9 +13,7 @@ interface UpgradeSubscriptionRequest {
 
 // Plan prices in cents (USD)
 const PLAN_PRICES: Record<string, number> = {
-  starter: 14900, // $149 (Launch plan)
-  pro: 19900, // $199
-  business: 49900, // $499
+  business: 9900, // $99 — single Inferno plan
 };
 
 // Plan order for validation

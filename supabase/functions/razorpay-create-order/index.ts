@@ -76,14 +76,7 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const { data: subscription } = await supabase
-        .from("subscriptions")
-        .select("plan")
-        .eq("user_id", user.id)
-        .single();
-      const userPlan = subscription?.plan || "starter";
-      const ratePerCredit = POWER_UP_RATES[userPlan] || POWER_UP_RATES.starter;
-      amountCents = creditsAmount * ratePerCredit;
+      amountCents = creditsAmount * POWER_UP_RATE_CENTS;
       description = `${creditsAmount} Credits Power-up`;
     } else {
       return new Response(
