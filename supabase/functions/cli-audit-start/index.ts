@@ -244,6 +244,13 @@ Deno.serve(async (req) => {
     const totalNlocCheck = scopeNloc + contextNloc;
     const planNlocLimit = PLAN_NLOC_LIMITS[tier] ?? 500;
 
+    // Fetch user's credit balance
+    const { data: credits } = await supabase
+      .from('nloc_credits')
+      .select('credits_remaining')
+      .eq('user_id', userId)
+      .maybeSingle();
+
     const creditsRemaining = credits?.credits_remaining || 0;
     if (creditsRemaining < estimatedCost) {
       return new Response(

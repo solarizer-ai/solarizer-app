@@ -16,18 +16,11 @@ interface CreateOrderRequest {
 }
 
 const PLAN_PRICES: Record<string, number> = {
-  starter: 14900,
-  pro: 19900,
-  business: 49900,
+  business: 9900, // $99 — single Inferno plan
 };
 
-const POWER_UP_RATES: Record<string, number> = {
-  starter: 100,
-  launch: 100,
-  pro: 100,
-  business: 100,
-  trial: 100,
-};
+// Flat $0.10 per credit for all plans
+const POWER_UP_RATE_CENTS = 10;
 
 const FRONTEND_URL = Deno.env.get("FRONTEND_URL") || "https://solarizer.io";
 
@@ -83,14 +76,7 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const { data: subscription } = await supabase
-        .from("subscriptions")
-        .select("plan")
-        .eq("user_id", user.id)
-        .single();
-      const userPlan = subscription?.plan || "starter";
-      const ratePerCredit = POWER_UP_RATES[userPlan] || POWER_UP_RATES.starter;
-      amountCents = creditsAmount * ratePerCredit;
+      amountCents = creditsAmount * POWER_UP_RATE_CENTS;
       description = `${creditsAmount} Credits Power-up`;
     } else {
       return new Response(
