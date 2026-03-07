@@ -9,7 +9,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { Code, DocTable, Yes, No } from "@/components/docs/DocHelpers";
+import { Code, DocTable, Yes } from "@/components/docs/DocHelpers";
 
 /* ================================================================== */
 /*  PAGE                                                               */
@@ -41,8 +41,8 @@ export default function PlansAndCostingPage() {
         </div>
         <div className="space-y-2 text-sm text-muted-foreground/60">
           <p>
-            Credits are the currency of Solarizer audits. Every plan
-            includes monthly credits that scale with your plan — <strong className="text-foreground">Spark 50, Blaze 100, Inferno 200</strong> — and unused
+            Credits are the currency of Solarizer audits. Your Inferno plan
+            includes <strong className="text-foreground">500 credits monthly</strong>, and unused
             credits carry forward indefinitely — they never expire and never
             reset.
           </p>
@@ -177,53 +177,52 @@ export default function PlansAndCostingPage() {
       </div>
 
       {/* ---------------------------------------------------------- */}
-      {/*  5. Plan Comparison                                         */}
+      {/*  5. Inferno Plan                                            */}
       {/* ---------------------------------------------------------- */}
       <div className="bg-foreground/[0.02] border border-border/10 rounded-2xl p-6">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold">Plan Comparison</h2>
+          <h2 className="text-lg font-semibold">Inferno Plan</h2>
           <p className="text-sm text-muted-foreground/60 mt-1">
-            Every plan runs the same core engine — higher tiers unlock deeper
-            analysis phases
+            One plan with full access to every feature
           </p>
         </div>
         <DocTable
-          headers={["Feature", "Spark ($149/mo)", "Blaze ($199/mo)", "Inferno ($499/mo)"]}
+          headers={["Feature", "Inferno ($99/mo)"]}
           rows={[
-            [<strong className="text-foreground">Monthly credits</strong>, "50", "100", "200"],
-            [<strong className="text-foreground">nLOC limit per audit</strong>, "500 nLOC", "3,000 nLOC", "9,999 nLOC"],
-            [<strong className="text-foreground">Complexity levels</strong>, "L1, L2, L3", "L1, L2, L3", "L1, L2, L3"],
+            [<strong className="text-foreground">Monthly credits</strong>, "500"],
+            [<strong className="text-foreground">nLOC limit per audit</strong>, "9,999 nLOC"],
+            [<strong className="text-foreground">Complexity levels</strong>, "L1, L2, L3"],
             [
               <span className="font-semibold text-foreground text-xs uppercase tracking-wider">Analysis depth</span>,
-              "", "", "",
+              "",
             ],
-            ["Initial vulnerability scan (Hunter P1)", <Yes />, <Yes />, <Yes />],
-            ["Deep scan on L2+ contracts (Hunter P2)", <No />, <Yes />, <Yes />],
-            ["Cross-contract interaction analysis", <No />, <Yes />, <Yes />],
-            ["AI false-positive validation", <No />, <Yes />, <Yes />],
-            ["QA scan (Low, Info, Gas findings)", <No />, <Yes />, <Yes />],
+            ["Initial vulnerability scan (Hunter P1)", <Yes />],
+            ["Deep scan on L2+ contracts (Hunter P2)", <Yes />],
+            ["Cross-contract interaction analysis", <Yes />],
+            ["AI false-positive validation", <Yes />],
+            ["QA scan (Low, Info, Gas findings)", <Yes />],
             [
               <span className="font-semibold text-foreground text-xs uppercase tracking-wider">Findings</span>,
-              "", "", "",
+              "",
             ],
-            ["Critical, High, Medium severity", <Yes />, <Yes />, <Yes />],
-            ["Low, Info, Gas severity", <No />, <Yes />, <Yes />],
-            ["Remediation guidance", <No />, <Yes />, <Yes />],
+            ["Critical, High, Medium severity", <Yes />],
+            ["Low, Info, Gas severity", <Yes />],
+            ["Remediation guidance", <Yes />],
             [
               <span className="font-semibold text-foreground text-xs uppercase tracking-wider">Reports</span>,
-              "", "", "",
+              "",
             ],
-            ["Local markdown report", <Yes />, <Yes />, <Yes />],
-            ["Dashboard report", "Free", "Free", "Free"],
-            ["Share reports with team", <No />, <No />, <Yes />],
-            ["Public report link", <No />, <No />, <Yes />],
+            ["Local markdown report", <Yes />],
+            ["Dashboard report", "Free"],
+            ["Share reports with team", <Yes />],
+            ["Public report link", <Yes />],
             [
               <span className="font-semibold text-foreground text-xs uppercase tracking-wider">Collaboration</span>,
-              "", "", "",
+              "",
             ],
-            ["Invite collaborators (up to 5)", <No />, <No />, <Yes />],
-            ["Comment and track remediation", <No />, <No />, <Yes />],
-            [<strong className="text-foreground">Credit rate</strong>, "$1.00/credit", "$1.00/credit", "$1.00/credit"],
+            ["Invite collaborators (up to 5)", <Yes />],
+            ["Comment and track remediation", <Yes />],
+            [<strong className="text-foreground">Credit rate</strong>, "$0.10/credit"],
           ]}
         />
       </div>
@@ -238,47 +237,47 @@ export default function PlansAndCostingPage() {
         </div>
         <div className="space-y-2 text-sm text-muted-foreground/60">
           <DocTable
-            headers={["Phase", "What it does", "Spark", "Blaze", "Inferno"]}
+            headers={["Phase", "What it does", "Included"]}
             rows={[
               [
                 <strong className="text-foreground">1. Complexity estimation</strong>,
                 "Classifies each contract as L1, L2, or L3 based on code patterns",
-                <Yes />, <Yes />, <Yes />,
+                <Yes />,
               ],
               [
                 <strong className="text-foreground">2. Hunting (P1)</strong>,
                 "Broad vulnerability sweep across all contracts",
-                <Yes />, <Yes />, <Yes />,
+                <Yes />,
               ],
               [
                 <strong className="text-foreground">3. Hunting (P2)</strong>,
                 "Second pass on L2+ contracts with deeper pattern matching",
-                <No />, <Yes />, <Yes />,
+                <Yes />,
               ],
               [
                 <strong className="text-foreground">4. Cross-contract</strong>,
                 "Examines contract interactions — reentrancy chains, trust boundaries, shared state",
-                <No />, <Yes />, <Yes />,
+                <Yes />,
               ],
               [
                 <strong className="text-foreground">5. AI validation</strong>,
                 "Re-examines each finding, rejecting false positives and adjusting severity",
-                <No />, <Yes />, <Yes />,
+                <Yes />,
               ],
               [
                 <strong className="text-foreground">6. QA scan</strong>,
                 "Gas optimizations, informational issues, and low-severity findings",
-                <No />, <Yes />, <Yes />,
+                <Yes />,
               ],
               [
                 <strong className="text-foreground">7. Formatting</strong>,
                 "Maps findings to exact source lines, generates your markdown report",
-                <Yes />, <Yes />, <Yes />,
+                <Yes />,
               ],
             ]}
           />
           <p>
-            Phases marked "\u2014" are available on higher plans. The engine
+            All 7 analysis phases run automatically on every audit. The engine
             seamlessly proceeds to the next phase without interruption.
           </p>
         </div>
@@ -293,21 +292,16 @@ export default function PlansAndCostingPage() {
           <h2 className="text-lg font-semibold">Scope Limits</h2>
         </div>
         <div className="space-y-3 text-sm text-muted-foreground/60">
-          <DocTable
-            headers={["Plan", "nLOC limit per audit"]}
-            rows={[
-              [<strong className="text-foreground">Spark</strong>, "500 nLOC"],
-              [<strong className="text-foreground">Blaze</strong>, "3,000 nLOC"],
-              [<strong className="text-foreground">Inferno</strong>, "9,999 nLOC"],
-            ]}
-          />
           <p>
-            If your selected scope exceeds your plan's limit, the cost
+            The Inferno plan supports audits up to <strong className="text-foreground">9,999 nLOC</strong> per audit.
+          </p>
+          <p>
+            If your selected scope exceeds the limit, the cost
             confirmation screen removes the "Start audit" option and shows:
           </p>
           <pre className="bg-[hsl(0_0%_4%)] border border-border/10 rounded-lg p-4 text-xs font-mono overflow-x-auto">
-{`Warning: Scope (1,200 nLOC) exceeds your Spark plan limit (500 nLOC).
-  Reduce scope or upgrade to Blaze.`}
+{`Warning: Scope (10,200 nLOC) exceeds the 9,999 nLOC limit.
+  Reduce scope to continue.`}
           </pre>
           <p>
             Both scope files and context files count toward the nLOC limit.
@@ -315,7 +309,7 @@ export default function PlansAndCostingPage() {
           </p>
           <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-xs">
             <strong className="text-foreground">Note:</strong> You'll also see a yellow warning
-            when your scope reaches 80% of your plan's limit, so you can
+            when your scope reaches 80% of the limit, so you can
             plan ahead.
           </div>
         </div>
@@ -331,8 +325,8 @@ export default function PlansAndCostingPage() {
         </div>
         <div className="space-y-3 text-sm text-muted-foreground/60">
           <p>
-            Monthly credits scale with your plan (Spark 50, Blaze 100, Inferno 200). Need more? Purchase
-            additional credits at a flat rate of <strong className="text-foreground">$1.00 per credit</strong>, regardless of plan.
+            Your Inferno plan includes 500 credits monthly. Need more? Purchase
+            additional credits at a flat rate of <strong className="text-foreground">$0.10 per credit</strong>.
           </p>
           <p>
             Additional credits stack with your monthly allocation and never
@@ -345,7 +339,7 @@ export default function PlansAndCostingPage() {
       {/*  9. Worked Examples                                         */}
       {/* ---------------------------------------------------------- */}
 
-      {/* Example 1 — Solo developer on Spark */}
+      {/* Example 1 — Solo developer on Inferno */}
       <div className="bg-foreground/[0.02] border border-border/10 rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-4">
           <User className="w-5 h-5 text-primary" />
@@ -357,7 +351,7 @@ export default function PlansAndCostingPage() {
           <p>
             <strong className="text-foreground">Scenario:</strong> You've written a custom ERC-20
             token with a fee-on-transfer mechanism. One file, 280 nLOC,
-            classified as L1 (standard). Spark plan.
+            classified as L1 (standard).
           </p>
           <DocTable
             headers={["File", "nLOC", "Complexity", "Rate", "Credits"]}
@@ -366,30 +360,29 @@ export default function PlansAndCostingPage() {
             ]}
           />
           <p>
-            <strong className="text-foreground">Total: 224 credits.</strong> With your plan's monthly
-            credits, you can buy additional credits at $1.00 each to cover the difference,
-            or accumulate credits over multiple months and run it for free.
+            <strong className="text-foreground">Total: 224 credits.</strong> Well within your 500
+            monthly credits — this audit is covered by your subscription with
+            276 credits to spare. Need more? Buy additional credits at $0.10 each.
           </p>
           <p className="font-medium text-foreground">What happens during the audit:</p>
           <ol className="list-decimal pl-5 space-y-1">
             <li>Complexity estimation classifies FeeToken.sol as L1</li>
             <li>Hunter P1 scans for vulnerabilities (Critical, High, Medium)</li>
-            <li className="text-muted-foreground/40 line-through">Deep scan — available on Blaze+</li>
-            <li className="text-muted-foreground/40 line-through">Cross-contract — single contract, not applicable</li>
-            <li className="text-muted-foreground/40 line-through">Validation — available on Blaze+</li>
-            <li className="text-muted-foreground/40 line-through">QA scan — available on Blaze+</li>
+            <li>Hunter P2 deep-scans for additional patterns</li>
+            <li>Cross-contract analysis (single contract — not applicable)</li>
+            <li>AI validation re-examines findings, rejecting false positives</li>
+            <li>QA scan finds gas optimizations and informational issues</li>
             <li>Formatting maps findings to source lines</li>
             <li>Report generated: <Code>solarizer-report.md</Code></li>
           </ol>
           <p>
-            <strong className="text-foreground">Result:</strong> Critical, High, and Medium
-            findings with exact line numbers and code snippets. Remediation
-            guidance and gas optimizations are included with Blaze and above.
+            <strong className="text-foreground">Result:</strong> Complete security audit with all
+            severity levels, remediation guidance, and gas optimizations included.
           </p>
         </div>
       </div>
 
-      {/* Example 2 — DeFi team on Blaze */}
+      {/* Example 2 — DeFi team on Inferno */}
       <div className="bg-foreground/[0.02] border border-border/10 rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-4">
           <Users className="w-5 h-5 text-primary" />
@@ -401,7 +394,7 @@ export default function PlansAndCostingPage() {
           <p>
             <strong className="text-foreground">Scenario:</strong> Your lending protocol has 3
             core contracts and 2 interface dependencies. You want the full
-            analysis. Blaze plan, 1,800 nLOC scope.
+            analysis. 1,800 nLOC scope — well within the 9,999 nLOC limit.
           </p>
           <DocTable
             headers={["File", "Role", "nLOC", "Complexity", "Rate", "Credits"]}
@@ -422,8 +415,9 @@ export default function PlansAndCostingPage() {
             ]}
           />
           <p>
-            <strong className="text-foreground">Total: 1,900 credits</strong> (scope: 1,800 nLOC
-            — well within Blaze's 3,000 limit).
+            <strong className="text-foreground">Total: 1,900 credits.</strong> You'll need to
+            purchase 1,400 additional credits at $0.10 each ($140) to supplement
+            your 500 monthly credits, or accumulate credits over multiple months.
           </p>
           <p className="font-medium text-foreground">What happens during the audit:</p>
           <ol className="list-decimal pl-5 space-y-1">
@@ -448,28 +442,24 @@ export default function PlansAndCostingPage() {
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold">
-            When Your Scope Exceeds the Plan Limit
+            When Your Scope Exceeds the Limit
           </h2>
         </div>
         <div className="space-y-3 text-sm text-muted-foreground/60">
           <p>
-            <strong className="text-foreground">Scenario:</strong> You're on Spark (500 nLOC
-            limit) and select 3 contracts totaling 720 nLOC.
+            <strong className="text-foreground">Scenario:</strong> You select contracts totaling
+            10,200 nLOC, exceeding the 9,999 nLOC limit.
           </p>
           <p>The "Start audit" option disappears. You see:</p>
           <pre className="bg-[hsl(0_0%_4%)] border border-border/10 rounded-lg p-4 text-xs font-mono overflow-x-auto">
-{`Warning: Scope (720 nLOC) exceeds your Spark plan limit (500 nLOC).
-Reduce scope or upgrade to Blaze.`}
+{`Warning: Scope (10,200 nLOC) exceeds the 9,999 nLOC limit.
+Reduce scope to continue.`}
           </pre>
           <p className="font-medium text-foreground">Your options:</p>
           <ol className="list-decimal pl-5 space-y-1">
             <li>
               <strong className="text-foreground">Reduce scope</strong> — deselect files until
-              you're under 500 nLOC. Audit the most critical contracts first.
-            </li>
-            <li>
-              <strong className="text-foreground">Upgrade to Blaze</strong> — your 3,000 nLOC
-              limit covers this audit comfortably.
+              you're under 9,999 nLOC. Audit the most critical contracts first.
             </li>
             <li>
               <strong className="text-foreground">Split into batches</strong> — audit each

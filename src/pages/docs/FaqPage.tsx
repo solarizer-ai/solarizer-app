@@ -29,12 +29,7 @@ const faqs = [
   {
     question: "Can I buy credits without a subscription?",
     answer:
-      "No. You need an active subscription (Spark, Blaze, or Inferno) to access the Solarizer analysis engine. However, you can purchase additional credits at any time on top of your plan.",
-  },
-  {
-    question: "Why can't I see remediation recommendations on the Spark plan?",
-    answer:
-      "Spark is a starter tier designed to help you identify vulnerabilities. You can download your report as a local markdown file on all plans. To access AI-driven remediation guidance, Low/Info/Gas severity findings, and deeper analysis phases, upgrade to Blaze.",
+      "No. You need an active Inferno subscription to access the Solarizer analysis engine. However, you can purchase additional credits at any time on top of your plan.",
   },
   {
     question: "How long does an audit take?",

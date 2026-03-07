@@ -59,34 +59,14 @@ interface Plan {
 
 const plans: Plan[] = [
   {
-    id: 'starter',
-    name: 'Spark',
-    tagline: 'Essentials',
-    monthlyPrice: 149,
-    monthlyCredits: 50,
-    creditRate: 1.0,
-    nlocLimit: '500',
-    popular: false,
-  },
-  {
-    id: 'pro',
-    name: 'Blaze',
-    tagline: 'Most Popular',
-    monthlyPrice: 199,
-    monthlyCredits: 100,
-    creditRate: 1.0,
-    nlocLimit: '3,000',
-    popular: true,
-  },
-  {
     id: 'business',
     name: 'Inferno',
     tagline: 'Full Power',
-    monthlyPrice: 499,
-    monthlyCredits: 200,
-    creditRate: 1.0,
+    monthlyPrice: 99,
+    monthlyCredits: 500,
+    creditRate: 0.10,
     nlocLimit: '9,999',
-    popular: false,
+    popular: true,
   },
 ];
 
@@ -106,61 +86,61 @@ const features: Feature[] = [
     icon: Search,
     title: "Vulnerability Scan",
     description: "Single-pass hunter identifies critical, high, and medium severity issues.",
-    plans: ['starter', 'pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: FolderUp,
     title: "Multi-File Upload",
     description: "Upload entire project folders or import from GitHub.",
-    plans: ['starter', 'pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: BarChart3,
     title: "Dashboard Reports",
     description: "Save audit reports to your cloud dashboard for reference.",
-    plans: ['starter', 'pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: FileDown,
     title: "Local Markdown Export",
     description: "Download complete audit reports as markdown files.",
-    plans: ['starter', 'pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: Radar,
     title: "Deep Scan",
     description: "Second-pass analysis on L2+ contracts catches deeper vulnerabilities.",
-    plans: ['pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: GitBranch,
     title: "Cross-Contract Analysis",
     description: "Detect vulnerabilities across contract interactions and dependencies.",
-    plans: ['pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: ShieldCheck,
     title: "AI Validation",
     description: "AI-powered false positive elimination for higher accuracy.",
-    plans: ['pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: TestTubes,
     title: "Security Coverage",
     description: "AI-generated hypothesis tests prove code safety or surface vulnerabilities — with pass/fail traceability per contract.",
-    plans: ['pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: Bug,
     title: "QA Scan",
     description: "Uncover Low, Info, and Gas optimization findings.",
-    plans: ['pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: Wrench,
     title: "Remediation Guidance",
     description: "Actionable fix suggestions with code examples for each finding.",
-    plans: ['pro', 'business'],
+    plans: ['business'],
   },
   {
     icon: Lightbulb,
@@ -189,8 +169,8 @@ const features: Feature[] = [
 ];
 
 const planDisplayName: Record<PlanId, string> = {
-  starter: 'Spark',
-  pro: 'Blaze',
+  starter: 'Inferno',
+  pro: 'Inferno',
   business: 'Inferno',
 };
 
@@ -199,7 +179,7 @@ const planDisplayName: Record<PlanId, string> = {
 /* ------------------------------------------------------------------ */
 
 const Pricing = () => {
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('pro');
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>('business');
   const [powerUpModalOpen, setPowerUpModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
@@ -360,39 +340,10 @@ const Pricing = () => {
             className="text-lg text-muted-foreground/60 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
             style={{ animationDelay: "100ms" }}
           >
-            From solo devs to security teams. One engine, three intensities.
+            One plan. Full power. From solo devs to security teams.
           </p>
         </section>
 
-
-        {/* ── Trial banner ── */}
-        {!subscription && (
-          <div
-            className="max-w-md mx-auto mb-8 rounded-2xl border border-primary/10 bg-primary/[0.03] px-6 py-5 text-center animate-in fade-in slide-in-from-bottom-4 duration-600"
-            style={{ animationDelay: "150ms" }}
-          >
-            <p className="text-base font-semibold">Try Solarizer Free</p>
-            <p className="text-xs text-muted-foreground/50 mt-1">
-              <span className="text-foreground/70 font-medium">$300 in credits</span>
-              &ensp;·&ensp;14 days&ensp;·&ensp;Full Inferno-tier access
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4 border-primary/20 text-primary hover:bg-primary/5"
-              onClick={() => setShowTrialModal(true)}
-            >
-              Enter Invite Code
-            </Button>
-            <p className="text-[11px] text-muted-foreground/30 mt-2.5">
-              DM us on{' '}
-              <a href="https://t.me/solarizer_ai" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">Telegram</a>
-              {' '}or{' '}
-              <a href="https://x.com/solarizer_io" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">X</a>
-              {' '}for a code
-            </p>
-          </div>
-        )}
 
         {/* ── Billing note ── */}
         <p className="text-sm text-muted-foreground/50 text-center mb-10">
@@ -400,7 +351,7 @@ const Pricing = () => {
         </p>
 
         {/* ── Plan selector cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="max-w-sm mx-auto">
           {plans.map((plan, index) => {
             const buttonConfig = getButtonConfig(plan.id);
             const isSelected = selectedPlan === plan.id;
@@ -471,7 +422,14 @@ const Pricing = () => {
 
         {/* ── Credit explainer ── */}
         <p className="text-sm text-muted-foreground/50 text-center mt-8 mb-4">
-          Monthly credits scale with your plan: Spark 50, Blaze 100, Inferno 200. Unused credits carry forward — they never expire. Maintain an active subscription to use them.
+          500 credits included monthly. Unused credits carry forward — they never expire. Maintain an active subscription to use them.
+        </p>
+
+        <p className="text-xs text-muted-foreground/40 text-center mt-2">
+          Free trial available with invite code —{' '}
+          <span className="cursor-pointer text-primary/50 hover:text-primary/70 underline" onClick={() => setShowTrialModal(true)}>
+            activate here
+          </span>
         </p>
 
         {/* ── Feature card grid ── */}
@@ -550,17 +508,17 @@ const Pricing = () => {
               <AccordionContent className="text-sm text-muted-foreground/60">
                 1 credit ≈ 1 nLOC (normalized line of code), modified by contract complexity.
                 L1 contracts cost 0.8× credits, L2 cost 1×, and L3 cost 1.2×.
-                Monthly credits scale with your plan: Spark 50, Blaze 100, Inferno 200.
+                500 credits included monthly.
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="q2" className="bg-foreground/[0.02] border border-border/10 rounded-lg px-4">
               <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                Can I switch plans?
+                Can I cancel anytime?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground/60">
-                Yes. Upgrades are immediate with prorated billing. Downgrades take effect
-                at the end of your current billing period.
+                Yes. Cancel anytime from your dashboard. Your access continues until the
+                end of your current billing period.
               </AccordionContent>
             </AccordionItem>
 
@@ -579,7 +537,7 @@ const Pricing = () => {
                 What happens if I run out of credits?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground/60">
-                Purchase additional credits at $1.00 per credit on any plan.
+                Purchase additional credits at $0.10 per credit.
               </AccordionContent>
             </AccordionItem>
 
@@ -588,9 +546,9 @@ const Pricing = () => {
                 Is the nLOC limit per audit or a monthly total?
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground/60">
-                Per audit. Each plan's nLOC limit (Spark: 500, Blaze: 3,000, Inferno: 9,999)
-                applies to each individual audit run. You can run as many audits as your credits
-                allow — the limit only constrains the scope of a single audit.
+                Per audit. The nLOC limit (9,999) applies to each individual audit run.
+                You can run as many audits as your credits allow — the limit only constrains
+                the scope of a single audit.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -607,7 +565,7 @@ const Pricing = () => {
 
         {/* ── Need more credits? ── */}
         <div className="flex items-center justify-center gap-3 py-8">
-          <span className="text-sm text-muted-foreground/50">Need more credits? $1.00 per credit on any plan.</span>
+          <span className="text-sm text-muted-foreground/50">Need more credits? $0.10 per credit.</span>
           <Button
             variant="link"
             className="text-primary px-0"

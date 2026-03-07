@@ -99,7 +99,7 @@ const SubscriptionPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base">Credits</CardTitle>
-              <CardDescription className="text-xs">{isPaid ? "Your credit balance" : "Your Spark plan credit balance"}</CardDescription>
+              <CardDescription className="text-xs">{isPaid ? "Your credit balance" : "Your credit balance"}</CardDescription>
             </div>
             {isPaid && (
               <Button size="sm" variant="outline" onClick={() => setShowPowerUpModal(true)} className="gap-1.5">

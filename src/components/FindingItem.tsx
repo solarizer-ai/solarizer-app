@@ -609,7 +609,7 @@ const FindingItem = ({
                     <div className="flex items-center gap-2">
                       <Lock className="w-4 h-4 text-primary" />
                        <p className="text-sm text-foreground/90">
-                         Upgrade to Blaze to view AI-powered fix recommendations
+                         Subscribe to view AI-powered fix recommendations
                        </p>
                      </div>
                      <Button 
@@ -621,7 +621,7 @@ const FindingItem = ({
                        className="shrink-0"
                      >
                        <Zap className="w-3.5 h-3.5 mr-1.5" />
-                       Upgrade to Blaze
+                       Subscribe
                     </Button>
                   </div>
                 </div>

@@ -741,22 +741,12 @@ const Home = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
             <Button asChild variant="solarGlow" size="lg">
-              <Link to="/signup">Start Free Trial</Link>
+              <Link to="/pricing">Get Started</Link>
             </Button>
             <Button variant="ghost" size="lg" className="text-muted-foreground/70 hover:text-foreground" onClick={scrollToHowItWorks}>
               See How It Works →
             </Button>
           </div>
-
-          <p className="text-sm text-muted-foreground/60 mt-5 font-medium tracking-wide">
-            $300 in free credits&ensp;·&ensp;14 days&ensp;·&ensp;No card required
-          </p>
-          <p className="text-xs text-muted-foreground/40 mt-2">
-            Request an invite code on{' '}
-            <a href="https://t.me/solarizer_ai" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">Telegram</a>
-            {' '}or{' '}
-            <a href="https://x.com/solarizer_io" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">X</a>
-          </p>
 
         </div>
 
@@ -966,38 +956,56 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── SECTION 7: Final CTA ──────────────────────────────────────── */}
+      {/* ── SECTION 7: Sample Report ──────────────────────────────────── */}
       <section className="py-16 md:py-24">
         <ScrollReveal>
-          <div className="max-w-2xl mx-auto text-center px-5 md:px-6">
+          <div className="max-w-3xl mx-auto text-center px-5 md:px-6">
             <h2 className="font-black tracking-tight leading-[1.15]">
-              <FitText as="span" max={88} min={22} className="block text-gradient">AI-Powered Security</FitText>
-              <FitText as="span" max={88} min={22} className="block mt-1 md:mt-2">Fraction of the Cost</FitText>
+              <FitText as="span" max={72} min={20} className="block text-gradient">See It In Action</FitText>
             </h2>
-
-            <p className="text-[clamp(0.75rem,calc(0.6rem+0.7vw),1.125rem)] text-muted-foreground/60 mt-4 md:mt-6 max-w-lg mx-auto leading-relaxed">
-              Multi-pass AI analysis, exploit-pattern matching, and line-accurate remediation — accessible to every team, at every stage.
+            <p className="text-[clamp(0.75rem,calc(0.6rem+0.7vw),1rem)] text-muted-foreground/60 mt-4 md:mt-6 max-w-lg mx-auto leading-relaxed">
+              Real audit report from a Sherlock contest codebase — generated in minutes, not weeks.
             </p>
 
-            <p className="text-sm text-muted-foreground/60 mt-3 font-medium tracking-wide">
-              $300 in free credits&ensp;·&ensp;14 days&ensp;·&ensp;No card required
-            </p>
-            <p className="text-xs text-muted-foreground/40 mt-1.5">
-              Request an invite code on{' '}
-              <a href="https://t.me/solarizer_ai" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">Telegram</a>
-              {' '}or{' '}
-              <a href="https://x.com/solarizer_io" target="_blank" rel="noopener noreferrer" className="text-primary/40 hover:text-primary/60 underline">X</a>
-            </p>
+            <div className="mt-10 max-w-md mx-auto">
+              <a
+                href="https://solarizer.io/report/40d3f5d970"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block rounded-2xl border border-border/50 hover:border-primary/30 bg-card/50 hover:bg-card/80 p-6 transition-all duration-300 hover:shadow-[0_0_30px_rgba(234,125,30,0.06)]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-foreground/90 group-hover:text-foreground transition-colors">
+                      DODO Cross-Chain DEX
+                    </p>
+                    <p className="text-xs text-muted-foreground/50 mt-1">
+                      3 contracts · 551 nLOC · Sherlock Contest
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-mono text-muted-foreground/40">Security Grade</p>
+                    <p className="text-lg font-black text-destructive/80">F</p>
+                  </div>
+                </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border/30">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-destructive/10 text-destructive/70">5 Critical</span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-400/70">3 High</span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-400/70">10 Medium</span>
+                  <span className="text-xs text-muted-foreground/40 ml-auto">65 total findings →</span>
+                </div>
+              </a>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-10">
               <Button asChild variant="solarGlow" size="lg">
-                <Link to="/signup">Start Free Trial</Link>
+                <Link to="/pricing">Get Started</Link>
               </Button>
               <Link to="/pricing" className="text-sm text-primary hover:underline">
                 View Pricing →
               </Link>
             </div>
-
           </div>
         </ScrollReveal>
       </section>

@@ -16,15 +16,15 @@ interface UpgradeToProModalProps {
   currentNloc?: number;
 }
 
-export function UpgradeToProModal({ 
-  open, 
-  onOpenChange, 
+export function UpgradeToProModal({
+  open,
+  onOpenChange,
   reason = 'nloc_limit',
-  currentNloc 
+  currentNloc
 }: UpgradeToProModalProps) {
   const features = [
-    { icon: Shield, text: "50 credits monthly allowance" },
-    { icon: Code2, text: "Up to 3,000 nLOC per audit" },
+    { icon: Shield, text: "500 credits monthly" },
+    { icon: Code2, text: "Up to 9,999 nLOC per audit" },
     { icon: Zap, text: "Purchase credits for larger projects" },
   ];
 
@@ -34,16 +34,16 @@ export function UpgradeToProModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            Upgrade to Blaze
+            Upgrade to Inferno
           </DialogTitle>
           <DialogDescription>
-            {`Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit limit for Spark.`}
+            {`Your code has ${currentNloc?.toLocaleString()} nLOC, exceeding the ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit limit for your current plan.`}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold">$199</span>
+            <span className="text-3xl font-bold">$99</span>
             <span className="text-muted-foreground">/month</span>
           </div>
 
@@ -60,11 +60,11 @@ export function UpgradeToProModal({
 
           <div className="pt-2 space-y-2">
             <Button className="w-full" size="lg">
-              Upgrade to Blaze
+              Upgrade to Inferno
             </Button>
-            <Button 
-              variant="ghost" 
-              className="w-full" 
+            <Button
+              variant="ghost"
+              className="w-full"
               onClick={() => onOpenChange(false)}
             >
               Maybe later

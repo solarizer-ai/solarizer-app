@@ -50,18 +50,18 @@ export const SUBSCRIPTION_CREDITS = {
 } as const;
 
 /**
- * Credit rates per plan (in cents) — flat $1.00 per credit across all plans
+ * Credit rates per plan (in cents) — flat $0.10 per credit across all plans
  */
 export const PLAN_CREDIT_RATES = {
-  starter: 100,  // $1.00 per credit
-  pro: 100,      // $1.00 per credit
-  business: 100, // $1.00 per credit
-  trial: 100,    // $1.00 per credit
+  starter: 10,  // $0.10 per credit
+  pro: 10,      // $0.10 per credit
+  business: 10, // $0.10 per credit
+  trial: 10,    // $0.10 per credit
 } as const;
 
 /**
  * Calculate credits after downgrade.
- * With flat $1 pricing, credits transfer 1:1 across all plans.
+ * With flat $0.10 pricing, credits transfer 1:1 across all plans.
  * Kept for API compatibility.
  */
 export function calculateDowngradeCredits(

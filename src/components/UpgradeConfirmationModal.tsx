@@ -41,12 +41,12 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "Remediation guidance",
   ],
   business: [
-    "Everything in Blaze",
+    "Everything included",
     "Up to 9,999 nLOC per audit",
     "Share reports on dashboard",
     "Invite up to 5 collaborators",
     "Comment & track remediation progress",
-    "Lowest credit rate ($2.20/credit)",
+    "Credit rate ($0.10/credit)",
   ],
 };
 

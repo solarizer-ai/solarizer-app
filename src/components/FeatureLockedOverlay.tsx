@@ -20,7 +20,7 @@ export function FeatureLockedOverlay({
   variant = 'card',
 }: FeatureLockedOverlayProps) {
   const isPro = requiredPlan === 'pro';
-  const planName = isPro ? 'Blaze' : 'Inferno';
+  const planName = 'Inferno';
   const PlanIcon = isPro ? Zap : Building2;
   const planColor = isPro ? 'text-primary' : 'text-purple-500';
   const planBgColor = isPro ? 'bg-primary/10' : 'bg-purple-500/10';

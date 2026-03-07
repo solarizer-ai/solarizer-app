@@ -6,7 +6,7 @@ const wizardSteps = [
   { step: "2", title: "Upload Method", desc: "Choose how to provide your contracts — upload a local folder or import from a GitHub repository." },
   { step: "3", title: "Upload Files", desc: <>Upload your Solidity files or select a repository and branch. Only <Code>.sol</Code> files are analyzed.</> },
   { step: "4", title: "Scope Selection", desc: <>Choose which files to include in audit scope and which are context. Scope files are charged at full rate; context files at the <Code>0.15x</Code> discount.</> },
-  { step: "5", title: "Complexity & Cost", desc: "Review the estimated nLOC, complexity classification, and total credit cost. Plan-specific nLOC limits apply: 500 (Spark), 3,000 (Blaze), 9,999 (Inferno)." },
+  { step: "5", title: "Complexity & Cost", desc: "Review the estimated nLOC, complexity classification, and total credit cost. The nLOC limit is 9,999 per audit." },
   { step: "6", title: "Additional Context", desc: "Optionally add notes or documentation to help the analysis engine understand your contracts.", optional: true },
 ];
 
@@ -20,12 +20,9 @@ const analysisPhases: { step: string; title: string; desc: string; plans: "all" 
   { step: "7", title: "Formatting", desc: "Maps findings to exact source lines and generates your final report.", plans: "all" },
 ];
 
-const PlanTag = ({ plans }: { plans: "all" | "blaze" }) =>
-  plans === "all" ? (
-    <span className="text-xs text-green-500/80 font-medium">All plans</span>
-  ) : (
-    <span className="text-xs text-primary/80 font-medium">Blaze &amp; Inferno</span>
-  );
+const PlanTag = ({ plans }: { plans: "all" | "blaze" }) => (
+  <span className="text-xs text-green-500/80 font-medium">Included</span>
+);
 
 const AuditsPage = () => (
   <div className="space-y-6">

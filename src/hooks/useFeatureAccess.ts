@@ -4,12 +4,12 @@ import { useSubscription, SubscriptionPlan } from "./useSubscription";
 export type ExtendedSubscriptionPlan = SubscriptionPlan | 'business';
 
 export interface FeatureAccess {
-  // Blaze+ features
+  // Inferno features (all included)
   canViewRemediation: boolean;
   canExportReport: boolean;
   canViewQAFindings: boolean; // low/info severity
 
-  // Inferno only features
+  // Inferno features
   canShareReports: boolean;
   canCommentOnFindings: boolean;
 
@@ -24,10 +24,10 @@ export interface FeatureAccess {
 /**
  * Hook to determine feature access based on user's subscription plan.
  *
- * Plan hierarchy:
- * - starter (Spark): Basic features only
- * - pro (Blaze): Remediation, Export, QA Findings
- * - business (Inferno): All Blaze features + Sharing, Comments
+ * Plan hierarchy (legacy DB values):
+ * - starter → Inferno: All features
+ * - pro → Inferno: All features
+ * - business → Inferno: All features
  * - trial: Maps to Inferno-tier access for 14 days
  */
 export function useFeatureAccess(): FeatureAccess {
@@ -48,12 +48,12 @@ export function useFeatureAccess(): FeatureAccess {
     const isBusiness = effectivelyActive && effectivePlan === 'business';
 
     return {
-      // Blaze+ features
+      // Inferno features (all included)
       canViewRemediation: isPro,
       canExportReport: isPro,
       canViewQAFindings: isPro,
 
-      // Inferno only features
+      // Inferno features
       canShareReports: isBusiness,
       canCommentOnFindings: isBusiness,
 

@@ -47,7 +47,7 @@ export function TrialActivationModal({ open, onOpenChange }: TrialActivationModa
 
       toast({
         title: "Trial activated!",
-        description: "You now have 14 days of full Inferno-tier access with 300 credits.",
+        description: "You now have full Inferno-tier access.",
       });
 
       // Refresh subscription and credits data
@@ -69,7 +69,7 @@ export function TrialActivationModal({ open, onOpenChange }: TrialActivationModa
         <DialogHeader>
           <DialogTitle>Activate Free Trial</DialogTitle>
           <DialogDescription>
-            Enter your trial access code to get 14 days of full Inferno-tier access with 300 credits.
+            Enter your trial access code to activate full Inferno-tier access.
           </DialogDescription>
         </DialogHeader>
 

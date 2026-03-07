@@ -113,7 +113,7 @@ const NewAuditPage = () => {
             </div>
             <h2 className="text-xl font-semibold">Subscription Required</h2>
             <p className="text-sm text-muted-foreground max-w-xs">
-              A Spark, Blaze, or Inferno plan is required to run security audits.
+              An active Inferno subscription is required to run security audits.
             </p>
             <Button onClick={() => navigate("/pricing")}>View Plans</Button>
           </CardContent>

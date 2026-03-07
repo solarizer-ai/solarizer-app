@@ -256,13 +256,6 @@ const Auth = () => {
             </p>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-lg font-semibold text-foreground/90">Start your free trial</p>
-            <p className="text-sm text-muted-foreground/50 mt-1.5 leading-relaxed">
-              $300 in credits&ensp;·&ensp;14 days<br />
-              Full Inferno-tier access
-            </p>
-          </div>
         </div>
 
         {/* Security badge at bottom */}
@@ -298,7 +291,7 @@ const Auth = () => {
             <p className="mt-1 text-sm text-muted-foreground">
               {isLogin
                 ? 'Sign in to access your security dashboard'
-                : '$300 in free credits to get started'}
+                : 'Start analyzing your smart contracts'}
             </p>
           </div>
 

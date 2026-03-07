@@ -129,7 +129,7 @@ const DashboardHome = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">Claim your free trial</p>
-              <p className="text-xs text-muted-foreground">$300 in credits · 14 days · Full Inferno-tier access</p>
+              <p className="text-xs text-muted-foreground">Free credits · 14 days · Full Inferno-tier access</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

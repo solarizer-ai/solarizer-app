@@ -63,7 +63,7 @@ const TermsOfService = () => {
                 <strong className="text-foreground">"Additional Credits"</strong> means additional Credits purchased separately from your subscription allocation.
               </p>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                <strong className="text-foreground">"Subscription Plan"</strong> means the tier of service you have selected (Spark, Blaze, or Inferno), each of which provides different feature access, scope limits, and Credit pricing.
+                <strong className="text-foreground">"Subscription Plan"</strong> means the tier of service you have selected (Inferno), each of which provides different feature access, scope limits, and Credit pricing.
               </p>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 <strong className="text-foreground">"nLOC"</strong> means normalized lines of code, calculated by excluding blank lines, comments, and import statements from the raw line count of a source file.
@@ -197,25 +197,11 @@ const TermsOfService = () => {
                       </tr>
                     </thead>
                     <tbody className="text-muted-foreground">
-                      <tr className="border-b border-border/50">
-                        <td className="py-2 pr-4 font-medium text-foreground">Spark</td>
-                        <td className="text-center py-2 px-4">$149/mo</td>
-                        <td className="text-center py-2 px-4">50</td>
-                        <td className="text-center py-2 px-4">$1.00/credit</td>
-                        <td className="text-center py-2 pl-4">500 nLOC</td>
-                      </tr>
-                      <tr className="border-b border-border/50">
-                        <td className="py-2 pr-4 font-medium text-foreground">Blaze</td>
-                        <td className="text-center py-2 px-4">$199/mo</td>
-                        <td className="text-center py-2 px-4">100</td>
-                        <td className="text-center py-2 px-4">$1.00/credit</td>
-                        <td className="text-center py-2 pl-4">3,000 nLOC</td>
-                      </tr>
                       <tr>
                         <td className="py-2 pr-4 font-medium text-foreground">Inferno</td>
-                        <td className="text-center py-2 px-4">$499/mo</td>
-                        <td className="text-center py-2 px-4">200</td>
-                        <td className="text-center py-2 px-4">$1.00/credit</td>
+                        <td className="text-center py-2 px-4">$99/mo</td>
+                        <td className="text-center py-2 px-4">500</td>
+                        <td className="text-center py-2 px-4">$0.10/credit</td>
                         <td className="text-center py-2 pl-4">9,999 nLOC</td>
                       </tr>
                     </tbody>
@@ -230,7 +216,7 @@ const TermsOfService = () => {
               <div className="bg-muted/30 border border-border rounded-lg p-4">
                 <h3 className="text-lg font-medium text-foreground mb-2">5.2 Credits</h3>
                 <p className="text-muted-foreground leading-relaxed mb-3">
-                  Each Subscription Plan includes a monthly allocation of Credits (Spark 50, Blaze 100, Inferno 200). Unused Credits carry forward indefinitely and do not expire as long as you maintain an active subscription. Credits are consumed based on the following formula:
+                  The Subscription Plan includes a monthly allocation of 500 Credits. Unused Credits carry forward indefinitely and do not expire as long as you maintain an active subscription. Credits are consumed based on the following formula:
                 </p>
                 <div className="bg-muted/50 border border-border rounded-lg p-4 my-3">
                   <code className="text-primary font-mono text-sm whitespace-pre-line">
@@ -245,7 +231,7 @@ const TermsOfService = () => {
               <div className="bg-muted/30 border border-border rounded-lg p-4">
                 <h3 className="text-lg font-medium text-foreground mb-2">5.3 Additional Credits</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  You may purchase additional Credits at a flat rate of $1.00 per credit, regardless of your Subscription Plan. Additional Credits are added to your balance immediately upon purchase and do not expire as long as you maintain an active subscription.
+                  You may purchase additional Credits at a flat rate of $0.10 per credit. Additional Credits are added to your balance immediately upon purchase and do not expire as long as you maintain an active subscription.
                 </p>
               </div>
 
@@ -257,17 +243,9 @@ const TermsOfService = () => {
               </div>
 
               <div className="bg-muted/30 border border-border rounded-lg p-4">
-                <h3 className="text-lg font-medium text-foreground mb-2">5.5 Credit Conversion on Downgrade</h3>
-                <p className="text-muted-foreground leading-relaxed mb-3">
-                  Upon downgrading your Subscription Plan, your remaining Credits are preserved. Since all plans share a flat $1.00 per credit rate, no conversion is necessary:
-                </p>
-                <div className="bg-muted/50 border border-border rounded-lg p-4 my-3">
-                  <code className="text-primary font-mono text-sm">
-                    New Balance = ⌊(Remaining Credits × Old Plan Rate) / New Plan Rate⌋
-                  </code>
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  Upgrades do not trigger credit conversion; your balance remains unchanged.
+                <h3 className="text-lg font-medium text-foreground mb-2">5.5 Credit Retention on Cancellation</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Upon cancellation, your remaining Credits are preserved until the end of your current billing period. Credits are consumed at the flat $0.10 per credit rate.
                 </p>
               </div>
 

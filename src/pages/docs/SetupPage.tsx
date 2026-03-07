@@ -14,7 +14,7 @@ const SetupPage = () => (
         <h2 className="text-lg font-semibold">What You'll Need</h2>
       </div>
       <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground/60">
-        <li>An active Solarizer subscription (Spark, Blaze, or Inferno)</li>
+        <li>An active Solarizer subscription (Inferno plan — $99/mo)</li>
         <li>Solidity source files (.sol) — either as a local folder or in a GitHub repository</li>
       </ul>
     </div>
@@ -44,7 +44,7 @@ const SetupPage = () => (
           <div>
             <h4 className="font-medium">Choose a Plan</h4>
             <p className="text-sm text-muted-foreground/60 mt-1">
-              Subscribe to <strong className="text-foreground">Spark ($149/mo)</strong>, <strong className="text-foreground">Blaze ($199/mo)</strong>, or <strong className="text-foreground">Inferno ($499/mo)</strong> to unlock the analysis engine. Every plan includes 50 monthly credits.
+              Subscribe to the <strong className="text-foreground">Inferno plan ($99/mo)</strong> to unlock the analysis engine. Includes 500 monthly credits with $0.10/credit top-ups.
             </p>
           </div>
         </div>

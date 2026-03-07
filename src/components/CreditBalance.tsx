@@ -48,7 +48,7 @@ export function CreditBalance() {
       : `Free Trial: ${trialDaysLeft} days left. Full Inferno-tier access.`
     : isPaid
       ? "Credits remaining. Purchase more for additional capacity."
-      : `Spark plan: ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit max. Purchase more for additional capacity.`;
+      : `Inferno plan: ${PLAN_LIMITS.starter.nlocPerScan} nLOC per audit max. Purchase more for additional capacity.`;
 
   return (
     <TooltipProvider delayDuration={200}>

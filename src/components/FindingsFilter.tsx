@@ -173,7 +173,7 @@ const FindingsFilter = ({ findings, onFilteredChange, hiddenSeverities = [], def
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Upgrade to Blaze to view {severity} findings</p>
+                      <p>Subscribe to view {severity} findings</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

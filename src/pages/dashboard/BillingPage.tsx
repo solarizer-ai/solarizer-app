@@ -88,11 +88,11 @@ const BillingPage = () => {
         ? "[&>div]:bg-warning"
         : "[&>div]:bg-destructive";
 
-  const pricePerCreditDollars = 1.00;
+  const pricePerCreditDollars = 0.10;
   const isTrial = plan === "trial";
 
   const getPlanPrice = (planId: string) => {
-    const prices: Record<string, number> = { starter: 149, pro: 199, business: 499 };
+    const prices: Record<string, number> = { starter: 99, pro: 99, business: 99 };
     return prices[planId] || 0;
   };
 
@@ -189,7 +189,7 @@ const BillingPage = () => {
                   <div>
                     <CardTitle className="text-base">Credits</CardTitle>
                     <CardDescription className="text-xs">
-                      {isTrial ? "Trial · Inferno-tier" : isPaid ? "Your credit balance" : "Spark plan balance"}
+                      {isTrial ? "Trial · Inferno-tier" : isPaid ? "Your credit balance" : "Credit balance"}
                     </CardDescription>
                   </div>
                   {isTrial && <Badge variant="secondary">Trial</Badge>}
@@ -252,7 +252,7 @@ const BillingPage = () => {
                 </p>
               ) : subscription?.current_period_end ? (
                 <p className="text-xs text-muted-foreground">
-                  50 credits included · Renews {format(new Date(subscription.current_period_end), "MMM d")}
+                  500 credits included · Renews {format(new Date(subscription.current_period_end), "MMM d")}
                 </p>
               ) : null}
             </CardContent>

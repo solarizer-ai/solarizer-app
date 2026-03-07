@@ -1,12 +1,12 @@
 /**
  * Shared plan name mapping.
- * Internal IDs (starter, pro, business) → Display names (Spark, Blaze, Inferno)
+ * All paid plans map to "Inferno" (single plan). Legacy DB values (starter, pro) also resolve to Inferno.
  */
 export function formatPlanName(plan: string | null): string {
   if (!plan) return 'None';
   const names: Record<string, string> = {
-    starter: 'Spark',
-    pro: 'Blaze',
+    starter: 'Inferno',
+    pro: 'Inferno',
     business: 'Inferno',
     trial: 'Free Trial',
   };

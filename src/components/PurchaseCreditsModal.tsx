@@ -24,7 +24,7 @@ interface PurchaseCreditsModalProps {
 const QUICK_OPTIONS = [25, 100, 500, 1000];
 const MIN_CREDITS = 25;
 const MAX_CREDITS = 1800;
-const PRICE_PER_CREDIT_CENTS = 100; // Flat $1.00 per credit
+const PRICE_PER_CREDIT_CENTS = 10; // $0.10 per credit
 
 export function PurchaseCreditsModal({
   open,

@@ -5,12 +5,12 @@ import { useSubscription, SubscriptionPlan } from "./useSubscription";
 export type ExtendedSubscriptionPlan = SubscriptionPlan | 'business';
 
 export interface ReportFeatureAccess {
-  // Blaze+ features
+  // Inferno features (all included)
   canViewRemediation: boolean;
   canExportReport: boolean;
   canViewQAFindings: boolean;
-  
-  // Inferno only features
+
+  // Inferno features
   canShareReports: boolean;
   canAddTeamMembers: boolean;
   canCommentOnFindings: boolean;
@@ -82,12 +82,12 @@ export function useReportFeatureAccess(auditId: string | null): ReportFeatureAcc
   const isBusiness = effectivePlan === 'business';
 
   return {
-    // Blaze+ features - available if effective plan is Blaze or higher
+    // Inferno features - available if effective plan is active
     canViewRemediation: isPro,
     canExportReport: isPro,
     canViewQAFindings: isPro,
     
-    // Inferno only features - available if effective plan is Inferno
+    // Inferno features
     canShareReports: isBusiness && isOwner,
     canAddTeamMembers: isBusiness && isOwner,
     canCommentOnFindings: isBusiness,

@@ -57,13 +57,13 @@ const GradesPage = () => (
           [<strong className="text-foreground">Critical</strong>, "Exploitable vulnerabilities that can lead to loss of funds or complete contract compromise", "All plans"],
           [<strong className="text-foreground">High</strong>, "Serious vulnerabilities that could be exploited under specific conditions", "All plans"],
           [<strong className="text-foreground">Medium</strong>, "Issues that could lead to unexpected behavior or reduced security guarantees", "All plans"],
-          [<strong className="text-foreground">Low</strong>, "Minor issues with limited impact, often related to best practices", "Blaze & Inferno"],
-          [<strong className="text-foreground">Info</strong>, "Informational observations about code structure, patterns, or documentation", "Blaze & Inferno"],
-          [<strong className="text-foreground">Gas</strong>, "Gas optimization opportunities that can reduce transaction costs", "Blaze & Inferno"],
+          [<strong className="text-foreground">Low</strong>, "Minor issues with limited impact, often related to best practices", "All plans"],
+          [<strong className="text-foreground">Info</strong>, "Informational observations about code structure, patterns, or documentation", "All plans"],
+          [<strong className="text-foreground">Gas</strong>, "Gas optimization opportunities that can reduce transaction costs", "All plans"],
         ]}
       />
       <p className="text-sm text-muted-foreground/60 mt-4">
-        Spark plans show Critical, High, and Medium findings. Upgrade to Blaze or Inferno to see Low, Info, and Gas severity findings.
+        All severity levels are included with your subscription.
       </p>
     </div>
 
