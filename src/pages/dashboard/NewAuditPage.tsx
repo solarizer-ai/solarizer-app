@@ -158,7 +158,7 @@ const NewAuditPage = () => {
     );
   }
 
-  const handleWizardComplete = async (data: { projectName: string; files: any[]; additionalContext?: string; scope: string[] }) => {
+  const handleWizardComplete = async (data: { projectName: string; files: any[]; additionalContext?: string; scope: string[]; language: string }) => {
     const allFiles = getAllFiles(data.files);
     const flatFiles = allFiles.map(f => ({ name: f.path, content: f.content || '' }));
 
@@ -168,6 +168,7 @@ const NewAuditPage = () => {
         files: flatFiles,
         scope: data.scope,
         additionalContext: data.additionalContext,
+        language: data.language,
       });
       startScan(result.sessionId, data.projectName);
       navigate("/dashboard");

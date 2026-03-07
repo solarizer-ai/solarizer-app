@@ -14,7 +14,7 @@ const faqs = [
   {
     question: "What exactly counts towards my credit cost?",
     answer:
-      "Only the Solidity files you include in your audit scope are counted. The nLOC (normalized lines of code) is calculated by stripping comments and whitespace, then applying the complexity multiplier for each file. Context files (interfaces, libraries) are counted at a reduced rate of 15%.",
+      "Only the source files you include in your audit scope are counted. The nLOC (normalized lines of code) is calculated by stripping comments and whitespace, then applying the complexity multiplier for each file. Context files (interfaces, libraries) are counted at a reduced rate of 15%.",
   },
   {
     question: "What happens to my credits if I switch plans?",
@@ -39,7 +39,7 @@ const faqs = [
   {
     question: "What file formats are supported?",
     answer:
-      "Solarizer analyzes Solidity (.sol) files. You can upload a folder of contracts directly or import from a GitHub repository.",
+      "Solarizer currently supports Solidity (.sol) and Rust/Solana (.rs) files. You can upload a folder directly or import from a GitHub repository.",
   },
   {
     question: "Can I re-run an audit on the same contracts?",

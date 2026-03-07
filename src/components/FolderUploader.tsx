@@ -12,7 +12,7 @@ interface FolderUploaderProps {
   onClear: () => void;
 }
 
-const ALLOWED_EXTENSIONS = ['.sol', '.json', '.md', '.txt', '.js', '.ts', '.yaml', '.yml', '.toml'];
+const ALLOWED_EXTENSIONS = ['.sol', '.rs', '.json', '.md', '.txt', '.js', '.ts', '.yaml', '.yml', '.toml'];
 const MAX_FILES = 500;
 const MAX_FILE_SIZE = 1024 * 1024;
 const MAX_TOTAL_SIZE = 10 * 1024 * 1024;

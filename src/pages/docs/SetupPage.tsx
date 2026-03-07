@@ -15,7 +15,7 @@ const SetupPage = () => (
       </div>
       <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground/60">
         <li>An active Solarizer subscription (Inferno plan — $99/mo)</li>
-        <li>Solidity source files (.sol) — either as a local folder or in a GitHub repository</li>
+        <li>Source files (Solidity .sol or Rust .rs) — either as a local folder or in a GitHub repository</li>
       </ul>
     </div>
 
@@ -55,7 +55,7 @@ const SetupPage = () => (
           <div>
             <h4 className="font-medium">Start Your First Audit</h4>
             <p className="text-sm text-muted-foreground/60 mt-1">
-              Click <strong className="text-foreground">New Audit</strong> from the dashboard. Upload a folder of Solidity contracts or import directly from a GitHub repository, then follow the guided wizard.
+              Click <strong className="text-foreground">New Audit</strong> from the dashboard. Select your language, upload a folder of source files or import from GitHub, then follow the guided wizard.
             </p>
           </div>
         </div>

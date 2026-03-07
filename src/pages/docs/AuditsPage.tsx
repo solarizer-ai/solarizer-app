@@ -3,11 +3,12 @@ import { Code } from "@/components/docs/DocHelpers";
 
 const wizardSteps = [
   { step: "1", title: "Project Name", desc: "Enter a name for your audit project." },
-  { step: "2", title: "Upload Method", desc: "Choose how to provide your contracts — upload a local folder or import from a GitHub repository." },
-  { step: "3", title: "Upload Files", desc: <>Upload your Solidity files or select a repository and branch. Only <Code>.sol</Code> files are analyzed.</> },
-  { step: "4", title: "Scope Selection", desc: <>Choose which files to include in audit scope and which are context. Scope files are charged at full rate; context files at the <Code>0.15x</Code> discount.</> },
-  { step: "5", title: "Complexity & Cost", desc: "Review the estimated nLOC, complexity classification, and total credit cost. The nLOC limit is 9,999 per audit." },
-  { step: "6", title: "Additional Context", desc: "Optionally add notes or documentation to help the analysis engine understand your contracts.", optional: true },
+  { step: "2", title: "Language", desc: "Select the language of the source code to audit (Solidity or Rust/Solana)." },
+  { step: "3", title: "Upload Method", desc: "Choose how to provide your source files — upload a local folder or import from a GitHub repository." },
+  { step: "4", title: "Upload Files", desc: <>Upload your source files or select a repository and branch. Files matching your selected language are analyzed.</> },
+  { step: "5", title: "Scope Selection", desc: <>Choose which files to include in audit scope and which are context. Scope files are charged at full rate; context files at the <Code>0.15x</Code> discount.</> },
+  { step: "6", title: "Complexity & Cost", desc: "Review the estimated nLOC, complexity classification, and total credit cost. The nLOC limit is 9,999 per audit." },
+  { step: "7", title: "Additional Context", desc: "Optionally add notes or documentation to help the analysis engine understand your code.", optional: true },
 ];
 
 const analysisPhases: { step: string; title: string; desc: string; plans: "all" | "blaze" }[] = [

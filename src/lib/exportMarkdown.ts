@@ -1,4 +1,5 @@
 import type { Audit, Finding } from "@/hooks/useAudits";
+import { getLanguageConfig } from "@/lib/languageConfig";
 
 export interface VulnerabilityCounts {
   critical: number;
@@ -13,12 +14,14 @@ interface ExportOptions {
   audit: Audit;
   findings: Finding[];
   vulnerabilityCounts: VulnerabilityCounts;
+  language?: string;
 }
 
-function generateReportId(dateStr: string): string {
+function generateReportId(dateStr: string, language?: string): string {
   const d = new Date(dateStr);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `SOL-${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}-${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`;
+  const prefix = getLanguageConfig(language || 'solidity').reportPrefix;
+  return `${prefix}-${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}-${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`;
 }
 
 function formatDate(dateStr: string): string {
@@ -60,7 +63,9 @@ const SEVERITY_CONFIG: Array<{
 ];
 
 export const generateMarkdownReport = (options: ExportOptions): string => {
-  const { audit, findings, vulnerabilityCounts } = options;
+  const { audit, findings, vulnerabilityCounts, language } = options;
+  const langConfig = getLanguageConfig(language || 'solidity');
+  const codeLang = langConfig.codeBlockLang;
   const counts = { ...vulnerabilityCounts, gas: vulnerabilityCounts.gas ?? findings.filter(f => f.severity === 'gas').length };
   const totalFindings = Object.values(counts).reduce((a, b) => a + b, 0);
   const overallRisk = computeOverallRisk(counts);
@@ -73,7 +78,7 @@ export const generateMarkdownReport = (options: ExportOptions): string => {
   // 1. Title + metadata
   md += `# Solarizer Security Audit Report\n\n`;
   md += `**Project:** ${audit.project_name}\n`;
-  md += `**Report ID:** ${generateReportId(audit.created_at)}\n`;
+  md += `**Report ID:** ${generateReportId(audit.created_at, language)}\n`;
   md += `**Generated:** ${formatDate(audit.created_at)}\n`;
   md += `**Lines Analyzed:** ${audit.nloc_count?.toLocaleString() ?? 'N/A'} nLOC\n`;
   md += `**Engine Version:** 1.0\n\n`;
@@ -165,7 +170,7 @@ export const generateMarkdownReport = (options: ExportOptions): string => {
         md += `**Description**\n\n${finding.description}\n\n`;
 
         if (finding.code_snippet) {
-          md += `**Code Snippet**\n\n\`\`\`solidity\n`;
+          md += `**Code Snippet**\n\n\`\`\`${codeLang}\n`;
           const lines = finding.code_snippet.split('\n');
           const startLine = finding.line_start || 1;
           lines.forEach((line, i) => {

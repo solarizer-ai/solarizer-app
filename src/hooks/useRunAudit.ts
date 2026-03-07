@@ -6,6 +6,7 @@ interface RunAuditParams {
   files: { name: string; content: string }[];
   scope: string[];
   additionalContext?: string;
+  language?: string;
 }
 
 interface AuditStartedResult {
@@ -22,6 +23,7 @@ export const useRunAudit = () => {
           files: params.files,
           scope: params.scope,
           additionalContext: params.additionalContext,
+          language: params.language || 'solidity',
           idempotency_key,
         },
       });

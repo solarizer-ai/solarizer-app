@@ -11,6 +11,7 @@ interface FileTypeIconProps {
 
 const FILE_TYPE_CONFIG: Record<string, { icon: typeof File; colorClass: string }> = {
   '.sol': { icon: FileCode, colorClass: 'text-purple-500' },
+  '.rs': { icon: FileCode, colorClass: 'text-orange-500' },
   '.json': { icon: Braces, colorClass: 'text-yellow-500' },
   '.md': { icon: FileText, colorClass: 'text-blue-500' },
   '.txt': { icon: FileText, colorClass: 'text-muted-foreground' },
