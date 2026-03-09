@@ -1,12 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { invokeWithRefresh } from "@/lib/sessionRefresh";
-import { useStagingMode } from "@/hooks/useStagingMode";
 
 interface RunAuditParams {
   projectName: string;
   files: { name: string; content: string }[];
   scope: string[];
   additionalContext?: string;
+  isStagingMode?: boolean;
 }
 
 interface AuditStartedResult {
@@ -14,12 +14,10 @@ interface AuditStartedResult {
 }
 
 export const useRunAudit = () => {
-  const { isStagingMode } = useStagingMode();
-
   return useMutation({
     mutationFn: async (params: RunAuditParams): Promise<AuditStartedResult> => {
       const idempotency_key = crypto.randomUUID();
-      const fnName = isStagingMode ? 'web-audit-start-rnd' : 'web-audit-start';
+      const fnName = params.isStagingMode ? 'web-audit-start-rnd' : 'web-audit-start';
 
       const { data, error } = await invokeWithRefresh<AuditStartedResult>(fnName, {
         body: {
@@ -30,6 +28,7 @@ export const useRunAudit = () => {
           idempotency_key,
         },
       });
+
 
       if (error) {
         try {

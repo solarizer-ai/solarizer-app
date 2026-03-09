@@ -171,6 +171,7 @@ const NewAuditPage = () => {
         files: flatFiles,
         scope: data.scope,
         additionalContext: data.additionalContext,
+        isStagingMode,
       });
       startScan(result.sessionId, data.projectName);
       navigate("/dashboard");
