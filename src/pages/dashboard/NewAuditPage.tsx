@@ -25,6 +25,7 @@ const NewAuditPage = () => {
 
   const runAudit = useRunAudit();
   const { startScan } = useScan();
+  const { isStagingMode } = useStagingMode();
   const { data: subscription, isExpired, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
 
