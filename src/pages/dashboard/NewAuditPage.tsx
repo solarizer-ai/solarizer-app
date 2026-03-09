@@ -7,8 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import AuditWizard from "@/components/AuditWizard";
 import { PurchaseCreditsModal } from "@/components/PurchaseCreditsModal";
 import { UpgradeToProModal } from "@/components/UpgradeToProModal";
+import { StagingModeBanner } from "@/components/StagingModeBanner";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRunAudit } from "@/hooks/useRunAudit";
+import { useStagingMode } from "@/hooks/useStagingMode";
 import { useScan } from "@/contexts/ScanContext";
 import { getAllFiles } from "@/types/files";
 import { toast } from "sonner";
@@ -23,6 +25,7 @@ const NewAuditPage = () => {
 
   const runAudit = useRunAudit();
   const { startScan } = useScan();
+  const { isStagingMode } = useStagingMode();
   const { data: subscription, isExpired, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
 
@@ -190,6 +193,8 @@ const NewAuditPage = () => {
         </Button>
         <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Security Analysis</h1>
       </div>
+
+      <StagingModeBanner />
 
       <AuditWizard
         onComplete={handleWizardComplete}

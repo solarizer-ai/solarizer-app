@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { invokeWithRefresh } from "@/lib/sessionRefresh";
+import { useStagingMode } from "@/hooks/useStagingMode";
 
 interface RunAuditParams {
   projectName: string;
@@ -13,10 +14,14 @@ interface AuditStartedResult {
 }
 
 export const useRunAudit = () => {
+  const { isStagingMode } = useStagingMode();
+
   return useMutation({
     mutationFn: async (params: RunAuditParams): Promise<AuditStartedResult> => {
       const idempotency_key = crypto.randomUUID();
-      const { data, error } = await invokeWithRefresh<AuditStartedResult>('web-audit-start', {
+      const fnName = isStagingMode ? 'web-audit-start-rnd' : 'web-audit-start';
+
+      const { data, error } = await invokeWithRefresh<AuditStartedResult>(fnName, {
         body: {
           projectName: params.projectName,
           files: params.files,
@@ -27,7 +32,6 @@ export const useRunAudit = () => {
       });
 
       if (error) {
-        // Try to parse JSON error body for specific messages (e.g. 403 subscription errors)
         try {
           const parsed = JSON.parse(error.message);
           if (parsed?.error) throw new Error(parsed.error);
