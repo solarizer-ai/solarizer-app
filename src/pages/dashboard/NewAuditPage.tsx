@@ -194,6 +194,8 @@ const NewAuditPage = () => {
         <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Security Analysis</h1>
       </div>
 
+      <StagingModeBanner />
+
       <AuditWizard
         onComplete={handleWizardComplete}
         onCancel={() => navigate("/dashboard")}
