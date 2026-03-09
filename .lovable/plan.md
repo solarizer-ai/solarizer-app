@@ -1,22 +1,37 @@
 
-# Pricing Update — Single Inferno Plan ($99/month)
 
-## Completed Changes
+# RND Staging Mode Toggle
 
-### 1. Build Error Fix
-- `cli-audit-start/index.ts`: Added missing `nloc_credits` query before credit balance check (was causing `ReferenceError: credits is not defined`).
+## What We're Building
+An admin-only toggle that routes web audits to a staging backend (`STAGING_CLOUD_RUN_PROXY_URL`) instead of production. Non-admin users are completely unaffected.
 
-### 2. Edge Function Pricing
-- `razorpay-create-order/index.ts`: `PLAN_PRICES` → `{ business: 9900 }` ($99). `POWER_UP_RATE_CENTS` → `10` ($0.10/credit flat).
-- `razorpay-upgrade-subscription/index.ts`: `PLAN_PRICES` → `{ business: 9900 }`.
+## Files to Create
 
-### 3. DB: `process_payment_success`
-- All subscription plans now grant **500 credits** on payment (was: starter 50, pro 100, business 200).
-- Removed annual billing branch (monthly only).
+### 1. `supabase/functions/web-audit-start-rnd/index.ts`
+Exact copy of `web-audit-start/index.ts` with both `CLOUD_RUN_PROXY_URL` references changed to `STAGING_CLOUD_RUN_PROXY_URL` (lines 203 and 373 equivalent).
 
-### 4. Frontend
-- Already updated: Pricing page shows single Inferno plan at $99/month with 500 credits. `PurchaseCreditsModal` uses `PRICE_PER_CREDIT_CENTS = 10`.
+### 2. `src/hooks/useStagingMode.ts`
+Hook that reads/writes `localStorage` key `solarizer_staging_mode`. Only returns `true` for admin users. Exposes `isStagingMode` and `toggleStagingMode`.
 
-## Trial Tier Mapping (unchanged)
-- `web-audit-start` maps `plan = 'trial'` → `tier = 'business'` for proxy.
-- Trial expiry enforced in `web-audit-start`, `deduct_credits` RPC, and `expire_overdue_subscriptions` cron.
+### 3. `src/components/StagingModeBanner.tsx`
+Compact banner with a Switch toggle and "Staging Mode" label. Shows warning text when active. Only renders for admins.
+
+## Files to Modify
+
+### 4. `src/hooks/useRunAudit.ts`
+- Import `useStagingMode`
+- Pick edge function name: `isStagingMode ? 'web-audit-start-rnd' : 'web-audit-start'`
+
+### 5. `src/pages/dashboard/NewAuditPage.tsx`
+- Import `StagingModeBanner` and `useStagingMode`
+- Render `<StagingModeBanner />` above the `<AuditWizard>` component
+- Pass `isStagingMode` to conditionally show "(Staging)" indicator
+
+## Secret Required
+After deployment, add `STAGING_CLOUD_RUN_PROXY_URL` secret with value `https://solarizer-ai-proxy-rnd-951097474743.us-central1.run.app`.
+
+## What's NOT Changed
+- `web-audit-start/index.ts` — untouched
+- No database changes needed
+- No config.toml changes needed (web-audit-start already doesn't have a config entry, JWT verification uses the default)
+
