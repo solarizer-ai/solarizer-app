@@ -10,7 +10,6 @@ import { UpgradeToProModal } from "@/components/UpgradeToProModal";
 import { StagingModeBanner } from "@/components/StagingModeBanner";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { useRunAudit } from "@/hooks/useRunAudit";
-import { useStagingMode } from "@/hooks/useStagingMode";
 import { useScan } from "@/contexts/ScanContext";
 import { getAllFiles } from "@/types/files";
 import { toast } from "sonner";
@@ -25,7 +24,6 @@ const NewAuditPage = () => {
 
   const runAudit = useRunAudit();
   const { startScan } = useScan();
-  const { isStagingMode } = useStagingMode();
   const { data: subscription, isExpired, isLoading: subscriptionLoading } = useSubscription();
   const { data: credits, isLoading: creditsLoading } = useCredits();
 
@@ -171,7 +169,7 @@ const NewAuditPage = () => {
         files: flatFiles,
         scope: data.scope,
         additionalContext: data.additionalContext,
-        isStagingMode,
+        isStagingMode: localStorage.getItem('solarizer_staging_mode') === 'true',
       });
       startScan(result.sessionId, data.projectName);
       navigate("/dashboard");
