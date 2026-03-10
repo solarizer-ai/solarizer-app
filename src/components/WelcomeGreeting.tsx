@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import solarizerLogo from "@/assets/solarizer-logo.png";
 import { Rocket, KeyRound } from "lucide-react";
 import { TrialActivationModal } from "@/components/TrialActivationModal";
+import { TRIAL_SIGNUP_ENABLED } from "@/config/features";
 
 interface WelcomeGreetingProps {
   displayName: string | null;
@@ -74,14 +75,16 @@ const WelcomeGreeting = ({ displayName, userId, onComplete }: WelcomeGreetingPro
           {saving ? "Setting up…" : "Get Started"}
         </Button>
 
-        <button
-          type="button"
-          onClick={() => setShowTrialModal(true)}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <KeyRound className="w-3 h-3" />
-          Have a trial code?
-        </button>
+        {TRIAL_SIGNUP_ENABLED && (
+          <button
+            type="button"
+            onClick={() => setShowTrialModal(true)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <KeyRound className="w-3 h-3" />
+            Have a trial code?
+          </button>
+        )}
 
         <TrialActivationModal open={showTrialModal} onOpenChange={setShowTrialModal} />
       </div>

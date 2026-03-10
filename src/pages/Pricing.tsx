@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRazorpaySubscription } from "@/hooks/useRazorpaySubscription";
 import { formatPlanName } from "@/lib/planNames";
 import { TrialActivationModal } from "@/components/TrialActivationModal";
+import { TRIAL_SIGNUP_ENABLED } from "@/config/features";
 
 /* ------------------------------------------------------------------ */
 /*  Plan data                                                          */
@@ -425,12 +426,14 @@ const Pricing = () => {
           500 credits included monthly. Unused credits carry forward — they never expire. Maintain an active subscription to use them.
         </p>
 
-        <p className="text-xs text-muted-foreground/40 text-center mt-2">
-          Free trial available with invite code —{' '}
-          <span className="cursor-pointer text-primary/50 hover:text-primary/70 underline" onClick={() => setShowTrialModal(true)}>
-            activate here
-          </span>
-        </p>
+        {TRIAL_SIGNUP_ENABLED && (
+          <p className="text-xs text-muted-foreground/40 text-center mt-2">
+            Free trial available with invite code —{' '}
+            <span className="cursor-pointer text-primary/50 hover:text-primary/70 underline" onClick={() => setShowTrialModal(true)}>
+              activate here
+            </span>
+          </p>
+        )}
 
         {/* ── Feature card grid ── */}
         <section className="py-12 max-w-6xl mx-auto">

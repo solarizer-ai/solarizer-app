@@ -18,6 +18,7 @@ import { useAudits, useDeleteAudit } from "@/hooks/useAudits";
 import { useSubscription, useCredits } from "@/hooks/useSubscription";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { TRIAL_SIGNUP_ENABLED } from "@/config/features";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -121,7 +122,7 @@ const DashboardHome = () => {
       <ShareInvitationBanner />
 
       {/* Subscribe Prompt for users with no plan */}
-      {!subscription && (
+      {TRIAL_SIGNUP_ENABLED && !subscription && (
         <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
