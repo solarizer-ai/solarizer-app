@@ -1,12 +1,3 @@
-
-
-# Update `.lovable/plan.md` — Reflect Single Inferno + Trial Model
-
-Replace the current plan.md with a clean, up-to-date summary of the pricing architecture.
-
-### New Content
-
-```markdown
 # Pricing Model — Single Inferno Plan
 
 ## Subscription
@@ -31,10 +22,3 @@ Replace the current plan.md with a clean, up-to-date summary of the pricing arch
 - Trial expiry enforced in `web-audit-start`, `deduct_credits` RPC, and `expire_overdue_subscriptions` cron
 - New signups get no plan and 0 credits until they subscribe or activate a trial
 - `SubscribeConfirmationModal` PLAN_PRICES need updating to 9900 (currently stale at legacy values)
-```
-
-### Changes
-| File | Action |
-|------|--------|
-| `.lovable/plan.md` | Rewrite with current pricing model |
-
