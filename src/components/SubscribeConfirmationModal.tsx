@@ -13,9 +13,9 @@ import { AccessTokenInput } from "@/components/AccessTokenInput";
 import { formatPlanName } from "@/lib/planNames";
 
 const PLAN_PRICES: Record<string, number> = {
-  starter: 14900,
-  pro: 19900,
-  business: 49900,
+  starter: 9900,
+  pro: 9900,
+  business: 9900,
 };
 
 interface CouponResult {
