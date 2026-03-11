@@ -83,6 +83,7 @@ const App = () => (
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+                <Route path="/activate-trial" element={<ProtectedRoute><ActivateTrial /></ProtectedRoute>} />
                 <Route path="/subscription-success" element={<Navigate to="/pricing" replace />} />
 
                 {/* Docs (sidebar layout, public) */}
