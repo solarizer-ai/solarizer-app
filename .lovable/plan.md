@@ -1,22 +1,30 @@
 
-# Pricing Update — Single Inferno Plan ($99/month)
 
-## Completed Changes
+# Create a Dedicated Trial Activation Page
 
-### 1. Build Error Fix
-- `cli-audit-start/index.ts`: Added missing `nloc_credits` query before credit balance check (was causing `ReferenceError: credits is not defined`).
+## What
+A new standalone page at `/activate-trial` where logged-in users can enter a trial code and activate their free trial. This replaces the need for the modal-based approach and gives users a direct URL to visit.
 
-### 2. Edge Function Pricing
-- `razorpay-create-order/index.ts`: `PLAN_PRICES` → `{ business: 9900 }` ($99). `POWER_UP_RATE_CENTS` → `10` ($0.10/credit flat).
-- `razorpay-upgrade-subscription/index.ts`: `PLAN_PRICES` → `{ business: 9900 }`.
+## Plan
 
-### 3. DB: `process_payment_success`
-- All subscription plans now grant **500 credits** on payment (was: starter 50, pro 100, business 200).
-- Removed annual billing branch (monthly only).
+### 1. Create `src/pages/ActivateTrial.tsx`
+A full-page form (not a modal) reusing the same `activate_trial` RPC logic from `TrialActivationModal.tsx`. The page will:
+- Show the Solarizer logo, a heading, and a description
+- Have a trial code input field (monospace, uppercase) with a KeyRound icon
+- Show error/success states inline
+- On success, redirect to `/dashboard` after a brief toast
+- Use the existing dark theme / HeroBackground for visual consistency with the Auth page
 
-### 4. Frontend
-- Already updated: Pricing page shows single Inferno plan at $99/month with 500 credits. `PurchaseCreditsModal` uses `PRICE_PER_CREDIT_CENTS = 10`.
+### 2. Add route in `src/App.tsx`
+Add a protected route:
+```
+<Route path="/activate-trial" element={<ProtectedRoute><ActivateTrial /></ProtectedRoute>} />
+```
+This ensures only logged-in users can access it.
 
-## Trial Tier Mapping (unchanged)
-- `web-audit-start` maps `plan = 'trial'` → `tier = 'business'` for proxy.
-- Trial expiry enforced in `web-audit-start`, `deduct_credits` RPC, and `expire_overdue_subscriptions` cron.
+### Changes Summary
+| File | Action |
+|------|--------|
+| `src/pages/ActivateTrial.tsx` | Create — standalone trial activation page |
+| `src/App.tsx` | Add `/activate-trial` protected route |
+
