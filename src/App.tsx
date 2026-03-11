@@ -21,6 +21,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Report from "./pages/Report";
 import PublicReport from "./pages/PublicReport";
+import ActivateTrial from "./pages/ActivateTrial";
 
 // Dashboard pages
 import DashboardHome from "./pages/dashboard/DashboardHome";
