@@ -1,22 +1,40 @@
 
-# Pricing Update — Single Inferno Plan ($99/month)
 
-## Completed Changes
+# Update `.lovable/plan.md` — Reflect Single Inferno + Trial Model
 
-### 1. Build Error Fix
-- `cli-audit-start/index.ts`: Added missing `nloc_credits` query before credit balance check (was causing `ReferenceError: credits is not defined`).
+Replace the current plan.md with a clean, up-to-date summary of the pricing architecture.
 
-### 2. Edge Function Pricing
-- `razorpay-create-order/index.ts`: `PLAN_PRICES` → `{ business: 9900 }` ($99). `POWER_UP_RATE_CENTS` → `10` ($0.10/credit flat).
-- `razorpay-upgrade-subscription/index.ts`: `PLAN_PRICES` → `{ business: 9900 }`.
+### New Content
 
-### 3. DB: `process_payment_success`
-- All subscription plans now grant **500 credits** on payment (was: starter 50, pro 100, business 200).
-- Removed annual billing branch (monthly only).
+```markdown
+# Pricing Model — Single Inferno Plan
 
-### 4. Frontend
-- Already updated: Pricing page shows single Inferno plan at $99/month with 500 credits. `PurchaseCreditsModal` uses `PRICE_PER_CREDIT_CENTS = 10`.
+## Subscription
+- **Inferno** ($99/month) — the only paid plan
+- 500 credits granted monthly
+- 9,999 nLOC per audit limit
+- Full feature access (insights, sharing, remediation, cross-contract analysis)
 
-## Trial Tier Mapping (unchanged)
-- `web-audit-start` maps `plan = 'trial'` → `tier = 'business'` for proxy.
-- Trial expiry enforced in `web-audit-start`, `deduct_credits` RPC, and `expire_overdue_subscriptions` cron.
+## Free Trial
+- Activated via invite code at `/activate-trial`
+- 14 days duration, 300 one-time credits
+- Full Inferno-tier feature access
+- One-time per user (tracked via `trial_activated_at`)
+- Cannot purchase additional credits while on trial
+
+## Credit Pricing
+- Flat $0.10 per credit across all contexts
+
+## Technical Notes
+- Internal DB values `starter`, `pro`, `business` all map to display name "Inferno" via `formatPlanName()`
+- Trial maps to `tier = 'business'` in edge functions for proxy/audit access
+- Trial expiry enforced in `web-audit-start`, `deduct_credits` RPC, and `expire_overdue_subscriptions` cron
+- New signups get no plan and 0 credits until they subscribe or activate a trial
+- `SubscribeConfirmationModal` PLAN_PRICES need updating to 9900 (currently stale at legacy values)
+```
+
+### Changes
+| File | Action |
+|------|--------|
+| `.lovable/plan.md` | Rewrite with current pricing model |
+
