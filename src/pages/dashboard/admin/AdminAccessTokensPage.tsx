@@ -41,6 +41,7 @@ interface TokenRedemption {
   token_id: string;
   user_id: string;
   redeemed_at: string;
+  profile: { email: string | null; display_name: string | null } | null;
 }
 
 export default function AdminAccessTokensPage() {
@@ -75,7 +76,22 @@ export default function AdminAccessTokensPage() {
         .eq("token_id", selectedToken.id)
         .order("redeemed_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as TokenRedemption[];
+      const rows = data ?? [];
+      if (rows.length === 0) return [];
+
+      const userIds = [...new Set(rows.map((r) => r.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, email")
+        .in("user_id", userIds);
+      const profileMap = new Map(
+        (profiles ?? []).map((p) => [p.user_id, p])
+      );
+
+      return rows.map((r) => ({
+        ...r,
+        profile: profileMap.get(r.user_id) ?? null,
+      })) as unknown as TokenRedemption[];
     },
     enabled: !!selectedToken,
   });
@@ -292,7 +308,7 @@ export default function AdminAccessTokensPage() {
             ) : (
               redemptions.map((r) => (
                 <div key={r.id} className="p-3 rounded-lg border bg-muted/30">
-                  <p className="text-xs font-mono break-all">{r.user_id}</p>
+                  <p className="text-sm font-medium text-foreground">{r.profile?.email || r.profile?.display_name || r.user_id}</p>
                   <p className="text-xs text-muted-foreground mt-1">{new Date(r.redeemed_at).toLocaleString()}</p>
                 </div>
               ))
