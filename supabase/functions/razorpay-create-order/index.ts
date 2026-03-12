@@ -178,26 +178,11 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Redeem access token
-      if (body.access_token_code) {
-        try {
-          await adminSupabase.rpc("redeem_access_token", {
-            p_code: body.access_token_code.toUpperCase().trim(),
-            p_user_id: user.id,
-          });
-        } catch (tokenErr) {
-          console.error("Failed to redeem access token:", tokenErr);
-        }
-      }
-
       // Store metadata
       const metadataObj: Record<string, any> = {};
       if (couponId) {
         metadataObj.coupon_id = couponId;
         metadataObj.original_amount_cents = amountCents;
-      }
-      if (body.access_token_code) {
-        metadataObj.access_token_code = body.access_token_code.toUpperCase().trim();
       }
       if (Object.keys(metadataObj).length > 0) {
         await adminSupabase
