@@ -9,7 +9,6 @@ interface CreateSubscriptionParams {
   plan: "starter" | "pro" | "business";
   billingPeriod: "monthly";
   coupon_code?: string;
-  access_token_code?: string;
 }
 
 interface UpgradeParams {
