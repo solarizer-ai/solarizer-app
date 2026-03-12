@@ -308,7 +308,7 @@ export default function AdminAccessTokensPage() {
             ) : (
               redemptions.map((r) => (
                 <div key={r.id} className="p-3 rounded-lg border bg-muted/30">
-                  <p className="text-xs font-mono break-all">{r.user_id}</p>
+                  <p className="text-sm font-medium text-foreground">{r.profile?.email || r.profile?.display_name || r.user_id}</p>
                   <p className="text-xs text-muted-foreground mt-1">{new Date(r.redeemed_at).toLocaleString()}</p>
                 </div>
               ))
