@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
           order_type: orderType,
           plan: plan || "",
           credits_amount: String(creditsAmount || 0),
-          access_token_code: body.access_token_code || "",
+          
         },
         expire_by: Math.floor(Date.now() / 1000) + 3600,
       }),
