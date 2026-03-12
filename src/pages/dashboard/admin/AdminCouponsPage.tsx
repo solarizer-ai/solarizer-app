@@ -353,7 +353,7 @@ export default function AdminCouponsPage() {
             ) : (
               redemptions.map((r) => (
                 <div key={r.id} className="p-3 border border-border rounded-lg space-y-1">
-                  <p className="text-sm font-medium text-foreground">{r.profiles?.display_name || r.user_id}</p>
+                  <p className="text-sm font-medium text-foreground">{r.profiles?.email || r.profiles?.display_name || r.user_id}</p>
                   <div className="flex gap-4 text-xs text-muted-foreground">
                     <span>Original: ${(r.original_amount_cents / 100).toFixed(2)}</span>
                     <span>Discount: −${(r.discount_applied_cents / 100).toFixed(2)}</span>
