@@ -73,7 +73,23 @@ export default function AdminCouponsPage() {
         .eq("coupon_id", selectedCoupon.id)
         .order("redeemed_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => ({ ...r, profiles: null })) as Redemption[];
+      const rows = data ?? [];
+      if (rows.length === 0) return [];
+
+      // Batch-fetch profiles for all user_ids
+      const userIds = [...new Set(rows.map((r) => r.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, email")
+        .in("user_id", userIds);
+      const profileMap = new Map(
+        (profiles ?? []).map((p) => [p.user_id, p])
+      );
+
+      return rows.map((r) => ({
+        ...r,
+        profiles: profileMap.get(r.user_id) ?? null,
+      })) as Redemption[];
     },
     enabled: !!selectedCoupon,
   });
