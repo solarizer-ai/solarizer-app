@@ -12,7 +12,7 @@ interface CreateOrderRequest {
   billingPeriod?: "monthly";
   creditsAmount?: number;
   coupon_code?: string;
-  access_token_code?: string;
+  
 }
 
 const PLAN_PRICES: Record<string, number> = {
