@@ -12,7 +12,7 @@ interface CreateOrderRequest {
   billingPeriod?: "monthly";
   creditsAmount?: number;
   coupon_code?: string;
-  access_token_code?: string;
+  
 }
 
 const PLAN_PRICES: Record<string, number> = {
@@ -85,26 +85,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Access token gate: required for new subscriptions
-    if (orderType === "subscription") {
-      if (!body.access_token_code) {
-        return new Response(
-          JSON.stringify({ error: "Access token required for new subscriptions" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const { data: tokenResult, error: tokenError } = await supabase.rpc("validate_access_token", {
-        p_code: body.access_token_code.toUpperCase().trim(),
-      });
-
-      if (tokenError || !(tokenResult as any)?.valid) {
-        return new Response(
-          JSON.stringify({ error: (tokenResult as any)?.error || "Invalid access token" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
 
     // Apply coupon discount if provided
     let couponId: string | undefined;
@@ -178,26 +158,11 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Redeem access token
-      if (body.access_token_code) {
-        try {
-          await adminSupabase.rpc("redeem_access_token", {
-            p_code: body.access_token_code.toUpperCase().trim(),
-            p_user_id: user.id,
-          });
-        } catch (tokenErr) {
-          console.error("Failed to redeem access token:", tokenErr);
-        }
-      }
-
       // Store metadata
       const metadataObj: Record<string, any> = {};
       if (couponId) {
         metadataObj.coupon_id = couponId;
         metadataObj.original_amount_cents = amountCents;
-      }
-      if (body.access_token_code) {
-        metadataObj.access_token_code = body.access_token_code.toUpperCase().trim();
       }
       if (Object.keys(metadataObj).length > 0) {
         await adminSupabase
@@ -247,7 +212,7 @@ Deno.serve(async (req) => {
           order_type: orderType,
           plan: plan || "",
           credits_amount: String(creditsAmount || 0),
-          access_token_code: body.access_token_code || "",
+          
         },
         expire_by: Math.floor(Date.now() / 1000) + 3600,
       }),
@@ -288,10 +253,6 @@ Deno.serve(async (req) => {
       metadata.coupon_id = couponId;
       metadata.original_amount_cents = amountCents;
     }
-    if (body.access_token_code) {
-      metadata.access_token_code = body.access_token_code.toUpperCase().trim();
-    }
-
     await adminSupabase
       .from("payment_orders")
       .update({

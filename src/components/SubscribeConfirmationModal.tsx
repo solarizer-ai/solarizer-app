@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CouponInput } from "@/components/CouponInput";
-import { AccessTokenInput } from "@/components/AccessTokenInput";
 import { formatPlanName } from "@/lib/planNames";
 
 const PLAN_PRICES: Record<string, number> = {
@@ -32,7 +31,7 @@ interface SubscribeConfirmationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   plan: "starter" | "pro" | "business";
-  onConfirm: (couponCode?: string, accessTokenCode?: string) => void;
+  onConfirm: (couponCode?: string) => void;
   isLoading?: boolean;
   currentPlan?: string | null;
 }
@@ -43,13 +42,8 @@ export function SubscribeConfirmationModal({
   plan,
   onConfirm,
   isLoading = false,
-  currentPlan = null,
 }: SubscribeConfirmationModalProps) {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponResult | null>(null);
-  const [validatedTokenCode, setValidatedTokenCode] = useState<string | null>(null);
-
-  const isTrialUser = currentPlan === 'trial';
-  const needsAccessToken = !isTrialUser;
 
   const baseCents = PLAN_PRICES[plan] || 0;
   const finalCents = appliedCoupon?.final_amount_cents ?? baseCents;
@@ -57,7 +51,7 @@ export function SubscribeConfirmationModal({
   const finalDollars = (finalCents / 100).toFixed(2);
 
   const handleConfirm = () => {
-    onConfirm(appliedCoupon?.code, validatedTokenCode ?? undefined);
+    onConfirm(appliedCoupon?.code);
   };
 
   return (
@@ -90,13 +84,6 @@ export function SubscribeConfirmationModal({
             )}
           </div>
 
-          {/* Access Token Input — skip for trial-to-paid conversion */}
-          {needsAccessToken && (
-            <AccessTokenInput
-              onValidate={(result) => setValidatedTokenCode(result?.code ?? null)}
-            />
-          )}
-
           {/* Coupon Input */}
           <CouponInput
             orderType="subscription"
@@ -110,7 +97,7 @@ export function SubscribeConfirmationModal({
               className="w-full"
               size="lg"
               onClick={handleConfirm}
-              disabled={isLoading || (needsAccessToken && !validatedTokenCode)}
+              disabled={isLoading}
             >
               {isLoading ? "Processing..." : finalCents < 100 ? "Confirm & Subscribe" : `Pay $${finalDollars} & Subscribe`}
             </Button>
