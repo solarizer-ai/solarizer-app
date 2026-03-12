@@ -85,26 +85,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Access token gate: required for new subscriptions
-    if (orderType === "subscription") {
-      if (!body.access_token_code) {
-        return new Response(
-          JSON.stringify({ error: "Access token required for new subscriptions" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const { data: tokenResult, error: tokenError } = await supabase.rpc("validate_access_token", {
-        p_code: body.access_token_code.toUpperCase().trim(),
-      });
-
-      if (tokenError || !(tokenResult as any)?.valid) {
-        return new Response(
-          JSON.stringify({ error: (tokenResult as any)?.error || "Invalid access token" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
 
     // Apply coupon discount if provided
     let couponId: string | undefined;
