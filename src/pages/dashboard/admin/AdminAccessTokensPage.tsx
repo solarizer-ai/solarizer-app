@@ -41,6 +41,7 @@ interface TokenRedemption {
   token_id: string;
   user_id: string;
   redeemed_at: string;
+  profile: { email: string | null; display_name: string | null } | null;
 }
 
 export default function AdminAccessTokensPage() {
