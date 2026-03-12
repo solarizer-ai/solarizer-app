@@ -68,7 +68,7 @@ export function useRazorpaySubscription() {
 
       const { data, error } = await invokeWithRefresh<SubscriptionResponse>(
         "razorpay-create-order",
-        { body: { orderType: "subscription", plan: params.plan, billingPeriod: params.billingPeriod, coupon_code: params.coupon_code, access_token_code: params.access_token_code } }
+        { body: { orderType: "subscription", plan: params.plan, billingPeriod: params.billingPeriod, coupon_code: params.coupon_code } }
       );
 
       if (error || !data?.success) {

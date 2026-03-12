@@ -224,18 +224,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Redeem access token if one was used
-    if (orderMetadata?.access_token_code) {
-      try {
-        await adminSupabase.rpc("redeem_access_token", {
-          p_code: orderMetadata.access_token_code,
-          p_user_id: user.id,
-        });
-      } catch (tokenErr) {
-        console.error("Failed to redeem access token:", tokenErr);
-      }
-    }
-
     const { data: credits } = await adminSupabase
       .from("nloc_credits")
       .select("credits_remaining")

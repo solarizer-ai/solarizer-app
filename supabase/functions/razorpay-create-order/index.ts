@@ -273,10 +273,6 @@ Deno.serve(async (req) => {
       metadata.coupon_id = couponId;
       metadata.original_amount_cents = amountCents;
     }
-    if (body.access_token_code) {
-      metadata.access_token_code = body.access_token_code.toUpperCase().trim();
-    }
-
     await adminSupabase
       .from("payment_orders")
       .update({

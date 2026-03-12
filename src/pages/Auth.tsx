@@ -482,16 +482,6 @@ const Auth = () => {
             </button>
           </div>
 
-          {/* Trial note (signup only) */}
-          {!isLogin && (
-            <p className="mt-4 text-center text-xs text-muted-foreground/60">
-              Need an invite code? Request one on{' '}
-              <a href="https://t.me/solarizer_ai" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:underline">Telegram</a>
-              {' '}or{' '}
-              <a href="https://x.com/solarizer_io" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:underline">X</a>
-              {' '}&mdash; activate it on your dashboard after signup.
-            </p>
-          )}
 
           {/* Legal footer */}
           <p className="mt-6 text-center text-xs text-muted-foreground/50">
