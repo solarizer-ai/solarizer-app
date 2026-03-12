@@ -34,7 +34,7 @@ interface Redemption {
   discounted_amount_cents: number;
   discount_applied_cents: number;
   redeemed_at: string;
-  profiles: { display_name: string | null } | null;
+  profiles: { display_name: string | null; email: string | null } | null;
 }
 
 export default function AdminCouponsPage() {
