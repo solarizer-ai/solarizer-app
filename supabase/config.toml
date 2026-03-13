@@ -13,8 +13,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.razorpay-create-order]
-
-[functions.razorpay-create-order]
 verify_jwt = false
 
 [functions.razorpay-create-subscription]
