@@ -1,30 +1,24 @@
+# Pricing Model — Single Inferno Plan
 
+## Subscription
+- **Inferno** ($99/month) — the only paid plan
+- 500 credits granted monthly
+- 9,999 nLOC per audit limit
+- Full feature access (insights, sharing, remediation, cross-contract analysis)
 
-# Fix: GitHub Import "Edge Function returned a non-2xx status code"
+## Free Trial
+- Activated via invite code at `/activate-trial`
+- 14 days duration, 300 one-time credits
+- Full Inferno-tier feature access
+- One-time per user (tracked via `trial_activated_at`)
+- Cannot purchase additional credits while on trial
 
-## Root Cause
+## Credit Pricing
+- Flat $0.10 per credit across all contexts
 
-The `github-fetch-repo` edge function has **outdated CORS headers**. It's missing the `x-supabase-client-*` headers that the newer Supabase JS client sends with every request. This causes the browser's CORS preflight (OPTIONS) to fail, which surfaces as a generic "Edge Function returned a non-2xx status code" error — before the function code even runs (explaining the empty logs).
-
-## Fix
-
-### 1. Update CORS headers in `supabase/functions/github-fetch-repo/index.ts`
-
-Replace the current headers:
-```
-'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-```
-With the full set:
-```
-'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version'
-```
-
-### 2. Fix duplicate config entry in `supabase/config.toml`
-
-Remove the duplicate `[functions.razorpay-create-order]` on line 16 (keeping lines 17-18). This could cause parsing issues.
-
-| File | Change |
-|------|--------|
-| `supabase/functions/github-fetch-repo/index.ts` | Update CORS `Access-Control-Allow-Headers` |
-| `supabase/config.toml` | Remove duplicate `[functions.razorpay-create-order]` entry |
-
+## Technical Notes
+- Internal DB values `starter`, `pro`, `business` all map to display name "Inferno" via `formatPlanName()`
+- Trial maps to `tier = 'business'` in edge functions for proxy/audit access
+- Trial expiry enforced in `web-audit-start`, `deduct_credits` RPC, and `expire_overdue_subscriptions` cron
+- New signups get no plan and 0 credits until they subscribe or activate a trial
+- `SubscribeConfirmationModal` PLAN_PRICES need updating to 9900 (currently stale at legacy values)
