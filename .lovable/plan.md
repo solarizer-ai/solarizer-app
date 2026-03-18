@@ -1,24 +1,31 @@
-# Pricing Model — Single Inferno Plan
 
-## Subscription
-- **Inferno** ($99/month) — the only paid plan
-- 500 credits granted monthly
-- 9,999 nLOC per audit limit
-- Full feature access (insights, sharing, remediation, cross-contract analysis)
 
-## Free Trial
-- Activated via invite code at `/activate-trial`
-- 14 days duration, 300 one-time credits
-- Full Inferno-tier feature access
-- One-time per user (tracked via `trial_activated_at`)
-- Cannot purchase additional credits while on trial
+# Disable Public Routes + Redirect All Users to Coming Soon
 
-## Credit Pricing
-- Flat $0.10 per credit across all contexts
+## Changes
 
-## Technical Notes
-- Internal DB values `starter`, `pro`, `business` all map to display name "Inferno" via `formatPlanName()`
-- Trial maps to `tier = 'business'` in edge functions for proxy/audit access
-- Trial expiry enforced in `web-audit-start`, `deduct_credits` RPC, and `expire_overdue_subscriptions` cron
-- New signups get no plan and 0 credits until they subscribe or activate a trial
-- `SubscribeConfirmationModal` PLAN_PRICES need updating to 9900 (currently stale at legacy values)
+### 1. `src/pages/ComingSoon.tsx` — Full redesign
+- Solarizer logo + "Coming Soon" hero
+- Feature preview cards: Multi-Pass Vulnerability Hunting, Cross-Contract Analysis, Invariant-Guided Detection, Security Coverage Testing
+- Reuse `HeroBackground` for animated background
+- CTA: "Sign up for early access" → `/signup`
+- No Header/Footer (nav links point to disabled routes)
+- Dark theme, solar orange accents
+
+### 2. `src/App.tsx` — Route changes
+- `/` → `<ComingSoon />`
+- `/pricing`, `/docs/*`, `/privacy`, `/terms`, `/coming-soon` → `<Navigate to="/" />`
+- `/login`, `/signup` → Keep (Auth)
+- `/dashboard/*` → Redirect to `/` (remove ProtectedRoute wrapper, just redirect)
+- `/report/:slug` → Keep (PublicReport, shared links still work)
+- `/payment-success`, `/activate-trial` → Redirect to `/`
+- Legacy redirects (`/settings`, `/audits`, `/billing`) → Redirect to `/`
+
+### 3. Memory update
+- Update navigation policy: all users (logged in or not) see Coming Soon page; dashboard is disabled
+
+| File | Change |
+|------|--------|
+| `src/pages/ComingSoon.tsx` | Full redesign with features, logo, background |
+| `src/App.tsx` | Redirect all routes (including `/dashboard/*`) to Coming Soon |
+
