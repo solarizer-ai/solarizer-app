@@ -2,7 +2,7 @@
 
 > Democratizing smart contract security for open-source blockchain projects and enterprise DeFi teams alike.
 
-Solarizer is a full-stack SaaS platform that automates security auditing of Solidity smart contracts using a **multi-phase agentic AI pipeline**. It detects vulnerabilities, generates structured audit reports, tracks remediation, and produces publicly shareable results — making professional-grade smart contract security accessible without a six-figure traditional audit.
+Solarizer is an open-source platform that automates security auditing of Solidity smart contracts using a **multi-phase agentic AI pipeline**. It detects vulnerabilities, generates structured audit reports, tracks remediation, and produces publicly shareable results — making professional-grade smart contract security accessible without a six-figure traditional audit.
 
 ---
 
@@ -46,11 +46,6 @@ Solarizer changes that equation. Open-source maintainers can point it at a GitHu
 - Public audit slugs for community transparency
 - Export full reports to Markdown for documentation
 
-### Credit-Based, Open Access
-- Credit system tied to Non-Comment Lines of Code (NLOC) — pay for what you actually analyze
-- Trial tier gives new projects 300 credits free to run their first audit
-- Subscription plans from $0 to $99/month scaling with project size
-
 ---
 
 ## Tech Stack
@@ -62,7 +57,6 @@ Solarizer changes that equation. Open-source maintainers can point it at a GitHu
 | Backend | Supabase (PostgreSQL + Edge Functions + Realtime) |
 | Auth | Supabase Auth (Google, Apple, Email) |
 | AI Orchestration | Multi-phase agentic pipeline via Edge Functions |
-| Payments | Razorpay / Cashfree |
 | File Handling | JSZip, React Dropzone |
 | State | TanStack Query, React Context |
 | Charts | Recharts |
@@ -102,11 +96,9 @@ User submits contract (GitHub URL or file upload)
 
 | Table | Purpose |
 |---|---|
-| `audits` | Audit records with status, NLOC, security score, phase tracking |
+| `audits` | Audit records with status, security score, and phase tracking |
 | `findings` | Individual vulnerabilities with severity, location, code snippet, remediation |
-| `profiles` | Users with subscription tier and trial status |
-| `subscriptions` | Active plan, credit allowance, billing cycle |
-| `nloc_credits` | Per-user credit balance and transaction history |
+| `profiles` | User accounts and onboarding state |
 | `audit_shares` | Shareable audit links with expiration |
 | `finding_comments` | Team discussion threads on findings |
 | `github_connections` | OAuth-linked GitHub accounts |
@@ -149,7 +141,6 @@ Solarizer's AI pipeline is trained to detect:
 ### Prerequisites
 - Node.js 18+
 - A Supabase project
-- A Razorpay or Cashfree account (for payments)
 
 ### Local Development
 
